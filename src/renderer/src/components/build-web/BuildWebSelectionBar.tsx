@@ -1,0 +1,66 @@
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { translate } from '@/i18n/i18n'
+import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
+import { useBuildWebStore } from './build-web-store'
+import { validateBuildWebBatch } from './build-web-take-to-work'
+import { productLabel } from './build-web-labels'
+
+/** The picked tasks and «Take to work», refused for a mix of products or releases. */
+export function BuildWebSelectionBar({
+  onTakeToWork
+}: {
+  onTakeToWork: (issues: BuildWebIssueRow[]) => void
+}): React.JSX.Element | null {
+  const issues = useBuildWebStore((s) => s.issues)
+  const selected = useBuildWebStore((s) => s.selected)
+  const clear = useBuildWebStore((s) => s.clearSelection)
+  const picked = issues.filter((i) => selected.has(i.id))
+  if (picked.length === 0) {
+    return null
+  }
+  const check = validateBuildWebBatch(picked)
+  const reason = check.ok
+    ? null
+    : check.reason === 'mixed'
+      ? translate('buildWeb.take.mixed', 'Tasks of different products or releases: {{groups}}', {
+          groups: check.groups.join(', ')
+        })
+      : check.reason === 'too-many'
+        ? translate('buildWeb.take.tooMany', 'At most 20 tasks at once.')
+        : translate('buildWeb.take.badKey', 'These keys cannot be sent: {{keys}}', {
+            keys: check.groups.join(', ')
+          })
+  const takeButton = (
+    <Button size="sm" disabled={!check.ok} onClick={() => onTakeToWork(picked)}>
+      {translate('buildWeb.take.button', 'Take to work ({{count}})', { count: picked.length })}
+    </Button>
+  )
+  return (
+    <div className="m-3 flex flex-wrap items-center gap-3 rounded-md border border-border bg-card px-3 py-2 md:mx-5">
+      <span className="text-sm font-medium">
+        {translate('buildWeb.take.selected', '{{count}} selected', { count: picked.length })}
+      </span>
+      {check.ok ? (
+        <span className="text-xs text-muted-foreground">
+          {productLabel(picked[0].product)} ·{' '}
+          {picked[0].version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
+        </span>
+      ) : null}
+      <div className="flex-1" />
+      <Button variant="ghost" size="sm" onClick={clear}>
+        {translate('buildWeb.take.clear', 'Clear')}
+      </Button>
+      {reason ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span tabIndex={0}>{takeButton}</span>
+          </TooltipTrigger>
+          <TooltipContent>{reason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        takeButton
+      )}
+    </div>
+  )
+}

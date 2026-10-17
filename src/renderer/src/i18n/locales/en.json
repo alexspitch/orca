@@ -20306,6 +20306,64 @@
       "pushed": "pushed",
       "buildTagOnly": "build tag only",
       "dist": "dist"
+    },
+    "detail": {
+      "noDescription": "No description.",
+      "noComments": "No comments.",
+      "task": "Task",
+      "sheetDescription": "Edit the task and hand it to an agent.",
+      "fullScreen": "Open full screen",
+      "close": "Close",
+      "description": "Description",
+      "steps": "Steps",
+      "comments": "Comments",
+      "openInBuildWeb": "Open in build-web",
+      "takeToWork": "Take to work",
+      "title": "Title",
+      "status": "Status",
+      "priority": "Priority",
+      "assignee": "Assignee",
+      "nobody": "Nobody",
+      "release": "Release",
+      "noRelease": "No release",
+      "forAi": "Handed to AI",
+      "statusTitle": "Move {{key}} to “{{status}}”?",
+      "statusJira": "build-web mirrors the move to Jira {{jira}}.",
+      "move": "Move",
+      "jiraResult": "Jira: {{result}}"
+    },
+    "take": {
+      "mixed": "Tasks of different products or releases: {{groups}}",
+      "tooMany": "At most 20 tasks at once.",
+      "badKey": "These keys cannot be sent: {{keys}}",
+      "button": "Take to work ({{count}})",
+      "selected": "{{count}} selected",
+      "clear": "Clear",
+      "title": "Take to work · {{count}} tasks",
+      "description": "A new Claude session in an existing worktree gets only the build-web-tasks skill call.",
+      "worktree": "Worktree",
+      "worktreeHint": "Worktrees of sa-dc-ap-products. The skill must be up to date in the one you pick.",
+      "noRepo": "No sa-dc-ap-products repository found; showing every git worktree.",
+      "agent": "Agent",
+      "noWorktree": "Work in this worktree",
+      "noWorktreeHint": "The skill does not create its own worktree",
+      "auto": "Auto mode",
+      "autoHint": "No stop after the plans; only tasks handed to AI",
+      "held": "Already held by a session: {{list}}. Starting replaces it.",
+      "cancel": "Cancel",
+      "start": "Start session",
+      "claude": "Claude Code"
+    },
+    "session": {
+      "label": "Agent session",
+      "live": "live",
+      "unverifiable": "unverifiable",
+      "open": "Open session"
+    },
+    "launch": {
+      "sessionNotSaved": "Session ID not saved to {{keys}}",
+      "revealFailed": "Could not open the worktree.",
+      "failed": "Could not start the agent."
     }
   }
 }

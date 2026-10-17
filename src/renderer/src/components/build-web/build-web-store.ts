@@ -37,6 +37,9 @@ type BuildWebState = {
   selected: ReadonlySet<string>
   openIssueId: string | null
   fullScreen: boolean
+  /** The worktree «Take to work» used last, and whether it worked in it (`-no-worktree`). */
+  lastWorktreeId: string | null
+  noWorktree: boolean
   setStatus: (contextKey: string, status: BuildWebConnectionStatus) => void
   setView: (view: BuildWebView) => void
   setQuery: (query: string) => void
@@ -50,6 +53,7 @@ type BuildWebState = {
   clearSelection: () => void
   openIssue: (id: string | null, fullScreen?: boolean) => void
   setFullScreen: (fullScreen: boolean) => void
+  rememberTakeToWork: (worktreeId: string, noWorktree: boolean) => void
 }
 
 export const useBuildWebStore = create<BuildWebState>()((set) => ({
@@ -66,6 +70,8 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   selected: new Set(),
   openIssueId: null,
   fullScreen: false,
+  lastWorktreeId: null,
+  noWorktree: true,
   setStatus: (contextKey, status) =>
     set((state) =>
       // Why: another host's tasks must not stay on screen under this host's account.
@@ -100,7 +106,8 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
     }),
   clearSelection: () => set({ selected: new Set() }),
   openIssue: (openIssueId, fullScreen = false) => set({ openIssueId, fullScreen }),
-  setFullScreen: (fullScreen) => set({ fullScreen })
+  setFullScreen: (fullScreen) => set({ fullScreen }),
+  rememberTakeToWork: (lastWorktreeId, noWorktree) => set({ lastWorktreeId, noWorktree })
 }))
 
 /** The list request for the current filters. */
