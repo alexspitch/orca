@@ -34,6 +34,7 @@ export const HOST_OPERATION_OWNERSHIP = {
   host: 'host',
   hostedReview: 'credential',
   jira: 'scope-picked',
+  buildWeb: 'scope-picked',
   layout: 'host',
   linear: 'scope-picked',
   managedServer: 'host',

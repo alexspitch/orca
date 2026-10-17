@@ -135,6 +135,18 @@ import {
 } from './browser-params'
 import { ScreencastUnsubscribe } from './browser-screencast-params'
 import { BrowserOpenUrlParams, BrowserTabCreateParams } from './browser-tab-create-params'
+import {
+  BuildWebAgentSessionParams,
+  BuildWebClearSessionParams,
+  BuildWebCommentParams,
+  BuildWebConnect,
+  BuildWebFavoriteParams,
+  BuildWebIssueId,
+  BuildWebIssueQueryParams,
+  BuildWebIssueUpdateParams,
+  BuildWebProviderSessionParams,
+  BuildWebVersionsParams
+} from './build-web-params'
 import { ClientEventsUnsubscribeParams } from './client-events-params'
 import {
   NativeChatSessionOptionsMutation,
@@ -814,6 +826,20 @@ export const RPC_PARAMS_BY_METHOD = {
   'browser.upload': Upload,
   'browser.viewport': Viewport,
   'browser.wait': Wait,
+  'buildWeb.addComment': BuildWebCommentParams,
+  'buildWeb.clearAgentSession': BuildWebClearSessionParams,
+  'buildWeb.connect': BuildWebConnect,
+  'buildWeb.disconnect': null,
+  'buildWeb.getIssue': BuildWebIssueId,
+  'buildWeb.listAssignees': null,
+  'buildWeb.listIssues': BuildWebIssueQueryParams,
+  'buildWeb.listVersions': BuildWebVersionsParams,
+  'buildWeb.noteProviderSession': BuildWebProviderSessionParams,
+  'buildWeb.setAgentSession': BuildWebAgentSessionParams,
+  'buildWeb.setFavorite': BuildWebFavoriteParams,
+  'buildWeb.status': null,
+  'buildWeb.testConnection': null,
+  'buildWeb.updateIssue': BuildWebIssueUpdateParams,
   'clipboard.abortImageUpload': AbortImageUpload,
   'clipboard.appendImageUploadChunk': AppendImageUploadChunk,
   'clipboard.commitImageUpload': CommitImageUpload,

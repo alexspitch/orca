@@ -66,6 +66,7 @@ import { MOBILE_RELAY_RUNTIME_CAPABILITIES } from './mobile-desktop-relay-contra
 import { SKILL_RUNTIME_CAPABILITIES } from './skill-install-capability'
 import { ACCOUNT_RUNTIME_CAPABILITIES } from './account-runtime-capabilities'
 import * as agentLaunchCapabilities from './agent-launch-runtime-capability'
+import { BUILD_WEB_RUNTIME_CAPABILITY } from './build-web-capability'
 import {
   AGENT_SESSION_ACCEPTED_SEND_RUNTIME_CAPABILITY,
   AGENT_SESSION_ATTACHMENTS_RUNTIME_CAPABILITY,
@@ -171,6 +172,7 @@ export const NATIVE_REMOTE_RUNTIME_CLIENT_CAPABILITIES = [
 
 export const RUNTIME_CAPABILITIES = [
   AI_VAULT_CHAT_FORK_SOURCE_CAPABILITY,
+  BUILD_WEB_RUNTIME_CAPABILITY,
   jiraDetailCapabilities.JIRA_TRANSITION_FIELDS_RUNTIME_CAPABILITY,
   JIRA_AGENT_ACCESS_RUNTIME_CAPABILITY,
   jiraDetailCapabilities.JIRA_CURRENT_SPRINT_RUNTIME_CAPABILITY,
