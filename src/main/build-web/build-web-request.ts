@@ -5,11 +5,12 @@ import {
   readFetchResponseJsonWithinLimit
 } from '../../shared/fetch-response-body'
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
+import { REMOTE_RPC_MAX_CONTENT_BYTES } from '../../shared/remote-rpc-content-budget'
 import { BUILD_WEB_REQUEST_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { recordOf, textOf, textsOf } from './build-web-response-fields'
 
-// Why: one answer must fit the remote RPC frame on its way to a paired client.
-const RESPONSE_MAX_BYTES = 8 * 1024 * 1024
+// Why: one answer must fit a remote RPC reply on its way to a paired client.
+const RESPONSE_MAX_BYTES = REMOTE_RPC_MAX_CONTENT_BYTES
 
 /** A larger cap for answers main digests itself and never forwards whole (the build catalog). */
 export type BuildWebResponseLimit = { bytes: number; structuralTokens: number }
@@ -29,12 +30,22 @@ export class BuildWebApiError extends Error {
 }
 
 export class BuildWebUnreachableError extends Error {
-  constructor(baseUrl: string, cause: unknown) {
-    // Why: the cause names the reason (refused, TLS, DNS) — never the request, which carries the token.
-    const why = cause instanceof Error ? cause.message : String(cause)
+  constructor(baseUrl: string, cause: unknown, token: string) {
+    // Why: the cause names the reason (refused, TLS, DNS), but a header check quotes the header
+    // value — so the token, and any piece of it, is cut out before the message goes anywhere.
+    const raw = cause instanceof Error ? cause.message : String(cause)
+    const why = redactToken(raw, token)
     super(`build-web at ${baseUrl} is unreachable: ${why}`)
     this.name = 'BuildWebUnreachableError'
   }
+}
+
+function redactToken(text: string, token: string): string {
+  let out = text
+  for (const piece of [token, ...token.split(/\s+/)].filter((p) => p.length >= 4)) {
+    out = out.split(piece).join('[token]')
+  }
+  return out
 }
 
 /**
@@ -96,7 +107,7 @@ export async function buildWebRequest(request: BuildWebRequest): Promise<unknown
       signal
     })
   } catch (error) {
-    throw new BuildWebUnreachableError(request.baseUrl, error)
+    throw new BuildWebUnreachableError(request.baseUrl, error, request.token)
   }
   if (response.ok) {
     const limit = request.responseLimit
@@ -127,7 +138,7 @@ export async function buildWebBinaryRequest(
       signal: requestSignal(request)
     })
   } catch (error) {
-    throw new BuildWebUnreachableError(request.baseUrl, error)
+    throw new BuildWebUnreachableError(request.baseUrl, error, request.token)
   }
   if (!response.ok) {
     await response.body?.cancel().catch(() => {})

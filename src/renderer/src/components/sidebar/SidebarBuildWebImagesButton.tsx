@@ -54,7 +54,7 @@ function useRunningImageCount(enabled: boolean): number | null {
 
 /** «Images»: build-web's images, with how many are building right now. */
 export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
-  const show = useAppStore((s) => s.settings?.showBuildWebImagesButton !== false)
+  const show = useAppStore((s) => s.settings?.showBuildWebImagesButton === true)
   const active = useAppStore((s) => s.activeView === 'build-web-images')
   const openPage = useAppStore((s) => s.openBuildWebImagesPage)
   const updateSettings = useAppStore((s) => s.updateSettings)

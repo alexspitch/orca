@@ -6,9 +6,10 @@ import type {
   BuildWebIssuePage,
   BuildWebIssuePatch,
   BuildWebIssueQuery,
-  BuildWebIssueRow,
+  BuildWebCommentOutcome,
   BuildWebMutationResult,
   BuildWebProduct,
+  BuildWebUpdateOutcome,
   BuildWebUser,
   BuildWebVersion
 } from '../../shared/build-web-types'
@@ -50,13 +51,13 @@ export type BuildWebApi = {
   updateIssue: (args: {
     id: string
     patch: BuildWebIssuePatch
-  }) => Promise<BuildWebMutationResult<{ issue: BuildWebIssueRow | null; jira: string | null }>>
+  }) => Promise<BuildWebMutationResult<BuildWebUpdateOutcome>>
   setFavorite: (args: { id: string; on: boolean }) => Promise<BuildWebMutationResult<boolean>>
   addComment: (args: {
     id: string
     body: string
     jira: boolean
-  }) => Promise<BuildWebMutationResult<{ id: string }>>
+  }) => Promise<BuildWebMutationResult<BuildWebCommentOutcome>>
   setAgentSession: (args: {
     id: string
     session: BuildWebSessionArgs

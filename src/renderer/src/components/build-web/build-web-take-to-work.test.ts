@@ -95,6 +95,13 @@ describe('worktree candidates', () => {
     expect(result).toEqual({ worktrees: [wt('a::1', 'a')], matchedRepo: true })
   })
 
+  it('never offers an archived worktree', () => {
+    const repos = [repo('a', '/p/sa-dc-ap-products-master')]
+    const archived = { ...wt('a::old', 'a'), isArchived: true }
+    const result = takeToWorkCandidates(repos, { a: [archived, wt('a::1', 'a')] })
+    expect(result.worktrees.map((w) => w.id)).toEqual(['a::1'])
+  })
+
   it('falls back to every git worktree, skipping folder workspaces', () => {
     const repos = [repo('b', '/p/orca'), repo('f', '/p/notes', 'folder')]
     const result = takeToWorkCandidates(repos, { b: [wt('b::1', 'b')], f: [wt('f::1', 'f')] })

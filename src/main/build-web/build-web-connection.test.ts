@@ -106,6 +106,39 @@ describe('connecting', () => {
     expect(result.ok ? '' : result.error).not.toContain('bwt_secret')
   })
 
+  it('cuts the token out of a header error, and refuses a token with a line break', async () => {
+    const { connection, request } = await loadModules()
+    fetchSpy.mockRejectedValue(new TypeError('invalid header value "Bearer bwt_abc def"'))
+    await expect(
+      request.buildWebRequest({ baseUrl: 'https://bw.test', token: 'bwt_abc def', path: '/x' })
+    ).rejects.toThrow(/invalid header value "Bearer \[token\]"/)
+    const result = await connection.connectBuildWeb({
+      baseUrl: 'https://bw.test',
+      token: 'bwt_abc\ndef'
+    })
+    expect(result).toMatchObject({ ok: false })
+    expect(fetchSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not bring a token back when it was replaced during a test', async () => {
+    const { connection, store } = await loadModules()
+    fetchSpy.mockResolvedValueOnce(json({ authed: true, user: 'a', perms: [] }))
+    await connection.connectBuildWeb({ baseUrl: 'https://bw.test', token: 'bwt_old' })
+    let answer: (r: Response) => void = () => {}
+    fetchSpy.mockReturnValueOnce(new Promise<Response>((resolve) => (answer = resolve)))
+    const testing = connection.testBuildWebConnection()
+    store.saveBuildWebCredential({
+      baseUrl: 'https://bw.test',
+      token: 'bwt_new',
+      login: 'b',
+      perms: []
+    })
+    answer(json({ authed: true, user: 'a', perms: [] }))
+    await testing
+    expect(store.loadBuildWebToken('https://bw.test')).toBe('bwt_new')
+    expect(connection.getBuildWebStatus().login).toBe('b')
+  })
+
   it('reads status from metadata only — no decryption on a cold session', async () => {
     const first = await loadModules()
     fetchSpy.mockResolvedValue(json({ authed: true, user: 'alex@spitch.ch', perms: [] }))
@@ -200,5 +233,39 @@ describe('request errors', () => {
         maxBytes: 2048
       })
     ).rejects.toMatchObject({ status: 413 })
+  })
+})
+
+describe('image catalog cache', () => {
+  const catalogAnswer = () => json({ images: [], builds: [], versions: {} })
+  const page = { page: 0, pageSize: 50 }
+
+  it('is not shared with the next token, and a push drops it', async () => {
+    const { connection } = await loadModules()
+    const images = await import('./build-web-images')
+    fetchSpy.mockResolvedValueOnce(json({ authed: true, user: 'a', perms: [] }))
+    await connection.connectBuildWeb({ baseUrl: 'https://bw.test', token: 'bwt_a' })
+    fetchSpy.mockResolvedValueOnce(catalogAnswer())
+    await images.listBuildWebImages(page)
+    await images.listBuildWebImages(page)
+    expect(fetchSpy).toHaveBeenCalledTimes(2)
+
+    fetchSpy.mockResolvedValueOnce(json({ authed: true, user: 'b', perms: [] }))
+    await connection.connectBuildWeb({ baseUrl: 'https://bw.test', token: 'bwt_b' })
+    fetchSpy.mockResolvedValueOnce(catalogAnswer())
+    await images.listBuildWebImages(page)
+    expect(fetchSpy).toHaveBeenCalledTimes(4)
+
+    let answer: (r: Response) => void = () => {}
+    fetchSpy.mockReturnValueOnce(new Promise<Response>((resolve) => (answer = resolve)))
+    const stale = images.listBuildWebImages({ ...page, refresh: true })
+    fetchSpy.mockResolvedValueOnce(json({ ok: true }))
+    await images.pushBuildWebImages({ runId: 'r1', combos: [], moveMainTag: false })
+    answer(catalogAnswer())
+    await stale
+    fetchSpy.mockResolvedValueOnce(catalogAnswer())
+    await images.listBuildWebImages(page)
+    // Why 7: the catalog read before the push is not reused after it.
+    expect(fetchSpy).toHaveBeenCalledTimes(7)
   })
 })

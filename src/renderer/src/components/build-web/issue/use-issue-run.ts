@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { BuildWebRun } from '../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
@@ -14,14 +14,31 @@ export function useIssueRun(
   setRun: (run: BuildWebRun | null) => void
   reload: () => void
 } {
-  const [run, setRun] = useState<BuildWebRun | null | undefined>(undefined)
-  const [error, setError] = useState<string | null>(null)
+  // Why keyed by task: another task's build must never show while this one's loads.
+  const [loaded, setLoaded] = useState<{ issueId: string; run: BuildWebRun | null } | null>(null)
+  const [failed, setFailed] = useState<{ issueId: string; message: string } | null>(null)
+  const generation = useRef(0)
+  const run = loaded?.issueId === issueId ? loaded.run : undefined
+  const error = failed?.issueId === issueId ? failed.message : null
+  const setRun = useCallback(
+    (next: BuildWebRun | null) => setLoaded({ issueId, run: next }),
+    [issueId]
+  )
   const load = useCallback(async () => {
+    const mine = ++generation.current
     try {
-      setRun(await callBuildWeb(target, 'getIssueRun', { id: issueId }))
-      setError(null)
+      const next = await callBuildWeb(target, 'getIssueRun', { id: issueId })
+      if (mine === generation.current) {
+        setLoaded({ issueId, run: next })
+        setFailed(null)
+      }
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : String(failure))
+      if (mine === generation.current) {
+        setFailed({
+          issueId,
+          message: failure instanceof Error ? failure.message : String(failure)
+        })
+      }
     }
   }, [issueId, target])
   useEffect(() => {

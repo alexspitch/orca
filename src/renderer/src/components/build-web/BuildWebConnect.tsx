@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
 import type { BuildWebConnectionStatus } from '../../../../shared/build-web-types'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { callBuildWeb } from './build-web-client'
@@ -33,6 +34,10 @@ export function BuildWebConnectForm({
       const result = await callBuildWeb(target, 'connect', { baseUrl, token })
       if (result.ok) {
         setToken('')
+        // Why: the sidebar items are hidden until build-web is connected — most users never use it.
+        void useAppStore
+          .getState()
+          .updateSettings({ showBuildWebButton: true, showBuildWebImagesButton: true })
         onConnected(result.status)
       } else {
         setError(result.error)

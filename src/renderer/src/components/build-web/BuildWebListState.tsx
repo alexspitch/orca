@@ -8,11 +8,14 @@ import { viewLabel } from './build-web-labels'
 export function BuildWebListState({
   kind,
   error,
-  onRetry
+  onRetry,
+  loadingLabel
 }: {
   kind: 'loading' | 'empty' | 'error'
   error?: string | null
   onRetry?: () => void
+  /** What is loading, when it is not the task list. */
+  loadingLabel?: string
 }): React.JSX.Element | null {
   const view = useBuildWebStore((s) => s.view)
   const [showLoading, setShowLoading] = useState(false)
@@ -28,7 +31,7 @@ export function BuildWebListState({
   if (kind === 'loading') {
     return showLoading ? (
       <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
-        {translate('buildWeb.state.loading', 'Loading tasks…')}
+        {loadingLabel ?? translate('buildWeb.state.loading', 'Loading tasks…')}
       </p>
     ) : null
   }

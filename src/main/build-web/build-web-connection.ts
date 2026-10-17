@@ -6,9 +6,11 @@ import type {
 import {
   clearBuildWebCredential,
   getBuildWebCredentialError,
+  getBuildWebCredentialGeneration,
   getBuildWebCredentialProtection,
   getStoredBuildWebMetadata,
   hasStoredBuildWebCredential,
+  isBuildWebTokenUnlocked,
   loadBuildWebToken,
   saveBuildWebCredential
 } from './credential-store'
@@ -45,6 +47,10 @@ export async function connectBuildWeb(args: BuildWebConnectArgs): Promise<BuildW
   if (!token) {
     return { ok: false, error: 'Enter a build-web API token.' }
   }
+  // Why: a token wrapped by a terminal carries a line break no header can hold; printable ASCII only.
+  if (!/^[!-~]+$/.test(token)) {
+    return { ok: false, error: 'The token has spaces or line breaks in it. Paste it as one line.' }
+  }
   try {
     const who = await whoIs(baseUrl, token)
     saveBuildWebCredential({ baseUrl, token, ...who })
@@ -75,14 +81,19 @@ export function getBuildWebStatus(): BuildWebConnectionStatus {
   }
 }
 
-export type BuildWebCredential = { baseUrl: string; token: string }
+/** `generation` tells apart answers read under a token that was since replaced or removed. */
+export type BuildWebCredential = { baseUrl: string; token: string; generation: number }
 
 /**
  * The stored server and token, decrypting on first use; throws when not connected. `background`
- * callers (the sidebar badge) never retry a decrypt that already failed — it may prompt again.
+ * callers (the sidebar badge) never retry a decrypt that already failed, and on macOS never make
+ * the first one — either may show a Keychain prompt nobody asked for.
  */
 export function requireBuildWebCredential(options?: { background?: true }): BuildWebCredential {
-  if (options?.background && getBuildWebCredentialError()) {
+  const promptRisk =
+    getBuildWebCredentialError() !== null ||
+    (process.platform === 'darwin' && !isBuildWebTokenUnlocked())
+  if (options?.background && promptRisk) {
     throw new BuildWebApiError('build-web token is locked', 401)
   }
   const metadata = getStoredBuildWebMetadata()
@@ -90,7 +101,7 @@ export function requireBuildWebCredential(options?: { background?: true }): Buil
   if (!metadata || !token) {
     throw new BuildWebApiError('build-web is not connected', 401)
   }
-  return { baseUrl: metadata.baseUrl, token }
+  return { baseUrl: metadata.baseUrl, token, generation: getBuildWebCredentialGeneration() }
 }
 
 /** Re-read who the token is (and refresh the stored sections) — Settings' «Test connection». */
@@ -98,7 +109,10 @@ export async function testBuildWebConnection(): Promise<BuildWebConnectResult> {
   try {
     const credential = requireBuildWebCredential()
     const who = await whoIs(credential.baseUrl, credential.token)
-    saveBuildWebCredential({ ...credential, ...who })
+    // Why: a disconnect or reconnect during the check must not bring this token back.
+    if (getBuildWebCredentialGeneration() === credential.generation) {
+      saveBuildWebCredential({ baseUrl: credential.baseUrl, token: credential.token, ...who })
+    }
     return { ok: true, status: getBuildWebStatus() }
   } catch (error) {
     return { ok: false, error: describeBuildWebError(error) }

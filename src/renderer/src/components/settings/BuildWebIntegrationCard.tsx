@@ -13,8 +13,8 @@ import { IntegrationCardDetails, IntegrationCardShell } from './integration-card
 /** build-web: connect, test, replace the token, disconnect, and bring the sidebar item back. */
 export function BuildWebIntegrationCard(): React.JSX.Element {
   const { target } = useBuildWebTarget()
-  const showButton = useAppStore((s) => s.settings?.showBuildWebButton !== false)
-  const showImagesButton = useAppStore((s) => s.settings?.showBuildWebImagesButton !== false)
+  const showButton = useAppStore((s) => s.settings?.showBuildWebButton === true)
+  const showImagesButton = useAppStore((s) => s.settings?.showBuildWebImagesButton === true)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [status, setStatus] = useState<BuildWebConnectionStatus | null>(null)
   const [replacing, setReplacing] = useState(false)
@@ -37,6 +37,8 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
     setMessage(null)
     try {
       await action()
+    } catch (failure) {
+      setMessage(failure instanceof Error ? failure.message : String(failure))
     } finally {
       setBusy(false)
     }

@@ -27,10 +27,11 @@ export function BuildWebIssueFullScreen({
   const { target } = useBuildWebTarget()
   const issueId = useBuildWebStore((s) => s.openIssueId)
   const perms = useBuildWebStore((s) => s.status?.perms ?? NO_PERMS)
-  const baseUrl = useBuildWebStore((s) => s.status?.baseUrl ?? null)
   const setFullScreen = useBuildWebStore((s) => s.setFullScreen)
   const state = useBuildWebIssueDetail(issueId)
   const [tab, setTab] = useState<CardTab>('overview')
+  // Why: a tab stays mounted once opened, so a guide draft or a comment survives a tab switch.
+  const [visited, setVisited] = useState<ReadonlySet<CardTab>>(() => new Set(['overview']))
   const runsVisible = readsRuns(perms)
   const {
     run,
@@ -72,7 +73,11 @@ export function BuildWebIssueFullScreen({
       />
       <Tabs
         value={tab}
-        onValueChange={(v) => setTab(TABS.find((t) => t === v) ?? 'overview')}
+        onValueChange={(v) => {
+          const next = TABS.find((t) => t === v) ?? 'overview'
+          setTab(next)
+          setVisited((seen) => (seen.has(next) ? seen : new Set([...seen, next])))
+        }}
         className="flex min-h-0 flex-1 flex-col"
       >
         <div className="px-3 md:px-5">
@@ -85,37 +90,38 @@ export function BuildWebIssueFullScreen({
           </TabsList>
         </div>
         <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-5">
-          <TabsContent value="overview">
+          <TabsContent value="overview" forceMount hidden={tab !== 'overview'}>
             <IssueOverviewTab target={target} state={state} />
           </TabsContent>
-          {runsVisible ? (
-            <>
-              <TabsContent value="build">
-                <IssueBuildTab
-                  target={target}
-                  detail={detail}
-                  run={run}
-                  error={runError}
-                  canWrite={writesRuns(perms)}
-                  baseUrl={baseUrl}
-                  onPushed={reloadRun}
-                />
-              </TabsContent>
-              <TabsContent value="guide">
-                <IssueGuideTab
-                  target={target}
-                  detail={detail}
-                  run={run}
-                  error={runError}
-                  canWrite={writesRuns(perms)}
-                  onRun={setRun}
-                />
-              </TabsContent>
-            </>
+          {runsVisible && visited.has('build') ? (
+            <TabsContent value="build" forceMount hidden={tab !== 'build'}>
+              <IssueBuildTab
+                target={target}
+                detail={detail}
+                run={run}
+                error={runError}
+                canWrite={writesRuns(perms)}
+                onPushed={reloadRun}
+              />
+            </TabsContent>
           ) : null}
-          <TabsContent value="commits">
-            <IssueCommitsTab target={target} issueId={detail.id} />
-          </TabsContent>
+          {runsVisible && visited.has('guide') ? (
+            <TabsContent value="guide" forceMount hidden={tab !== 'guide'}>
+              <IssueGuideTab
+                target={target}
+                detail={detail}
+                run={run}
+                error={runError}
+                canWrite={writesRuns(perms)}
+                onRun={setRun}
+              />
+            </TabsContent>
+          ) : null}
+          {visited.has('commits') ? (
+            <TabsContent value="commits" forceMount hidden={tab !== 'commits'}>
+              <IssueCommitsTab target={target} issueId={detail.id} />
+            </TabsContent>
+          ) : null}
         </div>
       </Tabs>
     </div>

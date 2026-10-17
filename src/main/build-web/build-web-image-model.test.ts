@@ -37,8 +37,9 @@ const catalog: ImageCatalog = {
     { image: 'dc/asr', product: 'dc' }
   ],
   builds: [
-    build({ number: 1, at: '2026-10-16T09:00:00Z' }),
+    // The console's order: newest first.
     build({ number: 2, at: '2026-10-17T09:00:00Z', tag: '3.1b2' }),
+    build({ number: 1, at: '2026-10-16T09:00:00Z' }),
     build({ image: 'sa/ui', dist: 'redos', status: 'running', ref: null }),
     build({ image: 'sa/ui', dist: 'redos', status: 'running', ref: null, run_id: 'run-2' }),
     build({
@@ -94,6 +95,15 @@ describe('image model', () => {
     expect(imagePage(older, { page: 0, pageSize: 50, q: '3.1old' }).total).toBe(1)
   })
 
+  it('keeps the console’s order for a build with no start time', () => {
+    const adopted: ImageCatalog = {
+      ...catalog,
+      builds: [build({ number: 12, at: null, tag: '3.1b12' }), build({ number: 11, tag: '3.1b11' })]
+    }
+    const page = imagePage(adopted, { page: 0, pageSize: 50 })
+    expect(page.rows.find((r) => r.image === 'sa/api')?.last?.number).toBe(12)
+  })
+
   it('pages, and an unknown page size falls back to 50', () => {
     const many: ImageCatalog = {
       ...catalog,
@@ -115,13 +125,20 @@ describe('image model', () => {
   })
 
   it('reads the console’s answer, dropping records that are not builds', () => {
-    const parsed = imageCatalogOf({
-      images: [{ image: 'a', product: 'sa' }, { nope: 1 }],
-      builds: [build({}), { image: 'x', status: 'weird', run_id: 'r' }],
-      versions: { sa: ['3.1', 7] }
-    })
+    const parsed = imageCatalogOf(
+      {
+        images: [{ image: 'a', product: 'sa' }, { nope: 1 }],
+        builds: [
+          build({ url: '/logs/run-1/api.log' }),
+          { image: 'x', status: 'weird', run_id: 'r' },
+          build({ url: 'javascript:alert(1)' })
+        ],
+        versions: { sa: ['3.1', 7] }
+      },
+      'https://bw.test'
+    )
     expect(parsed.images).toHaveLength(1)
-    expect(parsed.builds).toHaveLength(1)
+    expect(parsed.builds.map((b) => b.url)).toEqual(['https://bw.test/logs/run-1/api.log', null])
     expect(parsed.versions).toEqual({ sa: ['3.1'] })
   })
 })

@@ -9,6 +9,7 @@ import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebAgentSession } from '../../../../shared/build-web-types'
+import { parseExecutionHostId } from '../../../../shared/execution-host'
 
 type Found = { worktreeId: string } | null
 
@@ -39,7 +40,9 @@ function findSession(session: BuildWebAgentSession): Found {
 }
 
 function openSession(session: BuildWebAgentSession, found: NonNullable<Found>): void {
-  if (activateAndRevealWorktree(found.worktreeId) === false) {
+  const host = parseExecutionHostId(session.execution_host_id)
+  const opts = host ? { executionHostId: host.id } : undefined
+  if (activateAndRevealWorktree(found.worktreeId, opts) === false) {
     return
   }
   if (session.surface_kind === 'terminal') {
@@ -53,8 +56,8 @@ function openSession(session: BuildWebAgentSession, found: NonNullable<Found>): 
 }
 
 /**
- * Which session holds the task. `live` when this client shows it; otherwise `unverifiable` —
- * a session on another host or client is not evidence of anything (AGENTS.md, SSH use case).
+ * Which session holds the task. "Open here" says only that this client has its tab — not that the
+ * agent runs; anywhere else is `unverifiable` (AGENTS.md, SSH use case).
  */
 export function BuildWebSessionBadge({
   session
@@ -76,7 +79,7 @@ export function BuildWebSessionBadge({
       </span>
       <span className="text-muted-foreground">
         {found
-          ? translate('buildWeb.session.live', 'live')
+          ? translate('buildWeb.session.openHere', 'open here')
           : translate('buildWeb.session.unverifiable', 'unverifiable')}
       </span>
       <div className="flex-1" />

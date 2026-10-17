@@ -55,23 +55,48 @@ function rowsOf(hunks: ReturnType<typeof parsePatch>[number]['hunks']): DiffRow[
   return rows
 }
 
+function fileOf(file: ReturnType<typeof parsePatch>[number]): DiffFile {
+  const before = strip(file.oldFileName)
+  const after = strip(file.newFileName)
+  const status =
+    before === '/dev/null' || before === 'dev/null'
+      ? 'added'
+      : after === '/dev/null' || after === 'dev/null'
+        ? 'deleted'
+        : 'changed'
+  const rows = rowsOf(file.hunks)
+  return {
+    path: status === 'deleted' ? before : after,
+    status,
+    added: rows.filter((r) => r.right.kind === 'added').length,
+    removed: rows.filter((r) => r.left.kind === 'removed').length,
+    rows
+  }
+}
+
+/** A file the parser refused (a cut last hunk, a merge's combined diff): its lines as plain text. */
+function rawFileOf(chunk: string): DiffFile {
+  const path = /^diff --git a\/(\S+)/.exec(chunk)?.[1] ?? /^diff --cc (\S+)/.exec(chunk)?.[1] ?? '?'
+  const rows = chunk
+    .split('\n')
+    .map((text, n): DiffRow => ({ left: { line: n + 1, text, kind: 'same' }, right: EMPTY }))
+  return { path, status: 'changed', added: 0, removed: 0, rows }
+}
+
 export function diffFilesOf(patch: string): DiffFile[] {
-  return parsePatch(patch).map((file) => {
-    const before = strip(file.oldFileName)
-    const after = strip(file.newFileName)
-    const status =
-      before === '/dev/null' || before === 'dev/null'
-        ? 'added'
-        : after === '/dev/null' || after === 'dev/null'
-          ? 'deleted'
-          : 'changed'
-    const rows = rowsOf(file.hunks)
-    return {
-      path: status === 'deleted' ? before : after,
-      status,
-      added: rows.filter((r) => r.right.kind === 'added').length,
-      removed: rows.filter((r) => r.left.kind === 'removed').length,
-      rows
-    }
-  })
+  try {
+    return parsePatch(patch).map(fileOf)
+  } catch {
+    // Why: parsePatch throws on the whole patch for one bad hunk; keep every file it can read.
+    return patch
+      .split(/^(?=diff --(?:git|cc) )/m)
+      .filter((chunk) => chunk.trim())
+      .flatMap((chunk) => {
+        try {
+          return parsePatch(chunk).map(fileOf)
+        } catch {
+          return [rawFileOf(chunk)]
+        }
+      })
+  }
 }

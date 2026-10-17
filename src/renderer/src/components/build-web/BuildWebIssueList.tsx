@@ -92,7 +92,7 @@ export function BuildWebIssueList({
 }): React.JSX.Element {
   const issues = useBuildWebStore((s) => s.issues)
   const total = useBuildWebStore((s) => s.total)
-  const loadingMore = useBuildWebStore((s) => s.loadingMore)
+  const loadingMore = useBuildWebStore((s) => s.loadingMore || s.loading)
   const selected = useBuildWebStore((s) => s.selected)
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const toggleSelected = useBuildWebStore((s) => s.toggleSelected)

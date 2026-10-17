@@ -52,9 +52,9 @@ describe('issue rows', () => {
 
   it('builds the link from the stored origin, never from the answer', () => {
     const row = issueRowOf('https://bw.test', raw)
-    expect(row?.url).toBe('https://bw.test/tms/issues/abc?product=sa')
+    expect(row?.url).toBe('https://bw.test/issues/abc?product=sa')
     expect(buildWebIssueUrl('https://bw.test', 'a/b', 's&a')).toBe(
-      'https://bw.test/tms/issues/a%2Fb?product=s%26a'
+      'https://bw.test/issues/a%2Fb?product=s%26a'
     )
   })
 
@@ -66,7 +66,7 @@ describe('issue rows', () => {
       priority: 'high'
     })
     expect(row).toMatchObject({ status: 'unknown', product: 'unknown', priority: 3 })
-    expect(row?.url).toBe('https://bw.test/tms/issues/abc?product=xx')
+    expect(row?.url).toBe('https://bw.test/issues/abc?product=xx')
     expect(issueRowOf('https://bw.test', { title: 'no id' })).toBeNull()
     expect(
       issueRowOf('https://bw.test', { ...raw, agent_session: { surface_kind: 'window' } })

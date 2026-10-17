@@ -11,10 +11,20 @@ import {
   BUILD_WEB_REQUEST_TIMEOUT_MS
 } from '../../shared/build-web-timeouts'
 import { requireBuildWebCredential } from './build-web-connection'
-import { buildWebBinaryRequest, buildWebMutation, buildWebRequest } from './build-web-request'
+import { invalidateBuildWebImageCatalog } from './build-web-images'
+import {
+  buildWebBinaryRequest,
+  buildWebMutation,
+  buildWebRequest,
+  type BuildWebResponseLimit
+} from './build-web-request'
 import { recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 
 const DIFF_MAX_CHARS = 512 * 1024
+const DIFF_RESPONSE_LIMIT: BuildWebResponseLimit = {
+  bytes: 64 * 1024 * 1024,
+  structuralTokens: 1_000
+}
 const SHOT_MAX_BYTES = 2 * 1024 * 1024
 const enc = encodeURIComponent
 
@@ -32,6 +42,7 @@ function buildOf(value: unknown): BuildWebRunBuild | null {
     url: textOrNull(v.build_url),
     tags: textsOf(v.image_tags),
     pushed: v.pushed === true,
+    main_tag_pushed: v.pushed === true && v.main_tag_skipped !== true,
     tests_skipped: v.tests_skipped === true,
     error: textOrNull(v.error)
   }
@@ -81,6 +92,7 @@ export function pushBuildWebRun(
       path: `/api/runs/${enc(runId)}/push`,
       body: { moveMainTag }
     })
+    invalidateBuildWebImageCatalog()
     return true as const
   })
 }
@@ -173,7 +185,9 @@ export async function getBuildWebCommitDiff(
   const answer = recordOf(
     await buildWebRequest({
       ...credential,
-      path: `/api/tms/issues/${enc(issueId)}/commits/${enc(sha)}`
+      path: `/api/tms/issues/${enc(issueId)}/commits/${enc(sha)}`,
+      // Why: a huge patch is read whole and cut below, so it comes back truncated, not as an error.
+      responseLimit: DIFF_RESPONSE_LIMIT
     })
   )
   const diff = textOf(answer?.diff)

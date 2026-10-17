@@ -57,3 +57,25 @@ describe('commit diff rows', () => {
     expect(added).toMatchObject({ path: 'n.ts', status: 'added', added: 1, removed: 0 })
   })
 })
+
+describe('a patch the parser refuses', () => {
+  it('keeps the readable files and shows a cut one as text', () => {
+    const patch = [
+      'diff --git a/ok.ts b/ok.ts',
+      '--- a/ok.ts',
+      '+++ b/ok.ts',
+      '@@ -1 +1 @@',
+      '-a',
+      '+b',
+      'diff --git a/cut.ts b/cut.ts',
+      '--- a/cut.ts',
+      '+++ b/cut.ts',
+      '@@ -1,5 +1,5 @@',
+      '-x'
+    ].join('\n')
+    const files = diffFilesOf(patch)
+    expect(files.map((f) => f.path)).toEqual(['ok.ts', 'cut.ts'])
+    expect(files[0]).toMatchObject({ added: 1, removed: 1 })
+    expect(files[1].rows[0].left.text).toBe('diff --git a/cut.ts b/cut.ts')
+  })
+})

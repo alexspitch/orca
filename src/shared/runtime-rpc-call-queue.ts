@@ -47,7 +47,8 @@ export function isBackgroundRuntimeMethod(method: string): boolean {
     method === 'git.conflictOperation' ||
     method === 'git.branchCompare' ||
     method === 'git.upstreamStatus' ||
-    method === 'worktree.prefetchCreateBase'
+    method === 'worktree.prefetchCreateBase' ||
+    method === 'buildWeb.imageSummary'
   )
 }
 
@@ -55,7 +56,14 @@ export function isBackgroundRuntimeMethod(method: string): boolean {
 // the checkout, a model catalog read that waits on the first listing), so they would hold the
 // foreground slots listing refreshes and sends need; the background lane's slots belong to status.
 function isLongWaitRuntimeMethod(method: string): boolean {
-  return method === 'worktree.rm' || method === 'agentSession.modelCatalog'
+  return (
+    method === 'worktree.rm' ||
+    method === 'agentSession.modelCatalog' ||
+    // build-web: a git fetch on the console, or its whole build catalog.
+    method === 'buildWeb.issueCommits' ||
+    method === 'buildWeb.listImages' ||
+    method === 'buildWeb.listImageBuilds'
+  )
 }
 
 export class RuntimeRpcCallQueuePool {

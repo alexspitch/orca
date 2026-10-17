@@ -9,6 +9,7 @@ import type {
 } from '../../shared/build-web-image-types'
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
+import { getBuildWebCredentialGeneration, getStoredBuildWebMetadata } from './credential-store'
 import { buildWebMutation, buildWebRequest, type BuildWebResponseLimit } from './build-web-request'
 import { BUILD_WEB_CATALOG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { numberOf, recordOf, textOf, textOrNull } from './build-web-response-fields'
@@ -30,12 +31,35 @@ const CATALOG_LIMIT: BuildWebResponseLimit = {
   structuralTokens: 16_000_000
 }
 
-let cached: { baseUrl: string; at: number; catalog: ImageCatalog } | null = null
-let inflight: { baseUrl: string; promise: Promise<ImageCatalog> } | null = null
+// Why keyed by token generation: another token may not be allowed what this one read.
+let cached: { key: string; at: number; catalog: ImageCatalog } | null = null
+let inflight: { key: string; epoch: number; promise: Promise<ImageCatalog> } | null = null
+/** Bumped by a push, so a fetch that started before it never caches the old catalog. */
+let epoch = 0
+
+/** Drop the catalog after a write that changes it (a push, from Images or a task's build). */
+export function invalidateBuildWebImageCatalog(): void {
+  epoch++
+  cached = null
+  inflight = null
+}
 
 const STATUSES: readonly BuildWebImageBuild['status'][] = ['success', 'failed', 'running']
 
-function buildOf(value: unknown): BuildWebImageBuild | null {
+/** A Jenkins log as is; a log the console or an agent keeps (a path) on the console's origin. */
+function logUrlOf(url: string | null, baseUrl: string): string | null {
+  if (!url) {
+    return null
+  }
+  try {
+    const resolved = new URL(url, `${baseUrl}/`)
+    return resolved.protocol === 'https:' || resolved.protocol === 'http:' ? resolved.href : null
+  } catch {
+    return null
+  }
+}
+
+function buildOf(value: unknown, baseUrl: string): BuildWebImageBuild | null {
   const v = recordOf(value)
   const status = STATUSES.find((s) => s === v?.status)
   if (!v || !status || typeof v.image !== 'string' || typeof v.run_id !== 'string') {
@@ -58,18 +82,18 @@ function buildOf(value: unknown): BuildWebImageBuild | null {
     pushed_main_tag: v.pushed_main_tag === true,
     main_tag_on: textOrNull(v.main_tag_on),
     run_id: v.run_id,
-    url: textOrNull(v.url)
+    url: logUrlOf(textOrNull(v.url), baseUrl)
   }
 }
 
-export function imageCatalogOf(value: unknown): ImageCatalog {
+export function imageCatalogOf(value: unknown, baseUrl: string): ImageCatalog {
   const v = recordOf(value)
   const images = (Array.isArray(v?.images) ? v.images : [])
     .map(recordOf)
     .filter((i): i is Record<string, unknown> => i !== null && typeof i.image === 'string')
     .map((i) => ({ image: textOf(i.image), product: textOf(i.product) || 'other' }))
   const builds = (Array.isArray(v?.builds) ? v.builds : [])
-    .map(buildOf)
+    .map((b) => buildOf(b, baseUrl))
     .filter((b): b is BuildWebImageBuild => b !== null)
   const versions: Record<string, string[]> = {}
   for (const [product, list] of Object.entries(recordOf(v?.versions) ?? {})) {
@@ -80,36 +104,43 @@ export function imageCatalogOf(value: unknown): ImageCatalog {
   return { images, builds, versions }
 }
 
+function currentKey(): string {
+  const metadata = getStoredBuildWebMetadata()
+  return `${metadata?.baseUrl ?? ''}#${getBuildWebCredentialGeneration()}`
+}
+
 async function catalog(
   options: { force?: boolean; maxAgeMs?: number; background?: true } = {}
 ): Promise<ImageCatalog> {
   const credential = requireBuildWebCredential(options.background ? { background: true } : {})
   const maxAgeMs = options.maxAgeMs ?? CATALOG_TTL_MS
-  if (
-    !options.force &&
-    cached?.baseUrl === credential.baseUrl &&
-    Date.now() - cached.at < maxAgeMs
-  ) {
+  const key = `${credential.baseUrl}#${credential.generation}`
+  if (!options.force && cached?.key === key && Date.now() - cached.at < maxAgeMs) {
     return cached.catalog
   }
-  if (inflight?.baseUrl === credential.baseUrl) {
+  if (inflight?.key === key && inflight.epoch === epoch) {
     return inflight.promise
   }
+  const started = epoch
   const promise = buildWebRequest({
     ...credential,
     path: '/api/image-builds',
     timeoutMs: BUILD_WEB_CATALOG_TIMEOUT_MS,
     responseLimit: CATALOG_LIMIT
   })
-    .then(imageCatalogOf)
+    .then((answer) => imageCatalogOf(answer, credential.baseUrl))
     .then((next) => {
-      cached = { baseUrl: credential.baseUrl, at: Date.now(), catalog: next }
+      if (started === epoch && key === currentKey()) {
+        cached = { key, at: Date.now(), catalog: next }
+      }
       return next
     })
     .finally(() => {
-      inflight = null
+      if (inflight?.promise === promise) {
+        inflight = null
+      }
     })
-  inflight = { baseUrl: credential.baseUrl, promise }
+  inflight = { key, epoch: started, promise }
   return promise
 }
 
@@ -143,13 +174,12 @@ export async function pushBuildWebImages(
       path: `/api/runs/${encodeURIComponent(args.runId)}/push`,
       body: { combos: args.combos, moveMainTag: args.moveMainTag }
     })
-    cached = null
+    invalidateBuildWebImageCatalog()
     return true as const
   })
 }
 
 /** @internal - tests start from an empty cache. */
 export function _resetBuildWebImageCache(): void {
-  cached = null
-  inflight = null
+  invalidateBuildWebImageCatalog()
 }

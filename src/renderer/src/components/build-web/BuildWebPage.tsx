@@ -84,7 +84,11 @@ export default function BuildWebPage(): React.JSX.Element {
   }
 
   const disconnect = async (): Promise<void> => {
-    setStatus(contextKey, await callBuildWeb(target, 'disconnect'))
+    try {
+      setStatus(contextKey, await callBuildWeb(target, 'disconnect'))
+    } catch (failure) {
+      toast.error(failure instanceof Error ? failure.message : String(failure))
+    }
   }
 
   const connected = status?.connected === true

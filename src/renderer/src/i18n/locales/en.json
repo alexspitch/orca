@@ -20212,7 +20212,8 @@
     "state": {
       "loading": "Loading tasks…",
       "retry": "Try again",
-      "empty": "No tasks in {{view}} with these filters."
+      "empty": "No tasks in {{view}} with these filters.",
+      "loadingCard": "Loading…"
     },
     "page": {
       "title": "Issues",
@@ -20308,7 +20309,8 @@
       "running": "running",
       "pushed": "pushed",
       "buildTagOnly": "build tag only",
-      "dist": "dist"
+      "dist": "dist",
+      "loading": "Loading images…"
     },
     "detail": {
       "noDescription": "No description.",
@@ -20333,7 +20335,9 @@
       "statusTitle": "Move {{key}} to “{{status}}”?",
       "statusJira": "build-web mirrors the move to Jira {{jira}}.",
       "move": "Move",
-      "jiraResult": "Jira: {{result}}"
+      "jiraResult": "Jira: {{result}}",
+      "jiraMoved": "Jira: {{status}}",
+      "jiraNotMoved": "Not moved in Jira: {{error}}"
     },
     "take": {
       "mixed": "Tasks of different products or releases: {{groups}}",
@@ -20362,7 +20366,8 @@
       "label": "Agent session",
       "live": "live",
       "unverifiable": "unverifiable",
-      "open": "Open session"
+      "open": "Open session",
+      "openHere": "open here"
     },
     "launch": {
       "sessionNotSaved": "Session ID not saved to {{keys}}",
@@ -20388,7 +20393,8 @@
       "work": "Work",
       "buildBranch": "build",
       "commitPrefix": "Commits prefixed {{key}}",
-      "jira": "Jira"
+      "jira": "Jira",
+      "commentNotInJira": "Saved, but not posted to Jira: {{error}}"
     },
     "build": {
       "none": "The task has no build yet.",

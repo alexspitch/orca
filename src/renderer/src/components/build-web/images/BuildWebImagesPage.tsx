@@ -44,6 +44,7 @@ export default function BuildWebImagesPage(): React.JSX.Element {
           kind={error ? 'error' : 'loading'}
           error={error}
           onRetry={() => void refreshStatus()}
+          loadingLabel={translate('buildWeb.images.loading', 'Loading images…')}
         />
       ) : !connected ? (
         <BuildWebConnect target={target} onConnected={(next) => setStatus(contextKey, next)} />

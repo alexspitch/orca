@@ -25,6 +25,7 @@ import {
 } from './image-build-cells'
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
+import { useImagePicks } from './use-image-picks'
 import { IMAGE_PAGE_SIZE, toggled, useImageHistory } from './use-build-web-images'
 
 const DISTS = ['rhel', 'redos'] as const
@@ -49,7 +50,7 @@ export function ImageHistoryView({
   const [statuses, setStatuses] = useState<(typeof STATUSES)[number][]>([])
   const [version, setVersion] = useState('all')
   const [page, setPage] = useState(0)
-  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
+  const picks = useImagePicks()
   const args = {
     image,
     q,
@@ -62,7 +63,6 @@ export function ImageHistoryView({
   }
   const { data, loading, error, reload } = useImageHistory(target, true, args)
   const builds = data?.builds ?? []
-  const pickedBuilds = builds.filter((b) => picked.has(keyOf(b)) && isPushable(b))
   const pushedLabel = (v: (typeof PUSHED)[number]) =>
     v === 'yes'
       ? translate('buildWeb.images.inRegistry', 'in registry')
@@ -126,9 +126,9 @@ export function ImageHistoryView({
         <div className="flex-1" />
         <ImagePushMenu
           target={target}
-          builds={pickedBuilds}
+          builds={picks.builds}
           onPushed={() => {
-            setPicked(new Set())
+            picks.clear()
             reload(true)
           }}
         />
@@ -175,7 +175,10 @@ export function ImageHistoryView({
         <BuildWebListState kind="error" error={error} onRetry={() => reload(true)} />
       ) : builds.length === 0 ? (
         loading ? (
-          <BuildWebListState kind="loading" />
+          <BuildWebListState
+            kind="loading"
+            loadingLabel={translate('buildWeb.images.loading', 'Loading images…')}
+          />
         ) : (
           <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
             {translate('buildWeb.images.noBuilds', 'No builds of this image match.')}
@@ -211,8 +214,8 @@ export function ImageHistoryView({
                   <td className="py-2 pl-3 md:pl-5">
                     <Checkbox
                       disabled={!isPushable(b)}
-                      checked={picked.has(keyOf(b))}
-                      onCheckedChange={() => setPicked(new Set(toggled([...picked], keyOf(b))))}
+                      checked={picks.has(keyOf(b))}
+                      onCheckedChange={() => picks.toggle(keyOf(b), b)}
                       aria-label={translate('buildWeb.images.pick', 'Pick {{image}}', {
                         image: b.tag ?? image
                       })}

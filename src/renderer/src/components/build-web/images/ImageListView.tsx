@@ -20,6 +20,7 @@ import { BuildWebListState } from '../BuildWebListState'
 import { BuildStatusCell, LogCell, RegistryCell, formatBuildTime } from './image-build-cells'
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
+import { useImagePicks } from './use-image-picks'
 import { IMAGE_PAGE_SIZE, toggled, useImagePage } from './use-build-web-images'
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'other'] as const
@@ -43,7 +44,7 @@ export function ImageListView({
   const [dists, setDists] = useState<string[]>([])
   const [version, setVersion] = useState('all')
   const [page, setPage] = useState(0)
-  const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
+  const picks = useImagePicks()
   const args = {
     q,
     products,
@@ -54,9 +55,6 @@ export function ImageListView({
   }
   const { data, loading, error, reload } = useImagePage(target, true, args)
   const rows = data?.rows ?? []
-  const pickedBuilds = rows
-    .filter((r) => picked.has(r.image) && r.last && isPushable(r.last))
-    .flatMap((r) => (r.last ? [r.last] : []))
   const narrowed = Boolean(q.trim() || products.length || dists.length || version !== 'all')
   const reset = () => {
     setQ('')
@@ -101,8 +99,8 @@ export function ImageListView({
         <div className="flex-1" />
         <ImagePushMenu
           target={target}
-          builds={pickedBuilds}
-          onPushed={() => (setPicked(new Set()), reload(true))}
+          builds={picks.builds}
+          onPushed={() => (picks.clear(), reload(true))}
         />
         {narrowed ? (
           <Button variant="ghost" size="sm" onClick={reset}>
@@ -145,7 +143,10 @@ export function ImageListView({
         <BuildWebListState kind="error" error={error} onRetry={() => reload(true)} />
       ) : rows.length === 0 ? (
         loading ? (
-          <BuildWebListState kind="loading" />
+          <BuildWebListState
+            kind="loading"
+            loadingLabel={translate('buildWeb.images.loading', 'Loading images…')}
+          />
         ) : (
           <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
             {narrowed
@@ -187,14 +188,14 @@ export function ImageListView({
                     key={row.image}
                     className={cn(
                       'border-b border-border hover:bg-accent',
-                      picked.has(row.image) && 'bg-accent'
+                      picks.has(row.image) && 'bg-accent'
                     )}
                   >
                     <td className="py-2 pl-3 md:pl-5">
                       <Checkbox
                         disabled={!pushable}
-                        checked={picked.has(row.image)}
-                        onCheckedChange={() => setPicked(new Set(toggled([...picked], row.image)))}
+                        checked={picks.has(row.image)}
+                        onCheckedChange={() => picks.toggle(row.image, row.last)}
                         aria-label={translate('buildWeb.images.pick', 'Pick {{image}}', {
                           image: row.image
                         })}

@@ -96,7 +96,7 @@ function TakeToWorkForm({
     <>
       <DialogHeader>
         <DialogTitle>
-          {translate('buildWeb.take.title', 'Take to work · {{count}} tasks', {
+          {translate('buildWeb.take.title', 'Take to work ({{count}})', {
             count: issues.length
           })}
         </DialogTitle>

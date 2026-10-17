@@ -26,7 +26,6 @@ export function IssueBuildTab({
   run,
   error,
   canWrite,
-  baseUrl,
   onPushed
 }: {
   target: RuntimeClientTarget
@@ -34,7 +33,6 @@ export function IssueBuildTab({
   run: BuildWebRun | null | undefined
   error: string | null
   canWrite: boolean
-  baseUrl: string | null
   onPushed: () => void
 }): React.JSX.Element {
   const [pushing, setPushing] = useState(false)
@@ -42,13 +40,14 @@ export function IssueBuildTab({
     return <BuildWebListState kind="error" error={error} onRetry={onPushed} />
   }
   if (run === undefined) {
-    return <BuildWebListState kind="loading" />
-  }
-  const openInBuildWeb = () =>
-    baseUrl &&
-    void window.api.shell.openUrl(
-      `${baseUrl}/tms/issues/${encodeURIComponent(detail.id)}?product=${encodeURIComponent(detail.product)}`
+    return (
+      <BuildWebListState
+        kind="loading"
+        loadingLabel={translate('buildWeb.state.loadingCard', 'Loading…')}
+      />
     )
+  }
+  const openInBuildWeb = () => void window.api.shell.openUrl(detail.url)
   if (run === null) {
     return (
       <div className="flex flex-col items-start gap-3">
@@ -63,6 +62,9 @@ export function IssueBuildTab({
     )
   }
   const tally = imageTally(run)
+  const built = run.builds.filter((b) => b.status === 'SUCCESS')
+  const offersBuildTag = built.some((b) => !b.pushed)
+  const offersMainTag = built.some((b) => !b.main_tag_pushed)
   const push = async (moveMainTag: boolean): Promise<void> => {
     setPushing(true)
     try {
@@ -75,6 +77,8 @@ export function IssueBuildTab({
       } else {
         toast.error(result.error)
       }
+    } catch (failure) {
+      toast.error(failure instanceof Error ? failure.message : String(failure))
     } finally {
       setPushing(false)
     }
@@ -109,7 +113,7 @@ export function IssueBuildTab({
           <span>{run.testing_status || '—'}</span>
         </div>
         <div className="flex-1" />
-        {canWrite ? (
+        {canWrite && (offersBuildTag || offersMainTag) ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" disabled={pushing}>
@@ -118,12 +122,16 @@ export function IssueBuildTab({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={() => void push(false)}>
-                {translate('buildWeb.images.pushBuildTag', 'Build tag only')}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => void push(true)}>
-                {translate('buildWeb.images.pushBoth', 'Build tag and main tag')}
-              </DropdownMenuItem>
+              {offersBuildTag ? (
+                <DropdownMenuItem onSelect={() => void push(false)}>
+                  {translate('buildWeb.images.pushBuildTag', 'Build tag only')}
+                </DropdownMenuItem>
+              ) : null}
+              {offersMainTag ? (
+                <DropdownMenuItem onSelect={() => void push(true)}>
+                  {translate('buildWeb.images.pushBoth', 'Build tag and main tag')}
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}

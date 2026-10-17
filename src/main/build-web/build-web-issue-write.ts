@@ -1,8 +1,11 @@
 import type {
   BuildWebAgentSession,
   BuildWebIssuePatch,
+  BuildWebCommentOutcome,
   BuildWebIssueRow,
-  BuildWebMutationResult
+  BuildWebJiraOutcome,
+  BuildWebMutationResult,
+  BuildWebUpdateOutcome
 } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
 import { buildWebMutation, buildWebRequest } from './build-web-request'
@@ -11,7 +14,26 @@ import { recordOf, textOf } from './build-web-response-fields'
 
 const issuePath = (id: string, tail = '') => `/api/tms/issues/${encodeURIComponent(id)}${tail}`
 
-export type BuildWebUpdateOutcome = { issue: BuildWebIssueRow | null; jira: string | null }
+function withoutFavorite({
+  favorite: _favorite,
+  ...rest
+}: BuildWebIssueRow): Omit<BuildWebIssueRow, 'favorite'> {
+  return rest
+}
+
+/** What the console's mirror to Jira did — a move or a comment; shown, never assumed. */
+function jiraOutcomeOf(value: unknown): BuildWebJiraOutcome | null {
+  const jira = recordOf(value)
+  if (!jira) {
+    return null
+  }
+  const error = textOf(jira.error)
+  if (error) {
+    return { ok: false, error }
+  }
+  const status = textOf(jira.status)
+  return status ? { ok: true, status } : null
+}
 
 export function updateBuildWebIssue(
   id: string,
@@ -22,12 +44,8 @@ export function updateBuildWebIssue(
     const answer = recordOf(
       await buildWebRequest({ ...credential, method: 'PATCH', path: issuePath(id), body: patch })
     )
-    // Why: a status move is mirrored to Jira; its outcome is shown, not assumed.
-    const jira = recordOf(answer?.jira)
-    return {
-      issue: issueRowOf(credential.baseUrl, answer?.issue),
-      jira: jira ? textOf(jira.status) || textOf(jira.error) || null : null
-    }
+    const row = issueRowOf(credential.baseUrl, answer?.issue)
+    return { issue: row ? withoutFavorite(row) : null, jira: jiraOutcomeOf(answer?.jira) }
   })
 }
 
@@ -50,7 +68,7 @@ export function addBuildWebComment(
   id: string,
   body: string,
   jira: boolean
-): Promise<BuildWebMutationResult<{ id: string }>> {
+): Promise<BuildWebMutationResult<BuildWebCommentOutcome>> {
   return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     const answer = recordOf(
@@ -61,7 +79,7 @@ export function addBuildWebComment(
         body: { body, jira }
       })
     )
-    return { id: textOf(recordOf(answer?.comment)?.id) }
+    return { id: textOf(recordOf(answer?.comment)?.id), jira: jiraOutcomeOf(answer?.jira) }
   })
 }
 

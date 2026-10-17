@@ -108,7 +108,7 @@ export function buildWebBatchPrompt(keys: string[], flags: TakeToWorkFlags): str
     .join(' ')
 }
 
-/** Git worktrees of the build-web repository (by its folder name), or every git worktree if none match. */
+/** Live git worktrees of the build-web repository (by folder name), or every live one if none match. */
 export function takeToWorkCandidates(
   repos: readonly Repo[],
   worktreesByRepo: Record<string, Worktree[] | undefined>
@@ -117,7 +117,8 @@ export function takeToWorkCandidates(
   const ours = gitRepos.filter((repo) =>
     /sa-dc-ap-products/i.test(`${repo.path} ${repo.displayName}`)
   )
-  const pick = (list: readonly Repo[]) => list.flatMap((repo) => worktreesByRepo[repo.id] ?? [])
+  const pick = (list: readonly Repo[]) =>
+    list.flatMap((repo) => (worktreesByRepo[repo.id] ?? []).filter((w) => !w.isArchived))
   const matched = pick(ours)
   return matched.length
     ? { worktrees: matched, matchedRepo: true }

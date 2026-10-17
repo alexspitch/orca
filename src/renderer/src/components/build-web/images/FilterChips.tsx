@@ -1,4 +1,4 @@
-import { cn } from '@/lib/utils'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
 /** build-web's filter chips: a toggle per value with its count; none on means no filter. */
 export function FilterChips<T extends string>({
@@ -14,29 +14,27 @@ export function FilterChips<T extends string>({
   label: (value: T) => string
   onToggle: (value: T) => void
 }): React.JSX.Element {
+  const shown = options.filter((value) => (counts[value] ?? 0) > 0 || selected.includes(value))
   return (
-    <>
-      {options
-        .filter((value) => (counts[value] ?? 0) > 0 || selected.includes(value))
-        .map((value) => {
-          const on = selected.includes(value)
-          return (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={on}
-              onClick={() => onToggle(value)}
-              className={cn(
-                'rounded-full border px-2.5 py-0.5 text-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
-                on
-                  ? 'border-ring bg-accent text-accent-foreground'
-                  : 'border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-              )}
-            >
-              {label(value)} · {counts[value] ?? 0}
-            </button>
-          )
-        })}
-    </>
+    <ToggleGroup
+      type="multiple"
+      variant="outline"
+      size="xs"
+      spacing={1}
+      value={[...selected]}
+      onValueChange={(next) => {
+        // Why: one click changes one chip; the callers keep the toggle semantics.
+        const changed = shown.find((value) => next.includes(value) !== selected.includes(value))
+        if (changed) {
+          onToggle(changed)
+        }
+      }}
+    >
+      {shown.map((value) => (
+        <ToggleGroupItem key={value} value={value}>
+          {label(value)} · {counts[value] ?? 0}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
   )
 }

@@ -71,7 +71,12 @@ export function IssueGuideTab({
     return <BuildWebListState kind="error" error={error} />
   }
   if (run === undefined) {
-    return <BuildWebListState kind="loading" />
+    return (
+      <BuildWebListState
+        kind="loading"
+        loadingLabel={translate('buildWeb.state.loadingCard', 'Loading…')}
+      />
+    )
   }
   if (run === null || !run.guide_markdown) {
     return (
@@ -87,6 +92,8 @@ export function IssueGuideTab({
     setBusy(true)
     try {
       await action()
+    } catch (failure) {
+      toast.error(failure instanceof Error ? failure.message : String(failure))
     } finally {
       setBusy(false)
     }

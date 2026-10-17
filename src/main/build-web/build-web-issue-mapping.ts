@@ -43,9 +43,9 @@ function agentSessionOf(value: unknown): BuildWebAgentSession | null {
   }
 }
 
-/** The task's page in the console, from the stored origin — never a URL the answer carries. */
+/** The task's page (build-web's web app routes tasks at /issues), from the stored origin only. */
 export function buildWebIssueUrl(baseUrl: string, id: string, product: string): string {
-  return `${baseUrl}/tms/issues/${encodeURIComponent(id)}?product=${encodeURIComponent(product)}`
+  return `${baseUrl}/issues/${encodeURIComponent(id)}?product=${encodeURIComponent(product)}`
 }
 
 export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | null {

@@ -30,6 +30,8 @@ let cachedMetadata: BuildWebStoredMetadata | null = null
 let metadataLoaded = false
 let cachedSecret: BuildWebStoredSecret | null = null
 let credentialError: string | null = null
+/** Bumped on every save and clear, so whatever was read under another token can tell. */
+let credentialGeneration = 0
 
 function orcaDir(): string {
   return join(homedir(), '.orca')
@@ -75,6 +77,15 @@ export function getStoredBuildWebMetadata(): BuildWebStoredMetadata | null {
 /** Never decrypts: safe on every status poll. */
 export function hasStoredBuildWebCredential(): boolean {
   return getStoredBuildWebMetadata() !== null && credentialFileHasContent(getBuildWebSecretPath())
+}
+
+/** Whether the token was already decrypted this session (reading it now asks nothing). */
+export function isBuildWebTokenUnlocked(): boolean {
+  return cachedSecret !== null
+}
+
+export function getBuildWebCredentialGeneration(): number {
+  return credentialGeneration
 }
 
 export function getBuildWebCredentialError(): string | null {
@@ -136,6 +147,7 @@ export function saveBuildWebCredential(input: {
   metadataLoaded = true
   cachedSecret = secret
   credentialError = null
+  credentialGeneration++
 }
 
 // Why: a non-ENOENT unlink failure must surface — otherwise the token silently
@@ -156,6 +168,7 @@ export function clearBuildWebCredential(): void {
     metadataLoaded = true
     cachedSecret = null
     credentialError = null
+    credentialGeneration++
   }
 }
 

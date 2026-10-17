@@ -93,7 +93,12 @@ export function IssueCommitsTab({
     return <BuildWebListState kind="error" error={error} onRetry={() => void load(false)} />
   }
   if (!list) {
-    return <BuildWebListState kind="loading" />
+    return (
+      <BuildWebListState
+        kind="loading"
+        loadingLabel={translate('buildWeb.state.loadingCard', 'Loading…')}
+      />
+    )
   }
   return (
     <div className="flex flex-wrap gap-4">
@@ -162,7 +167,10 @@ export function IssueCommitsTab({
             onRetry={() => setDiffAttempt((n) => n + 1)}
           />
         ) : !diff ? (
-          <BuildWebListState kind="loading" />
+          <BuildWebListState
+            kind="loading"
+            loadingLabel={translate('buildWeb.state.loadingCard', 'Loading…')}
+          />
         ) : (
           <>
             <div className="flex flex-wrap gap-1 border-b border-border p-2">

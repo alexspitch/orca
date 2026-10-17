@@ -125,6 +125,16 @@ export type BuildWebIssuePatch = Partial<{
   for_ai: boolean
 }>
 
+/** The console's mirror of a status move or comment to Jira. */
+export type BuildWebJiraOutcome = { ok: true; status: string } | { ok: false; error: string }
+
+export type BuildWebUpdateOutcome = {
+  /** Without `favorite`: the console works it out only for lists and answers false here. */
+  issue: Omit<BuildWebIssueRow, 'favorite'> | null
+  jira: BuildWebJiraOutcome | null
+}
+export type BuildWebCommentOutcome = { id: string; jira: BuildWebJiraOutcome | null }
+
 export type BuildWebMutationResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string; status?: number; routeMissing?: boolean }

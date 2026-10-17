@@ -27,11 +27,19 @@ export function useBuildWebStatus(): { refreshStatus: () => Promise<void> } {
   const { target, contextKey } = useBuildWebTarget()
   const setStatus = useBuildWebStore((s) => s.setStatus)
   const setError = useBuildWebStore((s) => s.setError)
+  const latest = useRef(contextKey)
+  latest.current = contextKey
   const refreshStatus = useCallback(async () => {
     try {
-      setStatus(contextKey, await callBuildWeb(target, 'status'))
+      const status = await callBuildWeb(target, 'status')
+      // Why: a reply from the host the page just left must not overwrite this host's state.
+      if (latest.current === contextKey) {
+        setStatus(contextKey, status)
+      }
     } catch (error) {
-      setError(error instanceof Error ? error.message : String(error))
+      if (latest.current === contextKey) {
+        setError(error instanceof Error ? error.message : String(error))
+      }
     }
   }, [contextKey, setError, setStatus, target])
   useEffect(() => {
@@ -76,7 +84,8 @@ export function useBuildWebIssueList(): { reload: () => void; loadMore: () => vo
   const loadMore = useCallback(async () => {
     const mine = generation.current
     const store = useBuildWebStore.getState()
-    if (store.loadingMore || store.issues.length >= store.total) {
+    // Why not while loading: a reload replaces the rows this page's offset is counted from.
+    if (store.loading || store.loadingMore || store.issues.length >= store.total) {
       return
     }
     store.setLoadingMore(true)

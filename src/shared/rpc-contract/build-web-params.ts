@@ -43,7 +43,8 @@ export const BuildWebIssueUpdateParams = z.object({
       version_id: z.union([ShortText, z.null()]).optional(),
       for_ai: z.boolean().optional()
     })
-    .strict()
+    // Why strip, not strict: a newer client may send a field this host does not know yet.
+    .strip()
 })
 
 export const BuildWebFavoriteParams = z.object({ id: Id, on: z.boolean() })
@@ -58,7 +59,7 @@ export const BuildWebAgentSessionParams = z.object({
   id: Id,
   session: z.object({
     surface_kind: z.enum(['terminal', 'structured', 'unknown']),
-    surface_id: ShortText,
+    surface_id: required('Missing session id', 200),
     worktree_name: required('Missing worktree name', 200),
     execution_host_id: ShortText,
     agent: z.string().regex(/^[a-z0-9][a-z0-9-]{0,39}$/),
@@ -68,11 +69,14 @@ export const BuildWebAgentSessionParams = z.object({
 
 export const BuildWebProviderSessionParams = z.object({
   id: Id,
-  surfaceId: ShortText,
+  surfaceId: required('Missing session id', 200),
   providerSessionId: z.string().regex(/^[A-Za-z0-9._:-]{1,200}$/)
 })
 
-export const BuildWebClearSessionParams = z.object({ id: Id, surfaceId: ShortText })
+export const BuildWebClearSessionParams = z.object({
+  id: Id,
+  surfaceId: required('Missing session id', 200)
+})
 
 const ImageFilters = {
   q: z.string().max(200).optional(),
@@ -111,7 +115,7 @@ export const BuildWebImagePushParams = z.object({
 export const BuildWebPushRunParams = z.object({ runId: Id, moveMainTag: z.boolean() })
 export const BuildWebGuideParams = z.object({ runId: Id, guide: z.string().max(200_000) })
 export const BuildWebPublishGuideParams = z.object({
-  jiraKey: z.string().regex(/^[A-Z][A-Z0-9]*-\d+$/),
+  jiraKey: z.string().regex(/^[A-Z][A-Z0-9_]*-\d+$/),
   runId: Id,
   guide: z.string().max(200_000)
 })

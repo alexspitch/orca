@@ -10,6 +10,8 @@ export type BuildWebRunBuild = {
   url: string | null
   tags: string[]
   pushed: boolean
+  /** Pushed with the moving main tag too (build-web: pushed and not `main_tag_skipped`). */
+  main_tag_pushed: boolean
   tests_skipped: boolean
   error: string | null
 }

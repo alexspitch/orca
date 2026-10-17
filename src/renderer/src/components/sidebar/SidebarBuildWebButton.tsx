@@ -8,7 +8,7 @@ import { HideSidebarMenu } from './sidebar-nav-controls'
 
 /** «Issues»: build-web's tasks and images. Hidden with the sidebar menu, shown again from Settings. */
 export function SidebarBuildWebButton(): React.JSX.Element | null {
-  const show = useAppStore((s) => s.settings?.showBuildWebButton !== false)
+  const show = useAppStore((s) => s.settings?.showBuildWebButton === true)
   const active = useAppStore((s) => s.activeView === 'build-web')
   const openPage = useAppStore((s) => s.openBuildWebPage)
   const updateSettings = useAppStore((s) => s.updateSettings)

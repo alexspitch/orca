@@ -11,6 +11,8 @@ import type {
 // image-push.ts: the newest build per image, chip counts, filters and pages. Pure, so main can
 // hand a remote client one page instead of every build the console ever recorded.
 
+// Why no sort here: the console sends builds newest first, and places a build with no start time
+// (taken over from another run) by its number — re-sorting by time would sink it.
 export type ImageCatalog = {
   images: { image: string; product: string }[]
   builds: BuildWebImageBuild[]
@@ -25,9 +27,6 @@ function pageOf<T>(items: T[], page: number, pageSize: number): T[] {
   const at = Math.min(Math.max(0, page), last)
   return items.slice(at * size, at * size + size)
 }
-
-const newestFirst = (a: BuildWebImageBuild, b: BuildWebImageBuild) =>
-  (b.at ?? '').localeCompare(a.at ?? '')
 
 function countBy<T>(items: T[], key: (item: T) => string | null): Record<string, number> {
   const out: Record<string, number> = {}
@@ -69,7 +68,7 @@ function newestMatching(
 }
 
 export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): BuildWebImagePage {
-  const newest = [...catalog.builds].sort(newestFirst)
+  const newest = catalog.builds
   const dists = args.dists ?? []
   const q = args.q?.trim().toLowerCase()
   // A tag names one build of one image, so text matches the name or any build's ref or tag.
@@ -112,7 +111,7 @@ export function imageHistory(
   catalog: ImageCatalog,
   args: BuildWebImageHistoryArgs
 ): BuildWebImageHistory {
-  const own = catalog.builds.filter((b) => b.image === args.image).sort(newestFirst)
+  const own = catalog.builds.filter((b) => b.image === args.image)
   const q = args.q?.trim().toLowerCase()
   const base = own.filter(
     (b) =>

@@ -70,9 +70,22 @@ function CommentComposer({
       if (result.ok) {
         setBody('')
         state.reload()
+        if (result.value.jira && !result.value.jira.ok) {
+          toast.error(
+            translate(
+              'buildWeb.card.commentNotInJira',
+              'Saved, but not posted to Jira: {{error}}',
+              {
+                error: result.value.jira.error
+              }
+            )
+          )
+        }
       } else {
         toast.error(result.error)
       }
+    } catch (failure) {
+      toast.error(failure instanceof Error ? failure.message : String(failure))
     } finally {
       setSending(false)
     }

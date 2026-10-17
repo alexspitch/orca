@@ -34,8 +34,13 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
   const detail = loaded && loaded.id === id ? loaded : null
   const error = failed && failed.id === id ? failed.message : null
   const [assignees, setAssignees] = useState<BuildWebUser[]>([])
-  const [versions, setVersions] = useState<BuildWebVersion[]>([])
-  const [saving, setSaving] = useState(false)
+  const [releases, setReleases] = useState<{ product: string; list: BuildWebVersion[] } | null>(
+    null
+  )
+  // Why per product: another product's releases must never be offered for this task.
+  const versions = detail && releases?.product === detail.product ? releases.list : []
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const saving = savingId !== null && savingId === id
   const generation = useRef(0)
 
   const load = useCallback(async () => {
@@ -51,7 +56,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       }
       setDetail(next)
       setFailed(null)
-      const [users, releases] = await Promise.all([
+      const [users, list] = await Promise.all([
         callBuildWeb(target, 'listAssignees').catch(() => []),
         next.product === 'unknown'
           ? []
@@ -59,7 +64,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       ])
       if (mine === generation.current) {
         setAssignees(users)
-        setVersions(releases)
+        setReleases({ product: next.product, list })
       }
     } catch (failure) {
       if (mine === generation.current) {
@@ -78,6 +83,9 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       if (!current || saving) {
         return
       }
+      // Why: the reply may land after another task opened; it only ever touches its own card.
+      const onOwnCard = (update: (shown: BuildWebIssueDetail) => BuildWebIssueDetail) =>
+        setDetail((shown) => (shown && shown.id === current.id ? update(shown) : shown))
       if (patch.status && current.jira_key) {
         const accepted = await confirm({
           title: translate('buildWeb.detail.statusTitle', 'Move {{key}} to “{{status}}”?', {
@@ -97,32 +105,40 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       }
       const optimistic = patch.status === undefined
       if (optimistic) {
-        setDetail({ ...current, ...patch })
+        onOwnCard(() => ({ ...current, ...patch }))
       }
-      setSaving(true)
+      setSavingId(current.id)
       try {
         const result = await callBuildWeb(target, 'updateIssue', { id: current.id, patch })
         if (!result.ok) {
-          setDetail(current)
+          onOwnCard(() => current)
           toast.error(result.error)
           return
         }
-        if (result.value.issue) {
-          setDetail((shown) => (shown ? { ...shown, ...result.value.issue } : shown))
-          patchRow(current.id, result.value.issue)
+        const issue = result.value.issue
+        if (issue) {
+          onOwnCard((shown) => ({ ...shown, ...issue }))
+          patchRow(current.id, issue)
         }
-        if (patch.status && result.value.jira) {
-          toast.message(
-            translate('buildWeb.detail.jiraResult', 'Jira: {{result}}', {
-              result: result.value.jira
-            })
-          )
+        const jira = result.value.jira
+        if (patch.status && jira) {
+          if (jira.ok) {
+            toast.message(
+              translate('buildWeb.detail.jiraMoved', 'Jira: {{status}}', { status: jira.status })
+            )
+          } else {
+            toast.error(
+              translate('buildWeb.detail.jiraNotMoved', 'Not moved in Jira: {{error}}', {
+                error: jira.error
+              })
+            )
+          }
         }
       } catch (failure) {
-        setDetail(current)
+        onOwnCard(() => current)
         toast.error(failure instanceof Error ? failure.message : String(failure))
       } finally {
-        setSaving(false)
+        setSavingId((busy) => (busy === current.id ? null : busy))
       }
     },
     [confirm, detail, patchRow, saving, target]
