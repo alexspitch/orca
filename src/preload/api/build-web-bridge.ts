@@ -19,5 +19,13 @@ export const buildWebApi = {
   imageSummary: () => ipcRenderer.invoke('buildWeb:imageSummary'),
   listImages: (args) => ipcRenderer.invoke('buildWeb:listImages', args),
   listImageBuilds: (args) => ipcRenderer.invoke('buildWeb:listImageBuilds', args),
-  pushImages: (args) => ipcRenderer.invoke('buildWeb:pushImages', args)
+  pushImages: (args) => ipcRenderer.invoke('buildWeb:pushImages', args),
+  getIssueRun: (args) => ipcRenderer.invoke('buildWeb:getIssueRun', args),
+  pushRun: (args) => ipcRenderer.invoke('buildWeb:pushRun', args),
+  saveGuide: (args) => ipcRenderer.invoke('buildWeb:saveGuide', args),
+  refreshGuideImages: (args) => ipcRenderer.invoke('buildWeb:refreshGuideImages', args),
+  publishGuide: (args) => ipcRenderer.invoke('buildWeb:publishGuide', args),
+  issueCommits: (args) => ipcRenderer.invoke('buildWeb:issueCommits', args),
+  commitDiff: (args) => ipcRenderer.invoke('buildWeb:commitDiff', args),
+  guideShot: (args) => ipcRenderer.invoke('buildWeb:guideShot', args)
 } satisfies PreloadApi['buildWeb']

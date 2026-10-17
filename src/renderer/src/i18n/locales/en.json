@@ -20364,6 +20364,61 @@
       "sessionNotSaved": "Session ID not saved to {{keys}}",
       "revealFailed": "Could not open the worktree.",
       "failed": "Could not start the agent."
+    },
+    "card": {
+      "overview": "Overview",
+      "buildCount": "Build {{ok}} / {{total}}",
+      "build": "Build",
+      "guide": "Guide & Jira",
+      "commits": "Commits",
+      "path": "Path",
+      "byline": "{{author}} · created {{created}}",
+      "moveTo": "Move to “{{status}}”",
+      "collapse": "Collapse",
+      "commentJiraTitle": "Post this comment to Jira {{key}} too?",
+      "send": "Send",
+      "commentPlaceholder": "Comment…",
+      "comment": "Comment",
+      "alsoJira": "and in Jira",
+      "properties": "Properties",
+      "work": "Work",
+      "buildBranch": "build",
+      "commitPrefix": "Commits prefixed {{key}}",
+      "jira": "Jira"
+    },
+    "build": {
+      "none": "The task has no build yet.",
+      "inBuildWeb": "Build in build-web",
+      "status": "Status",
+      "branch": "Branch",
+      "images": "Images",
+      "testing": "Testing",
+      "tests": "Tests",
+      "skipped": "skipped",
+      "ran": "ran"
+    },
+    "commits": {
+      "title": "Commits · {{count}}",
+      "fetching": "Reading…",
+      "fetch": "Update from git",
+      "note": "Branches come from the task’s release: its branch and every newer one, down to master. A change carried over by cherry-pick is shown once.",
+      "none": "No commits with the task’s key on these branches.",
+      "pick": "Pick a commit to see its files and the diff: before on the left, after on the right.",
+      "truncated": "The patch is long and was cut; open the commit in build-web for all of it.",
+      "noFiles": "No file changes."
+    },
+    "guide": {
+      "none": "No guide yet. It is written from the task’s build: make the build first.",
+      "saved": "Guide saved.",
+      "publishTitle": "Publish the guide to Jira {{key}}?",
+      "publish": "Publish to Jira",
+      "published": "Published to Jira.",
+      "view": "Preview",
+      "markdown": "Markdown",
+      "refreshImages": "Refresh images",
+      "save": "Save",
+      "note": "From the task’s build. A saved guide is written to the {{key}} card as a comment.",
+      "noJira": "The task has no Jira issue."
     }
   }
 }

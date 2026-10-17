@@ -23,6 +23,7 @@ import { BuildWebListState } from './BuildWebListState'
 import { BuildWebIssueDrawer } from './BuildWebIssueDrawer'
 import { BuildWebSelectionBar } from './BuildWebSelectionBar'
 import { BuildWebTakeToWorkDialog } from './BuildWebTakeToWorkDialog'
+import { BuildWebIssueFullScreen } from './issue/BuildWebIssueFullScreen'
 
 /** Defers the visible spinner so a fast local answer never flashes one (STYLEGUIDE, UX rule 1). */
 function useDeferred(active: boolean, delayMs = 200): boolean {
@@ -51,8 +52,9 @@ export default function BuildWebPage(): React.JSX.Element {
   const patchIssue = useBuildWebStore((s) => s.patchIssue)
   const openIssue = useBuildWebStore((s) => s.openIssue)
   const spinning = useDeferred(loading)
+  const fullScreen = useBuildWebStore((s) => s.fullScreen)
+  const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const [taking, setTaking] = useState<BuildWebIssueRow[] | null>(null)
-  const takeIds = (ids: string[]) => setTaking(issues.filter((i) => ids.includes(i.id)))
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
@@ -64,7 +66,12 @@ export default function BuildWebPage(): React.JSX.Element {
         return
       }
       event.preventDefault()
-      if (useBuildWebStore.getState().openIssueId) {
+      const current = useBuildWebStore.getState()
+      if (current.fullScreen) {
+        current.setFullScreen(false)
+        return
+      }
+      if (current.openIssueId) {
         openIssue(null)
         return
       }
@@ -154,6 +161,8 @@ export default function BuildWebPage(): React.JSX.Element {
         />
       ) : !connected ? (
         <BuildWebConnect target={target} onConnected={(next) => setStatus(contextKey, next)} />
+      ) : fullScreen && openIssueId ? (
+        <BuildWebIssueFullScreen onTakeToWork={setTaking} />
       ) : (
         <>
           <BuildWebFilters />
@@ -167,7 +176,7 @@ export default function BuildWebPage(): React.JSX.Element {
           <BuildWebSelectionBar onTakeToWork={setTaking} />
         </>
       )}
-      <BuildWebIssueDrawer onTakeToWork={takeIds} />
+      <BuildWebIssueDrawer onTakeToWork={setTaking} />
       <BuildWebTakeToWorkDialog issues={taking} onClose={() => setTaking(null)} />
     </main>
   )

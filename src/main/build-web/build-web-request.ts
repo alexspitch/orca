@@ -93,6 +93,37 @@ export async function buildWebRequest(request: BuildWebRequest): Promise<unknown
   throw new BuildWebApiError(said, response.status, textsOf(data?.needsPermission))
 }
 
+/** A binary answer (a guide screenshot), capped so one image cannot fill memory or an RPC frame. */
+export async function buildWebBinaryRequest(
+  request: Omit<BuildWebRequest, 'method' | 'body'> & { maxBytes: number }
+): Promise<{ mime: string; bytes: Uint8Array }> {
+  let response: Response
+  try {
+    response = await getMainHttpClient().fetch(`${request.baseUrl}${request.path}`, {
+      headers: { authorization: `Bearer ${request.token}` },
+      redirect: 'error',
+      signal: AbortSignal.timeout(request.timeoutMs ?? REQUEST_TIMEOUT_MS)
+    })
+  } catch (error) {
+    throw new BuildWebUnreachableError(request.baseUrl, error)
+  }
+  if (!response.ok) {
+    await response.body?.cancel().catch(() => {})
+    throw new BuildWebApiError(response.statusText || `HTTP ${response.status}`, response.status)
+  }
+  const mime = response.headers.get('content-type') ?? 'application/octet-stream'
+  const declared = Number(response.headers.get('content-length') ?? 0)
+  if (declared > request.maxBytes || !mime.startsWith('image/')) {
+    await response.body?.cancel().catch(() => {})
+    throw new BuildWebApiError('not an image within the size limit', 413)
+  }
+  const bytes = new Uint8Array(await response.arrayBuffer())
+  if (bytes.byteLength > request.maxBytes) {
+    throw new BuildWebApiError('image too large', 413)
+  }
+  return { mime, bytes }
+}
+
 /** Plain words for a failure, for a toast or an inline error. */
 export function describeBuildWebError(error: unknown): string {
   if (error instanceof BuildWebApiError) {

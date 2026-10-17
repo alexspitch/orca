@@ -12,6 +12,12 @@ import {
   BuildWebImagePageParams,
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
+  BuildWebCommitDiffParams,
+  BuildWebCommitsParams,
+  BuildWebGuideParams,
+  BuildWebGuideShotParams,
+  BuildWebPublishGuideParams,
+  BuildWebPushRunParams,
   BuildWebProviderSessionParams,
   BuildWebVersionsParams
 } from '../../shared/rpc-contract/build-web-params'
@@ -55,4 +61,14 @@ export function registerBuildWebHandlers(): void {
   handle('clearAgentSession', BuildWebClearSessionParams, (args) =>
     commands.buildWebClearAgentSession(args)
   )
+  handle('getIssueRun', BuildWebIssueId, (args) => commands.buildWebGetIssueRun(args))
+  handle('pushRun', BuildWebPushRunParams, (args) => commands.buildWebPushRun(args))
+  handle('saveGuide', BuildWebGuideParams, (args) => commands.buildWebSaveGuide(args))
+  handle('refreshGuideImages', BuildWebGuideParams, (args) =>
+    commands.buildWebRefreshGuideImages(args)
+  )
+  handle('publishGuide', BuildWebPublishGuideParams, (args) => commands.buildWebPublishGuide(args))
+  handle('issueCommits', BuildWebCommitsParams, (args) => commands.buildWebIssueCommits(args))
+  handle('commitDiff', BuildWebCommitDiffParams, (args) => commands.buildWebCommitDiff(args))
+  handle('guideShot', BuildWebGuideShotParams, (args) => commands.buildWebGuideShot(args))
 }

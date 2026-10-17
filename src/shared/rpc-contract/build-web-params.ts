@@ -104,3 +104,21 @@ export const BuildWebImagePushParams = z.object({
     .max(200),
   moveMainTag: z.boolean()
 })
+
+export const BuildWebRunParams = z.object({ runId: Id })
+export const BuildWebPushRunParams = z.object({ runId: Id, moveMainTag: z.boolean() })
+export const BuildWebGuideParams = z.object({ runId: Id, guide: z.string().max(200_000) })
+export const BuildWebPublishGuideParams = z.object({
+  jiraKey: z.string().regex(/^[A-Z][A-Z0-9]*-\d+$/),
+  runId: Id,
+  guide: z.string().max(200_000)
+})
+export const BuildWebCommitsParams = z.object({ id: Id, fetch: z.boolean() })
+export const BuildWebCommitDiffParams = z.object({
+  id: Id,
+  sha: z.string().regex(/^[0-9a-f]{7,40}$/i)
+})
+export const BuildWebGuideShotParams = z.object({
+  runId: Id,
+  slug: z.string().regex(/^[A-Za-z0-9._-]{1,120}$/)
+})

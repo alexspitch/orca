@@ -11,6 +11,12 @@ import type {
   BuildWebImagePageParams,
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
+  BuildWebCommitDiffParams,
+  BuildWebCommitsParams,
+  BuildWebGuideParams,
+  BuildWebGuideShotParams,
+  BuildWebPublishGuideParams,
+  BuildWebPushRunParams,
   BuildWebProviderSessionParams,
   BuildWebVersionsParams
 } from '../../shared/rpc-contract/build-web-params'
@@ -40,6 +46,16 @@ import {
   listBuildWebImages,
   pushBuildWebImages
 } from '../build-web/build-web-images'
+import {
+  getBuildWebCommitDiff,
+  getBuildWebGuideShot,
+  getBuildWebIssueCommits,
+  getBuildWebIssueRun,
+  publishBuildWebGuide,
+  pushBuildWebRun,
+  refreshBuildWebGuideImages,
+  saveBuildWebGuide
+} from '../build-web/build-web-runs'
 
 type In<T extends z.ZodTypeAny> = z.infer<T>
 
@@ -115,5 +131,37 @@ export class RuntimeBuildWebCommands {
 
   buildWebPushImages(args: In<typeof BuildWebImagePushParams>) {
     return pushBuildWebImages(args)
+  }
+
+  buildWebGetIssueRun(args: In<typeof BuildWebIssueId>) {
+    return getBuildWebIssueRun(args.id)
+  }
+
+  buildWebPushRun(args: In<typeof BuildWebPushRunParams>) {
+    return pushBuildWebRun(args.runId, args.moveMainTag)
+  }
+
+  buildWebSaveGuide(args: In<typeof BuildWebGuideParams>) {
+    return saveBuildWebGuide(args.runId, args.guide)
+  }
+
+  buildWebRefreshGuideImages(args: In<typeof BuildWebGuideParams>) {
+    return refreshBuildWebGuideImages(args.runId, args.guide)
+  }
+
+  buildWebPublishGuide(args: In<typeof BuildWebPublishGuideParams>) {
+    return publishBuildWebGuide(args.jiraKey, args.runId, args.guide)
+  }
+
+  buildWebIssueCommits(args: In<typeof BuildWebCommitsParams>) {
+    return getBuildWebIssueCommits(args.id, args.fetch)
+  }
+
+  buildWebCommitDiff(args: In<typeof BuildWebCommitDiffParams>) {
+    return getBuildWebCommitDiff(args.id, args.sha)
+  }
+
+  buildWebGuideShot(args: In<typeof BuildWebGuideShotParams>) {
+    return getBuildWebGuideShot(args.runId, args.slug)
   }
 }

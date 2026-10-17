@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebIssueDetail } from './use-build-web-issue-detail'
 import { BuildWebIssueFields } from './BuildWebIssueFields'
@@ -20,7 +21,7 @@ import { BuildWebSessionBadge } from './BuildWebSessionBadge'
 export function BuildWebIssueDrawer({
   onTakeToWork
 }: {
-  onTakeToWork: (ids: string[]) => void
+  onTakeToWork: (issues: BuildWebIssueRow[]) => void
 }): React.JSX.Element {
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const fullScreen = useBuildWebStore((s) => s.fullScreen)
@@ -126,7 +127,7 @@ export function BuildWebIssueDrawer({
               {translate('buildWeb.detail.openInBuildWeb', 'Open in build-web')}
               <ExternalLink />
             </Button>
-            <Button size="sm" onClick={() => onTakeToWork([detail.id])}>
+            <Button size="sm" onClick={() => onTakeToWork([detail])}>
               {translate('buildWeb.detail.takeToWork', 'Take to work')}
             </Button>
           </div>

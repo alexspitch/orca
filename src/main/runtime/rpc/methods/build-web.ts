@@ -11,6 +11,12 @@ import {
   BuildWebImagePageParams,
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
+  BuildWebCommitDiffParams,
+  BuildWebCommitsParams,
+  BuildWebGuideParams,
+  BuildWebGuideShotParams,
+  BuildWebPublishGuideParams,
+  BuildWebPushRunParams,
   BuildWebProviderSessionParams,
   BuildWebVersionsParams
 } from '../../../../shared/rpc-contract/build-web-params'
@@ -124,5 +130,53 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebImagePushParams,
     handler: async (params, { runtime }) => runtime.buildWebPushImages(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.getIssueRun',
+    permission: 'workspace',
+    params: BuildWebIssueId,
+    handler: async (params, { runtime }) => runtime.buildWebGetIssueRun(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.pushRun',
+    permission: 'workspace',
+    params: BuildWebPushRunParams,
+    handler: async (params, { runtime }) => runtime.buildWebPushRun(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.saveGuide',
+    permission: 'workspace',
+    params: BuildWebGuideParams,
+    handler: async (params, { runtime }) => runtime.buildWebSaveGuide(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.refreshGuideImages',
+    permission: 'workspace',
+    params: BuildWebGuideParams,
+    handler: async (params, { runtime }) => runtime.buildWebRefreshGuideImages(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.publishGuide',
+    permission: 'workspace',
+    params: BuildWebPublishGuideParams,
+    handler: async (params, { runtime }) => runtime.buildWebPublishGuide(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.issueCommits',
+    permission: 'workspace',
+    params: BuildWebCommitsParams,
+    handler: async (params, { runtime }) => runtime.buildWebIssueCommits(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.commitDiff',
+    permission: 'workspace',
+    params: BuildWebCommitDiffParams,
+    handler: async (params, { runtime }) => runtime.buildWebCommitDiff(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.guideShot',
+    permission: 'workspace',
+    params: BuildWebGuideShotParams,
+    handler: async (params, { runtime }) => runtime.buildWebGuideShot(params)
   })
 ]

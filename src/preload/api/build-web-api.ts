@@ -20,6 +20,12 @@ import type {
   BuildWebImagePushArgs,
   BuildWebImageSummary
 } from '../../shared/build-web-image-types'
+import type {
+  BuildWebCommitDiff,
+  BuildWebCommitList,
+  BuildWebGuideShot,
+  BuildWebRun
+} from '../../shared/build-web-run-types'
 
 export type BuildWebSessionArgs = {
   surface_kind: 'terminal' | 'structured' | 'unknown'
@@ -70,4 +76,22 @@ export type BuildWebApi = {
     args: BuildWebImageHistoryArgs & { refresh?: boolean }
   ) => Promise<BuildWebImageHistory>
   pushImages: (args: BuildWebImagePushArgs) => Promise<BuildWebMutationResult<true>>
+  getIssueRun: (args: { id: string }) => Promise<BuildWebRun | null>
+  pushRun: (args: { runId: string; moveMainTag: boolean }) => Promise<BuildWebMutationResult<true>>
+  saveGuide: (args: {
+    runId: string
+    guide: string
+  }) => Promise<BuildWebMutationResult<BuildWebRun | null>>
+  refreshGuideImages: (args: {
+    runId: string
+    guide: string
+  }) => Promise<BuildWebMutationResult<BuildWebRun | null>>
+  publishGuide: (args: {
+    jiraKey: string
+    runId: string
+    guide: string
+  }) => Promise<BuildWebMutationResult<{ action: string; url: string }>>
+  issueCommits: (args: { id: string; fetch: boolean }) => Promise<BuildWebCommitList>
+  commitDiff: (args: { id: string; sha: string }) => Promise<BuildWebCommitDiff>
+  guideShot: (args: { runId: string; slug: string }) => Promise<BuildWebGuideShot>
 }
