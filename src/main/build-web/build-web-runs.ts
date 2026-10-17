@@ -6,13 +6,12 @@ import type {
   BuildWebRun,
   BuildWebRunBuild
 } from '../../shared/build-web-run-types'
-import { requireBuildWebCredential } from './build-web-connection'
 import {
-  BuildWebApiError,
-  buildWebBinaryRequest,
-  buildWebRequest,
-  describeBuildWebError
-} from './build-web-request'
+  BUILD_WEB_COMMITS_FETCH_TIMEOUT_MS,
+  BUILD_WEB_REQUEST_TIMEOUT_MS
+} from '../../shared/build-web-timeouts'
+import { requireBuildWebCredential } from './build-web-connection'
+import { buildWebBinaryRequest, buildWebMutation, buildWebRequest } from './build-web-request'
 import { recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 
 const DIFF_MAX_CHARS = 512 * 1024
@@ -60,18 +59,6 @@ export function runOf(value: unknown): BuildWebRun | null {
   }
 }
 
-async function mutate<T>(run: () => Promise<T>): Promise<BuildWebMutationResult<T>> {
-  try {
-    return { ok: true, value: await run() }
-  } catch (error) {
-    return {
-      ok: false,
-      error: describeBuildWebError(error),
-      ...(error instanceof BuildWebApiError ? { status: error.status } : {})
-    }
-  }
-}
-
 /** The task's build, or null when it has none. Needs the `build` or `history` section. */
 export async function getBuildWebIssueRun(issueId: string): Promise<BuildWebRun | null> {
   const credential = requireBuildWebCredential()
@@ -86,7 +73,7 @@ export function pushBuildWebRun(
   runId: string,
   moveMainTag: boolean
 ): Promise<BuildWebMutationResult<true>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     await buildWebRequest({
       ...credential,
@@ -102,7 +89,7 @@ export function saveBuildWebGuide(
   runId: string,
   guide: string
 ): Promise<BuildWebMutationResult<BuildWebRun | null>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     return runOf(
       await buildWebRequest({
@@ -119,7 +106,7 @@ export function refreshBuildWebGuideImages(
   runId: string,
   guide: string
 ): Promise<BuildWebMutationResult<BuildWebRun | null>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     return runOf(
       await buildWebRequest({
@@ -138,7 +125,7 @@ export function publishBuildWebGuide(
   runId: string,
   guide: string
 ): Promise<BuildWebMutationResult<{ action: string; url: string }>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     const answer = recordOf(
       await buildWebRequest({
@@ -162,7 +149,7 @@ export async function getBuildWebIssueCommits(
       ...credential,
       path: `/api/tms/issues/${enc(issueId)}/commits${fetchFirst ? '?fetch=1' : ''}`,
       // Why: `fetch=1` runs a git fetch on the console first.
-      timeoutMs: fetchFirst ? 90_000 : 20_000
+      timeoutMs: fetchFirst ? BUILD_WEB_COMMITS_FETCH_TIMEOUT_MS : BUILD_WEB_REQUEST_TIMEOUT_MS
     })
   )
   const commits = (Array.isArray(answer?.commits) ? answer.commits : [])

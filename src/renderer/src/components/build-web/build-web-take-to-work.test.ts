@@ -58,6 +58,14 @@ describe('take to work batch', () => {
     )
     expect(validateBuildWebBatch([]).ok).toBe(false)
   })
+
+  it('refuses a task whose product Orca does not know', () => {
+    expect(validateBuildWebBatch([issue('IS-1', { product: 'unknown' })])).toEqual({
+      ok: false,
+      reason: 'unknown-product',
+      groups: ['IS-1']
+    })
+  })
 })
 
 describe('skill call', () => {

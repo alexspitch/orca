@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { toast } from 'sonner'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { useAppStore } from '@/store'
 import { defaultScopeHost } from '@/lib/default-creation-host'
@@ -40,7 +41,7 @@ export function useBuildWebStatus(): { refreshStatus: () => Promise<void> } {
 }
 
 /** Loads the list for the current filters; a reply to an older request is dropped. */
-export function useBuildWebIssueList(): { reload: () => void } {
+export function useBuildWebIssueList(): { reload: () => void; loadMore: () => void } {
   const { target, contextKey } = useBuildWebTarget()
   const connected = useBuildWebStore(
     (s) => s.status?.connected === true && s.contextKey === contextKey
@@ -71,6 +72,30 @@ export function useBuildWebIssueList(): { reload: () => void } {
     }
   }, [product, query, statusFilter, target, view])
 
+  // Why: the same generation as `load`, so a filter change drops a page for the old filters.
+  const loadMore = useCallback(async () => {
+    const mine = generation.current
+    const store = useBuildWebStore.getState()
+    if (store.loadingMore || store.issues.length >= store.total) {
+      return
+    }
+    store.setLoadingMore(true)
+    try {
+      const page = await callBuildWeb(target, 'listIssues', {
+        ...issueQueryOf({ view, query, statusFilter, product }),
+        offset: store.issues.length
+      })
+      if (mine === generation.current) {
+        useBuildWebStore.getState().appendIssues(page.issues, page.total)
+      }
+    } catch (error) {
+      if (mine === generation.current) {
+        useBuildWebStore.getState().setLoadingMore(false)
+        toast.error(error instanceof Error ? error.message : String(error))
+      }
+    }
+  }, [product, query, statusFilter, target, view])
+
   useEffect(() => {
     if (!connected) {
       return
@@ -79,5 +104,5 @@ export function useBuildWebIssueList(): { reload: () => void } {
     return () => window.clearTimeout(timer)
   }, [connected, load, query])
 
-  return { reload: () => void load() }
+  return { reload: () => void load(), loadMore: () => void loadMore() }
 }

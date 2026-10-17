@@ -44,6 +44,12 @@ describe('build-web store', () => {
     expect([...useBuildWebStore.getState().selected]).toEqual(['2'])
   })
 
+  it('appends the next page without repeating a task that moved up', () => {
+    useBuildWebStore.getState().setIssues([row('1'), row('2')], 4)
+    useBuildWebStore.getState().appendIssues([row('2'), row('3')], 4)
+    expect(useBuildWebStore.getState().issues.map((i) => i.id)).toEqual(['1', '2', '3'])
+  })
+
   it('forgets another host’s tasks when the host changes', () => {
     const store = useBuildWebStore.getState()
     store.setIssues([row('1')], 1)

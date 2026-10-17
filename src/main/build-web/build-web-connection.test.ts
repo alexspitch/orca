@@ -164,4 +164,41 @@ describe('request errors', () => {
       request.buildWebRequest({ baseUrl: 'https://bw.test', token: 't', path: '/api/x' })
     ).rejects.toMatchObject({ status: 409, message: 'сначала закройте подзадачи' })
   })
+
+  it('tells a missing route from a missing task', async () => {
+    const { request } = await loadModules()
+    const call = () =>
+      request.buildWebMutation(() =>
+        request.buildWebRequest({ baseUrl: 'https://bw.test', token: 't', path: '/api/x' })
+      )
+    fetchSpy.mockResolvedValueOnce(new Response('Cannot PUT /api/x', { status: 404 }))
+    expect(await call()).toMatchObject({ ok: false, status: 404, routeMissing: true })
+    fetchSpy.mockResolvedValueOnce(json({ error: 'нет такой задачи' }, 404))
+    const gone = await call()
+    expect(gone).toMatchObject({ ok: false, status: 404 })
+    expect(gone).not.toHaveProperty('routeMissing')
+  })
+
+  it('caps a streamed screenshot without a declared length', async () => {
+    const { request } = await loadModules()
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (let n = 0; n < 4; n++) {
+          controller.enqueue(new Uint8Array(1024))
+        }
+        controller.close()
+      }
+    })
+    fetchSpy.mockResolvedValueOnce(
+      new Response(body, { status: 200, headers: { 'content-type': 'image/png' } })
+    )
+    await expect(
+      request.buildWebBinaryRequest({
+        baseUrl: 'https://bw.test',
+        token: 't',
+        path: '/api/shot',
+        maxBytes: 2048
+      })
+    ).rejects.toMatchObject({ status: 413 })
+  })
 })

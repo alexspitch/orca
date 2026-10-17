@@ -3,7 +3,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
-import { validateBuildWebBatch } from './build-web-take-to-work'
+import { batchCheckMessage, validateBuildWebBatch } from './build-web-take-to-work'
 import { productLabel } from './build-web-labels'
 
 /** The picked tasks and «Take to work», refused for a mix of products or releases. */
@@ -20,17 +20,7 @@ export function BuildWebSelectionBar({
     return null
   }
   const check = validateBuildWebBatch(picked)
-  const reason = check.ok
-    ? null
-    : check.reason === 'mixed'
-      ? translate('buildWeb.take.mixed', 'Tasks of different products or releases: {{groups}}', {
-          groups: check.groups.join(', ')
-        })
-      : check.reason === 'too-many'
-        ? translate('buildWeb.take.tooMany', 'At most 20 tasks at once.')
-        : translate('buildWeb.take.badKey', 'These keys cannot be sent: {{keys}}', {
-            keys: check.groups.join(', ')
-          })
+  const reason = batchCheckMessage(check)
   const takeButton = (
     <Button size="sm" disabled={!check.ok} onClick={() => onTakeToWork(picked)}>
       {translate('buildWeb.take.button', 'Take to work ({{count}})', { count: picked.length })}

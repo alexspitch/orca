@@ -16,7 +16,7 @@ import { buildWebBatchPrompt, type TakeToWorkFlags } from './build-web-take-to-w
 
 const PROVIDER_SESSION_WAIT_MS = 10 * 60_000
 const WRITE_CONCURRENCY = 4
-/** Consoles that predate the session field answer 404; Orca then stops trying for that address. */
+/** Consoles that predate the session route; Orca then stops trying for that address. */
 const sessionUnsupported = new Set<string>()
 
 async function eachLimited<T>(items: T[], run: (item: T) => Promise<void>): Promise<void> {
@@ -44,7 +44,8 @@ async function writeSessions(
     const result = await callBuildWeb(target, 'setAgentSession', { id: issue.id, session }).catch(
       () => null
     )
-    if (result && !result.ok && (result.status === 404 || result.status === 405)) {
+    // Why: only a missing route — a deleted task answers 404 too, with the console's own error.
+    if (result && !result.ok && result.routeMissing) {
       sessionUnsupported.add(baseUrl)
     } else if (!result?.ok) {
       failed.push(issue.key)
@@ -148,7 +149,16 @@ export async function launchBuildWebBatch(args: {
     const settled = await result.structuredSettlement.catch(() => null)
     if (settled && (settled.kind === 'structured' || settled.kind === 'visibility-unknown')) {
       surface = { surface_kind: 'structured', surface_id: settled.sessionId }
+    } else if (!settled || settled.kind === 'cancelled' || settled.kind === 'failed') {
+      if (settled?.kind === 'failed' && !settled.notified) {
+        toast.error(translate('buildWeb.launch.failed', 'Could not start the agent.'))
+      }
+      return false
     }
+  }
+  // Why: with no surface id (the host opened its own terminal) a record could never be cleared.
+  if (!surface.surface_id) {
+    return true
   }
   const written = await writeSessions(target, baseUrl, issues, {
     ...surface,

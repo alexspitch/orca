@@ -5,25 +5,11 @@ import type {
   BuildWebMutationResult
 } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
-import { BuildWebApiError, buildWebRequest, describeBuildWebError } from './build-web-request'
+import { buildWebMutation, buildWebRequest } from './build-web-request'
 import { issueRowOf } from './build-web-issue-mapping'
 import { recordOf, textOf } from './build-web-response-fields'
 
 const issuePath = (id: string, tail = '') => `/api/tms/issues/${encodeURIComponent(id)}${tail}`
-
-// Why: a mutation answers with a result rather than throwing, so the UI can show
-// the console's own words (409 «close the subtasks first») and roll back its view.
-async function mutate<T>(run: () => Promise<T>): Promise<BuildWebMutationResult<T>> {
-  try {
-    return { ok: true, value: await run() }
-  } catch (error) {
-    return {
-      ok: false,
-      error: describeBuildWebError(error),
-      ...(error instanceof BuildWebApiError ? { status: error.status } : {})
-    }
-  }
-}
 
 export type BuildWebUpdateOutcome = { issue: BuildWebIssueRow | null; jira: string | null }
 
@@ -31,7 +17,7 @@ export function updateBuildWebIssue(
   id: string,
   patch: BuildWebIssuePatch
 ): Promise<BuildWebMutationResult<BuildWebUpdateOutcome>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     const answer = recordOf(
       await buildWebRequest({ ...credential, method: 'PATCH', path: issuePath(id), body: patch })
@@ -49,7 +35,7 @@ export function setBuildWebFavorite(
   id: string,
   on: boolean
 ): Promise<BuildWebMutationResult<boolean>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     await buildWebRequest({
       ...credential,
@@ -65,7 +51,7 @@ export function addBuildWebComment(
   body: string,
   jira: boolean
 ): Promise<BuildWebMutationResult<{ id: string }>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     const answer = recordOf(
       await buildWebRequest({
@@ -89,7 +75,7 @@ export function setBuildWebAgentSession(
   id: string,
   session: BuildWebSessionInput
 ): Promise<BuildWebMutationResult<true>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     await buildWebRequest({
       ...credential,
@@ -106,7 +92,7 @@ export function noteBuildWebProviderSession(
   surfaceId: string,
   providerSessionId: string
 ): Promise<BuildWebMutationResult<true>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     await buildWebRequest({
       ...credential,
@@ -123,7 +109,7 @@ export function clearBuildWebAgentSession(
   id: string,
   surfaceId: string
 ): Promise<BuildWebMutationResult<true>> {
-  return mutate(async () => {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     await buildWebRequest({
       ...credential,

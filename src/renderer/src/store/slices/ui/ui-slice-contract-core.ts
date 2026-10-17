@@ -165,8 +165,8 @@ export type UISliceCore = {
   previousViewBeforeSkills: Exclude<UiViewHistory, 'skills'>
   previousViewBeforeMobile: Exclude<UiViewHistory, 'mobile'>
   previousViewBeforeArtifacts: Exclude<UiViewHistory, 'artifacts'>
-  previousViewBeforeBuildWeb: Exclude<UiViewHistory, 'build-web'>
-  previousViewBeforeBuildWebImages: Exclude<UiViewHistory, 'build-web-images'>
+  previousViewBeforeBuildWeb: Exclude<UiViewHistory, 'build-web' | 'build-web-images'>
+  previousViewBeforeBuildWebImages: Exclude<UiViewHistory, 'build-web' | 'build-web-images'>
   setActiveView: (view: UISliceCore['activeView']) => void
   taskPageData: TaskPageData
   taskResumeState: TaskResumeState | undefined

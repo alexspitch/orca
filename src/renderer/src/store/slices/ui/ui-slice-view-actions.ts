@@ -93,11 +93,16 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'artifacts')
       })),
     // Why: no view-history entry — the page has its own modes, and back returns to where it was opened.
+    // Moving between Issues and Images carries that origin over, so Escape never bounces between them.
     openBuildWebPage: () =>
       set((state) => ({
         activeView: 'build-web',
         previousViewBeforeBuildWeb:
-          state.activeView === 'build-web' ? state.previousViewBeforeBuildWeb : state.activeView
+          state.activeView === 'build-web'
+            ? state.previousViewBeforeBuildWeb
+            : state.activeView === 'build-web-images'
+              ? state.previousViewBeforeBuildWebImages
+              : state.activeView
       })),
     closeBuildWebPage: () => set((state) => ({ activeView: state.previousViewBeforeBuildWeb })),
     openBuildWebImagesPage: () =>
@@ -106,7 +111,9 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         previousViewBeforeBuildWebImages:
           state.activeView === 'build-web-images'
             ? state.previousViewBeforeBuildWebImages
-            : state.activeView
+            : state.activeView === 'build-web'
+              ? state.previousViewBeforeBuildWeb
+              : state.activeView
       })),
     closeBuildWebImagesPage: () =>
       set((state) => ({ activeView: state.previousViewBeforeBuildWebImages })),

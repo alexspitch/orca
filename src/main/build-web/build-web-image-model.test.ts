@@ -79,6 +79,21 @@ describe('image model', () => {
     ).toEqual(['sa/api'])
   })
 
+  it('filters builds before picking the newest, as build-web does', () => {
+    const older: ImageCatalog = {
+      ...catalog,
+      builds: [
+        build({ at: '2026-10-17T09:00:00Z', product_version: '3.2' }),
+        build({ at: '2026-10-10T09:00:00Z', dist: 'redos', tag: '3.1old' })
+      ]
+    }
+    const redos = imagePage(older, { page: 0, pageSize: 50, dists: ['redos'] })
+    expect(redos.rows.map((r) => r.last?.tag)).toEqual(['3.1old'])
+    expect(redos.counts.dists).toEqual({ rhel: 1, redos: 1 })
+    expect(imagePage(older, { page: 0, pageSize: 50, version: '3.1' }).total).toBe(1)
+    expect(imagePage(older, { page: 0, pageSize: 50, q: '3.1old' }).total).toBe(1)
+  })
+
   it('pages, and an unknown page size falls back to 50', () => {
     const many: ImageCatalog = {
       ...catalog,

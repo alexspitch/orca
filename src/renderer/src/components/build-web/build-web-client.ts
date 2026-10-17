@@ -1,4 +1,10 @@
 import { BUILD_WEB_RUNTIME_CAPABILITY } from '../../../../shared/build-web-capability'
+import {
+  BUILD_WEB_CATALOG_TIMEOUT_MS,
+  BUILD_WEB_CLIENT_MARGIN_MS,
+  BUILD_WEB_COMMITS_FETCH_TIMEOUT_MS,
+  BUILD_WEB_REQUEST_TIMEOUT_MS
+} from '../../../../shared/build-web-timeouts'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { BuildWebApi } from '../../../../preload/api/build-web-api'
 import { assertRuntimeEnvironmentCapability, callRuntimeRpc } from '@/runtime/runtime-rpc-client'
@@ -8,7 +14,15 @@ type Method = keyof BuildWebApi
 type ArgsOf<M extends Method> = Parameters<BuildWebApi[M]>
 type ResultOf<M extends Method> = Awaited<ReturnType<BuildWebApi[M]>>
 
-const RPC_TIMEOUT_MS = 30_000
+/** The host's own wait for this call, so a slow but healthy answer is not cut off here. */
+function hostWaitMs(method: Method, args: unknown): number {
+  if (method === 'issueCommits' && typeof args === 'object' && args && 'fetch' in args) {
+    return args.fetch === true ? BUILD_WEB_COMMITS_FETCH_TIMEOUT_MS : BUILD_WEB_REQUEST_TIMEOUT_MS
+  }
+  return method === 'imageSummary' || method === 'listImages' || method === 'listImageBuilds'
+    ? BUILD_WEB_CATALOG_TIMEOUT_MS
+    : BUILD_WEB_REQUEST_TIMEOUT_MS
+}
 
 /**
  * One call to build-web through whichever host holds the token: this app's main process,
@@ -29,7 +43,7 @@ export async function callBuildWeb<M extends Method>(
       )
     )
     return callRuntimeRpc<ResultOf<M>>(target, `buildWeb.${method}`, args[0], {
-      timeoutMs: RPC_TIMEOUT_MS
+      timeoutMs: hostWaitMs(method, args[0]) + BUILD_WEB_CLIENT_MARGIN_MS
     })
   }
   const api = window.api.buildWeb

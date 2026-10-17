@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { useBuildWebStore } from '../build-web-store'
 import { useBuildWebStatus, useBuildWebTarget } from '../use-build-web-data'
+import { useBuildWebPageEscape } from '../use-build-web-page-escape'
 import { BuildWebConnect } from '../BuildWebConnect'
 import { BuildWebListState } from '../BuildWebListState'
 import { ImageListView } from './ImageListView'
@@ -18,29 +19,7 @@ export default function BuildWebImagesPage(): React.JSX.Element {
   const setStatus = useBuildWebStore((s) => s.setStatus)
   const [image, setImage] = useState<string | null>(null)
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent): void {
-      const target = event.target
-      if (event.key !== 'Escape' || event.defaultPrevented || !(target instanceof HTMLElement)) {
-        return
-      }
-      if (
-        target.closest(
-          'input, textarea, select, [contenteditable="true"], [role="dialog"], [role="menu"]'
-        )
-      ) {
-        return
-      }
-      event.preventDefault()
-      if (image) {
-        setImage(null)
-        return
-      }
-      closePage()
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [closePage, image])
+  useBuildWebPageEscape(() => (image ? setImage(null) : closePage()))
 
   const connected = status?.connected === true
   return (

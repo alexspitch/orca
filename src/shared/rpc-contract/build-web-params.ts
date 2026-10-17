@@ -6,7 +6,9 @@ import { BUILD_WEB_STATUSES } from '../build-web-types'
 
 const required = (message: string, max: number) => z.string().trim().min(1, message).max(max)
 
-const Id = required('Missing task id', 128)
+// Why: the id becomes a URL path segment, and URL resolution turns `.`/`..` into another endpoint.
+const notDotSegment = (value: string) => value !== '.' && value !== '..'
+const Id = required('Missing task id', 128).refine(notDotSegment, 'Invalid id')
 const Status = z.enum(BUILD_WEB_STATUSES)
 const Product = z.enum(['sa', 'dc', 'ap', 'storage', 'tools'])
 // Why: build-web's own limits — a longer value would be refused there with a less useful message.
@@ -22,7 +24,8 @@ export const BuildWebIssueQueryParams = z.object({
   q: z.string().max(500).optional(),
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
   product: z.array(Product).max(5).optional(),
-  limit: z.number().int().min(1).max(100).optional()
+  limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().min(0).max(100_000).optional()
 })
 
 export const BuildWebIssueId = z.object({ id: Id })
@@ -105,7 +108,6 @@ export const BuildWebImagePushParams = z.object({
   moveMainTag: z.boolean()
 })
 
-export const BuildWebRunParams = z.object({ runId: Id })
 export const BuildWebPushRunParams = z.object({ runId: Id, moveMainTag: z.boolean() })
 export const BuildWebGuideParams = z.object({ runId: Id, guide: z.string().max(200_000) })
 export const BuildWebPublishGuideParams = z.object({
@@ -120,5 +122,8 @@ export const BuildWebCommitDiffParams = z.object({
 })
 export const BuildWebGuideShotParams = z.object({
   runId: Id,
-  slug: z.string().regex(/^[A-Za-z0-9._-]{1,120}$/)
+  slug: z
+    .string()
+    .regex(/^[A-Za-z0-9._-]{1,120}$/)
+    .refine(notDotSegment, 'Invalid screenshot')
 })

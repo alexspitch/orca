@@ -9,7 +9,8 @@ import type {
 } from '../../shared/build-web-image-types'
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
-import { BuildWebApiError, buildWebRequest, describeBuildWebError } from './build-web-request'
+import { buildWebMutation, buildWebRequest, type BuildWebResponseLimit } from './build-web-request'
+import { BUILD_WEB_CATALOG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { numberOf, recordOf, textOf, textOrNull } from './build-web-response-fields'
 import {
   imageHistory,
@@ -18,9 +19,16 @@ import {
   type ImageCatalog
 } from './build-web-image-model'
 
-// Why a short cache: /api/image-builds returns every build the console recorded; paging and
-// the sidebar badge both read it, and neither should refetch it on every click.
+// Why a cache: /api/image-builds returns every build the console recorded; paging and the
+// sidebar badge both read it, and neither should refetch it on every click. The badge accepts
+// an older copy, so on its own it downloads the catalog rarely.
 const CATALOG_TTL_MS = 30_000
+const SUMMARY_TTL_MS = 120_000
+// Why larger than a page: main digests the catalog and only pages of it cross RPC.
+const CATALOG_LIMIT: BuildWebResponseLimit = {
+  bytes: 64 * 1024 * 1024,
+  structuralTokens: 16_000_000
+}
 
 let cached: { baseUrl: string; at: number; catalog: ImageCatalog } | null = null
 let inflight: { baseUrl: string; promise: Promise<ImageCatalog> } | null = null
@@ -72,15 +80,27 @@ export function imageCatalogOf(value: unknown): ImageCatalog {
   return { images, builds, versions }
 }
 
-async function catalog(force = false): Promise<ImageCatalog> {
-  const credential = requireBuildWebCredential()
-  if (!force && cached?.baseUrl === credential.baseUrl && Date.now() - cached.at < CATALOG_TTL_MS) {
+async function catalog(
+  options: { force?: boolean; maxAgeMs?: number; background?: true } = {}
+): Promise<ImageCatalog> {
+  const credential = requireBuildWebCredential(options.background ? { background: true } : {})
+  const maxAgeMs = options.maxAgeMs ?? CATALOG_TTL_MS
+  if (
+    !options.force &&
+    cached?.baseUrl === credential.baseUrl &&
+    Date.now() - cached.at < maxAgeMs
+  ) {
     return cached.catalog
   }
   if (inflight?.baseUrl === credential.baseUrl) {
     return inflight.promise
   }
-  const promise = buildWebRequest({ ...credential, path: '/api/image-builds', timeoutMs: 45_000 })
+  const promise = buildWebRequest({
+    ...credential,
+    path: '/api/image-builds',
+    timeoutMs: BUILD_WEB_CATALOG_TIMEOUT_MS,
+    responseLimit: CATALOG_LIMIT
+  })
     .then(imageCatalogOf)
     .then((next) => {
       cached = { baseUrl: credential.baseUrl, at: Date.now(), catalog: next }
@@ -94,26 +114,28 @@ async function catalog(force = false): Promise<ImageCatalog> {
 }
 
 export async function buildWebImageSummary(): Promise<BuildWebImageSummary> {
-  return { running: runningImageCount(await catalog()) }
+  return {
+    running: runningImageCount(await catalog({ maxAgeMs: SUMMARY_TTL_MS, background: true }))
+  }
 }
 
 export async function listBuildWebImages(
   args: BuildWebImagePageArgs & { refresh?: boolean }
 ): Promise<BuildWebImagePage> {
-  return imagePage(await catalog(args.refresh === true), args)
+  return imagePage(await catalog({ force: args.refresh === true }), args)
 }
 
 export async function listBuildWebImageBuilds(
   args: BuildWebImageHistoryArgs & { refresh?: boolean }
 ): Promise<BuildWebImageHistory> {
-  return imageHistory(await catalog(args.refresh === true), args)
+  return imageHistory(await catalog({ force: args.refresh === true }), args)
 }
 
 /** Publish builds of one run to the registry; the main tag only when asked (build tag by default). */
 export async function pushBuildWebImages(
   args: BuildWebImagePushArgs
 ): Promise<BuildWebMutationResult<true>> {
-  try {
+  return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     await buildWebRequest({
       ...credential,
@@ -122,14 +144,8 @@ export async function pushBuildWebImages(
       body: { combos: args.combos, moveMainTag: args.moveMainTag }
     })
     cached = null
-    return { ok: true, value: true }
-  } catch (error) {
-    return {
-      ok: false,
-      error: describeBuildWebError(error),
-      ...(error instanceof BuildWebApiError ? { status: error.status } : {})
-    }
-  }
+    return true as const
+  })
 }
 
 /** @internal - tests start from an empty cache. */

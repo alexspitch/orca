@@ -19,6 +19,7 @@ import {
   buildWebBatchPrompt,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
+  batchCheckMessage,
   validateBuildWebBatch
 } from './build-web-take-to-work'
 import { launchBuildWebBatch } from './build-web-agent-launch'
@@ -118,11 +119,9 @@ function TakeToWorkForm({
           {issues[0].version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
         </li>
       </ul>
-      {!check.ok && check.reason === 'mixed' ? (
+      {batchCheckMessage(check) ? (
         <p role="alert" className="text-sm text-destructive">
-          {translate('buildWeb.take.mixed', 'Tasks of different products or releases: {{groups}}', {
-            groups: check.groups.join(', ')
-          })}
+          {batchCheckMessage(check)}
         </p>
       ) : null}
       <div className="flex flex-col gap-1.5">

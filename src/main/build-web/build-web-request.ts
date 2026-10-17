@@ -1,17 +1,27 @@
 import { getMainHttpClient } from '../network/http-client'
-import { readFetchResponseJsonWithinLimit } from '../../shared/fetch-response-body'
+import {
+  API_RESPONSE_JSON_LIMITS,
+  readFetchResponseBytesWithinLimit,
+  readFetchResponseJsonWithinLimit
+} from '../../shared/fetch-response-body'
+import type { BuildWebMutationResult } from '../../shared/build-web-types'
+import { BUILD_WEB_REQUEST_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { recordOf, textOf, textsOf } from './build-web-response-fields'
 
-const REQUEST_TIMEOUT_MS = 20_000
 // Why: one answer must fit the remote RPC frame on its way to a paired client.
 const RESPONSE_MAX_BYTES = 8 * 1024 * 1024
+
+/** A larger cap for answers main digests itself and never forwards whole (the build catalog). */
+export type BuildWebResponseLimit = { bytes: number; structuralTokens: number }
 
 /** A refusal from the console, kept apart from the network failing. */
 export class BuildWebApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    readonly needsPermission: string[] = []
+    readonly needsPermission: string[] = [],
+    /** 404/405 without the console's JSON error: the route itself is absent (an older console). */
+    readonly routeMissing = false
   ) {
     super(message)
     this.name = 'BuildWebApiError'
@@ -57,12 +67,17 @@ export type BuildWebRequest = {
   body?: unknown
   signal?: AbortSignal
   timeoutMs?: number
+  responseLimit?: BuildWebResponseLimit
+}
+
+function requestSignal(request: Pick<BuildWebRequest, 'signal' | 'timeoutMs'>): AbortSignal {
+  const timeout = AbortSignal.timeout(request.timeoutMs ?? BUILD_WEB_REQUEST_TIMEOUT_MS)
+  return request.signal ? AbortSignal.any([request.signal, timeout]) : timeout
 }
 
 /** One call to the console's API. Returns the parsed JSON, or throws a typed error. */
 export async function buildWebRequest(request: BuildWebRequest): Promise<unknown> {
-  const timeout = AbortSignal.timeout(request.timeoutMs ?? REQUEST_TIMEOUT_MS)
-  const signal = request.signal ? AbortSignal.any([request.signal, timeout]) : timeout
+  const signal = requestSignal(request)
   const headers: Record<string, string> = {
     authorization: `Bearer ${request.token}`,
     accept: 'application/json'
@@ -84,13 +99,20 @@ export async function buildWebRequest(request: BuildWebRequest): Promise<unknown
     throw new BuildWebUnreachableError(request.baseUrl, error)
   }
   if (response.ok) {
-    return readFetchResponseJsonWithinLimit<unknown>(response, RESPONSE_MAX_BYTES)
+    const limit = request.responseLimit
+    return limit
+      ? readFetchResponseJsonWithinLimit<unknown>(response, limit.bytes, {
+          ...API_RESPONSE_JSON_LIMITS,
+          structuralTokens: limit.structuralTokens
+        })
+      : readFetchResponseJsonWithinLimit<unknown>(response, RESPONSE_MAX_BYTES)
   }
   const data = recordOf(
     await readFetchResponseJsonWithinLimit<unknown>(response, 64 * 1024).catch(() => null)
   )
   const said = textOf(data?.error) || response.statusText || `HTTP ${response.status}`
-  throw new BuildWebApiError(said, response.status, textsOf(data?.needsPermission))
+  const routeMissing = (response.status === 404 || response.status === 405) && !textOf(data?.error)
+  throw new BuildWebApiError(said, response.status, textsOf(data?.needsPermission), routeMissing)
 }
 
 /** A binary answer (a guide screenshot), capped so one image cannot fill memory or an RPC frame. */
@@ -102,7 +124,7 @@ export async function buildWebBinaryRequest(
     response = await getMainHttpClient().fetch(`${request.baseUrl}${request.path}`, {
       headers: { authorization: `Bearer ${request.token}` },
       redirect: 'error',
-      signal: AbortSignal.timeout(request.timeoutMs ?? REQUEST_TIMEOUT_MS)
+      signal: requestSignal(request)
     })
   } catch (error) {
     throw new BuildWebUnreachableError(request.baseUrl, error)
@@ -112,15 +134,13 @@ export async function buildWebBinaryRequest(
     throw new BuildWebApiError(response.statusText || `HTTP ${response.status}`, response.status)
   }
   const mime = response.headers.get('content-type') ?? 'application/octet-stream'
-  const declared = Number(response.headers.get('content-length') ?? 0)
-  if (declared > request.maxBytes || !mime.startsWith('image/')) {
+  if (!mime.startsWith('image/')) {
     await response.body?.cancel().catch(() => {})
-    throw new BuildWebApiError('not an image within the size limit', 413)
+    throw new BuildWebApiError('not an image', 415)
   }
-  const bytes = new Uint8Array(await response.arrayBuffer())
-  if (bytes.byteLength > request.maxBytes) {
+  const bytes = await readFetchResponseBytesWithinLimit(response, request.maxBytes).catch(() => {
     throw new BuildWebApiError('image too large', 413)
-  }
+  })
   return { mime, bytes }
 }
 
@@ -139,4 +159,21 @@ export function describeBuildWebError(error: unknown): string {
     return error.message
   }
   return error instanceof Error ? error.message : String(error)
+}
+
+/** Run a write and report a refusal as a value, so the UI can show it next to the control. */
+export async function buildWebMutation<T>(
+  run: () => Promise<T>
+): Promise<BuildWebMutationResult<T>> {
+  try {
+    return { ok: true, value: await run() }
+  } catch (error) {
+    return {
+      ok: false,
+      error: describeBuildWebError(error),
+      ...(error instanceof BuildWebApiError
+        ? { status: error.status, ...(error.routeMissing ? { routeMissing: true } : {}) }
+        : {})
+    }
+  }
 }

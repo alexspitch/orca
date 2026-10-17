@@ -1,7 +1,10 @@
 import { Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { activateTabAndFocusPane } from '@/lib/activate-tab-and-focus-pane'
-import { activateStructuredAgentSessionById } from '@/lib/structured-agent-session-tab-activation'
+import {
+  activateStructuredAgentSessionById,
+  findStructuredAgentSessionTab
+} from '@/lib/structured-agent-session-tab-activation'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
@@ -15,14 +18,20 @@ function findSession(session: BuildWebAgentSession): Found {
   if (!session.surface_id) {
     return null
   }
-  const tabsByWorktree =
-    session.surface_kind === 'terminal' ? state.tabsByWorktree : state.unifiedTabsByWorktree
-  for (const [worktreeId, tabs] of Object.entries(tabsByWorktree)) {
-    const holds = (tabs ?? []).some((tab) => {
-      const fields = Object.fromEntries(Object.entries(tab))
-      return fields.id === session.surface_id || fields.sessionId === session.surface_id
+  if (session.surface_kind === 'terminal') {
+    for (const [worktreeId, tabs] of Object.entries(state.tabsByWorktree)) {
+      if ((tabs ?? []).some((tab) => tab.id === session.surface_id)) {
+        return { worktreeId }
+      }
+    }
+    return null
+  }
+  for (const worktreeId of Object.keys(state.unifiedTabsByWorktree)) {
+    const tab = findStructuredAgentSessionTab(state.unifiedTabsByWorktree, {
+      workspaceId: worktreeId,
+      sessionId: session.surface_id
     })
-    if (holds) {
+    if (tab) {
       return { worktreeId }
     }
   }

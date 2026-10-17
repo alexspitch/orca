@@ -2,18 +2,21 @@ import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { isGitRepoKind } from '../../../../shared/repo-kind'
+import { translate } from '@/i18n/i18n'
 import { productLabel } from './build-web-labels'
 
 // «Take to work»: which tasks may go together, where, and the one line the agent receives.
 
 export const MAX_BATCH = 20
 const KEY_RE = /^[A-Z][A-Z0-9]*-\d+(?:\.\d+)?$/
-/** Agents that run the build-web-tasks skill; others call skills differently. */
-export const BUILD_WEB_SKILL_AGENTS = ['claude'] as const
 
 export type BatchCheck =
   | { ok: true }
-  | { ok: false; reason: 'empty' | 'mixed' | 'too-many' | 'bad-key'; groups: string[] }
+  | {
+      ok: false
+      reason: 'empty' | 'mixed' | 'too-many' | 'bad-key' | 'unknown-product'
+      groups: string[]
+    }
 
 const releaseOf = (issue: BuildWebIssueRow) => issue.version_name ?? '—'
 
@@ -32,6 +35,11 @@ export function validateBuildWebBatch(issues: BuildWebIssueRow[]): BatchCheck {
       groups: issues.filter((i) => !KEY_RE.test(i.key)).map((i) => i.key)
     }
   }
+  // Why: the skill and the train are picked by product, so one Orca cannot name must not go.
+  const unknown = issues.filter((issue) => issue.product === 'unknown')
+  if (unknown.length) {
+    return { ok: false, reason: 'unknown-product', groups: unknown.map((issue) => issue.key) }
+  }
   const groups = new Map<string, { label: string; count: number }>()
   for (const issue of issues) {
     const key = `${issue.product}|${issue.version_id ?? ''}`
@@ -48,6 +56,38 @@ export function validateBuildWebBatch(issues: BuildWebIssueRow[]): BatchCheck {
         groups: [...groups.values()].map((g) => `${g.label} (${g.count})`)
       }
     : { ok: true }
+}
+
+/** Why the batch cannot go, in words; null when it can (or is merely empty). */
+export function batchCheckMessage(check: BatchCheck): string | null {
+  if (check.ok || check.reason === 'empty') {
+    return null
+  }
+  const groups = check.groups.join(', ')
+  switch (check.reason) {
+    case 'mixed':
+      return translate(
+        'buildWeb.take.mixed',
+        'Tasks of different products or releases: {{groups}}',
+        {
+          groups
+        }
+      )
+    case 'too-many':
+      return translate('buildWeb.take.tooMany', 'At most 20 tasks at once.')
+    case 'bad-key':
+      return translate('buildWeb.take.badKey', 'These keys cannot be sent: {{keys}}', {
+        keys: groups
+      })
+    case 'unknown-product':
+      return translate(
+        'buildWeb.take.unknownProduct',
+        'Orca does not know the product of {{keys}}.',
+        {
+          keys: groups
+        }
+      )
+  }
 }
 
 export type TakeToWorkFlags = { noWorktree: boolean; auto: boolean }

@@ -1,6 +1,5 @@
 import type {
   BuildWebImageBuild,
-  BuildWebImageFilters,
   BuildWebImageHistory,
   BuildWebImageHistoryArgs,
   BuildWebImagePage,
@@ -48,52 +47,63 @@ export function runningImageCount(catalog: ImageCatalog): number {
   ).size
 }
 
-function matches(build: BuildWebImageBuild | null, filters: BuildWebImageFilters): boolean {
-  if (filters.dists?.length && (!build || !filters.dists.includes(build.dist))) {
-    return false
+/** Each image's newest build passing the version and dists; filters first, as build-web's `lastOf`. */
+function newestMatching(
+  newest: BuildWebImageBuild[],
+  version: string | undefined,
+  dists: string[]
+): Map<string, BuildWebImageBuild> {
+  const last = new Map<string, BuildWebImageBuild>()
+  for (const build of newest) {
+    if (version && build.product_version !== version) {
+      continue
+    }
+    if (dists.length && !dists.includes(build.dist)) {
+      continue
+    }
+    if (!last.has(build.image)) {
+      last.set(build.image, build)
+    }
   }
-  return (
-    !filters.version ||
-    build?.version === filters.version ||
-    build?.product_version === filters.version
-  )
+  return last
 }
 
 export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): BuildWebImagePage {
-  const latest = new Map<string, BuildWebImageBuild>()
-  for (const build of [...catalog.builds].sort(newestFirst)) {
-    if (!latest.has(build.image)) {
-      latest.set(build.image, build)
-    }
-  }
-  const all: BuildWebImageRow[] = catalog.images.map((i) => ({
-    image: i.image,
-    product: i.product,
-    last: latest.get(i.image) ?? null
-  }))
+  const newest = [...catalog.builds].sort(newestFirst)
+  const dists = args.dists ?? []
   const q = args.q?.trim().toLowerCase()
-  const byText = all.filter(
-    (row) =>
-      !q || row.image.toLowerCase().includes(q) || (row.last?.tag ?? '').toLowerCase().includes(q)
-  )
-  const byFilters = byText.filter((row) => matches(row.last, args))
-  const rows = byFilters.filter(
-    (row) => !args.products?.length || args.products.includes(row.product)
-  )
+  // A tag names one build of one image, so text matches the name or any build's ref or tag.
+  const hit = q
+    ? new Set([
+        ...catalog.images.filter((i) => i.image.toLowerCase().includes(q)).map((i) => i.image),
+        ...catalog.builds
+          .filter((b) => `${b.ref ?? ''}\n${b.tag ?? ''}`.toLowerCase().includes(q))
+          .map((b) => b.image)
+      ])
+    : null
+  const textMatches = (image: string) => !hit || hit.has(image)
+  const inProducts = (product: string) => !args.products?.length || args.products.includes(product)
+  const last = newestMatching(newest, args.version, dists)
+  const byFilters: BuildWebImageRow[] = catalog.images
+    .map((i) => ({ image: i.image, product: i.product, last: last.get(i.image) ?? null }))
+    .filter((row) => (!args.version && !dists.length) || row.last)
+    .filter((row) => textMatches(row.image))
+  const rows = byFilters.filter((row) => inProducts(row.product))
+  const distCounts: Record<string, number> = {}
+  for (const dist of new Set(catalog.builds.map((b) => b.dist))) {
+    const own = newestMatching(newest, args.version, [dist])
+    distCounts[dist] = catalog.images.filter(
+      (i) => own.has(i.image) && inProducts(i.product) && textMatches(i.image)
+    ).length
+  }
   const versionLists = args.products?.length
     ? args.products.map((p) => catalog.versions[p] ?? [])
     : Object.values(catalog.versions)
   return {
     rows: pageOf(rows, args.page, args.pageSize),
     total: rows.length,
-    of: all.length,
-    counts: {
-      products: countBy(byFilters, (row) => row.product),
-      dists: countBy(
-        byText.filter((row) => !args.products?.length || args.products.includes(row.product)),
-        (row) => row.last?.dist ?? null
-      )
-    },
+    of: catalog.images.length,
+    counts: { products: countBy(byFilters, (row) => row.product), dists: distCounts },
     versions: [...new Set(versionLists.flat())]
   }
 }

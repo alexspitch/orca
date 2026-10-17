@@ -46,6 +46,9 @@ export function IssueCommitsTab({
   const [fetching, setFetching] = useState(false)
   const [sha, setSha] = useState<string | null>(null)
   const [diff, setDiff] = useState<BuildWebCommitDiff | null>(null)
+  // Why its own error: a failed diff must not hide the list, and retry must fetch the diff again.
+  const [diffError, setDiffError] = useState<string | null>(null)
+  const [diffAttempt, setDiffAttempt] = useState(0)
   const [fileIndex, setFileIndex] = useState(0)
 
   const load = useCallback(
@@ -71,16 +74,18 @@ export function IssueCommitsTab({
     }
     let alive = true
     setDiff(null)
+    setDiffError(null)
     setFileIndex(0)
     void callBuildWeb(target, 'commitDiff', { id: issueId, sha })
       .then((next) => alive && setDiff(next))
       .catch(
-        (failure) => alive && setError(failure instanceof Error ? failure.message : String(failure))
+        (failure) =>
+          alive && setDiffError(failure instanceof Error ? failure.message : String(failure))
       )
     return () => {
       alive = false
     }
-  }, [issueId, sha, target])
+  }, [diffAttempt, issueId, sha, target])
   const files = useMemo(() => (diff ? diffFilesOf(diff.diff) : []), [diff])
   const file = files[fileIndex] ?? null
 
@@ -150,6 +155,12 @@ export function IssueCommitsTab({
               'Pick a commit to see its files and the diff: before on the left, after on the right.'
             )}
           </p>
+        ) : diffError ? (
+          <BuildWebListState
+            kind="error"
+            error={diffError}
+            onRetry={() => setDiffAttempt((n) => n + 1)}
+          />
         ) : !diff ? (
           <BuildWebListState kind="loading" />
         ) : (

@@ -1,10 +1,10 @@
-import type { BuildWebStatus } from '../../../../../shared/build-web-types'
+import type { BuildWebIssueStatus, BuildWebStatus } from '../../../../../shared/build-web-types'
 import type { BuildWebRun } from '../../../../../shared/build-web-run-types'
 
 // After build-web's cardFacts.ts: the card's one-step status move and the run's image tally.
 
-export function nextStatus(status: BuildWebStatus, subtask: boolean): BuildWebStatus | null {
-  if (status === 'done' || status === 'wontfix') {
+export function nextStatus(status: BuildWebIssueStatus, subtask: boolean): BuildWebStatus | null {
+  if (status === 'done' || status === 'wontfix' || status === 'unknown') {
     return null
   }
   if (status === 'inprogress') {

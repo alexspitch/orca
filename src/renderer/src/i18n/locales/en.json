@@ -20205,7 +20205,9 @@
       "status": "Status",
       "priority": "Prio",
       "release": "Release",
-      "marks": "Marks"
+      "marks": "Marks",
+      "shownOf": "{{shown}} of {{total}}",
+      "loadMore": "Load more"
     },
     "state": {
       "loading": "Loading tasks…",
@@ -20233,7 +20235,8 @@
       "testing": "Testing",
       "testingExternal": "External testing",
       "done": "Done",
-      "wontfix": "Won't fix"
+      "wontfix": "Won't fix",
+      "unknown": "Unknown"
     },
     "view": {
       "mine": "Mine",
@@ -20352,7 +20355,8 @@
       "held": "Already held by a session: {{list}}. Starting replaces it.",
       "cancel": "Cancel",
       "start": "Start session",
-      "claude": "Claude Code"
+      "claude": "Claude Code",
+      "unknownProduct": "Orca does not know the product of {{keys}}."
     },
     "session": {
       "label": "Agent session",
@@ -20419,6 +20423,9 @@
       "save": "Save",
       "note": "From the task’s build. A saved guide is written to the {{key}} card as a comment.",
       "noJira": "The task has no Jira issue."
+    },
+    "product": {
+      "unknown": "Unknown"
     }
   }
 }

@@ -4,8 +4,9 @@ import {
   type BuildWebComment,
   type BuildWebIssueDetail,
   type BuildWebIssueRow,
-  type BuildWebProduct,
-  type BuildWebStatus
+  type BuildWebIssueProduct,
+  type BuildWebIssueStatus,
+  type BuildWebProduct
 } from '../../shared/build-web-types'
 import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 
@@ -16,12 +17,12 @@ const SURFACES: readonly BuildWebAgentSession['surface_kind'][] = [
   'unknown'
 ]
 
-function productOf(value: unknown): BuildWebProduct {
-  return PRODUCTS.find((p) => p === value) ?? 'tools'
+function productOf(value: unknown): BuildWebIssueProduct {
+  return PRODUCTS.find((p) => p === value) ?? 'unknown'
 }
 
-function statusOf(value: unknown): BuildWebStatus {
-  return BUILD_WEB_STATUSES.find((s) => s === value) ?? 'todo'
+function statusOf(value: unknown): BuildWebIssueStatus {
+  return BUILD_WEB_STATUSES.find((s) => s === value) ?? 'unknown'
 }
 
 function agentSessionOf(value: unknown): BuildWebAgentSession | null {
@@ -72,7 +73,7 @@ export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | 
     jira_key: textOrNull(v.jira_key),
     updated_at: textOf(v.updated_at),
     agent_session: agentSessionOf(v.agent_session),
-    url: buildWebIssueUrl(baseUrl, v.id, product)
+    url: buildWebIssueUrl(baseUrl, v.id, textOf(v.product))
   }
 }
 

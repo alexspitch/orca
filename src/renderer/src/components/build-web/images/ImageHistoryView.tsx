@@ -145,21 +145,30 @@ export function ImageHistoryView({
           counts={data?.counts.dists ?? {}}
           selected={dists}
           label={(d) => d}
-          onToggle={(d) => setDists(toggled(dists, d))}
+          onToggle={(d) => {
+            setDists(toggled(dists, d))
+            setPage(0)
+          }}
         />
         <FilterChips
           options={PUSHED}
           counts={data?.counts.pushed ?? {}}
           selected={pushed}
           label={pushedLabel}
-          onToggle={(v) => setPushed(toggled(pushed, v))}
+          onToggle={(v) => {
+            setPushed(toggled(pushed, v))
+            setPage(0)
+          }}
         />
         <FilterChips
           options={STATUSES}
           counts={data?.counts.statuses ?? {}}
           selected={statuses}
           label={buildStatusLabel}
-          onToggle={(s) => setStatuses(toggled(statuses, s))}
+          onToggle={(s) => {
+            setStatuses(toggled(statuses, s))
+            setPage(0)
+          }}
         />
       </div>
       {error ? (

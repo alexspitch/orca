@@ -65,7 +65,8 @@ describe('issue rows', () => {
       product: 'xx',
       priority: 'high'
     })
-    expect(row).toMatchObject({ status: 'todo', product: 'tools', priority: 3 })
+    expect(row).toMatchObject({ status: 'unknown', product: 'unknown', priority: 3 })
+    expect(row?.url).toBe('https://bw.test/tms/issues/abc?product=xx')
     expect(issueRowOf('https://bw.test', { title: 'no id' })).toBeNull()
     expect(
       issueRowOf('https://bw.test', { ...raw, agent_session: { surface_kind: 'window' } })

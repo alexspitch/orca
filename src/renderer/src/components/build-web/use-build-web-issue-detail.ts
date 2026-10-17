@@ -28,29 +28,34 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
   const { target } = useBuildWebTarget()
   const confirm = useConfirmationDialog()
   const patchRow = useBuildWebStore((s) => s.patchIssue)
-  const [detail, setDetail] = useState<BuildWebIssueDetail | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [loaded, setDetail] = useState<BuildWebIssueDetail | null>(null)
+  const [failed, setFailed] = useState<{ id: string; message: string } | null>(null)
+  // Why: another task's card must not show or stay editable while this one loads — save acts on it.
+  const detail = loaded && loaded.id === id ? loaded : null
+  const error = failed && failed.id === id ? failed.message : null
   const [assignees, setAssignees] = useState<BuildWebUser[]>([])
   const [versions, setVersions] = useState<BuildWebVersion[]>([])
   const [saving, setSaving] = useState(false)
   const generation = useRef(0)
 
   const load = useCallback(async () => {
+    // Why: bump even with no id, so a late reply for the task just closed is dropped.
+    const mine = ++generation.current
     if (!id) {
-      setDetail(null)
       return
     }
-    const mine = ++generation.current
     try {
       const next = await callBuildWeb(target, 'getIssue', { id })
       if (mine !== generation.current) {
         return
       }
       setDetail(next)
-      setError(null)
+      setFailed(null)
       const [users, releases] = await Promise.all([
         callBuildWeb(target, 'listAssignees').catch(() => []),
-        callBuildWeb(target, 'listVersions', { product: next.product }).catch(() => [])
+        next.product === 'unknown'
+          ? []
+          : callBuildWeb(target, 'listVersions', { product: next.product }).catch(() => [])
       ])
       if (mine === generation.current) {
         setAssignees(users)
@@ -58,7 +63,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       }
     } catch (failure) {
       if (mine === generation.current) {
-        setError(failure instanceof Error ? failure.message : String(failure))
+        setFailed({ id, message: failure instanceof Error ? failure.message : String(failure) })
       }
     }
   }, [id, target])

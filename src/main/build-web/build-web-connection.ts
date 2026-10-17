@@ -77,8 +77,14 @@ export function getBuildWebStatus(): BuildWebConnectionStatus {
 
 export type BuildWebCredential = { baseUrl: string; token: string }
 
-/** The stored server and token, decrypting on first use; throws when not connected. */
-export function requireBuildWebCredential(): BuildWebCredential {
+/**
+ * The stored server and token, decrypting on first use; throws when not connected. `background`
+ * callers (the sidebar badge) never retry a decrypt that already failed — it may prompt again.
+ */
+export function requireBuildWebCredential(options?: { background?: true }): BuildWebCredential {
+  if (options?.background && getBuildWebCredentialError()) {
+    throw new BuildWebApiError('build-web token is locked', 401)
+  }
   const metadata = getStoredBuildWebMetadata()
   const token = metadata ? loadBuildWebToken(metadata.baseUrl) : null
   if (!metadata || !token) {

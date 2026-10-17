@@ -19,6 +19,9 @@ export const BUILD_WEB_STATUSES = [
   'wontfix'
 ] as const
 export type BuildWebStatus = (typeof BUILD_WEB_STATUSES)[number]
+/** A status or product this Orca does not know yet: shown as is, never guessed into a known one. */
+export type BuildWebIssueStatus = BuildWebStatus | 'unknown'
+export type BuildWebIssueProduct = BuildWebProduct | 'unknown'
 
 /** What a subtask may move to — the console refuses the rest. */
 export const BUILD_WEB_SUBTASK_STATUSES: readonly BuildWebStatus[] = [
@@ -65,10 +68,10 @@ export type BuildWebAgentSession = {
 export type BuildWebIssueRow = {
   id: string
   key: string
-  product: BuildWebProduct
+  product: BuildWebIssueProduct
   title: string
   type: string
-  status: BuildWebStatus
+  status: BuildWebIssueStatus
   priority: number
   parent_id: string | null
   parent_key: string | null
@@ -108,6 +111,7 @@ export type BuildWebIssueQuery = {
   status?: BuildWebStatus[]
   product?: BuildWebProduct[]
   limit?: number
+  offset?: number
 }
 
 export type BuildWebIssuePage = { issues: BuildWebIssueRow[]; total: number }
@@ -123,7 +127,7 @@ export type BuildWebIssuePatch = Partial<{
 
 export type BuildWebMutationResult<T> =
   | { ok: true; value: T }
-  | { ok: false; error: string; status?: number }
+  | { ok: false; error: string; status?: number; routeMissing?: boolean }
 
 export type BuildWebUser = { email: string; name: string }
 export type BuildWebVersion = { id: string; name: string; branch: string }

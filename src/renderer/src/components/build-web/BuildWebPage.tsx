@@ -16,6 +16,7 @@ import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebIssueList, useBuildWebStatus, useBuildWebTarget } from './use-build-web-data'
+import { useBuildWebPageEscape } from './use-build-web-page-escape'
 import { BuildWebConnect } from './BuildWebConnect'
 import { BuildWebFilters } from './BuildWebFilters'
 import { BuildWebIssueList } from './BuildWebIssueList'
@@ -43,7 +44,7 @@ export default function BuildWebPage(): React.JSX.Element {
   const closePage = useAppStore((s) => s.closeBuildWebPage)
   const { target, contextKey } = useBuildWebTarget()
   const { refreshStatus } = useBuildWebStatus()
-  const { reload } = useBuildWebIssueList()
+  const { reload, loadMore } = useBuildWebIssueList()
   const status = useBuildWebStore((s) => (s.contextKey === contextKey ? s.status : null))
   const loading = useBuildWebStore((s) => s.loading)
   const issues = useBuildWebStore((s) => s.issues)
@@ -56,30 +57,16 @@ export default function BuildWebPage(): React.JSX.Element {
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const [taking, setTaking] = useState<BuildWebIssueRow[] | null>(null)
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent): void {
-      const target = event.target
-      if (event.key !== 'Escape' || event.defaultPrevented || !(target instanceof HTMLElement)) {
-        return
-      }
-      if (target.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) {
-        return
-      }
-      event.preventDefault()
-      const current = useBuildWebStore.getState()
-      if (current.fullScreen) {
-        current.setFullScreen(false)
-        return
-      }
-      if (current.openIssueId) {
-        openIssue(null)
-        return
-      }
+  useBuildWebPageEscape(() => {
+    const current = useBuildWebStore.getState()
+    if (current.fullScreen) {
+      current.setFullScreen(false)
+    } else if (current.openIssueId) {
+      openIssue(null)
+    } else {
       closePage()
     }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [closePage, openIssue])
+  })
 
   const toggleFavorite = async (issue: BuildWebIssueRow): Promise<void> => {
     const on = !issue.favorite
@@ -171,7 +158,10 @@ export default function BuildWebPage(): React.JSX.Element {
           ) : issues.length === 0 ? (
             <BuildWebListState kind={loading ? 'loading' : 'empty'} />
           ) : (
-            <BuildWebIssueList onFavorite={(issue) => void toggleFavorite(issue)} />
+            <BuildWebIssueList
+              onFavorite={(issue) => void toggleFavorite(issue)}
+              onLoadMore={loadMore}
+            />
           )}
           <BuildWebSelectionBar onTakeToWork={setTaking} />
         </>

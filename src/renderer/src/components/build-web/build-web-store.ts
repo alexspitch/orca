@@ -33,6 +33,7 @@ type BuildWebState = {
   issues: BuildWebIssueRow[]
   total: number
   loading: boolean
+  loadingMore: boolean
   error: string | null
   selected: ReadonlySet<string>
   openIssueId: string | null
@@ -47,6 +48,8 @@ type BuildWebState = {
   setProduct: (product: BuildWebProduct | 'all') => void
   setLoading: () => void
   setIssues: (issues: BuildWebIssueRow[], total: number) => void
+  setLoadingMore: (loadingMore: boolean) => void
+  appendIssues: (issues: BuildWebIssueRow[], total: number) => void
   setError: (error: string) => void
   patchIssue: (id: string, patch: Partial<BuildWebIssueRow>) => void
   toggleSelected: (id: string) => void
@@ -66,6 +69,7 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   issues: [],
   total: 0,
   loading: false,
+  loadingMore: false,
   error: null,
   selected: new Set(),
   openIssueId: null,
@@ -89,7 +93,18 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
       // Why: a selection must not hold tasks the list no longer shows — Take to work would send them.
       const shown = new Set(issues.map((issue) => issue.id))
       const selected = new Set([...state.selected].filter((id) => shown.has(id)))
-      return { issues, total, loading: false, error: null, selected }
+      return { issues, total, loading: false, loadingMore: false, error: null, selected }
+    }),
+  setLoadingMore: (loadingMore) => set({ loadingMore }),
+  appendIssues: (more, total) =>
+    set((state) => {
+      // Why: a task updated between pages moves up and would otherwise appear twice.
+      const shown = new Set(state.issues.map((issue) => issue.id))
+      return {
+        issues: [...state.issues, ...more.filter((issue) => !shown.has(issue.id))],
+        total,
+        loadingMore: false
+      }
     }),
   setError: (error) => set({ loading: false, error }),
   patchIssue: (id, patch) =>

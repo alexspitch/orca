@@ -34,6 +34,9 @@ export function issueListQuery(query: BuildWebIssueQuery): string {
     params.set('product', query.product.join(','))
   }
   params.set('limit', String(Math.min(Math.max(query.limit ?? LIST_LIMIT_MAX, 1), LIST_LIMIT_MAX)))
+  if (query.offset) {
+    params.set('offset', String(query.offset))
+  }
   return params.toString()
 }
 

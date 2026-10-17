@@ -1,14 +1,16 @@
 import type {
-  BuildWebProduct,
-  BuildWebStatus,
+  BuildWebIssueProduct,
+  BuildWebIssueStatus,
   BuildWebView
 } from '../../../../shared/build-web-types'
 import { translate } from '@/i18n/i18n'
 
 // Labels are looked up when drawn, never cached at import: the language can change at runtime.
 
-export function statusLabel(status: BuildWebStatus): string {
+export function statusLabel(status: BuildWebIssueStatus): string {
   switch (status) {
+    case 'unknown':
+      return translate('buildWeb.status.unknown', 'Unknown')
     case 'todo':
       return translate('buildWeb.status.todo', 'To do')
     case 'planned':
@@ -47,12 +49,15 @@ export function viewLabel(view: BuildWebView): string {
   }
 }
 
-export function productLabel(product: BuildWebProduct): string {
+export function productLabel(product: BuildWebIssueProduct): string {
+  if (product === 'unknown') {
+    return translate('buildWeb.product.unknown', 'Unknown')
+  }
   return product === 'storage' ? 'Storage' : product === 'tools' ? 'Tools' : product.toUpperCase()
 }
 
 /** A status chip tone from existing tokens — closed work recedes, a failed build stands out. */
-export function statusTone(status: BuildWebStatus): 'secondary' | 'outline' | 'destructive' {
+export function statusTone(status: BuildWebIssueStatus): 'secondary' | 'outline' | 'destructive' {
   if (status === 'build_failed') {
     return 'destructive'
   }

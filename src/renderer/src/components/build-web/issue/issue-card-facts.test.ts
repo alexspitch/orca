@@ -10,6 +10,7 @@ describe('card facts', () => {
     expect(nextStatus('build_failed', false)).toBe('deploying')
     expect(nextStatus('testing_external', false)).toBe('done')
     expect(nextStatus('wontfix', false)).toBeNull()
+    expect(nextStatus('unknown', false)).toBeNull()
   })
 
   it('shows run tabs for build or history, and writes only for build', () => {

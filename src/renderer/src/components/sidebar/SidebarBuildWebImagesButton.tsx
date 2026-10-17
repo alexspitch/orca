@@ -8,7 +8,9 @@ import { callBuildWeb } from '../build-web/build-web-client'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 
-const POLL_MS = 30_000
+const POLL_MS = 60_000
+// Why: not connected, no access or a locked token will not fix itself within a minute.
+const FAILED_POLL_MS = 5 * 60_000
 
 /** Images building right now in build-web, or null when unknown (not connected, no access). */
 function useRunningImageCount(enabled: boolean): number | null {
@@ -20,27 +22,31 @@ function useRunningImageCount(enabled: boolean): number | null {
       return
     }
     let alive = true
+    let timer = 0
     const read = async (): Promise<void> => {
+      let delay = POLL_MS
       // Why: a hidden window has nobody to show the count to; skip the console round-trip.
-      if (document.visibilityState === 'hidden') {
-        return
+      if (document.visibilityState !== 'hidden') {
+        try {
+          const summary = await callBuildWeb(target, 'imageSummary')
+          if (alive) {
+            setRunning(summary.running)
+          }
+        } catch {
+          delay = FAILED_POLL_MS
+          if (alive) {
+            setRunning(null)
+          }
+        }
       }
-      try {
-        const summary = await callBuildWeb(target, 'imageSummary')
-        if (alive) {
-          setRunning(summary.running)
-        }
-      } catch {
-        if (alive) {
-          setRunning(null)
-        }
+      if (alive) {
+        timer = window.setTimeout(() => void read(), delay)
       }
     }
     void read()
-    const timer = window.setInterval(() => void read(), POLL_MS)
     return () => {
       alive = false
-      window.clearInterval(timer)
+      window.clearTimeout(timer)
     }
   }, [enabled, target])
   return running

@@ -1,5 +1,6 @@
 import { Bot, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -83,11 +84,15 @@ function IssueRow({
 }
 
 export function BuildWebIssueList({
-  onFavorite
+  onFavorite,
+  onLoadMore
 }: {
   onFavorite: (issue: BuildWebIssueRow) => void
+  onLoadMore: () => void
 }): React.JSX.Element {
   const issues = useBuildWebStore((s) => s.issues)
+  const total = useBuildWebStore((s) => s.total)
+  const loadingMore = useBuildWebStore((s) => s.loadingMore)
   const selected = useBuildWebStore((s) => s.selected)
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const toggleSelected = useBuildWebStore((s) => s.toggleSelected)
@@ -125,6 +130,17 @@ export function BuildWebIssueList({
           ))}
         </tbody>
       </table>
+      {total > issues.length ? (
+        <div className="flex items-center justify-center gap-3 py-3 text-xs text-muted-foreground">
+          {translate('buildWeb.list.shownOf', '{{shown}} of {{total}}', {
+            shown: issues.length,
+            total
+          })}
+          <Button variant="outline" size="sm" disabled={loadingMore} onClick={onLoadMore}>
+            {translate('buildWeb.list.loadMore', 'Load more')}
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }
