@@ -14,6 +14,7 @@ import { IntegrationCardDetails, IntegrationCardShell } from './integration-card
 export function BuildWebIntegrationCard(): React.JSX.Element {
   const { target } = useBuildWebTarget()
   const showButton = useAppStore((s) => s.settings?.showBuildWebButton !== false)
+  const showImagesButton = useAppStore((s) => s.settings?.showBuildWebImagesButton !== false)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [status, setStatus] = useState<BuildWebConnectionStatus | null>(null)
   const [replacing, setReplacing] = useState(false)
@@ -123,6 +124,25 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
           <Switch
             checked={showButton}
             onCheckedChange={(checked) => void updateSettings({ showBuildWebButton: checked })}
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>
+            <span className="block">
+              {translate('buildWeb.settings.showImagesInSidebar', 'Show Images in sidebar')}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {translate(
+                'buildWeb.settings.showImagesInSidebarHint',
+                'With the number of images building right now'
+              )}
+            </span>
+          </span>
+          <Switch
+            checked={showImagesButton}
+            onCheckedChange={(checked) =>
+              void updateSettings({ showBuildWebImagesButton: checked })
+            }
           />
         </label>
       </IntegrationCardDetails>

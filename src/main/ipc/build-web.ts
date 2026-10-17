@@ -8,6 +8,9 @@ import {
   BuildWebFavoriteParams,
   BuildWebIssueId,
   BuildWebIssueQueryParams,
+  BuildWebImageHistoryParams,
+  BuildWebImagePageParams,
+  BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
   BuildWebProviderSessionParams,
   BuildWebVersionsParams
@@ -30,6 +33,12 @@ export function registerBuildWebHandlers(): void {
   ipcMain.handle('buildWeb:disconnect', () => commands.buildWebDisconnect())
   ipcMain.handle('buildWeb:testConnection', () => commands.buildWebTestConnection())
   ipcMain.handle('buildWeb:listAssignees', () => commands.buildWebListAssignees())
+  ipcMain.handle('buildWeb:imageSummary', () => commands.buildWebImageSummary())
+  handle('listImages', BuildWebImagePageParams, (args) => commands.buildWebListImages(args))
+  handle('listImageBuilds', BuildWebImageHistoryParams, (args) =>
+    commands.buildWebListImageBuilds(args)
+  )
+  handle('pushImages', BuildWebImagePushParams, (args) => commands.buildWebPushImages(args))
   handle('connect', BuildWebConnect, (args) => commands.buildWebConnect(args))
   handle('listIssues', BuildWebIssueQueryParams, (args) => commands.buildWebListIssues(args))
   handle('getIssue', BuildWebIssueId, (args) => commands.buildWebGetIssue(args))

@@ -20257,10 +20257,55 @@
       "searchTitle": "Build Web Integration",
       "searchDescription": "Connect build-web, replace its API token, or show the Issues item in the sidebar.",
       "searchKeyword": "build-web",
-      "searchIssues": "issues"
+      "searchIssues": "issues",
+      "showImagesInSidebar": "Show Images in sidebar",
+      "showImagesInSidebarHint": "With the number of images building right now"
     },
     "sidebar": {
-      "issues": "Issues"
+      "issues": "Issues",
+      "images": "Images",
+      "imagesBuilding": "{{label}}, {{count}} building"
+    },
+    "images": {
+      "title": "Images",
+      "inRegistry": "in registry",
+      "notPushed": "not pushed",
+      "allImages": "All images",
+      "buildInBuildWeb": "Build in build-web",
+      "searchTag": "Search by tag",
+      "version": "Product version",
+      "allVersions": "All versions",
+      "found": "{{shown}} of {{of}}",
+      "noBuilds": "No builds of this image match.",
+      "tag": "Tag",
+      "versionShort": "Version",
+      "branch": "Branch",
+      "builtAt": "Built",
+      "status": "Status",
+      "log": "Log",
+      "registry": "Registry",
+      "pick": "Pick {{image}}",
+      "other": "Other",
+      "search": "Search by image or tag",
+      "reset": "Reset",
+      "noneFiltered": "Nothing matches these filters.",
+      "none": "No images.",
+      "image": "Image",
+      "product": "Product",
+      "lastBuild": "Last build",
+      "pushStarted": "Push started — build-web publishes the tags.",
+      "pushCount": "Push to registry ({{count}})",
+      "push": "Push to registry",
+      "pushWhat": "What to publish",
+      "pushBuildTag": "Build tag only",
+      "pushBoth": "Build tag and main tag",
+      "pushMain": "Main tag",
+      "success": "success",
+      "failed": "failed",
+      "running": "running",
+      "pushed": "pushed",
+      "buildTagOnly": "build tag only",
+      "dist": "dist"
     }
   }
 }

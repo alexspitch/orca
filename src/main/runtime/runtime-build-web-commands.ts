@@ -7,6 +7,9 @@ import type {
   BuildWebFavoriteParams,
   BuildWebIssueId,
   BuildWebIssueQueryParams,
+  BuildWebImageHistoryParams,
+  BuildWebImagePageParams,
+  BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
   BuildWebProviderSessionParams,
   BuildWebVersionsParams
@@ -31,6 +34,12 @@ import {
   setBuildWebFavorite,
   updateBuildWebIssue
 } from '../build-web/build-web-issue-write'
+import {
+  buildWebImageSummary,
+  listBuildWebImageBuilds,
+  listBuildWebImages,
+  pushBuildWebImages
+} from '../build-web/build-web-images'
 
 type In<T extends z.ZodTypeAny> = z.infer<T>
 
@@ -90,5 +99,21 @@ export class RuntimeBuildWebCommands {
 
   buildWebClearAgentSession(args: In<typeof BuildWebClearSessionParams>) {
     return clearBuildWebAgentSession(args.id, args.surfaceId)
+  }
+
+  buildWebImageSummary() {
+    return buildWebImageSummary()
+  }
+
+  buildWebListImages(args: In<typeof BuildWebImagePageParams>) {
+    return listBuildWebImages(args)
+  }
+
+  buildWebListImageBuilds(args: In<typeof BuildWebImageHistoryParams>) {
+    return listBuildWebImageBuilds(args)
+  }
+
+  buildWebPushImages(args: In<typeof BuildWebImagePushParams>) {
+    return pushBuildWebImages(args)
   }
 }

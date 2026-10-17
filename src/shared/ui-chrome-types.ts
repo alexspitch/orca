@@ -129,3 +129,5 @@ export type TopLevelView =
   | 'mobile'
   /** build-web's tasks and images (the sidebar's «Issues»). */
   | 'build-web'
+  /** build-web's images, a sidebar item of its own. */
+  | 'build-web-images'

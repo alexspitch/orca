@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { SetupGuideSidebarEntry } from './SetupGuideSidebarEntry'
 import { SidebarTaskNavButton } from './SidebarTaskNavButton'
 import { SidebarBuildWebButton } from './SidebarBuildWebButton'
+import { SidebarBuildWebImagesButton } from './SidebarBuildWebImagesButton'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 import { translate } from '@/i18n/i18n'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
@@ -121,6 +122,7 @@ const SidebarNav = React.memo(function SidebarNav() {
       <SetupGuideSidebarEntry />
       <SidebarTaskNavButton />
       <SidebarBuildWebButton />
+      <SidebarBuildWebImagesButton />
       {showArtifactsButton ? (
         <ContextMenu>
           <ContextMenuTrigger asChild>

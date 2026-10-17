@@ -12,6 +12,14 @@ import type {
   BuildWebUser,
   BuildWebVersion
 } from '../../shared/build-web-types'
+import type {
+  BuildWebImageHistory,
+  BuildWebImageHistoryArgs,
+  BuildWebImagePage,
+  BuildWebImagePageArgs,
+  BuildWebImagePushArgs,
+  BuildWebImageSummary
+} from '../../shared/build-web-image-types'
 
 export type BuildWebSessionArgs = {
   surface_kind: 'terminal' | 'structured' | 'unknown'
@@ -56,4 +64,10 @@ export type BuildWebApi = {
     id: string
     surfaceId: string
   }) => Promise<BuildWebMutationResult<true>>
+  imageSummary: () => Promise<BuildWebImageSummary>
+  listImages: (args: BuildWebImagePageArgs & { refresh?: boolean }) => Promise<BuildWebImagePage>
+  listImageBuilds: (
+    args: BuildWebImageHistoryArgs & { refresh?: boolean }
+  ) => Promise<BuildWebImageHistory>
+  pushImages: (args: BuildWebImagePushArgs) => Promise<BuildWebMutationResult<true>>
 }

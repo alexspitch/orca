@@ -70,3 +70,37 @@ export const BuildWebProviderSessionParams = z.object({
 })
 
 export const BuildWebClearSessionParams = z.object({ id: Id, surfaceId: ShortText })
+
+const ImageFilters = {
+  q: z.string().max(200).optional(),
+  products: z.array(z.string().max(20)).max(10).optional(),
+  dists: z.array(z.string().max(20)).max(5).optional(),
+  version: z.string().max(40).optional(),
+  page: z.number().int().min(0).max(100_000),
+  pageSize: z.number().int().min(1).max(200),
+  refresh: z.boolean().optional()
+}
+
+export const BuildWebImagePageParams = z.object(ImageFilters)
+
+export const BuildWebImageHistoryParams = z.object({
+  ...ImageFilters,
+  image: required('Missing image', 300),
+  pushed: z
+    .array(z.enum(['yes', 'no']))
+    .max(2)
+    .optional(),
+  statuses: z
+    .array(z.enum(['success', 'failed', 'running']))
+    .max(3)
+    .optional()
+})
+
+export const BuildWebImagePushParams = z.object({
+  runId: Id,
+  combos: z
+    .array(z.object({ image: required('Missing image', 300), dist: ShortText, branch: ShortText }))
+    .min(1)
+    .max(200),
+  moveMainTag: z.boolean()
+})

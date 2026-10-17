@@ -15,5 +15,9 @@ export const buildWebApi = {
   addComment: (args) => ipcRenderer.invoke('buildWeb:addComment', args),
   setAgentSession: (args) => ipcRenderer.invoke('buildWeb:setAgentSession', args),
   noteProviderSession: (args) => ipcRenderer.invoke('buildWeb:noteProviderSession', args),
-  clearAgentSession: (args) => ipcRenderer.invoke('buildWeb:clearAgentSession', args)
+  clearAgentSession: (args) => ipcRenderer.invoke('buildWeb:clearAgentSession', args),
+  imageSummary: () => ipcRenderer.invoke('buildWeb:imageSummary'),
+  listImages: (args) => ipcRenderer.invoke('buildWeb:listImages', args),
+  listImageBuilds: (args) => ipcRenderer.invoke('buildWeb:listImageBuilds', args),
+  pushImages: (args) => ipcRenderer.invoke('buildWeb:pushImages', args)
 } satisfies PreloadApi['buildWeb']

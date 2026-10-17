@@ -8,4 +8,6 @@ export type SidebarButtonSettings = {
   showMobileButton?: boolean
   /** The «Issues» shortcut to build-web's tasks; Settings → Integrations shows it again. */
   showBuildWebButton?: boolean
+  /** The «Images» shortcut to build-web's images, with the count of builds running now. */
+  showBuildWebImagesButton?: boolean
 }

@@ -100,6 +100,16 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
           state.activeView === 'build-web' ? state.previousViewBeforeBuildWeb : state.activeView
       })),
     closeBuildWebPage: () => set((state) => ({ activeView: state.previousViewBeforeBuildWeb })),
+    openBuildWebImagesPage: () =>
+      set((state) => ({
+        activeView: 'build-web-images',
+        previousViewBeforeBuildWebImages:
+          state.activeView === 'build-web-images'
+            ? state.previousViewBeforeBuildWebImages
+            : state.activeView
+      })),
+    closeBuildWebImagesPage: () =>
+      set((state) => ({ activeView: state.previousViewBeforeBuildWebImages })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

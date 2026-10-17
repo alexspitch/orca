@@ -7,6 +7,9 @@ import {
   BuildWebFavoriteParams,
   BuildWebIssueId,
   BuildWebIssueQueryParams,
+  BuildWebImageHistoryParams,
+  BuildWebImagePageParams,
+  BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
   BuildWebProviderSessionParams,
   BuildWebVersionsParams
@@ -97,5 +100,29 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebClearSessionParams,
     handler: async (params, { runtime }) => runtime.buildWebClearAgentSession(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.imageSummary',
+    permission: 'workspace',
+    params: null,
+    handler: async (_params, { runtime }) => runtime.buildWebImageSummary()
+  }),
+  defineMethod({
+    name: 'buildWeb.listImages',
+    permission: 'workspace',
+    params: BuildWebImagePageParams,
+    handler: async (params, { runtime }) => runtime.buildWebListImages(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.listImageBuilds',
+    permission: 'workspace',
+    params: BuildWebImageHistoryParams,
+    handler: async (params, { runtime }) => runtime.buildWebListImageBuilds(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.pushImages',
+    permission: 'workspace',
+    params: BuildWebImagePushParams,
+    handler: async (params, { runtime }) => runtime.buildWebPushImages(params)
   })
 ]

@@ -124,6 +124,7 @@ export type UiViewHistory =
   | 'artifacts'
   | 'mobile'
   | 'build-web'
+  | 'build-web-images'
 
 export type UISliceCore = {
   sidebarOpen: boolean
@@ -165,6 +166,7 @@ export type UISliceCore = {
   previousViewBeforeMobile: Exclude<UiViewHistory, 'mobile'>
   previousViewBeforeArtifacts: Exclude<UiViewHistory, 'artifacts'>
   previousViewBeforeBuildWeb: Exclude<UiViewHistory, 'build-web'>
+  previousViewBeforeBuildWebImages: Exclude<UiViewHistory, 'build-web-images'>
   setActiveView: (view: UISliceCore['activeView']) => void
   taskPageData: TaskPageData
   taskResumeState: TaskResumeState | undefined
@@ -208,6 +210,8 @@ export type UISliceCore = {
   closeArtifactsPage: () => void
   openBuildWebPage: () => void
   closeBuildWebPage: () => void
+  openBuildWebImagesPage: () => void
+  closeBuildWebImagesPage: () => void
   openMobilePage: () => void
   closeMobilePage: () => void
   setNewWorkspaceDraft: (draft: NonNullable<UISliceCore['newWorkspaceDraft']>) => void
