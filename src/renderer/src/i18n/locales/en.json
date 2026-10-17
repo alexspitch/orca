@@ -20175,5 +20175,92 @@
       "clear": "Clear Jira favourite",
       "activeLabel": "Jira favourites: {{name}}"
     }
+  },
+  "buildWeb": {
+    "connect": {
+      "url": "build-web address",
+      "token": "API token",
+      "tokenHint": "Issue a dedicated token for Orca in build-web: the key icon in the header → My API tokens. Everyone using this Orca host acts as that account.",
+      "connecting": "Connecting…",
+      "submit": "Connect",
+      "title": "Connect build-web",
+      "description": "See your build-web tasks and images here, and hand tasks to an agent in a worktree.",
+      "tokenPlaceholder": "bwt_…"
+    },
+    "filters": {
+      "status": "Status",
+      "open": "Open",
+      "anyStatus": "Any status",
+      "product": "Product",
+      "allProducts": "All products",
+      "search": "Search by key or title"
+    },
+    "list": {
+      "select": "Select {{key}}",
+      "session": "Agent session",
+      "favorite": "Favorite {{key}}",
+      "selection": "Selection",
+      "key": "Key",
+      "title": "Title",
+      "status": "Status",
+      "priority": "Prio",
+      "release": "Release",
+      "marks": "Marks"
+    },
+    "state": {
+      "loading": "Loading tasks…",
+      "retry": "Try again",
+      "empty": "No tasks in {{view}} with these filters."
+    },
+    "page": {
+      "title": "Issues",
+      "refresh": "Refresh",
+      "more": "More",
+      "recheck": "Check connection",
+      "disconnect": "Disconnect"
+    },
+    "client": {
+      "updateServer": "This Orca server does not support build-web yet. Update the server to use Issues."
+    },
+    "status": {
+      "todo": "To do",
+      "planned": "Planned",
+      "inprogress": "In progress",
+      "paused": "Paused",
+      "awaitingResponse": "Awaiting response",
+      "deploying": "Deploying",
+      "buildFailed": "Build failed",
+      "testing": "Testing",
+      "testingExternal": "External testing",
+      "done": "Done",
+      "wontfix": "Won't fix"
+    },
+    "view": {
+      "mine": "Mine",
+      "ai": "For AI",
+      "favorite": "Favorites",
+      "all": "All"
+    },
+    "settings": {
+      "testOk": "Connected.",
+      "description": "build-web tasks and images in the Issues page; hand tasks to an agent in a worktree.",
+      "connected": "Connected",
+      "notConnected": "Not connected",
+      "test": "Test connection",
+      "replace": "Replace token",
+      "disconnect": "Disconnect",
+      "server": "Server",
+      "account": "Account",
+      "sections": "Sections",
+      "showInSidebar": "Show in sidebar",
+      "showInSidebarHint": "The Issues item next to Tasks",
+      "searchTitle": "Build Web Integration",
+      "searchDescription": "Connect build-web, replace its API token, or show the Issues item in the sidebar.",
+      "searchKeyword": "build-web",
+      "searchIssues": "issues"
+    },
+    "sidebar": {
+      "issues": "Issues"
+    }
   }
 }

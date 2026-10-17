@@ -92,6 +92,14 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         activeView: state.previousViewBeforeArtifacts,
         worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'artifacts')
       })),
+    // Why: no view-history entry — the page has its own modes, and back returns to where it was opened.
+    openBuildWebPage: () =>
+      set((state) => ({
+        activeView: 'build-web',
+        previousViewBeforeBuildWeb:
+          state.activeView === 'build-web' ? state.previousViewBeforeBuildWeb : state.activeView
+      })),
+    closeBuildWebPage: () => set((state) => ({ activeView: state.previousViewBeforeBuildWeb })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

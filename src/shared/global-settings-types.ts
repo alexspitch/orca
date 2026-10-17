@@ -43,6 +43,7 @@ import type {
   TaskViewPresetId
 } from './ui-chrome-types'
 import type { SetupScriptLaunchMode } from './worktree/launch-types'
+import type { SidebarButtonSettings } from './sidebar-button-settings'
 import type { WorktreeVisibilityDefaults } from './repo-types'
 
 export type { WorktreeVisibilityDefaults } from './repo-types'
@@ -50,7 +51,7 @@ export type { WorktreeVisibilityDefaults } from './repo-types'
 /** MiniMax account region used to select the quota endpoint. */
 export type MiniMaxEndpoint = 'overseas' | 'cn'
 
-type GlobalSettingsBase = NativeChatGlobalSettings & DeletePrefs
+type GlobalSettingsBase = NativeChatGlobalSettings & DeletePrefs & SidebarButtonSettings
 
 export type GlobalSettings = GlobalSettingsBase & {
   workspaceDir: string
@@ -271,12 +272,6 @@ export type GlobalSettings = GlobalSettingsBase & {
    *  Renderer-writable only: omitted from the SettingsUpdate RPC schema so a worker
    *  cannot raise its own cap via `orca settings update`. */
   nestedWorkerMaxDepth?: number
-  /** Only toggles the sidebar shortcut; Artifacts stay reachable from Settings. */
-  showArtifactsButton?: boolean
-  /** Only toggles the sidebar shortcut; Skills stay reachable from Settings. */
-  showSkillsButton?: boolean
-  /** Only toggles the sidebar shortcut; Orca Mobile stays reachable from Settings. */
-  showMobileButton?: boolean
   /** Pinned workspaces show in one sidebar location by default; opt in to also show them in their natural groups. */
   showPinnedWorktreesInGroups?: boolean
   /** How Ctrl+Tab picks the next visible tab; optional (older profiles), readers default to MRU. */

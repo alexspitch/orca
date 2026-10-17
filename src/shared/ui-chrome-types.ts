@@ -127,3 +127,5 @@ export type TopLevelView =
   | 'skills'
   | 'artifacts'
   | 'mobile'
+  /** build-web's tasks and images (the sidebar's «Issues»). */
+  | 'build-web'

@@ -157,6 +157,17 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
+    title: translate('buildWeb.settings.searchTitle', 'Build Web Integration'),
+    description: translate(
+      'buildWeb.settings.searchDescription',
+      'Connect build-web, replace its API token, or show the Issues item in the sidebar.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('buildWeb.settings.searchKeyword', 'build-web'),
+      ...translateSearchKeyword('buildWeb.settings.searchIssues', 'issues')
+    ]
+  },
+  {
     title: translate('auto.components.settings.integrations.search.617603509b', 'Jira Integration'),
     description: translate(
       'auto.components.settings.integrations.search.76f6af7c57',
