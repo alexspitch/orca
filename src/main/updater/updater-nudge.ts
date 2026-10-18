@@ -2,12 +2,14 @@ import { app } from 'electron'
 import { is } from '@electron-toolkit/utils'
 import { fetchNudge, shouldApplyNudge } from '../updater-nudge'
 import { NUDGE_ACTIVATION_COOLDOWN_MS, NUDGE_POLL_INTERVAL_MS } from './updater-state'
+import { getCustomUpdateFeed } from './custom-update-feed'
 import { UpdaterBuildSelection } from './updater-build-selection'
 
 /** Polls update campaigns and exposes their dismissal actions. */
 export abstract class UpdaterNudge extends UpdaterBuildSelection {
   protected async checkForUpdateNudge(): Promise<void> {
-    if (!app.isPackaged || is.dev) {
+    // Why: onorca.dev campaigns name upstream versions, which a custom build is never offered.
+    if (!app.isPackaged || is.dev || getCustomUpdateFeed()) {
       return
     }
     if (this.nudgeCheckInFlight) {

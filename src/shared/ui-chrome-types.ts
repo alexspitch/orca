@@ -127,3 +127,11 @@ export type TopLevelView =
   | 'skills'
   | 'artifacts'
   | 'mobile'
+  /** build-web's tasks and images (the sidebar's «Issues»). */
+  | 'build-web'
+  /** build-web's images, a sidebar item of its own. */
+  | 'build-web-images'
+  /** build-web's build trains, read and departed by hand. */
+  | 'build-web-trains'
+  /** A project's git log across all branches, as WebStorm's Git › Log. */
+  | 'git-log'

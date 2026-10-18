@@ -9,14 +9,19 @@ import { cn } from '@/lib/utils'
 function Checkbox({
   className,
   checked,
+  emphasis = 'default',
   ...props
-}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+}: React.ComponentProps<typeof CheckboxPrimitive.Root> & {
+  /** `strong`: an unchecked box that must read at a glance on a dense table row. */
+  emphasis?: 'default' | 'strong'
+}) {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"
       checked={checked}
       className={cn(
         'peer size-4 shrink-0 rounded-[4px] border border-border bg-background shadow-xs outline-none transition-shadow focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground',
+        emphasis === 'strong' && 'border-muted-foreground/70',
         className
       )}
       {...props}

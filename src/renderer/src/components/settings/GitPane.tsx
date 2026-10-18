@@ -23,6 +23,8 @@ import {
   compareAgainstUpstreamMatchesSearch
 } from './CompareAgainstUpstreamSetting'
 import { getAutoRenameBranchSearchEntries } from './auto-rename-branch-search'
+import { GitLogPageSettings } from '../git-log/GitLogPageSettings'
+import { gitLogSettingsMatchSearch } from '../git-log/git-log-settings-search'
 import {
   KEEP_LOCAL_MAIN_UP_TO_DATE_SECTION_ID,
   getKeepLocalMainUpToDateTitle
@@ -323,6 +325,9 @@ export function GitPane({
         settings={settings}
         updateSettings={updateSettings}
       />
+    ) : null,
+    gitLogSettingsMatchSearch(searchQuery) ? (
+      <GitLogPageSettings key="git-log-page" settings={settings} updateSettings={updateSettings} />
     ) : null,
     shouldShowAutoRenameBranchSetting(searchQuery, hasUnsavedBranchPromptChanges) ? (
       <AutoRenameBranchFromWorkSetting

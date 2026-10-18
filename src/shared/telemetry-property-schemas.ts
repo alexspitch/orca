@@ -134,6 +134,7 @@ export const launchSourceSchema = z.enum([
   'quick_command',
   'tab_bar_quick_launch',
   'task_page',
+  'build_web_page',
   'new_workspace_composer',
   'workspace_jump_palette',
   'shortcut',

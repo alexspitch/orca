@@ -1,8 +1,26 @@
 import type { UISlice, UISliceGet, UISliceSet } from './ui-slice-contract'
 import { rewindHistoryIndexPastView } from '../worktree-nav-history'
+import { createUiGitLogActions } from './ui-slice-git-log-actions'
+
+/** Where a build-web page returns to: another build-web page carries over its own origin. */
+function buildWebOrigin(state: UISlice): UISlice['previousViewBeforeBuildWeb'] {
+  if (state.activeView === 'build-web') {
+    return state.previousViewBeforeBuildWeb
+  }
+  if (state.activeView === 'build-web-images') {
+    return state.previousViewBeforeBuildWebImages
+  }
+  if (state.activeView === 'git-log') {
+    return state.previousViewBeforeGitLog
+  }
+  return state.activeView === 'build-web-trains'
+    ? state.previousViewBeforeBuildWebTrains
+    : state.activeView
+}
 
 export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<UISlice> {
   return {
+    ...createUiGitLogActions(set),
     openActivityPage: () => {
       set((state) => ({
         activeView: 'activity',
@@ -96,6 +114,28 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
         activeView: state.previousViewBeforeArtifacts,
         worktreeNavHistoryIndex: rewindHistoryIndexPastView(state, 'artifacts')
       })),
+    // Why: no view-history entry — the page has its own modes, and back returns to where it was opened.
+    // Moving between Issues and Images carries that origin over, so Escape never bounces between them.
+    openBuildWebPage: () =>
+      set((state) => ({
+        activeView: 'build-web',
+        previousViewBeforeBuildWeb: buildWebOrigin(state)
+      })),
+    closeBuildWebPage: () => set((state) => ({ activeView: state.previousViewBeforeBuildWeb })),
+    openBuildWebImagesPage: () =>
+      set((state) => ({
+        activeView: 'build-web-images',
+        previousViewBeforeBuildWebImages: buildWebOrigin(state)
+      })),
+    closeBuildWebImagesPage: () =>
+      set((state) => ({ activeView: state.previousViewBeforeBuildWebImages })),
+    openBuildWebTrainsPage: () =>
+      set((state) => ({
+        activeView: 'build-web-trains',
+        previousViewBeforeBuildWebTrains: buildWebOrigin(state)
+      })),
+    closeBuildWebTrainsPage: () =>
+      set((state) => ({ activeView: state.previousViewBeforeBuildWebTrains })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

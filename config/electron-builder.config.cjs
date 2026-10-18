@@ -33,6 +33,10 @@ const {
 } = require('./wayland-clipboard-resources.cjs')
 const { writeMacBuildCompatibility } = require('./scripts/mac-build-compatibility.cjs')
 const {
+  resolveCustomUpdateFeed,
+  writeCustomUpdateFeed
+} = require('./scripts/custom-update-feed.cjs')
+const {
   MOBILE_WEB_BUNDLE_DIR,
   assertMobileWebBundleBuilt
 } = require('./scripts/verify-packaged-mobile-web-bundle.cjs')
@@ -109,6 +113,7 @@ const devChannelRepo = isHourlyChannel
     : isAdhocChannel
       ? 'orca-adhoc'
       : null
+const customUpdateFeed = resolveCustomUpdateFeed()
 const appId = 'com.stablyai.orca'
 const featureWallResources = {
   from: 'resources/onboarding/feature-wall',
@@ -448,6 +453,9 @@ module.exports = {
         }
       }
       writeMacBuildCompatibility(resourcesDir, { version, commit, architecture })
+    }
+    if (customUpdateFeed) {
+      writeCustomUpdateFeed(resourcesDir, customUpdateFeed)
     }
     stampPackagedCliVersion(resourcesDir, context.packager.appInfo.version)
     prunePackagedRuntimeNodeModules(resourcesDir, context.electronPlatformName, context.arch)
@@ -799,16 +807,19 @@ module.exports = {
   // on Intel Macs. The beforeBuild hook performs Orca's targeted rebuild and
   // returns false so electron-builder does not rebuild optional cpu-features.
   npmRebuild: true,
-  publish: {
-    provider: 'github',
-    owner: 'stablyai',
-    repo: devChannelRepo ?? 'orca',
-    // Why draft on the main repo: `--publish always` otherwise creates a
-    // public GitHub release as soon as the first platform uploads, and
-    // /releases/latest serves a missing Windows exe. release-cut undrafts
-    // only after every required asset exists.
-    releaseType: devChannelRepo ? 'prerelease' : 'draft'
-  }
+  // Custom builds: latest-*.yml for config/scripts/publish-custom-build.mjs, never a GitHub release.
+  publish: customUpdateFeed
+    ? { provider: 'generic', url: customUpdateFeed.url }
+    : {
+        provider: 'github',
+        owner: 'stablyai',
+        repo: devChannelRepo ?? 'orca',
+        // Why draft on the main repo: `--publish always` otherwise creates a
+        // public GitHub release as soon as the first platform uploads, and
+        // /releases/latest serves a missing Windows exe. release-cut undrafts
+        // only after every required asset exists.
+        releaseType: devChannelRepo ? 'prerelease' : 'draft'
+      }
 }
 
 // Stamp the effective channel version where node-mode CLI code can read it.

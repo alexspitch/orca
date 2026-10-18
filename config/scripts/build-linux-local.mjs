@@ -20,7 +20,11 @@ export function resolveLinuxBuildArch({
   return arch
 }
 
-export function buildLinuxElectronBuilderArgs(arch, extraArgs = []) {
+export function buildLinuxElectronBuilderArgs(
+  arch,
+  extraArgs = [],
+  targets = ['AppImage', 'deb', 'rpm']
+) {
   if (!SUPPORTED_ARCHES.has(arch)) {
     throw new Error(`Unsupported Linux build architecture: ${arch}`)
   }
@@ -30,9 +34,7 @@ export function buildLinuxElectronBuilderArgs(arch, extraArgs = []) {
     '--config',
     'config/electron-builder.config.cjs',
     '--linux',
-    'AppImage',
-    'deb',
-    'rpm',
+    ...targets,
     `--${arch}`,
     ...extraArgs
   ]
@@ -41,6 +43,7 @@ export function buildLinuxElectronBuilderArgs(arch, extraArgs = []) {
 export function runLocalLinuxBuild({
   arch = resolveLinuxBuildArch(),
   extraArgs = [],
+  targets = undefined,
   environment = process.env,
   execFile = execFileSync,
   platform = process.platform,
@@ -53,7 +56,7 @@ export function runLocalLinuxBuild({
     delete env.ORCA_LINUX_ARM64_RELEASE
   }
   const pnpm = platform === 'win32' ? 'pnpm.cmd' : 'pnpm'
-  execFile(pnpm, buildLinuxElectronBuilderArgs(arch, extraArgs), {
+  execFile(pnpm, buildLinuxElectronBuilderArgs(arch, extraArgs, targets), {
     cwd,
     env,
     stdio: 'inherit'

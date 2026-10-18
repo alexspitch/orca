@@ -22,6 +22,10 @@ const ActivityPrototypePage = lazy(() => import('../components/activity/Activity
 const Settings = lazy(() => import('../components/settings/Settings'))
 const SkillsPage = lazy(() => import('../components/skills/SkillsPage'))
 const ArtifactsPage = lazy(() => import('../components/artifacts/ArtifactsPage'))
+const BuildWebPage = lazy(() => import('../components/build-web/BuildWebPage'))
+const BuildWebImagesPage = lazy(() => import('../components/build-web/images/BuildWebImagesPage'))
+const BuildWebTrainsPage = lazy(() => import('../components/build-web/trains/BuildWebTrainsPage'))
+const GitLogPage = lazy(() => import('../components/git-log/GitLogPage'))
 const WorkspaceSpacePage = lazy(() => import('../components/workspace-space/WorkspaceSpacePage'))
 const MobilePage = lazy(() => import('../components/mobile/MobilePage'))
 const Terminal = lazy(() => import('../components/Terminal'))
@@ -71,6 +75,10 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
       {activeView === 'settings' ? <Settings /> : null}
       {activeView === 'skills' ? <SkillsPage /> : null}
       {activeView === 'artifacts' ? <ArtifactsPage /> : null}
+      {activeView === 'build-web' ? <BuildWebPage /> : null}
+      {activeView === 'build-web-images' ? <BuildWebImagesPage /> : null}
+      {activeView === 'build-web-trains' ? <BuildWebTrainsPage /> : null}
+      {activeView === 'git-log' ? <GitLogPage /> : null}
       {activeView === 'tasks' ? <TaskPage /> : null}
       {activeView === 'automations' ? <AutomationsPage /> : null}
       {activeView === 'activity' ? <ActivityPrototypePage /> : null}
@@ -155,10 +163,14 @@ export function AppWorkspaceShell(props: {
               )
             ) : null}
             <div className="flex flex-col flex-1 min-w-0 min-h-0 overflow-hidden">
-              {/* Why: automations/artifacts own their page headers; the stacked titlebar would be an empty 36px stripe. */}
+              {/* Why: automations/artifacts/build-web own their page headers; the stacked titlebar would be an empty 36px stripe. */}
               {layout.stackedSidebarOpen &&
               layout.activeView !== 'automations' &&
-              layout.activeView !== 'artifacts' ? (
+              layout.activeView !== 'artifacts' &&
+              layout.activeView !== 'build-web' &&
+              layout.activeView !== 'build-web-images' &&
+              layout.activeView !== 'build-web-trains' &&
+              layout.activeView !== 'git-log' ? (
                 <div className="titlebar">{titlebarMainStrip}</div>
               ) : null}
               <div className="relative flex flex-1 min-w-0 min-h-0 overflow-hidden">

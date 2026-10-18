@@ -1,5 +1,6 @@
 import { RuntimeGitDiffCommands } from './runtime-git-diff-commands'
 import { RuntimeGitGenerationCommands } from './runtime-git-generation-commands'
+import { RuntimeGitLogCommands } from './runtime-git-log-commands'
 import { RuntimeGitStagingCommands } from './runtime-git-staging-commands'
 import { RuntimeGitStatusCommands } from './runtime-git-status-commands'
 import { RuntimeGitSyncCommands } from './runtime-git-sync-commands'
@@ -41,8 +42,10 @@ export class RuntimeGitCommands {
   readonly bulkUnstageRuntimeGitPaths: RuntimeGitStagingCommands['bulkUnstageRuntimeGitPaths']
   readonly bulkDiscardRuntimeGitPaths: RuntimeGitStagingCommands['bulkDiscardRuntimeGitPaths']
   readonly discardRuntimeGitPath: RuntimeGitStagingCommands['discardRuntimeGitPath']
+  readonly gitLogPage: RuntimeGitLogCommands
 
   constructor(host: RuntimeGitCommandHost) {
+    this.gitLogPage = new RuntimeGitLogCommands(host)
     const status = new RuntimeGitStatusCommands(host)
     const diff = new RuntimeGitDiffCommands(host)
     const sync = new RuntimeGitSyncCommands(host)

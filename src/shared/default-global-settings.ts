@@ -157,6 +157,8 @@ export function buildDefaultSettings(args: {
     nestedWorkerMaxDepth: 1,
     showArtifactsButton: false,
     showSkillsButton: false,
+    showBuildWebButton: false,
+    showBuildWebImagesButton: false,
     showMobileButton: true,
     showPinnedWorktreesInGroups: false,
     ctrlTabOrderMode: 'mru',

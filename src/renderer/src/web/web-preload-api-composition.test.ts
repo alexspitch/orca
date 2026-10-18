@@ -47,6 +47,7 @@ describe('web preload API composition', () => {
       'hostedReview',
       'linear',
       'jira',
+      'buildWeb',
       'hooks',
       'stats',
       'memory',

@@ -18,6 +18,7 @@ import {
 } from '../linear/linear-credential-paths'
 import { getTokenDir as getJiraTokenDir } from '../jira/site-credential-store'
 import { getSecretPath as getBitbucketSecretPath } from '../bitbucket/credential-store'
+import { getBuildWebSecretPath } from '../build-web/credential-store'
 import { getOpenAiKeyPath } from '../speech/openai-api-key-store'
 import { API_KEY_ENVELOPE_PREFIX, getZcodePlanApiKeyPath } from '../zcode/zcode-plan-api-key-store'
 import { COOKIE_ENVELOPE_PREFIX, getMiniMaxCookiePath } from '../minimax/minimax-cookie-store'
@@ -55,6 +56,7 @@ export function listPlaintextCredentialTargets(): PlaintextCredentialTarget[] {
     ...encFilesIn(getWorkspaceTokenDir()).map((path) => ({ path, raw: true })),
     ...encFilesIn(getJiraTokenDir()).map((path) => ({ path, raw: true })),
     { path: getBitbucketSecretPath(), raw: true },
+    { path: getBuildWebSecretPath(), raw: true },
     { path: getOpenAiKeyPath(), raw: true },
     { path: getMiniMaxCookiePath(), envelopePrefix: COOKIE_ENVELOPE_PREFIX, raw: true },
     { path: getZcodePlanApiKeyPath(), envelopePrefix: API_KEY_ENVELOPE_PREFIX },

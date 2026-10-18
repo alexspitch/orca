@@ -146,6 +146,18 @@
   --color-workspace-status-done: var(--workspace-status-done);
   --color-workspace-status-review: var(--workspace-status-review);
   --color-workspace-status-progress: var(--workspace-status-progress);
+  --color-chip-tone-neutral: var(--chip-tone-neutral);
+  --color-chip-tone-faint: var(--chip-tone-faint);
+  --color-chip-tone-blue: var(--chip-tone-blue);
+  --color-chip-tone-purple: var(--chip-tone-purple);
+  --color-chip-tone-cyan: var(--chip-tone-cyan);
+  --color-chip-tone-sky: var(--chip-tone-sky);
+  --color-chip-tone-green: var(--chip-tone-green);
+  --color-chip-tone-amber: var(--chip-tone-amber);
+  --color-chip-tone-ochre: var(--chip-tone-ochre);
+  --color-chip-tone-orange: var(--chip-tone-orange);
+  --color-chip-tone-red: var(--chip-tone-red);
+  --color-chip-tone-crimson: var(--chip-tone-crimson);
   --color-tab-group-split-divider: var(--tab-group-split-divider);
   --color-tab-group-split-divider-strong: var(--tab-group-split-divider-strong);
   --color-git-graph-ref: var(--git-graph-ref);
@@ -239,6 +251,21 @@
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;
   --workspace-status-progress: #d4a300;
+  /* Chip tones: a hue per value of a closed vocabulary (a status, a product, a priority)
+     read by colour before its words. The ink is text-weight in each theme; a chip
+     fills and rules with the same token at a fraction. */
+  --chip-tone-neutral: var(--color-neutral-600);
+  --chip-tone-faint: var(--color-neutral-400);
+  --chip-tone-blue: var(--color-blue-700);
+  --chip-tone-purple: var(--color-violet-700);
+  --chip-tone-cyan: var(--color-cyan-700);
+  --chip-tone-sky: var(--color-sky-800);
+  --chip-tone-green: var(--color-green-700);
+  --chip-tone-amber: var(--color-amber-700);
+  --chip-tone-ochre: var(--color-yellow-800);
+  --chip-tone-orange: var(--color-orange-700);
+  --chip-tone-red: var(--color-red-600);
+  --chip-tone-crimson: var(--color-red-800);
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);
@@ -350,6 +377,18 @@
   --workspace-status-done: #c7a594;
   --workspace-status-review: #16a34a;
   --workspace-status-progress: #d4a300;
+  --chip-tone-neutral: var(--color-neutral-400);
+  --chip-tone-faint: var(--color-neutral-500);
+  --chip-tone-blue: var(--color-blue-300);
+  --chip-tone-purple: var(--color-violet-300);
+  --chip-tone-cyan: var(--color-cyan-300);
+  --chip-tone-sky: var(--color-sky-400);
+  --chip-tone-green: var(--color-green-400);
+  --chip-tone-amber: var(--color-amber-300);
+  --chip-tone-ochre: var(--color-yellow-500);
+  --chip-tone-orange: var(--color-orange-300);
+  --chip-tone-red: var(--color-red-400);
+  --chip-tone-crimson: var(--color-rose-300);
   --chart-1: var(--color-blue-300);
   --chart-2: var(--color-blue-500);
   --chart-3: var(--color-blue-600);

@@ -6,6 +6,7 @@ import {
 } from './updater-mac-install'
 import { compareVersions } from './updater-fallback'
 import { fetchChangelog } from './updater-changelog'
+import { getCustomUpdateFeed } from './updater/custom-update-feed'
 import type { UpdaterHandlerContext } from './updater-handler-context'
 import { recordUpdaterLifecycle } from './updater-lifecycle-diagnostics'
 import {
@@ -131,8 +132,10 @@ export function registerAutoUpdaterHandlers({
     markUpdateAvailableEventPending(attemptId)
     void (async () => {
       try {
+        const customFeed = getCustomUpdateFeed()
+        // Why: onorca.dev describes upstream releases, not the custom build being offered.
         const changelog =
-          isLocalBuildCheck() || isPinnedBuildCheck()
+          isLocalBuildCheck() || isPinnedBuildCheck() || customFeed
             ? null
             : await fetchChangelog(info.version, app.getVersion()).catch(() => null)
 
@@ -146,7 +149,9 @@ export function registerAutoUpdaterHandlers({
 
         // Why: side effects must run after the guard so a concurrent 'error' during the fetch can't leave orphaned state.
         setAvailableVersion(info.version)
-        setAvailableReleaseUrl(null)
+        // Why: the GitHub tag URL the renderer falls back to does not exist for a custom build.
+        const releaseUrl = customFeed?.releaseNotesUrl ?? null
+        setAvailableReleaseUrl(releaseUrl)
         // Why: a pinned dev jump is not a release check. Letting it call
         // recordCompletedUpdateCheck() would persist lastUpdateCheckAt and
         // suppress the next real background check for a full day.
@@ -167,6 +172,7 @@ export function registerAutoUpdaterHandlers({
             state: 'available',
             version: info.version,
             changelog,
+            ...(releaseUrl ? { releaseUrl } : {}),
             // Why: the offer is real, but this host can never apply it — say so before a download is offered.
             ...(isExternallyManagedLinuxInstall() ? { externallyManaged: true } : {})
           }
