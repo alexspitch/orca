@@ -62,6 +62,7 @@ import {
   saveBuildWebGuide
 } from '../build-web/build-web-runs'
 import { buildWebIssueSummary } from '../build-web/build-web-issue-summary'
+import { followBuildWebPush } from '../build-web/build-web-push-progress'
 import {
   getBuildWebRun,
   listBuildWebVersionBranches,
@@ -145,8 +146,12 @@ export class RuntimeBuildWebCommands {
     return listBuildWebImageBuilds(args)
   }
 
-  buildWebPushImages(args: In<typeof BuildWebImagePushParams>) {
-    return pushBuildWebImages(args)
+  async buildWebPushImages(args: In<typeof BuildWebImagePushParams>) {
+    const result = await pushBuildWebImages(args)
+    if (result.ok) {
+      followBuildWebPush(args.runId)
+    }
+    return result
   }
 
   buildWebVersionBranches(args: In<typeof BuildWebVersionBranchesParams>) {

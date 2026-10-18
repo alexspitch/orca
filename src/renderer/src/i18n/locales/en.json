@@ -20944,6 +20944,17 @@
       "guideNone": "no guide comment yet (will create)",
       "open": "open in Jira",
       "panelTitle": "Jira · {{key}}"
+    },
+    "push": {
+      "going": "Pushing {{n}} image(s)…",
+      "unknown": "build-web did not report this push; the table shows what the registry holds",
+      "finished": "Push finished: {{ok}} pushed, {{failed}} failed",
+      "failed": "push failed",
+      "noAnswer": "no answer",
+      "hideLog": "Hide log",
+      "log": "Log",
+      "toastFailed": "{{n}} image(s) were not pushed",
+      "toastDone": "{{n}} image(s) pushed"
     }
   }
 }

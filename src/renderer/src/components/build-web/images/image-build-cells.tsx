@@ -3,6 +3,7 @@ import { translate } from '@/i18n/i18n'
 import type { BuildWebImageBuild } from '../../../../../shared/build-web-image-types'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { useBuildLogViewer } from './build-log-viewer'
+import { pushStateOf, useImagePushes } from './image-push-runs'
 import { imageBuildTone } from '../build-web-tones'
 
 // Cells the image list and an image's history share, so both read as one table.
@@ -34,8 +35,21 @@ export function BuildStatusCell({ build }: { build: BuildWebImageBuild }): React
 
 /** Where the build stands in the registry — build-web's «В repo»: pushed green, the rest amber. */
 export function RegistryCell({ build }: { build: BuildWebImageBuild }): React.JSX.Element | null {
+  // A push started from this window says so until the table reads its outcome.
+  const push = useImagePushes((s) => pushStateOf(s, build))
   if (build.status !== 'success' || !build.ref) {
     return null
+  }
+  if (push === 'pushing') {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <Loader2 className="size-3 animate-spin text-chip-tone-amber" />
+        <BuildWebToneChip label={translate('buildWeb.run.pushing', 'pushing…')} tone="amber" />
+      </span>
+    )
+  }
+  if (push === 'failed') {
+    return <BuildWebToneChip label={translate('buildWeb.push.failed', 'push failed')} tone="red" />
   }
   if (build.pushed_build_tag && build.pushed_main_tag) {
     return <BuildWebToneChip label={translate('buildWeb.images.pushed', 'pushed')} tone="green" />

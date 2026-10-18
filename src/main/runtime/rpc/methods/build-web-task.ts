@@ -18,6 +18,7 @@ import {
   BuildWebJiraKeyParams,
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
+  BuildWebPushProgressParams,
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
@@ -236,5 +237,11 @@ export const BUILD_WEB_TASK_METHODS = [
     permission: 'workspace',
     params: BuildWebCommentDeleteParams,
     handler: async (params, { runtime }) => runtime.buildWebDeleteComment(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.pushProgress',
+    permission: 'workspace',
+    params: BuildWebPushProgressParams,
+    handler: async (params, { runtime }) => runtime.buildWebPushProgress(params)
   })
 ]

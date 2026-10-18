@@ -18,6 +18,7 @@ import {
 } from '../../../../../shared/build-web-image-push'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
+import { pushKeyOf, useImagePushes } from './image-push-runs'
 
 /**
  * «Push to registry» for the picked builds. The choice in the menu is the confirmation: the build
@@ -33,6 +34,7 @@ export function ImagePushMenu({
   onPushed: () => void
 }): React.JSX.Element {
   const [busy, setBusy] = useState(false)
+  const track = useImagePushes((s) => s.track)
   const push = async (moveMainTag: boolean): Promise<void> => {
     setBusy(true)
     try {
@@ -42,6 +44,7 @@ export function ImagePushMenu({
           toast.error(result.error)
           return
         }
+        track({ runId: request.runId, keys: request.combos.map(pushKeyOf), startedAt: Date.now() })
       }
       toast.success(
         translate('buildWeb.images.pushStarted', 'Push started — build-web publishes the tags.')

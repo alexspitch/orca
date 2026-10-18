@@ -1,4 +1,5 @@
 import type { BuildWebJiraOutcome, BuildWebMutationResult } from '../../shared/build-web-types'
+import type { BuildWebPushProgress } from '../../shared/build-web-image-types'
 import type {
   BuildWebAdoptResult,
   BuildWebBranch,
@@ -99,4 +100,5 @@ export type BuildWebTaskApi = {
     id: string
     commentId: string
   }) => Promise<BuildWebMutationResult<{ jira: BuildWebJiraOutcome | null }>>
+  pushProgress: (args: { runIds: string[] }) => Promise<BuildWebPushProgress[]>
 }

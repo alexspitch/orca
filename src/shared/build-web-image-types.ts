@@ -110,3 +110,16 @@ export type BuildWebImagePushArgs = {
   combos: { image: string; dist: string; branch: string }[]
   moveMainTag: boolean
 }
+
+/** How a push started from Orca goes, read off the run's event stream on the console. */
+export type BuildWebPushProgress = {
+  runId: string
+  /** `unknown`: the console reported nothing — another instance holds it, or it is long over. */
+  state: 'pushing' | 'done' | 'unknown'
+  /** The tail of the push's log. */
+  lines: string[]
+  /** `image|dist` of the images pushed, and of those that failed. */
+  ok: string[]
+  failed: string[]
+  error: string | null
+}

@@ -19,6 +19,7 @@ import {
   BuildWebJiraKeyParams,
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
+  BuildWebPushProgressParams,
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
@@ -89,4 +90,5 @@ export function registerBuildWebTaskHandlers(): void {
   handle('deleteComment', BuildWebCommentDeleteParams, (args) =>
     commands.buildWebDeleteComment(args)
   )
+  handle('pushProgress', BuildWebPushProgressParams, (args) => commands.buildWebPushProgress(args))
 }

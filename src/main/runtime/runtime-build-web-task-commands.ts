@@ -19,6 +19,7 @@ import type {
   BuildWebJiraKeyParams,
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
+  BuildWebPushProgressParams,
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
@@ -45,6 +46,7 @@ import {
   listBuildWebImageNames
 } from '../build-web/build-web-issue-build-start'
 import { readBuildWebGuideStream, startBuildWebGuide } from '../build-web/build-web-guide-stream'
+import { buildWebPushProgress } from '../build-web/build-web-push-progress'
 import {
   cancelBuildWebJob,
   findBuildWebShotsJob,
@@ -210,5 +212,9 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebDeleteComment(args: In<typeof BuildWebCommentDeleteParams>) {
     return deleteBuildWebComment(args.id, args.commentId)
+  }
+
+  buildWebPushProgress(args: In<typeof BuildWebPushProgressParams>) {
+    return buildWebPushProgress(args.runIds)
   }
 }

@@ -18,6 +18,7 @@ import { ImagePushMenu } from './ImagePushMenu'
 import { useImagePicks } from './use-image-picks'
 import { ImageBuildDialog } from './ImageBuildDialog'
 import { ImageBuildProgress } from './ImageBuildProgress'
+import { ImagePushProgress } from './ImagePushProgress'
 import { useBuildWebStore } from '../build-web-store'
 import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip } from '../BuildWebToneChip'
@@ -166,6 +167,7 @@ export function ImageHistoryView({
         />
       </div>
       <ImageBuildProgress target={target} image={image} onSettled={() => reload(true)} />
+      <ImagePushProgress target={target} image={image} onSettled={() => reload(true)} />
       <ImageBuildDialog
         open={building}
         onOpenChange={setBuilding}

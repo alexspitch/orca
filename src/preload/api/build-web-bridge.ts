@@ -67,5 +67,6 @@ export const buildWebApi = {
   jiraDraft: (args) => ipcRenderer.invoke('buildWeb:jiraDraft', args),
   createJiraIssue: (args) => ipcRenderer.invoke('buildWeb:createJiraIssue', args),
   editComment: (args) => ipcRenderer.invoke('buildWeb:editComment', args),
-  deleteComment: (args) => ipcRenderer.invoke('buildWeb:deleteComment', args)
+  deleteComment: (args) => ipcRenderer.invoke('buildWeb:deleteComment', args),
+  pushProgress: (args) => ipcRenderer.invoke('buildWeb:pushProgress', args)
 } satisfies PreloadApi['buildWeb']
