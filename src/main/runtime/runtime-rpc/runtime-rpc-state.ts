@@ -66,7 +66,6 @@ export class RuntimeRpcState {
   protected e2eeKeypair: E2EEKeypair | null = null
   protected hostDescriptor: RuntimeHostDescriptor | null = null
   protected pairingInitializationFailure: PairingOfferUnavailable | null = null
-  protected tlsFingerprint: string | null = null
   protected activeTransports: RpcTransport[] = []
   protected transports: RuntimeTransportMetadata[] = []
   protected metadataOwnershipWatch: RuntimeMetadataOwnershipWatch | null = null
@@ -78,6 +77,7 @@ export class RuntimeRpcState {
   // Why nullable: launch sets both for every runtime process; in-process test servers may not.
   protected mobileDesktopRelay: MobileDesktopRelay | null = null
   protected mobileRelayHostCatalog: MobileRelayHostCatalog | null = null
+  protected detachPairedServerRows: (() => void) | null = null
   // Why: lets an automatic mint install a provider whose launch-time construction failed.
   protected mobileRelayPairingProviderInstaller: (() => Promise<unknown>) | null = null
   protected mobileRelayPairingOfferQueue: Promise<void> = Promise.resolve()

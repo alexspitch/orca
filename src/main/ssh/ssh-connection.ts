@@ -80,7 +80,11 @@ import {
 } from './ssh-reconnect-error-classification'
 import { SshReconnectLadder } from './ssh-reconnect-ladder'
 import { mayUserSshConfigClaimAlias } from './ssh-config-alias-claim'
-import { getPassphrasePrivateKeyPath } from './ssh-private-key-authentication'
+import {
+  didDeferKeyboardInteractive,
+  didOfferKeyboardInteractive,
+  getPassphrasePrivateKeyPath
+} from './ssh-private-key-authentication'
 import {
   requiresSystemSshForSecurityKey,
   shouldUseSystemSshTransport
@@ -90,6 +94,7 @@ import { openSshSessionChannelWithRetry, waitForSshChannelOpen } from './ssh-cha
 import { tagSftpHandshakeCorruption } from './sftp-handshake-corruption'
 import { withTimeout } from '../../shared/promise-timeout-fallback'
 import { isEphemeralRuntimeSshOwner } from '../../shared/managed-orcad-ssh-owner'
+import { isSshUserDisconnected } from './ssh-user-disconnect'
 export type { SshConnectionCallbacks } from './ssh-connection-utils'
 
 /** The sign-in a connection holds in memory, handed to the connection that replaces it. */
@@ -735,6 +740,32 @@ export class SshConnection {
                 return
               }
             }
+            // Why: a strict MaxAuthTries host can drop the key retry before it reaches the challenge
+            // the agent-first attempt held back for that key, so offer the challenge on its own.
+            if (
+              isAgentFallbackError(authError) &&
+              didDeferKeyboardInteractive(config) &&
+              !didOfferKeyboardInteractive(keyConfig)
+            ) {
+              const challengeConfig = buildConnectConfig(this.target, resolved, {
+                keyboardInteractiveOnly: true
+              })
+              this.respawnProxy(challengeConfig, effectiveProxy, connectGeneration)
+              try {
+                await this.doSsh2Connect(challengeConfig, connectGeneration)
+                return
+              } catch (challengeErr) {
+                if (
+                  !(challengeErr instanceof Error) ||
+                  isHostKeyVerificationError(challengeErr) ||
+                  this.keyboardInteractiveCancelled
+                ) {
+                  this.killProxyIfCurrent(connectGeneration)
+                  throw challengeErr
+                }
+                authError = challengeErr
+              }
+            }
           }
         }
       }
@@ -822,7 +853,7 @@ export class SshConnection {
   }
 
   async reconnect(): Promise<void> {
-    if (this.disposed || this.state.status === 'connecting') {
+    if (!this.mayRedial() || this.state.status === 'connecting') {
       return
     }
     await this.restartReconnect()
@@ -834,7 +865,7 @@ export class SshConnection {
    * while asleep (or in a macOS dark wake) say nothing about whether the host is reachable.
    */
   retryAfterNetworkReturn(nowMs = Date.now()): boolean {
-    if (this.disposed || this.isAwaitingCredential()) {
+    if (!this.mayRedial() || this.isAwaitingCredential()) {
       return false
     }
     const { status } = this.state
@@ -1415,8 +1446,14 @@ export class SshConnection {
     })
   }
 
+  // Why: a user's Disconnect is recorded before its teardown disposes this connection, which can
+  // wait behind the target's lifecycle; until then a drop, backoff or wake must not redial.
+  private mayRedial(): boolean {
+    return !this.disposed && !isSshUserDisconnected(this.target.id)
+  }
+
   private scheduleReconnect(): void {
-    if (this.disposed || this.reconnectTimer) {
+    if (!this.mayRedial() || this.reconnectTimer) {
       return
     }
     const decision = this.reconnectLadder.next(Date.now())
@@ -1431,7 +1468,7 @@ export class SshConnection {
     )
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = null
-      if (this.disposed) {
+      if (!this.mayRedial()) {
         return
       }
       await this.runReconnectAttempt()

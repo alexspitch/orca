@@ -59,6 +59,7 @@ import {
   AttachmentUploadIdParams,
   AttachmentUploadStartParams
 } from './agent-session-attachment-params'
+import { CurrentRequestsParams } from './agent-session-current-requests-params'
 import { CreateAgentSessionParams, EnsureAgentSessionParams } from './agent-session-params'
 import { ReadVisualParams } from './agent-session-visual-params'
 import {
@@ -68,7 +69,9 @@ import {
 } from './ai-vault-params'
 import {
   AntigravityAccountMutationParams,
-  AntigravityAccountTargetParams
+  AntigravityAccountTargetParams,
+  AntigravityChatSignInCompleteParams,
+  AntigravityChatSignInFlowParams
 } from './antigravity-accounts-params'
 import { ArtifactsDeleteParams, ListOptions, SourceRequest, WriteRequest } from './artifacts-params'
 import {
@@ -365,6 +368,8 @@ import { JiraSavedFilterMutationParam } from './jira-saved-filter-params'
 import {
   AgentIssueContext,
   AgentSearchIssues,
+  LinearCommentDelete,
+  LinearCommentEdit,
   LinearCurrentContext,
   LinearIssueAddComment,
   LinearIssueAttachLink,
@@ -401,6 +406,10 @@ import {
   WorkspaceSelection
 } from './linear-params'
 import { CreateProject } from './linear-project-create-params'
+import {
+  ManagedRuntimeAgentParams,
+  ManagedRuntimeCancelParams
+} from './managed-runtime-install-params'
 import {
   ManagedServerRecover,
   ManagedServerSelector,
@@ -519,6 +528,7 @@ import {
   UpdatePaneLayout,
   WorktreeTabSelector
 } from './session-tabs-schemas-params'
+import { SidebarSessionBeginParams } from './sidebar-session-params'
 import {
   SkillsCancelInstallParams,
   SkillsDiscoverParams,
@@ -620,6 +630,7 @@ import {
   WorkspacePortScanHostParams,
   WorkspacePortScanParams
 } from './workspace-ports-params'
+import { SetCollapsedParams } from './workspace-view-collapse-params'
 import { WorktreeCreate, WorktreePrefetchCreateBase } from './worktree-create-params'
 import {
   WorktreeActivate,
@@ -636,6 +647,8 @@ import {
   WorktreeTeardownMissingTerminalsParams
 } from './worktree-params'
 import { WorktreeAdoptProvisionedRoot } from './worktree-provisioned-root-params'
+import { RepoIconDataUrlsParams } from '../sidebar-list/repo-icon-data-urls-contract'
+import { SidebarInputsReadParams } from '../sidebar-list/sidebar-inputs-feed-contract'
 import { SkillBundleInstallRequestSchema } from '../skill-bundle-install-contract'
 import { SkillDeleteRequestSchema } from '../skill-delete-contract'
 import {
@@ -657,6 +670,10 @@ export const RPC_PARAMS_BY_METHOD = {
   'accounts.addCodexFromHome': AddCodexFromHomeParams,
   'accounts.addDataFromHome': AddDataAccountParams,
   'accounts.antigravityAddCurrent': AntigravityAccountTargetParams,
+  'accounts.antigravityChatSignInCancel': AntigravityChatSignInFlowParams,
+  'accounts.antigravityChatSignInComplete': AntigravityChatSignInCompleteParams,
+  'accounts.antigravityChatSignInStart': null,
+  'accounts.antigravityChatSignInSubscribe': null,
   'accounts.antigravityList': AntigravityAccountTargetParams,
   'accounts.antigravityRemove': AntigravityAccountMutationParams,
   'accounts.antigravitySelect': AntigravityAccountMutationParams,
@@ -689,6 +706,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'agentSession.conversationOutline': OptionsParams,
   'agentSession.create': CreateParams,
   'agentSession.createSupport': CreateSupportParams,
+  'agentSession.currentRequests': CurrentRequestsParams,
   'agentSession.ensure': AttachParams,
   'agentSession.handoffStatus': HandoffStatusParams,
   'agentSession.history': HistoryParams,
@@ -1031,6 +1049,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'gitlab.createIssue': CreateIssueOfGitlabParams,
   'gitlab.diagnoseAuth': EmptyParams,
   'gitlab.jobTrace': JobTrace,
+  'gitlab.listAssignableUsers': RepoSelectorOfGitlabParams,
   'gitlab.listIssues': IssuesListOfGitlabParams,
   'gitlab.listLabels': RepoSelectorOfGitlabParams,
   'gitlab.listMRs': WorkItemsListOfGitlabParams,
@@ -1095,6 +1114,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'linear.agentTeamList': LinearWorkspaceRead,
   'linear.agentTeamMembers': LinearTeamLookup,
   'linear.agentTeamStates': LinearTeamLookup,
+  'linear.commentDelete': LinearCommentDelete,
+  'linear.commentEdit': LinearCommentEdit,
   'linear.connect': ConnectOfLinearParams,
   'linear.createIssue': CreateIssueOfLinearParams,
   'linear.createProject': CreateProject,
@@ -1128,6 +1149,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'linear.teamStates': TeamId,
   'linear.testConnection': WorkspaceSelection,
   'linear.updateIssue': IssueUpdateOfLinearParams,
+  'managedRuntime.cancel': ManagedRuntimeCancelParams,
+  'managedRuntime.install': ManagedRuntimeAgentParams,
+  'managedRuntime.subscribe': ManagedRuntimeAgentParams,
   'managedServer.cancelStop': ManagedServerSelector,
   'managedServer.forget': ManagedServerSelector,
   'managedServer.recover': ManagedServerRecover,
@@ -1281,6 +1305,16 @@ export const RPC_PARAMS_BY_METHOD = {
   'settings.update': SettingsUpdate,
   'settings.updatePRBotAuthorOverride': PRBotAuthorOverrideUpdate,
   'settings.updateTerminalQuickCommands': TerminalQuickCommandsUpdate,
+  'sidebarInputs.activityFacts': null,
+  'sidebarInputs.desktopFacts': null,
+  'sidebarInputs.pairedServerRows': null,
+  'sidebarInputs.read': SidebarInputsReadParams,
+  'sidebarInputs.repoIcons': RepoIconDataUrlsParams,
+  'sidebarInputs.reviewFacts': null,
+  'sidebarInputs.temporal': null,
+  'sidebarInputs.workspaceCreations': null,
+  'sidebarInputs.workspaceRows': null,
+  'sidebarSession.begin': SidebarSessionBeginParams,
   'skills.beginUpload': SkillUploadBeginRequestSchema,
   'skills.cancelInstall': SkillsCancelInstallParams,
   'skills.cancelUpload': SkillUploadCommitRequestSchema,
@@ -1364,6 +1398,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'ui.mutateJiraSavedFilters': JiraSavedFilterMutationParam,
   'ui.recordFeatureInteraction': FeatureInteractionIdParam,
   'ui.set': UiUpdate,
+  'ui.setCollapsed': SetCollapsedParams,
   'ui.setJiraQuickFilters': JiraQuickFilterStateParam,
   'updater.check': UpdaterCheckParams,
   'updater.download': null,
