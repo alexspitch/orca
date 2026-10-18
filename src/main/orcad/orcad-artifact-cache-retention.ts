@@ -10,6 +10,7 @@
 import { readdir, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { nodeRuntimeAsset } from '../../shared/node-runtime-pin'
+import { ORCAD_RUNTIMES_DIRNAME } from '../../shared/orcad-artifacts'
 import {
   ORCAD_LOCK_FILE_NAME,
   orcadPeerPidIsJudgeableHere,
@@ -49,9 +50,10 @@ export async function pruneOrcadArtifactCache(
     }
     const targetRoot = join(cacheRoot, target)
     const slots = await Promise.all(
-      // Dot entries are staging directories another process may be filling right now.
+      // Dot entries are staging directories another process may be filling right now; `runtimes/`
+      // is the pinned Node every slot's `.runtime-node` links into, not a slot.
       (await listNames(targetRoot))
-        .filter((name) => !name.startsWith('.'))
+        .filter((name) => !name.startsWith('.') && name !== ORCAD_RUNTIMES_DIRNAME)
         .map(async (name) => ({ name, mtimeMs: await mtimeOf(join(targetRoot, name)) }))
     )
     const present = slots.filter(

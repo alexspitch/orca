@@ -64,6 +64,18 @@ describe('orcad artifact cache retention', () => {
     }
   })
 
+  it('never evicts the shared runtimes/ beside the slots, however old', async () => {
+    const root = cacheRoot()
+    const runtimes = slot(root, 'linux-x64-glibc', 'runtimes', 600)
+    const kept = [1, 2, 3].map((age) => slot(root, 'linux-x64-glibc', `0.1.0+v${age}`, age))
+    const evicted = slot(root, 'linux-x64-glibc', '0.1.0+v4', 4)
+
+    expect(await pruneOrcadArtifactCache(root)).toEqual([evicted])
+    for (const path of [runtimes, ...kept]) {
+      expect(existsSync(path)).toBe(true)
+    }
+  })
+
   it('leaves the runtime archive cache and a missing root alone', async () => {
     const root = cacheRoot()
     const archives = join(root, 'node', 'archives')
