@@ -2,7 +2,7 @@
 
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs'
+import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { Readable } from 'node:stream'
 import { parse } from 'yaml'
@@ -11,12 +11,9 @@ import { DEFAULT_BUILD_WEB_URL } from './build-custom.mjs'
 // Uploads the custom build in dist/ to build-web's «Orca» section, from where custom builds update.
 // Needs a personal build-web API token: BW_TOKEN, or a file named by BW_TOKEN_FILE.
 
-const MANIFEST_NAMES = [
-  'latest-mac.yml',
-  'latest-linux.yml',
-  'latest-linux-arm64.yml',
-  'latest.yml'
-]
+// Why any channel: electron-builder names a prerelease's manifests after it (custom-mac.yml), while
+// the app's generic feed has no channel and asks for latest-*.yml — so build-web stores them as that.
+const MANIFEST_FILE_RE = /^([a-z]+)(-mac|-linux|-linux-arm64)?\.yml$/
 const UPLOAD_ATTEMPTS = 3
 
 async function sha512File(path) {
@@ -29,13 +26,22 @@ async function sha512File(path) {
 
 /** The manifests of the newest build in distDir; older leftovers of other platforms are skipped. */
 export function readNewestManifests(distDir) {
-  const found = MANIFEST_NAMES.filter((name) => existsSync(join(distDir, name))).map((name) => {
-    const path = join(distDir, name)
-    return { name, mtime: statSync(path).mtimeMs, manifest: parse(readFileSync(path, 'utf8')) }
-  })
+  const found = []
+  for (const file of readdirSync(distDir)) {
+    const match = MANIFEST_FILE_RE.exec(file)
+    if (!match) {
+      continue
+    }
+    const path = join(distDir, file)
+    const manifest = parse(readFileSync(path, 'utf8'))
+    if (!manifest?.version || !Array.isArray(manifest.files)) {
+      continue
+    }
+    found.push({ name: `latest${match[2] ?? ''}.yml`, mtime: statSync(path).mtimeMs, manifest })
+  }
   if (found.length === 0) {
     throw new Error(
-      `No latest-*.yml in ${distDir}: run pnpm build:mac:custom or pnpm build:linux:custom first`
+      `No update manifest in ${distDir}: run pnpm build:mac:custom or pnpm build:linux:custom first`
     )
   }
   const newest = found.reduce((a, b) => (b.mtime > a.mtime ? b : a))

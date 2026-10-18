@@ -68,10 +68,11 @@ describe('publishing a custom build', () => {
     const dir = dist([
       ['latest-linux.yml', 'version: 1.0.0-custom.1.aaa\nfiles: []\n', 1000],
       [
-        'latest-mac.yml',
+        'custom-mac.yml',
         'version: 1.0.0-custom.2.bbb\nfiles:\n  - url: Orca-mac.zip\n  - url: orca-macos-arm64.dmg\n',
         2000
       ],
+      ['builder-debug.yml', 'x64: {}\n', 3000],
       ['Orca-mac.zip.blockmap', 'b']
     ])
     const { version, manifests } = readNewestManifests(dir)
