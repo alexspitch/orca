@@ -1,6 +1,7 @@
-import { Badge } from '@/components/ui/badge'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebImageBuild } from '../../../../../shared/build-web-image-types'
+import { BuildWebToneChip } from '../BuildWebToneChip'
+import { imageBuildTone } from '../build-web-tones'
 
 // Cells the image list and an image's history share, so both read as one table.
 
@@ -17,38 +18,32 @@ export function buildStatusLabel(status: BuildWebImageBuild['status']): string {
 
 export function BuildStatusCell({ build }: { build: BuildWebImageBuild }): React.JSX.Element {
   return (
-    <Badge
-      variant={
-        build.status === 'failed'
-          ? 'destructive'
-          : build.status === 'running'
-            ? 'secondary'
-            : 'outline'
-      }
-      title={build.raw_status}
-    >
-      {buildStatusLabel(build.status)}
-    </Badge>
+    <span title={build.raw_status}>
+      <BuildWebToneChip
+        label={buildStatusLabel(build.status)}
+        tone={imageBuildTone(build.status)}
+      />
+    </span>
   )
 }
 
-/** Where the build stands in the registry — build-web's «В repo» column. */
+/** Where the build stands in the registry — build-web's «В repo»: pushed green, the rest amber. */
 export function RegistryCell({ build }: { build: BuildWebImageBuild }): React.JSX.Element | null {
   if (build.status !== 'success' || !build.ref) {
     return null
   }
   if (build.pushed_build_tag && build.pushed_main_tag) {
-    return <Badge variant="outline">{translate('buildWeb.images.pushed', 'pushed')}</Badge>
-  }
-  if (build.pushed_build_tag) {
-    return (
-      <Badge variant="outline">{translate('buildWeb.images.buildTagOnly', 'build tag only')}</Badge>
-    )
+    return <BuildWebToneChip label={translate('buildWeb.images.pushed', 'pushed')} tone="green" />
   }
   return (
-    <span className="text-xs text-muted-foreground">
-      {translate('buildWeb.images.notPushed', 'not pushed')}
-    </span>
+    <BuildWebToneChip
+      label={
+        build.pushed_build_tag
+          ? translate('buildWeb.images.buildTagOnly', 'build tag only')
+          : translate('buildWeb.images.notPushed', 'not pushed')
+      }
+      tone="amber"
+    />
   )
 }
 

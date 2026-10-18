@@ -11,6 +11,7 @@ import type { BuildWebRun } from '../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebListState } from '../BuildWebListState'
+import { JiraStatusLine } from '../BuildWebToneChip'
 import { guideShotSlugs, withShotUrls } from './issue-card-facts'
 
 /** Screenshot blobs for the guide, fetched with the token in main; revoked when the guide changes. */
@@ -211,12 +212,7 @@ export function IssueGuideTab({
         </h3>
         {detail.jira_key ? (
           <>
-            <p>
-              <span className="font-mono">{detail.jira_key}</span>
-              {detail.jira_status ? (
-                <span className="text-muted-foreground"> · {detail.jira_status}</span>
-              ) : null}
-            </p>
+            <JiraStatusLine jiraKey={detail.jira_key} status={detail.jira_status} />
             <Button variant="outline" size="sm" disabled={busy} onClick={() => void publish()}>
               {translate('buildWeb.guide.publish', 'Publish to Jira')}
             </Button>

@@ -24,6 +24,29 @@ describe('issue list query', () => {
     })
   })
 
+  it('combines the quick filters and passes the sort and the page', () => {
+    const params = new URLSearchParams(
+      issueListQuery({
+        view: 'mine',
+        mine: true,
+        favorite: true,
+        sort: 'priority',
+        dir: 'asc',
+        limit: 50,
+        offset: 100
+      })
+    )
+    expect(params.get('mine')).toBe('yes')
+    expect(params.get('favorite')).toBe('yes')
+    expect(params.get('ai')).toBeNull()
+    expect(params.get('sort')).toBe('priority')
+    expect(params.get('dir')).toBe('asc')
+    expect(params.get('offset')).toBe('100')
+    expect(
+      new URLSearchParams(issueListQuery({ view: 'mine', mine: false })).get('mine')
+    ).toBeNull()
+  })
+
   it('caps the page at 100 rows', () => {
     expect(new URLSearchParams(issueListQuery({ view: 'all', limit: 5000 })).get('limit')).toBe(
       '100'

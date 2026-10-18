@@ -26,7 +26,23 @@ export type BuildWebImageBuild = {
 
 export type BuildWebImageRow = { image: string; product: string; last: BuildWebImageBuild | null }
 
+/** Columns the image tables sort by; main sorts the whole catalog before it cuts a page. */
+export const BUILD_WEB_IMAGE_SORTS = [
+  'image',
+  'product',
+  'version',
+  'dist',
+  'tag',
+  'branch',
+  'at',
+  'status',
+  'registry'
+] as const
+export type BuildWebImageSort = (typeof BUILD_WEB_IMAGE_SORTS)[number]
+
 export type BuildWebImageFilters = {
+  sort?: BuildWebImageSort
+  dir?: 'asc' | 'desc'
   q?: string
   products?: string[]
   dists?: string[]

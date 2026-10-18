@@ -44,7 +44,7 @@ export default function BuildWebPage(): React.JSX.Element {
   const closePage = useAppStore((s) => s.closeBuildWebPage)
   const { target, contextKey } = useBuildWebTarget()
   const { refreshStatus } = useBuildWebStatus()
-  const { reload, loadMore } = useBuildWebIssueList()
+  const { reload } = useBuildWebIssueList()
   const status = useBuildWebStore((s) => (s.contextKey === contextKey ? s.status : null))
   const loading = useBuildWebStore((s) => s.loading)
   const issues = useBuildWebStore((s) => s.issues)
@@ -162,10 +162,7 @@ export default function BuildWebPage(): React.JSX.Element {
           ) : issues.length === 0 ? (
             <BuildWebListState kind={loading ? 'loading' : 'empty'} />
           ) : (
-            <BuildWebIssueList
-              onFavorite={(issue) => void toggleFavorite(issue)}
-              onLoadMore={loadMore}
-            />
+            <BuildWebIssueList onFavorite={(issue) => void toggleFavorite(issue)} />
           )}
           <BuildWebSelectionBar onTakeToWork={setTaking} />
         </>

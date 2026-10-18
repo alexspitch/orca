@@ -23,7 +23,7 @@ import {
   validateBuildWebBatch
 } from './build-web-take-to-work'
 import { launchBuildWebBatch } from './build-web-agent-launch'
-import { productLabel } from './build-web-labels'
+import { BuildWebToneChip, ProductChip, StatusChip } from './BuildWebToneChip'
 
 function Option({
   checked,
@@ -38,7 +38,7 @@ function Option({
 }): React.JSX.Element {
   return (
     <label className="flex items-start gap-2 text-sm">
-      <Checkbox checked={checked} onCheckedChange={(v) => onChange(v === true)} />
+      <Checkbox emphasis="strong" checked={checked} onCheckedChange={(v) => onChange(v === true)} />
       <span>
         {title}
         <span className="block text-xs text-muted-foreground">{hint}</span>
@@ -109,14 +109,19 @@ function TakeToWorkForm({
       </DialogHeader>
       <ul className="flex flex-col gap-1 rounded-md border border-border p-3 text-sm">
         {issues.map((i) => (
-          <li key={i.id} className="flex gap-2">
+          <li key={i.id} className="flex items-center gap-2">
             <span className="w-20 shrink-0 font-mono text-xs text-muted-foreground">{i.key}</span>
-            <span className="truncate">{i.title}</span>
+            <span className="min-w-0 flex-1 truncate">{i.title}</span>
+            <StatusChip status={i.status} />
           </li>
         ))}
-        <li className="pt-1 text-xs text-muted-foreground">
-          {productLabel(issues[0].product)} ·{' '}
-          {issues[0].version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
+        <li className="flex items-center gap-1.5 pt-1">
+          <ProductChip product={issues[0].product} />
+          <BuildWebToneChip
+            label={issues[0].version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
+            tone={null}
+            mono={Boolean(issues[0].version_name)}
+          />
         </li>
       </ul>
       {batchCheckMessage(check) ? (

@@ -6,12 +6,10 @@ import type {
   BuildWebUser,
   BuildWebVersion
 } from '../../../../shared/build-web-types'
-import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
-import { translate } from '@/i18n/i18n'
 import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebTarget } from './use-build-web-data'
-import { statusLabel } from './build-web-labels'
+import { toastJiraOutcome, useConfirmStatusMove } from './use-build-web-issue-write'
 
 export type IssueDetailState = {
   detail: BuildWebIssueDetail | null
@@ -26,7 +24,7 @@ export type IssueDetailState = {
 /** The open task's card, its pickers, and field writes (status without optimism: it moves Jira). */
 export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
   const { target } = useBuildWebTarget()
-  const confirm = useConfirmationDialog()
+  const confirmStatusMove = useConfirmStatusMove()
   const patchRow = useBuildWebStore((s) => s.patchIssue)
   const [loaded, setDetail] = useState<BuildWebIssueDetail | null>(null)
   const [failed, setFailed] = useState<{ id: string; message: string } | null>(null)
@@ -86,22 +84,8 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       // Why: the reply may land after another task opened; it only ever touches its own card.
       const onOwnCard = (update: (shown: BuildWebIssueDetail) => BuildWebIssueDetail) =>
         setDetail((shown) => (shown && shown.id === current.id ? update(shown) : shown))
-      if (patch.status && current.jira_key) {
-        const accepted = await confirm({
-          title: translate('buildWeb.detail.statusTitle', 'Move {{key}} to “{{status}}”?', {
-            key: current.key,
-            status: statusLabel(patch.status)
-          }),
-          description: translate(
-            'buildWeb.detail.statusJira',
-            'build-web mirrors the move to Jira {{jira}}.',
-            { jira: current.jira_key }
-          ),
-          confirmLabel: translate('buildWeb.detail.move', 'Move')
-        })
-        if (!accepted) {
-          return
-        }
+      if (!(await confirmStatusMove(current, patch))) {
+        return
       }
       const optimistic = patch.status === undefined
       if (optimistic) {
@@ -120,20 +104,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
           onOwnCard((shown) => ({ ...shown, ...issue }))
           patchRow(current.id, issue)
         }
-        const jira = result.value.jira
-        if (patch.status && jira) {
-          if (jira.ok) {
-            toast.message(
-              translate('buildWeb.detail.jiraMoved', 'Jira: {{status}}', { status: jira.status })
-            )
-          } else {
-            toast.error(
-              translate('buildWeb.detail.jiraNotMoved', 'Not moved in Jira: {{error}}', {
-                error: jira.error
-              })
-            )
-          }
-        }
+        toastJiraOutcome(patch, result.value.jira)
       } catch (failure) {
         onOwnCard(() => current)
         toast.error(failure instanceof Error ? failure.message : String(failure))
@@ -141,7 +112,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
         setSavingId((busy) => (busy === current.id ? null : busy))
       }
     },
-    [confirm, detail, patchRow, saving, target]
+    [confirmStatusMove, detail, patchRow, saving, target]
   )
 
   return { detail, error, assignees, versions, saving, save, reload: () => void load() }

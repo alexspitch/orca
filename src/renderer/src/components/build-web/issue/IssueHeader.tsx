@@ -1,10 +1,16 @@
 import { ChevronLeft, ExternalLink, Minimize2 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueDetail, BuildWebIssuePatch } from '../../../../../shared/build-web-types'
-import { productLabel, statusLabel, statusTone } from '../build-web-labels'
+import { productLabel, statusLabel } from '../build-web-labels'
+import {
+  BuildWebToneChip,
+  PriorityChip,
+  ProductChip,
+  StatusChip,
+  TypeChip
+} from '../BuildWebToneChip'
 import { BuildWebSessionBadge } from '../BuildWebSessionBadge'
 import { nextStatus } from './issue-card-facts'
 
@@ -52,14 +58,19 @@ export function IssueHeader({
         <div className="flex min-w-0 flex-1 basis-[28rem] flex-col gap-2">
           <h1 className="text-lg leading-snug font-semibold">{detail.title}</h1>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant={statusTone(detail.status)}>{statusLabel(detail.status)}</Badge>
-            {detail.for_ai ? (
-              <Badge variant="secondary">
-                {translate('buildWeb.detail.forAi', 'Handed to AI')}
-              </Badge>
+            <StatusChip status={detail.status} />
+            <ProductChip product={detail.product} />
+            <TypeChip type={detail.type} />
+            <PriorityChip priority={detail.priority} />
+            {detail.version_name ? (
+              <BuildWebToneChip label={detail.version_name} tone={null} mono />
             ) : null}
-            <Badge variant="outline">{detail.type}</Badge>
-            <Badge variant="outline">P{detail.priority}</Badge>
+            {detail.for_ai ? (
+              <BuildWebToneChip
+                label={translate('buildWeb.detail.forAi', 'Handed to AI')}
+                tone="purple"
+              />
+            ) : null}
             <span className="text-xs text-muted-foreground">
               {translate('buildWeb.card.byline', '{{author}} · created {{created}}', {
                 author: detail.created_by,

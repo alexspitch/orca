@@ -1,3 +1,4 @@
+import { buildCell, sortByCell } from './build-web-image-sort'
 import type {
   BuildWebImageBuild,
   BuildWebImageHistory,
@@ -87,7 +88,16 @@ export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): B
     .map((i) => ({ image: i.image, product: i.product, last: last.get(i.image) ?? null }))
     .filter((row) => (!args.version && !dists.length) || row.last)
     .filter((row) => textMatches(row.image))
-  const rows = byFilters.filter((row) => inProducts(row.product))
+  const filtered = byFilters.filter((row) => inProducts(row.product))
+  const sort = args.sort
+  // Why the row's own name and product: an image with no matching build still has both.
+  const rowCell = (row: BuildWebImageRow) =>
+    sort === 'image'
+      ? row.image
+      : sort === 'product'
+        ? row.product
+        : buildCell(row.last, sort ?? 'image')
+  const rows = sort ? sortByCell(filtered, rowCell, args.dir ?? 'asc') : filtered
   const distCounts: Record<string, number> = {}
   for (const dist of new Set(catalog.builds.map((b) => b.dist))) {
     const own = newestMatching(newest, args.version, [dist])
@@ -119,12 +129,16 @@ export function imageHistory(
       (!args.version || b.product_version === args.version)
   )
   const pushedOf = (b: BuildWebImageBuild) => (b.pushed_build_tag ? 'yes' : 'no')
-  const builds = base.filter(
+  const filtered = base.filter(
     (b) =>
       (!args.dists?.length || args.dists.includes(b.dist)) &&
       (!args.pushed?.length || args.pushed.includes(pushedOf(b))) &&
       (!args.statuses?.length || args.statuses.includes(b.status))
   )
+  const sort = args.sort
+  const builds = sort
+    ? sortByCell(filtered, (b) => buildCell(b, sort), args.dir ?? 'asc')
+    : filtered
   return {
     builds: pageOf(builds, args.page, args.pageSize),
     total: builds.length,

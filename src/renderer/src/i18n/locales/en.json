@@ -20372,7 +20372,10 @@
       "anyStatus": "Any status",
       "product": "Product",
       "allProducts": "All products",
-      "search": "Search by key or title"
+      "search": "Search by key or title",
+      "quick": "Quick filters",
+      "toWork": "To work",
+      "statusCount": "{{count}} statuses"
     },
     "detail": {
       "noDescription": "No description.",
@@ -20398,7 +20401,8 @@
       "statusJira": "build-web mirrors the move to Jira {{jira}}.",
       "move": "Move",
       "jiraMoved": "Jira: {{status}}",
-      "jiraNotMoved": "Not moved in Jira: {{error}}"
+      "jiraNotMoved": "Not moved in Jira: {{error}}",
+      "resize": "Resize the card"
     },
     "list": {
       "select": "Select {{key}}",
@@ -20412,13 +20416,20 @@
       "release": "Release",
       "marks": "Marks",
       "shownOf": "{{shown}} of {{total}}",
-      "loadMore": "Load more"
+      "loadMore": "Load more",
+      "product": "Product",
+      "type": "Type",
+      "updated": "Updated",
+      "range": "{{from}}–{{to}} of {{total}}",
+      "changeStatus": "Change the status of {{key}}",
+      "changePriority": "Change the priority of {{key}}"
     },
     "state": {
       "loading": "Loading tasks…",
       "retry": "Try again",
       "empty": "No tasks in {{view}} with these filters.",
-      "loadingCard": "Loading…"
+      "loadingCard": "Loading…",
+      "noneMatch": "No tasks match these filters."
     },
     "page": {
       "title": "Issues",
@@ -20609,6 +20620,18 @@
       "issues": "Issues",
       "images": "Images",
       "imagesBuilding": "{{label}}, {{count}} building"
+    },
+    "priority": {
+      "highest": "Highest",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "lowest": "Lowest"
+    },
+    "type": {
+      "bug": "Bug",
+      "improvement": "Improvement",
+      "chore": "Chore"
     }
   }
 }

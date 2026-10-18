@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { CloudUpload, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -16,9 +15,8 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebListState } from '../BuildWebListState'
 import { imageTally } from './issue-card-facts'
-
-const statusVariant = (status: string) =>
-  status === 'SUCCESS' ? 'outline' : /FAIL|ABORT|failed/i.test(status) ? 'destructive' : 'secondary'
+import { BuildWebToneChip } from '../BuildWebToneChip'
+import { runStatusTone } from '../build-web-tones'
 
 export function IssueBuildTab({
   target,
@@ -90,13 +88,13 @@ export function IssueBuildTab({
           <span className="text-xs text-muted-foreground">
             {translate('buildWeb.build.status', 'Status')}
           </span>
-          <Badge variant={statusVariant(run.status)}>{run.status}</Badge>
+          <BuildWebToneChip label={run.status} tone={runStatusTone(run.status)} />
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">
             {translate('buildWeb.build.branch', 'Branch')}
           </span>
-          <span className="font-mono text-xs">{run.branch}</span>
+          <BuildWebToneChip label={run.branch} tone={null} mono />
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xs text-muted-foreground">
@@ -160,16 +158,21 @@ export function IssueBuildTab({
               <tr key={`${b.image}|${b.dist}|${b.branch}`} className="border-b border-border">
                 <td className="truncate px-3 py-2 font-mono text-xs">{b.image}</td>
                 <td className="py-2 text-xs">{b.dist}</td>
-                <td className="truncate py-2 font-mono text-xs text-muted-foreground">
-                  {b.branch}
+                <td className="py-2 pr-2">
+                  <BuildWebToneChip label={b.branch} tone={null} mono />
                 </td>
                 <td className="py-2">
-                  <Badge variant={statusVariant(b.status)}>{b.status}</Badge>
+                  <BuildWebToneChip label={b.status} tone={runStatusTone(b.status)} />
                 </td>
-                <td className="py-2 text-xs text-muted-foreground">
-                  {b.tests_skipped
-                    ? translate('buildWeb.build.skipped', 'skipped')
-                    : translate('buildWeb.build.ran', 'ran')}
+                <td className="py-2">
+                  <BuildWebToneChip
+                    label={
+                      b.tests_skipped
+                        ? translate('buildWeb.build.skipped', 'skipped')
+                        : translate('buildWeb.build.ran', 'ran')
+                    }
+                    tone={b.tests_skipped ? 'amber' : 'neutral'}
+                  />
                 </td>
                 <td className="py-2">
                   {b.url && /^https?:\/\//.test(b.url) ? (
@@ -186,10 +189,17 @@ export function IssueBuildTab({
                     </button>
                   ) : null}
                 </td>
-                <td className="py-2 pr-3 text-xs text-muted-foreground">
-                  {b.pushed
-                    ? translate('buildWeb.images.pushed', 'pushed')
-                    : translate('buildWeb.images.notPushed', 'not pushed')}
+                <td className="py-2 pr-3">
+                  {b.status === 'SUCCESS' ? (
+                    <BuildWebToneChip
+                      label={
+                        b.pushed
+                          ? translate('buildWeb.images.pushed', 'pushed')
+                          : translate('buildWeb.images.notPushed', 'not pushed')
+                      }
+                      tone={b.pushed ? 'green' : 'amber'}
+                    />
+                  ) : null}
                 </td>
               </tr>
             ))}

@@ -15,13 +15,20 @@ const LIST_LIMIT_MAX = 100
 
 /** The query string for a list request: the console's own filter names. */
 export function issueListQuery(query: BuildWebIssueQuery): string {
-  const params = new URLSearchParams({ parent: 'root', sort: 'updated_at', dir: 'desc' })
-  if (query.view === 'mine') {
-    params.set('mine', 'yes')
-  } else if (query.view === 'ai') {
-    params.set('ai', 'yes')
-  } else if (query.view === 'favorite') {
-    params.set('favorite', 'yes')
+  const params = new URLSearchParams({
+    parent: 'root',
+    sort: query.sort ?? 'updated_at',
+    dir: query.dir ?? 'desc'
+  })
+  // Why the flags win: an older client sends only `view`, a newer one both (for older hosts).
+  const flagged = query.mine !== undefined || query.ai !== undefined || query.favorite !== undefined
+  const quick = flagged
+    ? { mine: query.mine === true, ai: query.ai === true, favorite: query.favorite === true }
+    : { mine: query.view === 'mine', ai: query.view === 'ai', favorite: query.view === 'favorite' }
+  for (const [name, on] of Object.entries(quick)) {
+    if (on) {
+      params.set(name, 'yes')
+    }
   }
   const q = query.q?.trim()
   if (q) {

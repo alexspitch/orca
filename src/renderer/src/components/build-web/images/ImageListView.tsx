@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { RefreshCw } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { translate } from '@/i18n/i18n'
@@ -11,6 +10,9 @@ import { BuildStatusCell, LogCell, RegistryCell, formatBuildTime } from './image
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
 import { useImagePicks } from './use-image-picks'
+import { BuildWebSortHeader } from '../BuildWebSortHeader'
+import { BuildWebToneChip } from '../BuildWebToneChip'
+import { productTone } from '../build-web-tones'
 import {
   FoundCount,
   ImagePages,
@@ -18,7 +20,7 @@ import {
   ImageTableState,
   VersionSelect
 } from './image-view-parts'
-import { IMAGE_PAGE_SIZE, toggled, useImagePage } from './use-build-web-images'
+import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-build-web-images'
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'other'] as const
 const DISTS = ['rhel', 'redos'] as const
@@ -42,7 +44,10 @@ export function ImageListView({
   const [version, setVersion] = useState('all')
   const [page, setPage] = useState(0)
   const picks = useImagePicks()
+  const sorting = useImageSort(() => setPage(0))
   const args = {
+    sort: sorting.sort ?? undefined,
+    dir: sorting.dir,
     q,
     products,
     dists,
@@ -134,20 +139,48 @@ export function ImageListView({
                     {translate('buildWeb.list.selection', 'Selection')}
                   </span>
                 </th>
-                <th className="py-2">{translate('buildWeb.images.image', 'Image')}</th>
-                <th className="w-24 py-2">{translate('buildWeb.images.product', 'Product')}</th>
-                <th className="w-24 py-2">
-                  {translate('buildWeb.images.versionShort', 'Version')}
-                </th>
-                <th className="w-16 py-2">{translate('buildWeb.images.dist', 'dist')}</th>
-                <th className="w-32 py-2">
-                  {translate('buildWeb.images.lastBuild', 'Last build')}
-                </th>
-                <th className="w-24 py-2">{translate('buildWeb.images.status', 'Status')}</th>
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="image"
+                  label={translate('buildWeb.images.image', 'Image')}
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="product"
+                  label={translate('buildWeb.images.product', 'Product')}
+                  className="w-24"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="version"
+                  label={translate('buildWeb.images.versionShort', 'Version')}
+                  className="w-24"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="dist"
+                  label={translate('buildWeb.images.dist', 'dist')}
+                  className="w-16"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="at"
+                  label={translate('buildWeb.images.lastBuild', 'Last build')}
+                  className="w-32"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="status"
+                  label={translate('buildWeb.images.status', 'Status')}
+                  className="w-24"
+                />
                 <th className="w-20 py-2">{translate('buildWeb.images.log', 'Log')}</th>
-                <th className="w-36 py-2 pr-3 md:pr-5">
-                  {translate('buildWeb.images.registry', 'Registry')}
-                </th>
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="registry"
+                  label={translate('buildWeb.images.registry', 'Registry')}
+                  className="w-36 pr-3 md:pr-5"
+                />
               </tr>
             </thead>
             <tbody>
@@ -162,14 +195,17 @@ export function ImageListView({
                     )}
                   >
                     <td className="py-2 pl-3 md:pl-5">
-                      <Checkbox
-                        disabled={!pushable}
-                        checked={picks.has(row.image)}
-                        onCheckedChange={() => picks.toggle(row.image, row.last)}
-                        aria-label={translate('buildWeb.images.pick', 'Pick {{image}}', {
-                          image: row.image
-                        })}
-                      />
+                      {/* Why no disabled box: a faded one reads the same as an empty one. */}
+                      {pushable ? (
+                        <Checkbox
+                          emphasis="strong"
+                          checked={picks.has(row.image)}
+                          onCheckedChange={() => picks.toggle(row.image, row.last)}
+                          aria-label={translate('buildWeb.images.pick', 'Pick {{image}}', {
+                            image: row.image
+                          })}
+                        />
+                      ) : null}
                     </td>
                     <td className="max-w-0 py-2">
                       <button
@@ -181,9 +217,16 @@ export function ImageListView({
                       </button>
                     </td>
                     <td className="py-2">
-                      <Badge variant="secondary">{productName(row.product)}</Badge>
+                      <BuildWebToneChip
+                        label={productName(row.product)}
+                        tone={productTone(row.product)}
+                      />
                     </td>
-                    <td className="py-2 font-mono text-xs">{row.last?.version ?? ''}</td>
+                    <td className="py-2">
+                      {row.last?.version ? (
+                        <BuildWebToneChip label={row.last.version} tone={null} mono />
+                      ) : null}
+                    </td>
                     <td className="py-2 text-xs">{row.last?.dist ?? ''}</td>
                     <td className="py-2 text-xs text-muted-foreground">
                       {formatBuildTime(row.last?.at ?? null)}

@@ -56,10 +56,35 @@ export function productLabel(product: BuildWebIssueProduct): string {
   return product === 'storage' ? 'Storage' : product === 'tools' ? 'Tools' : product.toUpperCase()
 }
 
-/** A status chip tone from existing tokens — closed work recedes, a failed build stands out. */
-export function statusTone(status: BuildWebIssueStatus): 'secondary' | 'outline' | 'destructive' {
-  if (status === 'build_failed') {
-    return 'destructive'
+/** build-web's five priorities, highest first; an unknown number reads as itself. */
+export const BUILD_WEB_PRIORITIES = [5, 4, 3, 2, 1] as const
+
+export function priorityLabel(priority: number): string {
+  switch (priority) {
+    case 5:
+      return translate('buildWeb.priority.highest', 'Highest')
+    case 4:
+      return translate('buildWeb.priority.high', 'High')
+    case 3:
+      return translate('buildWeb.priority.medium', 'Medium')
+    case 2:
+      return translate('buildWeb.priority.low', 'Low')
+    case 1:
+      return translate('buildWeb.priority.lowest', 'Lowest')
+    default:
+      return `P${priority}`
   }
-  return status === 'done' || status === 'wontfix' ? 'outline' : 'secondary'
+}
+
+export function typeLabel(type: string): string {
+  switch (type) {
+    case 'bug':
+      return translate('buildWeb.type.bug', 'Bug')
+    case 'improvement':
+      return translate('buildWeb.type.improvement', 'Improvement')
+    case 'chore':
+      return translate('buildWeb.type.chore', 'Chore')
+    default:
+      return type
+  }
 }

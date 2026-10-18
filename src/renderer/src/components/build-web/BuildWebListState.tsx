@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import { useBuildWebStore } from './build-web-store'
-import { viewLabel } from './build-web-labels'
 
 /** Empty, loading and error states of the list — one place, so they read the same everywhere. */
 export function BuildWebListState({
@@ -17,7 +15,6 @@ export function BuildWebListState({
   /** What is loading, when it is not the task list. */
   loadingLabel?: string
 }): React.JSX.Element | null {
-  const view = useBuildWebStore((s) => s.view)
   const [showLoading, setShowLoading] = useState(false)
   useEffect(() => {
     if (kind !== 'loading') {
@@ -51,9 +48,7 @@ export function BuildWebListState({
   }
   return (
     <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
-      {translate('buildWeb.state.empty', 'No tasks in {{view}} with these filters.', {
-        view: viewLabel(view)
-      })}
+      {translate('buildWeb.state.noneMatch', 'No tasks match these filters.')}
     </p>
   )
 }

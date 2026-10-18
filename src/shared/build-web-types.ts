@@ -105,8 +105,26 @@ export type BuildWebIssueDetail = BuildWebIssueRow & {
   comments: BuildWebComment[]
 }
 
+/** The console's own sort keys for the task list. */
+export const BUILD_WEB_ISSUE_SORTS = [
+  'key',
+  'title',
+  'priority',
+  'type',
+  'status',
+  'updated_at'
+] as const
+export type BuildWebIssueSort = (typeof BUILD_WEB_ISSUE_SORTS)[number]
+
 export type BuildWebIssueQuery = {
+  /** Kept for hosts that predate the flags below; a newer host reads the flags when any is set. */
   view: BuildWebView
+  /** Quick filters, combined with AND. */
+  mine?: boolean
+  ai?: boolean
+  favorite?: boolean
+  sort?: BuildWebIssueSort
+  dir?: 'asc' | 'desc'
   q?: string
   status?: BuildWebStatus[]
   product?: BuildWebProduct[]

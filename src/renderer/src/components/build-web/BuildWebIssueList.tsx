@@ -1,28 +1,34 @@
 import { Bot, Star } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
-import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
-import { useBuildWebStore } from './build-web-store'
-import { statusLabel, statusTone } from './build-web-labels'
+import type { BuildWebIssuePatch, BuildWebIssueRow } from '../../../../shared/build-web-types'
+import { ISSUE_PAGE_SIZE, useBuildWebStore } from './build-web-store'
+import { BuildWebToneChip, ProductChip, TypeChip } from './BuildWebToneChip'
+import { BuildWebSortHeader } from './BuildWebSortHeader'
+import { PriorityPicker, StatusPicker } from './BuildWebRowPickers'
+import { useIssueRowPatch } from './use-build-web-issue-write'
 
 function IssueRow({
   issue,
   selected,
   open,
+  busy,
   onToggle,
   onOpen,
-  onFavorite
+  onFavorite,
+  onPatch
 }: {
   issue: BuildWebIssueRow
   selected: boolean
   open: boolean
+  busy: boolean
   onToggle: () => void
   onOpen: () => void
   onFavorite: () => void
+  onPatch: (patch: BuildWebIssuePatch) => void
 }): React.JSX.Element {
   return (
     <tr
@@ -31,13 +37,20 @@ function IssueRow({
     >
       <td className="w-10 py-2 pl-3 md:pl-5">
         <Checkbox
+          emphasis="strong"
           checked={selected}
           onCheckedChange={onToggle}
           aria-label={translate('buildWeb.list.select', 'Select {{key}}', { key: issue.key })}
         />
       </td>
       <td className="w-28 py-2 font-mono text-xs text-muted-foreground">{issue.key}</td>
-      <td className="max-w-0 py-2">
+      <td className="w-20 py-2">
+        <ProductChip product={issue.product} />
+      </td>
+      <td className="w-28 py-2">
+        <TypeChip type={issue.type} />
+      </td>
+      <td className="max-w-0 py-2 pr-3">
         <button
           type="button"
           onClick={onOpen}
@@ -46,17 +59,28 @@ function IssueRow({
           {issue.title}
         </button>
       </td>
-      <td className="w-36 py-2">
-        <Badge variant={statusTone(issue.status)}>{statusLabel(issue.status)}</Badge>
+      <td className="w-40 py-2">
+        <StatusPicker issue={issue} busy={busy} onPatch={onPatch} />
       </td>
-      <td className="w-12 py-2 text-xs text-muted-foreground">P{issue.priority}</td>
-      <td className="w-28 py-2 text-xs text-muted-foreground">{issue.version_name ?? '—'}</td>
+      <td className="w-32 py-2">
+        <PriorityPicker issue={issue} busy={busy} onPatch={onPatch} />
+      </td>
+      <td className="w-28 py-2">
+        {issue.version_name ? (
+          <BuildWebToneChip label={issue.version_name} tone={null} mono />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </td>
+      <td className="w-24 py-2 text-xs text-muted-foreground">
+        {issue.updated_at ? new Date(issue.updated_at).toLocaleDateString() : ''}
+      </td>
       <td className="w-16 py-2 pr-3 md:pr-5">
         <div className="flex items-center justify-end gap-1">
           {issue.agent_session ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-muted-foreground">
+                <span className="text-chip-tone-purple">
                   <Bot
                     className="size-3.5"
                     aria-label={translate('buildWeb.list.session', 'Agent session')}
@@ -75,7 +99,9 @@ function IssueRow({
             aria-label={translate('buildWeb.list.favorite', 'Favorite {{key}}', { key: issue.key })}
             className="rounded p-1 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
-            <Star className={cn('size-3.5', issue.favorite && 'fill-current text-foreground')} />
+            <Star
+              className={cn('size-3.5', issue.favorite && 'fill-current text-chip-tone-amber')}
+            />
           </button>
         </div>
       </td>
@@ -84,61 +110,107 @@ function IssueRow({
 }
 
 export function BuildWebIssueList({
-  onFavorite,
-  onLoadMore
+  onFavorite
 }: {
   onFavorite: (issue: BuildWebIssueRow) => void
-  onLoadMore: () => void
 }): React.JSX.Element {
   const issues = useBuildWebStore((s) => s.issues)
   const total = useBuildWebStore((s) => s.total)
-  const loadingMore = useBuildWebStore((s) => s.loadingMore || s.loading)
+  const loading = useBuildWebStore((s) => s.loading)
+  const page = useBuildWebStore((s) => s.page)
+  const setPage = useBuildWebStore((s) => s.setPage)
+  const sort = useBuildWebStore((s) => s.sort)
+  const sortBy = useBuildWebStore((s) => s.sortBy)
   const selected = useBuildWebStore((s) => s.selected)
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const toggleSelected = useBuildWebStore((s) => s.toggleSelected)
   const openIssue = useBuildWebStore((s) => s.openIssue)
+  const { busy, patch } = useIssueRowPatch()
+  const header = { sort: sort.sort, dir: sort.dir, onSort: sortBy }
 
   return (
-    <div className="scrollbar-sleek min-h-0 flex-1 overflow-auto">
-      <table className="w-full min-w-[640px] table-fixed border-collapse">
-        <thead className="sticky top-0 z-10 bg-background">
-          <tr className="border-b border-border text-left text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
-            <th className="w-10 py-2 pl-3 md:pl-5">
-              <span className="sr-only">{translate('buildWeb.list.selection', 'Selection')}</span>
-            </th>
-            <th className="w-28 py-2">{translate('buildWeb.list.key', 'Key')}</th>
-            <th className="py-2">{translate('buildWeb.list.title', 'Title')}</th>
-            <th className="w-36 py-2">{translate('buildWeb.list.status', 'Status')}</th>
-            <th className="w-12 py-2">{translate('buildWeb.list.priority', 'Prio')}</th>
-            <th className="w-28 py-2">{translate('buildWeb.list.release', 'Release')}</th>
-            <th className="w-16 py-2 pr-3 md:pr-5">
-              <span className="sr-only">{translate('buildWeb.list.marks', 'Marks')}</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {issues.map((issue) => (
-            <IssueRow
-              key={issue.id}
-              issue={issue}
-              selected={selected.has(issue.id)}
-              open={openIssueId === issue.id}
-              onToggle={() => toggleSelected(issue.id)}
-              onOpen={() => openIssue(issue.id)}
-              onFavorite={() => onFavorite(issue)}
-            />
-          ))}
-        </tbody>
-      </table>
-      {total > issues.length ? (
-        <div className="flex items-center justify-center gap-3 py-3 text-xs text-muted-foreground">
-          {translate('buildWeb.list.shownOf', '{{shown}} of {{total}}', {
-            shown: issues.length,
-            total
-          })}
-          <Button variant="outline" size="sm" disabled={loadingMore} onClick={onLoadMore}>
-            {translate('buildWeb.list.loadMore', 'Load more')}
-          </Button>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="scrollbar-sleek min-h-0 flex-1 overflow-auto">
+        <table className="w-full min-w-[1000px] table-fixed border-collapse">
+          <thead className="sticky top-0 z-10 bg-background">
+            <tr className="border-b border-border text-left text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
+              <th className="w-10 py-2 pl-3 md:pl-5">
+                <span className="sr-only">{translate('buildWeb.list.selection', 'Selection')}</span>
+              </th>
+              <BuildWebSortHeader
+                {...header}
+                sortKey="key"
+                label={translate('buildWeb.list.key', 'Key')}
+                className="w-28"
+              />
+              <th className="w-20 py-2">{translate('buildWeb.list.product', 'Product')}</th>
+              <BuildWebSortHeader
+                {...header}
+                sortKey="type"
+                label={translate('buildWeb.list.type', 'Type')}
+                className="w-28"
+              />
+              <BuildWebSortHeader
+                {...header}
+                sortKey="title"
+                label={translate('buildWeb.list.title', 'Title')}
+              />
+              <BuildWebSortHeader
+                {...header}
+                sortKey="status"
+                label={translate('buildWeb.list.status', 'Status')}
+                className="w-40"
+              />
+              <BuildWebSortHeader
+                {...header}
+                sortKey="priority"
+                label={translate('buildWeb.list.priority', 'Priority')}
+                className="w-32"
+              />
+              <th className="w-28 py-2">{translate('buildWeb.list.release', 'Release')}</th>
+              <BuildWebSortHeader
+                {...header}
+                sortKey="updated_at"
+                label={translate('buildWeb.list.updated', 'Updated')}
+                className="w-24"
+              />
+              <th className="w-16 py-2 pr-3 md:pr-5">
+                <span className="sr-only">{translate('buildWeb.list.marks', 'Marks')}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {issues.map((issue) => (
+              <IssueRow
+                key={issue.id}
+                issue={issue}
+                selected={selected.has(issue.id)}
+                open={openIssueId === issue.id}
+                busy={busy.has(issue.id)}
+                onToggle={() => toggleSelected(issue.id)}
+                onOpen={() => openIssue(issue.id)}
+                onFavorite={() => onFavorite(issue)}
+                onPatch={(change) => void patch(issue, change)}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {total > ISSUE_PAGE_SIZE ? (
+        <div className="flex items-center justify-between gap-3 border-t border-border px-3 md:px-5">
+          <span className="text-xs whitespace-nowrap text-muted-foreground">
+            {translate('buildWeb.list.range', '{{from}}–{{to}} of {{total}}', {
+              from: page * ISSUE_PAGE_SIZE + 1,
+              to: page * ISSUE_PAGE_SIZE + issues.length,
+              total
+            })}
+          </span>
+          <PaginationBar
+            currentPage={page}
+            totalPages={Math.ceil(total / ISSUE_PAGE_SIZE)}
+            loadingTarget={loading ? page : null}
+            onPageChange={setPage}
+          />
         </div>
       ) : null}
     </div>

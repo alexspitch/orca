@@ -14,8 +14,9 @@ import {
   BuildWebIssueSteps,
   SectionTitle
 } from './BuildWebIssueBody'
-import { productLabel } from './build-web-labels'
 import { BuildWebSessionBadge } from './BuildWebSessionBadge'
+import { PriorityChip, ProductChip, StatusChip, TypeChip } from './BuildWebToneChip'
+import { useBuildWebDrawerWidth } from './use-build-web-drawer-width'
 
 /** The side card of a task: fields to edit, its text to read, and the ways out of it. */
 export function BuildWebIssueDrawer({
@@ -30,15 +31,30 @@ export function BuildWebIssueDrawer({
     fullScreen ? null : openIssueId
   )
   const open = openIssueId !== null && !fullScreen
+  const resize = useBuildWebDrawerWidth()
 
   return (
     <Sheet open={open} onOpenChange={(next) => !next && openIssue(null)}>
       <SheetContent
+        ref={resize.containerRef}
         side="right"
         showCloseButton={false}
-        className="w-[min(92vw,560px)] sm:max-w-[560px]"
+        className="max-w-none sm:max-w-none"
+        style={{ width: resize.width }}
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={translate('buildWeb.detail.resize', 'Resize the card')}
+          aria-valuenow={resize.width}
+          aria-valuemin={resize.minWidth}
+          aria-valuemax={resize.maxWidth}
+          tabIndex={0}
+          onMouseDown={resize.onResizeStart}
+          onKeyDown={resize.onKeyDown}
+          className="absolute top-0 left-0 z-10 h-full w-1 cursor-col-resize transition-colors hover:bg-ring/20 focus-visible:bg-ring/30 focus-visible:outline-none active:bg-ring/30"
+        />
         <VisuallyHidden.Root asChild>
           <SheetTitle>{detail?.title ?? translate('buildWeb.detail.task', 'Task')}</SheetTitle>
         </VisuallyHidden.Root>
@@ -53,8 +69,11 @@ export function BuildWebIssueDrawer({
         <div className="flex items-center gap-2 border-b border-border px-4 py-3">
           <span className="font-mono text-sm text-muted-foreground">{detail?.key}</span>
           {detail ? (
-            <span className="text-xs text-muted-foreground">
-              {productLabel(detail.product)} · {detail.type}
+            <span className="flex min-w-0 flex-wrap items-center gap-1.5">
+              <ProductChip product={detail.product} />
+              <TypeChip type={detail.type} />
+              <StatusChip status={detail.status} />
+              <PriorityChip priority={detail.priority} />
             </span>
           ) : null}
           <div className="flex-1" />

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import { toast } from 'sonner'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { useAppStore } from '@/store'
 import { defaultScopeHost } from '@/lib/default-creation-host'
@@ -48,62 +47,38 @@ export function useBuildWebStatus(): { refreshStatus: () => Promise<void> } {
   return { refreshStatus }
 }
 
-/** Loads the list for the current filters; a reply to an older request is dropped. */
-export function useBuildWebIssueList(): { reload: () => void; loadMore: () => void } {
+/** Loads the current page for the filters and sort; a reply to an older request is dropped. */
+export function useBuildWebIssueList(): { reload: () => void } {
   const { target, contextKey } = useBuildWebTarget()
   const connected = useBuildWebStore(
     (s) => s.status?.connected === true && s.contextKey === contextKey
   )
-  const view = useBuildWebStore((s) => s.view)
+  const quick = useBuildWebStore((s) => s.quick)
+  const sort = useBuildWebStore((s) => s.sort)
+  const page = useBuildWebStore((s) => s.page)
   const query = useBuildWebStore((s) => s.query)
-  const statusFilter = useBuildWebStore((s) => s.statusFilter)
+  const statuses = useBuildWebStore((s) => s.statuses)
   const product = useBuildWebStore((s) => s.product)
   const generation = useRef(0)
 
   const load = useCallback(async () => {
     const mine = ++generation.current
-    const store = useBuildWebStore.getState()
-    store.setLoading()
+    useBuildWebStore.getState().setLoading()
     try {
-      const page = await callBuildWeb(
+      const answer = await callBuildWeb(
         target,
         'listIssues',
-        issueQueryOf({ view, query, statusFilter, product })
+        issueQueryOf({ quick, sort, page, query, statuses, product })
       )
       if (mine === generation.current) {
-        useBuildWebStore.getState().setIssues(page.issues, page.total)
+        useBuildWebStore.getState().setIssues(answer.issues, answer.total)
       }
     } catch (error) {
       if (mine === generation.current) {
         useBuildWebStore.getState().setError(error instanceof Error ? error.message : String(error))
       }
     }
-  }, [product, query, statusFilter, target, view])
-
-  // Why: the same generation as `load`, so a filter change drops a page for the old filters.
-  const loadMore = useCallback(async () => {
-    const mine = generation.current
-    const store = useBuildWebStore.getState()
-    // Why not while loading: a reload replaces the rows this page's offset is counted from.
-    if (store.loading || store.loadingMore || store.issues.length >= store.total) {
-      return
-    }
-    store.setLoadingMore(true)
-    try {
-      const page = await callBuildWeb(target, 'listIssues', {
-        ...issueQueryOf({ view, query, statusFilter, product }),
-        offset: store.issues.length
-      })
-      if (mine === generation.current) {
-        useBuildWebStore.getState().appendIssues(page.issues, page.total)
-      }
-    } catch (error) {
-      if (mine === generation.current) {
-        useBuildWebStore.getState().setLoadingMore(false)
-        toast.error(error instanceof Error ? error.message : String(error))
-      }
-    }
-  }, [product, query, statusFilter, target, view])
+  }, [page, product, query, quick, sort, statuses, target])
 
   useEffect(() => {
     if (!connected) {
@@ -113,5 +88,5 @@ export function useBuildWebIssueList(): { reload: () => void; loadMore: () => vo
     return () => window.clearTimeout(timer)
   }, [connected, load, query])
 
-  return { reload: () => void load(), loadMore: () => void loadMore() }
+  return { reload: () => void load() }
 }

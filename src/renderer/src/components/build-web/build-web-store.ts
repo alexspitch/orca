@@ -1,11 +1,21 @@
 import { create } from 'zustand'
-import type {
-  BuildWebConnectionStatus,
-  BuildWebIssueRow,
-  BuildWebProduct,
-  BuildWebStatus,
-  BuildWebView
+import {
+  BUILD_WEB_STATUSES,
+  type BuildWebConnectionStatus,
+  type BuildWebIssueQuery,
+  type BuildWebIssueRow,
+  type BuildWebIssueSort,
+  type BuildWebProduct,
+  type BuildWebStatus
 } from '../../../../shared/build-web-types'
+import {
+  nextSort,
+  QUICK_FILTERS,
+  readViewPrefs,
+  writeViewPrefs,
+  type IssueSortState,
+  type QuickFilter
+} from './build-web-view-prefs'
 
 /** The statuses a task is still being worked in — the list's default. */
 export const OPEN_STATUSES: readonly BuildWebStatus[] = [
@@ -20,20 +30,34 @@ export const OPEN_STATUSES: readonly BuildWebStatus[] = [
   'testing_external'
 ]
 
-export type BuildWebStatusFilter = 'open' | 'all' | BuildWebStatus
+/** «К работе» in build-web: what is waiting for hands, not for a train or a tester. */
+export const TO_WORK_STATUSES: readonly BuildWebStatus[] = [
+  'todo',
+  'planned',
+  'inprogress',
+  'build_failed'
+]
+
+export function sameStatuses(set: ReadonlySet<BuildWebStatus>, list: readonly BuildWebStatus[]) {
+  return set.size === list.length && list.every((s) => set.has(s))
+}
 
 type BuildWebState = {
   /** Which host's answer `status` is: a reply from a host the page left is dropped. */
   contextKey: string | null
   status: BuildWebConnectionStatus | null
-  view: BuildWebView
+  /** Quick filters, combined; none means every task. */
+  quick: ReadonlySet<QuickFilter>
+  sort: IssueSortState
+  page: number
+  drawerWidth: number
   query: string
-  statusFilter: BuildWebStatusFilter
+  /** The statuses shown; empty means any status. */
+  statuses: ReadonlySet<BuildWebStatus>
   product: BuildWebProduct | 'all'
   issues: BuildWebIssueRow[]
   total: number
   loading: boolean
-  loadingMore: boolean
   error: string | null
   selected: ReadonlySet<string>
   openIssueId: string | null
@@ -42,14 +66,16 @@ type BuildWebState = {
   lastWorktreeId: string | null
   noWorktree: boolean
   setStatus: (contextKey: string, status: BuildWebConnectionStatus) => void
-  setView: (view: BuildWebView) => void
+  toggleQuick: (filter: QuickFilter) => void
+  sortBy: (sort: BuildWebIssueSort) => void
+  setPage: (page: number) => void
+  setDrawerWidth: (width: number) => void
   setQuery: (query: string) => void
-  setStatusFilter: (filter: BuildWebStatusFilter) => void
+  toggleStatus: (status: BuildWebStatus) => void
+  setStatuses: (statuses: readonly BuildWebStatus[]) => void
   setProduct: (product: BuildWebProduct | 'all') => void
   setLoading: () => void
   setIssues: (issues: BuildWebIssueRow[], total: number) => void
-  setLoadingMore: (loadingMore: boolean) => void
-  appendIssues: (issues: BuildWebIssueRow[], total: number) => void
   setError: (error: string) => void
   patchIssue: (id: string, patch: Partial<BuildWebIssueRow>) => void
   toggleSelected: (id: string) => void
@@ -59,17 +85,23 @@ type BuildWebState = {
   rememberTakeToWork: (worktreeId: string, noWorktree: boolean) => void
 }
 
+const prefs = readViewPrefs()
+
+export const ISSUE_PAGE_SIZE = 50
+
 export const useBuildWebStore = create<BuildWebState>()((set) => ({
   contextKey: null,
   status: null,
-  view: 'mine',
+  quick: new Set(prefs.quick),
+  sort: prefs.sort,
+  page: 0,
+  drawerWidth: prefs.drawerWidth,
   query: '',
-  statusFilter: 'open',
+  statuses: new Set(prefs.statuses ?? OPEN_STATUSES),
   product: 'all',
   issues: [],
   total: 0,
   loading: false,
-  loadingMore: false,
   error: null,
   selected: new Set(),
   openIssueId: null,
@@ -83,28 +115,54 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
         ? { status }
         : { contextKey, status, issues: [], total: 0, selected: new Set(), openIssueId: null }
     ),
-  setView: (view) => set({ view }),
-  setQuery: (query) => set({ query }),
-  setStatusFilter: (statusFilter) => set({ statusFilter }),
-  setProduct: (product) => set({ product }),
+  toggleQuick: (filter) =>
+    set((state) => {
+      const quick = new Set(state.quick)
+      if (!quick.delete(filter)) {
+        quick.add(filter)
+      }
+      writeViewPrefs({ quick: [...quick] })
+      return { quick, page: 0 }
+    }),
+  sortBy: (by) =>
+    set((state) => {
+      const sort = nextSort(state.sort, by)
+      writeViewPrefs({ sort })
+      return { sort, page: 0 }
+    }),
+  setPage: (page) => set({ page: Math.max(0, page) }),
+  setDrawerWidth: (drawerWidth) => {
+    writeViewPrefs({ drawerWidth })
+    set({ drawerWidth })
+  },
+  // Why page 0: a narrower filter may have fewer pages than the one being read.
+  setQuery: (query) => set({ query, page: 0 }),
+  toggleStatus: (status) =>
+    set((state) => {
+      const statuses = new Set(state.statuses)
+      if (!statuses.delete(status)) {
+        statuses.add(status)
+      }
+      writeViewPrefs({ statuses: [...statuses] })
+      return { statuses, page: 0 }
+    }),
+  setStatuses: (list) => {
+    writeViewPrefs({ statuses: [...list] })
+    set({ statuses: new Set(list), page: 0 })
+  },
+  setProduct: (product) => set({ product, page: 0 }),
   setLoading: () => set({ loading: true }),
   setIssues: (issues, total) =>
     set((state) => {
       // Why: a selection must not hold tasks the list no longer shows — Take to work would send them.
       const shown = new Set(issues.map((issue) => issue.id))
       const selected = new Set([...state.selected].filter((id) => shown.has(id)))
-      return { issues, total, loading: false, loadingMore: false, error: null, selected }
-    }),
-  setLoadingMore: (loadingMore) => set({ loadingMore }),
-  appendIssues: (more, total) =>
-    set((state) => {
-      // Why: a task updated between pages moves up and would otherwise appear twice.
-      const shown = new Set(state.issues.map((issue) => issue.id))
-      return {
-        issues: [...state.issues, ...more.filter((issue) => !shown.has(issue.id))],
-        total,
-        loadingMore: false
-      }
+      // Why: a page past the end (the list shrank) would read as «nothing matches».
+      const page =
+        issues.length === 0 && state.page > 0 && total > 0
+          ? Math.ceil(total / ISSUE_PAGE_SIZE) - 1
+          : state.page
+      return { issues, total, page, loading: false, error: null, selected }
     }),
   setError: (error) => set({ loading: false, error }),
   patchIssue: (id, patch) =>
@@ -125,19 +183,24 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   rememberTakeToWork: (lastWorktreeId, noWorktree) => set({ lastWorktreeId, noWorktree })
 }))
 
-/** The list request for the current filters. */
+/** The list request for the current filters, sort and page. */
 export function issueQueryOf(
-  state: Pick<BuildWebState, 'view' | 'query' | 'statusFilter' | 'product'>
-) {
+  state: Pick<BuildWebState, 'quick' | 'sort' | 'page' | 'query' | 'statuses' | 'product'>
+): BuildWebIssueQuery {
   return {
-    view: state.view,
+    // Why: a host older than the flags reads only `view`, which holds one quick filter at most.
+    view: QUICK_FILTERS.find((q) => state.quick.has(q)) ?? 'all',
+    mine: state.quick.has('mine'),
+    ai: state.quick.has('ai'),
+    favorite: state.quick.has('favorite'),
+    sort: state.sort.sort,
+    dir: state.sort.dir,
+    limit: ISSUE_PAGE_SIZE,
+    offset: state.page * ISSUE_PAGE_SIZE,
     q: state.query.trim() || undefined,
-    status:
-      state.statusFilter === 'all'
-        ? undefined
-        : state.statusFilter === 'open'
-          ? [...OPEN_STATUSES]
-          : [state.statusFilter],
+    status: state.statuses.size
+      ? BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s))
+      : undefined,
     product: state.product === 'all' ? undefined : [state.product]
   }
 }

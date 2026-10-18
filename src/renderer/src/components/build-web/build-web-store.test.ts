@@ -1,6 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
-import { issueQueryOf, OPEN_STATUSES, useBuildWebStore } from './build-web-store'
+import {
+  ISSUE_PAGE_SIZE,
+  issueQueryOf,
+  OPEN_STATUSES,
+  TO_WORK_STATUSES,
+  useBuildWebStore
+} from './build-web-store'
+import type { QuickFilter } from './build-web-view-prefs'
 
 const row = (id: string): BuildWebIssueRow => ({
   id,
@@ -44,10 +51,24 @@ describe('build-web store', () => {
     expect([...useBuildWebStore.getState().selected]).toEqual(['2'])
   })
 
-  it('appends the next page without repeating a task that moved up', () => {
-    useBuildWebStore.getState().setIssues([row('1'), row('2')], 4)
-    useBuildWebStore.getState().appendIssues([row('2'), row('3')], 4)
-    expect(useBuildWebStore.getState().issues.map((i) => i.id)).toEqual(['1', '2', '3'])
+  it('goes back to the last page when the one shown ran past the end', () => {
+    useBuildWebStore.setState({ page: 3 })
+    useBuildWebStore.getState().setIssues([], 60)
+    expect(useBuildWebStore.getState().page).toBe(1)
+  })
+
+  it('starts a filter or sort change on the first page', () => {
+    useBuildWebStore.setState({ page: 2 })
+    useBuildWebStore.getState().toggleQuick('ai')
+    expect(useBuildWebStore.getState().page).toBe(0)
+    useBuildWebStore.setState({ page: 2 })
+    useBuildWebStore.getState().sortBy('priority')
+    expect(useBuildWebStore.getState()).toMatchObject({
+      page: 0,
+      sort: { sort: 'priority', dir: 'desc' }
+    })
+    useBuildWebStore.getState().sortBy('priority')
+    expect(useBuildWebStore.getState().sort.dir).toBe('asc')
   })
 
   it('forgets another host’s tasks when the host changes', () => {
@@ -64,24 +85,49 @@ describe('build-web store', () => {
     expect(after.openIssueId).toBeNull()
   })
 
-  it('asks for open work by default and for one status when picked', () => {
-    expect(
-      issueQueryOf({ view: 'mine', query: '  ', statusFilter: 'open', product: 'all' })
-    ).toEqual({
+  it('asks for the picked statuses, combined quick filters, the sort and the page', () => {
+    const base = {
+      quick: new Set<QuickFilter>(['mine']),
+      sort: { sort: 'updated_at' as const, dir: 'desc' as const },
+      page: 0,
+      query: '  ',
+      statuses: new Set(OPEN_STATUSES),
+      product: 'all' as const
+    }
+    expect(issueQueryOf(base)).toEqual({
       view: 'mine',
+      mine: true,
+      ai: false,
+      favorite: false,
+      sort: 'updated_at',
+      dir: 'desc',
+      limit: ISSUE_PAGE_SIZE,
+      offset: 0,
       q: undefined,
       status: [...OPEN_STATUSES],
       product: undefined
     })
     expect(
-      issueQueryOf({ view: 'ai', query: 'export', statusFilter: 'testing', product: 'dc' })
+      issueQueryOf({
+        ...base,
+        quick: new Set<QuickFilter>(['ai', 'favorite']),
+        page: 2,
+        query: 'export',
+        statuses: new Set(TO_WORK_STATUSES),
+        product: 'dc'
+      })
     ).toMatchObject({
+      view: 'ai',
+      ai: true,
+      favorite: true,
+      offset: 2 * ISSUE_PAGE_SIZE,
       q: 'export',
-      status: ['testing'],
+      status: ['todo', 'planned', 'inprogress', 'build_failed'],
       product: ['dc']
     })
-    expect(
-      issueQueryOf({ view: 'all', query: '', statusFilter: 'all', product: 'all' }).status
-    ).toBeUndefined()
+    expect(issueQueryOf({ ...base, quick: new Set(), statuses: new Set() })).toMatchObject({
+      view: 'all',
+      status: undefined
+    })
   })
 })

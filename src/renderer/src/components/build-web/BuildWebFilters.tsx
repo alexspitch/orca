@@ -1,5 +1,6 @@
+import { Bot, Star, User } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
   Select,
   SelectContent,
@@ -8,61 +9,53 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { translate } from '@/i18n/i18n'
-import {
-  BUILD_WEB_STATUSES,
-  type BuildWebProduct,
-  type BuildWebView
-} from '../../../../shared/build-web-types'
-import { useBuildWebStore, type BuildWebStatusFilter } from './build-web-store'
-import { productLabel, statusLabel, viewLabel } from './build-web-labels'
+import type { BuildWebProduct } from '../../../../shared/build-web-types'
+import { useBuildWebStore } from './build-web-store'
+import { BuildWebStatusFilter, BuildWebToWorkToggle } from './BuildWebStatusFilter'
+import { viewLabel } from './build-web-labels'
+import { ProductChip } from './BuildWebToneChip'
+import { QUICK_FILTERS, type QuickFilter } from './build-web-view-prefs'
 
-const VIEWS: readonly BuildWebView[] = ['mine', 'ai', 'favorite', 'all']
+const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
+  mine: <User />,
+  ai: <Bot />,
+  favorite: <Star />
+}
 const PRODUCTS: readonly BuildWebProduct[] = ['sa', 'dc', 'ap', 'storage', 'tools']
 
-function statusFilterOf(value: string): BuildWebStatusFilter {
-  if (value === 'open' || value === 'all') {
-    return value
-  }
-  return BUILD_WEB_STATUSES.find((s) => s === value) ?? 'open'
-}
-
 export function BuildWebFilters(): React.JSX.Element {
-  const view = useBuildWebStore((s) => s.view)
+  const quick = useBuildWebStore((s) => s.quick)
   const query = useBuildWebStore((s) => s.query)
-  const statusFilter = useBuildWebStore((s) => s.statusFilter)
   const product = useBuildWebStore((s) => s.product)
-  const setView = useBuildWebStore((s) => s.setView)
+  const toggleQuick = useBuildWebStore((s) => s.toggleQuick)
   const setQuery = useBuildWebStore((s) => s.setQuery)
-  const setStatusFilter = useBuildWebStore((s) => s.setStatusFilter)
   const setProduct = useBuildWebStore((s) => s.setProduct)
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2 md:px-5">
-      <Tabs value={view} onValueChange={(next) => setView(VIEWS.find((v) => v === next) ?? 'mine')}>
-        <TabsList>
-          {VIEWS.map((v) => (
-            <TabsTrigger key={v} value={v}>
-              {viewLabel(v)}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      <Select value={statusFilter} onValueChange={(next) => setStatusFilter(statusFilterOf(next))}>
-        <SelectTrigger size="sm" aria-label={translate('buildWeb.filters.status', 'Status')}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="open">{translate('buildWeb.filters.open', 'Open')}</SelectItem>
-          <SelectItem value="all">
-            {translate('buildWeb.filters.anyStatus', 'Any status')}
-          </SelectItem>
-          {BUILD_WEB_STATUSES.map((s) => (
-            <SelectItem key={s} value={s}>
-              {statusLabel(s)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* Combined like build-web's: Mine and For AI together is my tasks handed to the model. */}
+      <ToggleGroup
+        type="multiple"
+        variant="outline"
+        size="sm"
+        value={QUICK_FILTERS.filter((q) => quick.has(q))}
+        onValueChange={(next) => {
+          const changed = QUICK_FILTERS.find((q) => next.includes(q) !== quick.has(q))
+          if (changed) {
+            toggleQuick(changed)
+          }
+        }}
+        aria-label={translate('buildWeb.filters.quick', 'Quick filters')}
+      >
+        {QUICK_FILTERS.map((q) => (
+          <ToggleGroupItem key={q} value={q}>
+            {QUICK_ICON[q]}
+            {viewLabel(q)}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
+      <BuildWebToWorkToggle />
+      <BuildWebStatusFilter />
       <Select
         value={product}
         onValueChange={(next) => setProduct(PRODUCTS.find((p) => p === next) ?? 'all')}
@@ -76,7 +69,7 @@ export function BuildWebFilters(): React.JSX.Element {
           </SelectItem>
           {PRODUCTS.map((p) => (
             <SelectItem key={p} value={p}>
-              {productLabel(p)}
+              <ProductChip product={p} />
             </SelectItem>
           ))}
         </SelectContent>

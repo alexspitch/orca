@@ -1,5 +1,6 @@
 import { z } from 'zod'
-import { BUILD_WEB_STATUSES } from '../build-web-types'
+import { BUILD_WEB_ISSUE_SORTS, BUILD_WEB_STATUSES } from '../build-web-types'
+import { BUILD_WEB_IMAGE_SORTS } from '../build-web-image-types'
 
 // One object per call: the web client's generic proxy sends `buildWeb.<name>(args)`,
 // and IPC validates with the same schemas, so both transports agree on every field.
@@ -21,6 +22,11 @@ export const BuildWebConnect = z.object({
 
 export const BuildWebIssueQueryParams = z.object({
   view: z.enum(['mine', 'ai', 'favorite', 'all']),
+  mine: z.boolean().optional(),
+  ai: z.boolean().optional(),
+  favorite: z.boolean().optional(),
+  sort: z.enum(BUILD_WEB_ISSUE_SORTS).optional(),
+  dir: z.enum(['asc', 'desc']).optional(),
   q: z.string().max(500).optional(),
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
   product: z.array(Product).max(5).optional(),
@@ -79,6 +85,8 @@ export const BuildWebClearSessionParams = z.object({
 })
 
 const ImageFilters = {
+  sort: z.enum(BUILD_WEB_IMAGE_SORTS).optional(),
+  dir: z.enum(['asc', 'desc']).optional(),
   q: z.string().max(200).optional(),
   products: z.array(z.string().max(20)).max(10).optional(),
   dists: z.array(z.string().max(20)).max(5).optional(),

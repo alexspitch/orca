@@ -3,7 +3,8 @@ import type {
   BuildWebImageHistory,
   BuildWebImageHistoryArgs,
   BuildWebImagePage,
-  BuildWebImagePageArgs
+  BuildWebImagePageArgs,
+  BuildWebImageSort
 } from '../../../../../shared/build-web-image-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
@@ -93,4 +94,27 @@ export function useImageHistory(
 /** Add or remove one value of a multi-select filter. */
 export function toggled<T>(list: T[], value: T): T[] {
   return list.includes(value) ? list.filter((v) => v !== value) : [...list, value]
+}
+
+/** A sortable column of an image table: unsorted until a header is clicked, then by it. */
+export function useImageSort(onChange: () => void): {
+  sort: BuildWebImageSort | null
+  dir: 'asc' | 'desc'
+  onSort: (sort: BuildWebImageSort) => void
+} {
+  const [state, setState] = useState<{ sort: BuildWebImageSort | null; dir: 'asc' | 'desc' }>({
+    sort: null,
+    dir: 'asc'
+  })
+  const onSort = (sort: BuildWebImageSort) => {
+    setState((current) =>
+      current.sort === sort
+        ? { sort, dir: current.dir === 'asc' ? 'desc' : 'asc' }
+        : // Newest first on the first click; for status and registry, ascending puts what
+          // needs attention (failed, not pushed) on top.
+          { sort, dir: sort === 'at' ? 'desc' : 'asc' }
+    )
+    onChange()
+  }
+  return { ...state, onSort }
 }

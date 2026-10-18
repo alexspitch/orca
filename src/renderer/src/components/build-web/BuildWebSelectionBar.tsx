@@ -4,7 +4,7 @@ import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { batchCheckMessage, validateBuildWebBatch } from './build-web-take-to-work'
-import { productLabel } from './build-web-labels'
+import { BuildWebToneChip, ProductChip } from './BuildWebToneChip'
 
 /** The picked tasks and «Take to work», refused for a mix of products or releases. */
 export function BuildWebSelectionBar({
@@ -32,9 +32,13 @@ export function BuildWebSelectionBar({
         {translate('buildWeb.take.selected', '{{count}} selected', { count: picked.length })}
       </span>
       {check.ok ? (
-        <span className="text-xs text-muted-foreground">
-          {productLabel(picked[0].product)} ·{' '}
-          {picked[0].version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
+        <span className="flex items-center gap-1.5">
+          <ProductChip product={picked[0].product} />
+          <BuildWebToneChip
+            label={picked[0].version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
+            tone={null}
+            mono={Boolean(picked[0].version_name)}
+          />
         </span>
       ) : null}
       <div className="flex-1" />

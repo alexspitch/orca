@@ -16,6 +16,8 @@ import {
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
 import { useImagePicks } from './use-image-picks'
+import { BuildWebSortHeader } from '../BuildWebSortHeader'
+import { BuildWebToneChip } from '../BuildWebToneChip'
 import {
   FoundCount,
   ImagePages,
@@ -23,7 +25,7 @@ import {
   ImageTableState,
   VersionSelect
 } from './image-view-parts'
-import { IMAGE_PAGE_SIZE, toggled, useImageHistory } from './use-build-web-images'
+import { IMAGE_PAGE_SIZE, toggled, useImageHistory, useImageSort } from './use-build-web-images'
 
 const DISTS = ['rhel', 'redos'] as const
 const PUSHED = ['yes', 'no'] as const
@@ -48,7 +50,10 @@ export function ImageHistoryView({
   const [version, setVersion] = useState('all')
   const [page, setPage] = useState(0)
   const picks = useImagePicks()
+  const sorting = useImageSort(() => setPage(0))
   const args = {
+    sort: sorting.sort ?? undefined,
+    dir: sorting.dir,
     image,
     q,
     dists,
@@ -155,35 +160,74 @@ export function ImageHistoryView({
                     {translate('buildWeb.list.selection', 'Selection')}
                   </span>
                 </th>
-                <th className="w-40 py-2">{translate('buildWeb.images.tag', 'Tag')}</th>
-                <th className="w-24 py-2">
-                  {translate('buildWeb.images.versionShort', 'Version')}
-                </th>
-                <th className="w-16 py-2">{translate('buildWeb.images.dist', 'dist')}</th>
-                <th className="py-2">{translate('buildWeb.images.branch', 'Branch')}</th>
-                <th className="w-32 py-2">{translate('buildWeb.images.builtAt', 'Built')}</th>
-                <th className="w-24 py-2">{translate('buildWeb.images.status', 'Status')}</th>
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="tag"
+                  label={translate('buildWeb.images.tag', 'Tag')}
+                  className="w-40"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="version"
+                  label={translate('buildWeb.images.versionShort', 'Version')}
+                  className="w-24"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="dist"
+                  label={translate('buildWeb.images.dist', 'dist')}
+                  className="w-16"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="branch"
+                  label={translate('buildWeb.images.branch', 'Branch')}
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="at"
+                  label={translate('buildWeb.images.builtAt', 'Built')}
+                  className="w-32"
+                />
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="status"
+                  label={translate('buildWeb.images.status', 'Status')}
+                  className="w-24"
+                />
                 <th className="w-20 py-2">{translate('buildWeb.images.log', 'Log')}</th>
-                <th className="w-36 py-2 pr-3 md:pr-5">
-                  {translate('buildWeb.images.registry', 'Registry')}
-                </th>
+                <BuildWebSortHeader
+                  {...sorting}
+                  sortKey="registry"
+                  label={translate('buildWeb.images.registry', 'Registry')}
+                  className="w-36 pr-3 md:pr-5"
+                />
               </tr>
             </thead>
             <tbody>
               {builds.map((b) => (
                 <tr key={keyOf(b)} className="border-b border-border hover:bg-accent">
                   <td className="py-2 pl-3 md:pl-5">
-                    <Checkbox
-                      disabled={!isPushable(b)}
-                      checked={picks.has(keyOf(b))}
-                      onCheckedChange={() => picks.toggle(keyOf(b), b)}
-                      aria-label={translate('buildWeb.images.pick', 'Pick {{image}}', {
-                        image: b.tag ?? image
-                      })}
-                    />
+                    {/* Why no disabled box: a faded one reads the same as an empty one. */}
+                    {isPushable(b) ? (
+                      <Checkbox
+                        emphasis="strong"
+                        checked={picks.has(keyOf(b))}
+                        onCheckedChange={() => picks.toggle(keyOf(b), b)}
+                        aria-label={translate('buildWeb.images.pick', 'Pick {{image}}', {
+                          image: b.tag ?? image
+                        })}
+                      />
+                    ) : null}
                   </td>
-                  <td className="truncate py-2 font-mono text-xs">{b.tag ?? ''}</td>
-                  <td className="py-2 text-xs">{b.product_version ?? ''}</td>
+                  <td className="py-2">
+                    {b.tag ? <BuildWebToneChip label={b.tag} tone={null} mono /> : null}
+                  </td>
+                  <td className="py-2">
+                    {b.product_version ? (
+                      <BuildWebToneChip label={b.product_version} tone={null} mono />
+                    ) : null}
+                  </td>
                   <td className="py-2 text-xs">{b.dist}</td>
                   <td className="truncate py-2 font-mono text-xs text-muted-foreground">
                     {b.branch}

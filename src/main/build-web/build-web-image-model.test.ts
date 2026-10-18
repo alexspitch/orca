@@ -104,6 +104,21 @@ describe('image model', () => {
     expect(page.rows.find((r) => r.image === 'sa/api')?.last?.number).toBe(12)
   })
 
+  it('sorts the whole list before it cuts a page, empty cells last', () => {
+    const byStatus = imagePage(catalog, { page: 0, pageSize: 50, sort: 'status', dir: 'asc' })
+    expect(byStatus.rows.map((r) => r.last?.status)).toEqual(['running', 'running', 'success'])
+    const byName = imagePage(catalog, { page: 0, pageSize: 50, sort: 'image', dir: 'desc' })
+    expect(byName.rows.map((r) => r.image)).toEqual(['sa/ui', 'sa/api', 'dc/asr'])
+    const history = imageHistory(catalog, {
+      image: 'sa/api',
+      page: 0,
+      pageSize: 50,
+      sort: 'tag',
+      dir: 'asc'
+    })
+    expect(history.builds.map((b) => b.tag)).toEqual(['3.1b1', '3.1b2'])
+  })
+
   it('pages, and an unknown page size falls back to 50', () => {
     const many: ImageCatalog = {
       ...catalog,

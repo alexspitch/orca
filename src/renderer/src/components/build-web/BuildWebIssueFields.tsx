@@ -17,7 +17,8 @@ import {
   type BuildWebUser,
   type BuildWebVersion
 } from '../../../../shared/build-web-types'
-import { statusLabel } from './build-web-labels'
+import { BUILD_WEB_PRIORITIES } from './build-web-labels'
+import { PriorityChip, StatusChip } from './BuildWebToneChip'
 
 const NONE = '__none__'
 
@@ -88,7 +89,7 @@ export function BuildWebIssueFields({
             <SelectContent>
               {statuses.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {statusLabel(s)}
+                  <StatusChip status={s} />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -104,9 +105,9 @@ export function BuildWebIssueFields({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {[1, 2, 3, 4, 5].map((p) => (
+              {BUILD_WEB_PRIORITIES.map((p) => (
                 <SelectItem key={p} value={String(p)}>
-                  P{p}
+                  <PriorityChip priority={p} />
                 </SelectItem>
               ))}
             </SelectContent>

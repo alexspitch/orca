@@ -9,6 +9,7 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import type { IssueDetailState } from '../use-build-web-issue-detail'
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebIssueFields } from '../BuildWebIssueFields'
+import { BuildWebToneChip, JiraStatusLine } from '../BuildWebToneChip'
 import {
   BuildWebIssueComments,
   BuildWebIssueDescription,
@@ -103,7 +104,11 @@ function CommentComposer({
       <div className="flex items-center gap-3">
         {detail.jira_key ? (
           <label className="flex items-center gap-2 text-sm">
-            <Checkbox checked={jira} onCheckedChange={(v) => setJira(v === true)} />
+            <Checkbox
+              emphasis="strong"
+              checked={jira}
+              onCheckedChange={(v) => setJira(v === true)}
+            />
             {translate('buildWeb.card.alsoJira', 'and in Jira')}
           </label>
         ) : null}
@@ -152,10 +157,10 @@ export function IssueOverviewTab({
           />
         </Panel>
         <Panel title={translate('buildWeb.card.work', 'Work')}>
-          <div className="flex flex-col gap-1 font-mono text-xs">
+          <div className="flex flex-col items-start gap-1 text-xs">
             {detail.branches.map((branch, n) => (
-              <span key={branch}>
-                {branch}
+              <span key={branch} className="flex items-center gap-1">
+                <BuildWebToneChip label={branch} tone={null} mono />
                 {n === 0 ? (
                   <span className="font-sans text-muted-foreground">
                     {' '}
@@ -173,12 +178,7 @@ export function IssueOverviewTab({
         </Panel>
         {detail.jira_key ? (
           <Panel title={translate('buildWeb.card.jira', 'Jira')}>
-            <p className="text-sm">
-              <span className="font-mono">{detail.jira_key}</span>
-              {detail.jira_status ? (
-                <span className="text-muted-foreground"> · {detail.jira_status}</span>
-              ) : null}
-            </p>
+            <JiraStatusLine jiraKey={detail.jira_key} status={detail.jira_status} />
           </Panel>
         ) : null}
       </aside>

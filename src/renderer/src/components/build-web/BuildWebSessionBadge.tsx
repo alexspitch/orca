@@ -9,6 +9,7 @@ import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebAgentSession } from '../../../../shared/build-web-types'
+import { BuildWebToneChip } from './BuildWebToneChip'
 import { parseExecutionHostId } from '../../../../shared/execution-host'
 
 type Found = { worktreeId: string } | null
@@ -70,18 +71,21 @@ export function BuildWebSessionBadge({
   const found = findSession(session)
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2 text-xs">
-      <Bot className="size-3.5 text-muted-foreground" />
+      <Bot className="size-3.5 text-chip-tone-purple" />
       <span className="text-muted-foreground">
         {translate('buildWeb.session.label', 'Agent session')}
       </span>
       <span>
         {session.agent} · {session.worktree_name}
       </span>
-      <span className="text-muted-foreground">
-        {found
-          ? translate('buildWeb.session.openHere', 'open here')
-          : translate('buildWeb.session.unverifiable', 'unverifiable')}
-      </span>
+      <BuildWebToneChip
+        label={
+          found
+            ? translate('buildWeb.session.openHere', 'open here')
+            : translate('buildWeb.session.unverifiable', 'unverifiable')
+        }
+        tone={found ? 'green' : 'neutral'}
+      />
       <div className="flex-1" />
       {found ? (
         <Button variant="link" size="xs" onClick={() => openSession(session, found)}>
