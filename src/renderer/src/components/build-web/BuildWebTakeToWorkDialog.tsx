@@ -26,6 +26,7 @@ import {
   validateBuildWebBatch
 } from './build-web-take-to-work'
 import { launchBuildWebBatch } from './build-web-agent-launch'
+import { taskSessionName } from './build-web-task-session'
 import { createBatchWorktree } from './build-web-new-worktree'
 import { TakeToWorkNewWorktree, type NewWorktreeDraft } from './TakeToWorkNewWorktree'
 import { BuildWebToneChip, ProductChip, StatusChip } from './BuildWebToneChip'
@@ -212,6 +213,12 @@ function TakeToWorkForm({
       <p className="text-sm">
         <span className="text-muted-foreground">{translate('buildWeb.take.agent', 'Agent')}: </span>
         {translate('buildWeb.take.claude', 'Claude Code')}
+      </p>
+      <p className="text-sm">
+        <span className="text-muted-foreground">
+          {translate('buildWeb.take.session', 'Session')}:{' '}
+        </span>
+        <span className="font-mono text-xs">{taskSessionName(issues.map((i) => i.key))}</span>
       </p>
       <div className="flex flex-col gap-2">
         {mode === 'existing' ? (

@@ -2,6 +2,7 @@ import { toast } from 'sonner'
 import { focusTerminalTabSurface } from '@/lib/focus-terminal-tab-surface'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
 import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
+import { findStructuredAgentSessionTab } from '@/lib/structured-agent-session-tab-activation'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
@@ -11,6 +12,7 @@ import type { Worktree } from '../../../../shared/worktree/types'
 import type { BuildWebSessionArgs } from '../../../../preload/api/build-web-api'
 import { callBuildWeb } from './build-web-client'
 import { buildWebBatchPrompt, type TakeToWorkFlags } from './build-web-take-to-work'
+import { taskSessionName } from './build-web-task-session'
 
 // Plain module code, not a component effect: revealing the worktree leaves the Issues page.
 
@@ -98,6 +100,18 @@ function noteProviderSessionLater(
   check(useAppStore.getState())
 }
 
+/** A chat takes no launch label, so its tab is renamed once it exists. */
+function nameStructuredTab(worktreeId: string, sessionId: string, name: string): void {
+  const state = useAppStore.getState()
+  const tab = findStructuredAgentSessionTab(state.unifiedTabsByWorktree, {
+    workspaceId: worktreeId,
+    sessionId
+  })
+  if (tab) {
+    state.setTabCustomTitle(tab.id, name, { recordInteraction: false })
+  }
+}
+
 export async function launchBuildWebBatch(args: {
   target: RuntimeClientTarget
   baseUrl: string
@@ -106,10 +120,9 @@ export async function launchBuildWebBatch(args: {
   flags: TakeToWorkFlags
 }): Promise<boolean> {
   const { target, baseUrl, worktree, issues, flags } = args
-  const prompt = buildWebBatchPrompt(
-    issues.map((i) => i.key),
-    flags
-  )
+  const keys = issues.map((i) => i.key)
+  const prompt = buildWebBatchPrompt(keys, flags)
+  const sessionName = taskSessionName(keys)
   let revealFailed = false
   const result = launchAgentInNewTab({
     requestId: newAgentLaunchRequestId(),
@@ -119,6 +132,7 @@ export async function launchBuildWebBatch(args: {
     prompt,
     promptDelivery: 'submit-after-ready',
     launchSource: 'build_web_page',
+    quickCommandLabel: sessionName,
     beforeSurfaceOpen: () => {
       // Why: the launcher owns the initial surface, so revealing must not seed a sibling shell.
       revealFailed =
@@ -149,6 +163,7 @@ export async function launchBuildWebBatch(args: {
     const settled = await result.structuredSettlement.catch(() => null)
     if (settled && (settled.kind === 'structured' || settled.kind === 'visibility-unknown')) {
       surface = { surface_kind: 'structured', surface_id: settled.sessionId }
+      nameStructuredTab(worktree.id, settled.sessionId, sessionName)
     } else if (!settled || settled.kind === 'cancelled' || settled.kind === 'failed') {
       if (settled?.kind === 'failed' && !settled.notified) {
         toast.error(translate('buildWeb.launch.failed', 'Could not start the agent.'))
