@@ -3,9 +3,11 @@ import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {
+  batchWorktreeName,
   buildWebBatchPrompt,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
+  takeToWorkRepos,
   validateBuildWebBatch
 } from './build-web-take-to-work'
 
@@ -114,5 +116,23 @@ describe('worktree candidates', () => {
     expect(defaultTakeToWorkWorktree(candidates, 'other', 'x')).toBe('x')
     expect(defaultTakeToWorkWorktree(candidates, null, null)).toBe('x')
     expect(defaultTakeToWorkWorktree([], 'y', 'x')).toBeNull()
+  })
+})
+
+describe('a new worktree for the batch', () => {
+  it('is named after its keys, at most three', () => {
+    expect(batchWorktreeName(['IS-12', 'IS-13.1'])).toBe('is-12-is-13-1')
+    expect(batchWorktreeName(['IS-1', 'IS-2', 'IS-3', 'IS-4'])).toBe('is-1-is-2-is-3-batch')
+  })
+
+  it('goes into the build-web repository when there is one', () => {
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: a test fixture needs only the fields the function reads.
+    const repo = (id: string, path: string) => ({ id, path, displayName: id }) as Repo
+    expect(
+      takeToWorkRepos([repo('a', '/p/sa-dc-ap-products'), repo('b', '/p/orca')]).repos.map(
+        (r) => r.id
+      )
+    ).toEqual(['a'])
+    expect(takeToWorkRepos([repo('b', '/p/orca')])).toMatchObject({ matchedRepo: false })
   })
 })

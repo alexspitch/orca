@@ -17,6 +17,7 @@ import type {
   BuildWebImageHistory,
   BuildWebImageHistoryArgs,
   BuildWebImagePage,
+  BuildWebImageBuildArgs,
   BuildWebImagePageArgs,
   BuildWebImagePushArgs,
   BuildWebImageSummary
@@ -77,6 +78,11 @@ export type BuildWebApi = {
     args: BuildWebImageHistoryArgs & { refresh?: boolean }
   ) => Promise<BuildWebImageHistory>
   pushImages: (args: BuildWebImagePushArgs) => Promise<BuildWebMutationResult<true>>
+  versionBranches: (args: { product: string }) => Promise<string[]>
+  startImageBuild: (
+    args: BuildWebImageBuildArgs
+  ) => Promise<BuildWebMutationResult<{ runId: string }>>
+  getRun: (args: { runId: string }) => Promise<BuildWebRun | null>
   getIssueRun: (args: { id: string }) => Promise<BuildWebRun | null>
   pushRun: (args: { runId: string; moveMainTag: boolean }) => Promise<BuildWebMutationResult<true>>
   saveGuide: (args: {

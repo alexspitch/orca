@@ -24,3 +24,16 @@ export function textsOf(value: unknown): string[] {
     ? value.filter((item): item is string => typeof item === 'string')
     : []
 }
+
+/** A Jenkins URL as is; a log the console or an agent keeps (a path) on the console's origin. */
+export function consoleUrlOf(url: string | null, baseUrl: string): string | null {
+  if (!url) {
+    return null
+  }
+  try {
+    const resolved = new URL(url, `${baseUrl}/`)
+    return resolved.protocol === 'https:' || resolved.protocol === 'http:' ? resolved.href : null
+  } catch {
+    return null
+  }
+}

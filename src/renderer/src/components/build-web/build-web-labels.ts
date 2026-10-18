@@ -76,6 +76,12 @@ export function priorityLabel(priority: number): string {
   }
 }
 
+/** A person as the table names them: the login, without the mail domain. */
+export function loginOf(email: string): string {
+  const at = email.indexOf('@')
+  return at > 0 ? email.slice(0, at) : email
+}
+
 export function typeLabel(type: string): string {
   switch (type) {
     case 'bug':

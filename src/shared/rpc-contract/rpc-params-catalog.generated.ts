@@ -148,6 +148,7 @@ import {
   BuildWebFavoriteParams,
   BuildWebGuideParams,
   BuildWebGuideShotParams,
+  BuildWebImageBuildParams,
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
   BuildWebImagePushParams,
@@ -157,6 +158,8 @@ import {
   BuildWebProviderSessionParams,
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
+  BuildWebRunParams,
+  BuildWebVersionBranchesParams,
   BuildWebVersionsParams
 } from './build-web-params'
 import { ClientEventsUnsubscribeParams } from './client-events-params'
@@ -860,6 +863,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.disconnect': null,
   'buildWeb.getIssue': BuildWebIssueId,
   'buildWeb.getIssueRun': BuildWebIssueId,
+  'buildWeb.getRun': BuildWebRunParams,
   'buildWeb.guideShot': BuildWebGuideShotParams,
   'buildWeb.imageSummary': null,
   'buildWeb.issueCommits': BuildWebCommitsParams,
@@ -876,9 +880,11 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.saveGuide': BuildWebGuideParams,
   'buildWeb.setAgentSession': BuildWebAgentSessionParams,
   'buildWeb.setFavorite': BuildWebFavoriteParams,
+  'buildWeb.startImageBuild': BuildWebImageBuildParams,
   'buildWeb.status': null,
   'buildWeb.testConnection': null,
   'buildWeb.updateIssue': BuildWebIssueUpdateParams,
+  'buildWeb.versionBranches': BuildWebVersionBranchesParams,
   'clipboard.abortImageUpload': AbortImageUpload,
   'clipboard.appendImageUploadChunk': AppendImageUploadChunk,
   'clipboard.commitImageUpload': CommitImageUpload,

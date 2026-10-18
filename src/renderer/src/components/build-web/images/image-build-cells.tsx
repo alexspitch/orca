@@ -1,3 +1,4 @@
+import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebImageBuild } from '../../../../../shared/build-web-image-types'
 import { BuildWebToneChip } from '../BuildWebToneChip'
@@ -18,7 +19,10 @@ export function buildStatusLabel(status: BuildWebImageBuild['status']): string {
 
 export function BuildStatusCell({ build }: { build: BuildWebImageBuild }): React.JSX.Element {
   return (
-    <span title={build.raw_status}>
+    <span title={build.raw_status} className="inline-flex items-center gap-1">
+      {build.status === 'running' ? (
+        <Loader2 className="size-3 animate-spin text-chip-tone-cyan" />
+      ) : null}
       <BuildWebToneChip
         label={buildStatusLabel(build.status)}
         tone={imageBuildTone(build.status)}

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { BuildWebUser } from '../../../../shared/build-web-types'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { useAppStore } from '@/store'
 import { defaultScopeHost } from '@/lib/default-creation-host'
@@ -89,4 +90,23 @@ export function useBuildWebIssueList(): { reload: () => void } {
   }, [connected, load, query])
 
   return { reload: () => void load() }
+}
+
+/** The people a task can be assigned to, read once per host; empty until it answers. */
+export function useBuildWebAssignees(enabled: boolean): BuildWebUser[] {
+  const { target, contextKey } = useBuildWebTarget()
+  const [loaded, setLoaded] = useState<{ contextKey: string; users: BuildWebUser[] } | null>(null)
+  useEffect(() => {
+    if (!enabled) {
+      return
+    }
+    let alive = true
+    void callBuildWeb(target, 'listAssignees')
+      .then((users) => alive && setLoaded({ contextKey, users }))
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [contextKey, enabled, target])
+  return loaded?.contextKey === contextKey ? loaded.users : []
 }

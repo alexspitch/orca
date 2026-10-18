@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Hammer, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { translate } from '@/i18n/i18n'
@@ -10,6 +10,9 @@ import { BuildStatusCell, LogCell, RegistryCell, formatBuildTime } from './image
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
 import { useImagePicks } from './use-image-picks'
+import { ImageBuildDialog } from './ImageBuildDialog'
+import { ImageBuildProgress } from './ImageBuildProgress'
+import { useBuildWebStore } from '../build-web-store'
 import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { productTone } from '../build-web-tones'
@@ -24,6 +27,7 @@ import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-buil
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'other'] as const
 const DISTS = ['rhel', 'redos'] as const
+const RUNNING_REFRESH_MS = 20_000
 const productName = (p: string) =>
   p === 'other'
     ? translate('buildWeb.images.other', 'Other')
@@ -57,6 +61,21 @@ export function ImageListView({
   }
   const { data, loading, error, reload } = useImagePage(target, true, args)
   const rows = data?.rows ?? []
+  const canBuild = useBuildWebStore((s) => s.status?.perms.includes('build') === true)
+  const [building, setBuilding] = useState<{
+    image: string
+    product: string
+    branch?: string
+  } | null>(null)
+  const anyRunning = rows.some((r) => r.last?.status === 'running')
+  // Why: builds going on the console show their outcome without a manual refresh.
+  useEffect(() => {
+    if (!anyRunning) {
+      return
+    }
+    const timer = window.setInterval(() => reload(true), RUNNING_REFRESH_MS)
+    return () => window.clearInterval(timer)
+  }, [anyRunning, reload])
   const narrowed = Boolean(q.trim() || products.length || dists.length || version !== 'all')
   const reset = () => {
     setQ('')
@@ -118,6 +137,15 @@ export function ImageListView({
           onToggle={(d) => (setDists(toggled(dists, d)), setPage(0))}
         />
       </div>
+      <ImageBuildProgress target={target} onSettled={() => reload(true)} />
+      <ImageBuildDialog
+        open={building !== null}
+        onOpenChange={(open) => !open && setBuilding(null)}
+        target={target}
+        image={building?.image ?? ''}
+        product={building?.product ?? ''}
+        initialBranch={building?.branch}
+      />
       <ImageTableState
         error={error}
         loading={loading}
@@ -229,7 +257,32 @@ export function ImageListView({
                     </td>
                     <td className="py-2 text-xs">{row.last?.dist ?? ''}</td>
                     <td className="py-2 text-xs text-muted-foreground">
-                      {formatBuildTime(row.last?.at ?? null)}
+                      <span className="inline-flex items-center gap-1">
+                        {formatBuildTime(row.last?.at ?? null)}
+                        {canBuild ? (
+                          <Button
+                            variant="ghost"
+                            size="icon-xs"
+                            onClick={() =>
+                              setBuilding({
+                                image: row.image,
+                                product: row.product,
+                                branch: row.last?.branch || undefined
+                              })
+                            }
+                            aria-label={translate(
+                              'buildWeb.imageBuild.buildImage',
+                              'Build {{image}}',
+                              {
+                                image: row.image
+                              }
+                            )}
+                            title={translate('buildWeb.imageBuild.again', 'Start a build')}
+                          >
+                            <Hammer />
+                          </Button>
+                        ) : null}
+                      </span>
                     </td>
                     <td className="py-2">
                       {row.last ? <BuildStatusCell build={row.last} /> : null}

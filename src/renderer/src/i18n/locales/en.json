@@ -20422,7 +20422,9 @@
       "updated": "Updated",
       "range": "{{from}}–{{to}} of {{total}}",
       "changeStatus": "Change the status of {{key}}",
-      "changePriority": "Change the priority of {{key}}"
+      "changePriority": "Change the priority of {{key}}",
+      "assignee": "Assignee",
+      "changeAssignee": "Change the assignee of {{key}}"
     },
     "state": {
       "loading": "Loading tasks…",
@@ -20459,7 +20461,17 @@
       "mixed": "Tasks of different products or releases: {{groups}}",
       "tooMany": "At most 20 tasks at once.",
       "badKey": "These keys cannot be sent: {{keys}}",
-      "unknownProduct": "Orca does not know the product of {{keys}}."
+      "unknownProduct": "Orca does not know the product of {{keys}}.",
+      "existing": "Existing worktree",
+      "createNew": "Create a new worktree",
+      "repo": "Repository",
+      "pickRepo": "Pick a repository",
+      "name": "Name",
+      "base": "Base branch",
+      "baseDefault": "Repository default",
+      "newHint": "Orca creates the worktree, then the session works in it (-no-worktree).",
+      "noRepoFound": "The repository is not available.",
+      "createFailed": "Could not create the worktree: {{error}}"
     },
     "session": {
       "label": "Agent session",
@@ -20473,7 +20485,8 @@
       "failed": "Could not start the agent."
     },
     "client": {
-      "updateServer": "This Orca server does not support build-web yet. Update the server to use Issues."
+      "updateServer": "This Orca server does not support build-web yet. Update the server to use Issues.",
+      "restart": "This window was opened before Orca was updated. Restart Orca to use this."
     },
     "status": {
       "unknown": "Unknown",
@@ -20538,7 +20551,8 @@
       "buildTagOnly": "build tag only",
       "version": "Product version",
       "allVersions": "All versions",
-      "found": "{{shown}} of {{of}}"
+      "found": "{{shown}} of {{of}}",
+      "openInBuildWeb": "Open in build-web"
     },
     "card": {
       "overview": "Overview",
@@ -20632,6 +20646,27 @@
       "bug": "Bug",
       "improvement": "Improvement",
       "chore": "Chore"
+    },
+    "imageBuild": {
+      "both": "rhel and redos",
+      "started": "Build of {{image}} started.",
+      "title": "Build the image",
+      "version": "Version",
+      "loadingVersions": "Loading versions…",
+      "noVersions": "No versions",
+      "branch": "Branch {{branch}}",
+      "dist": "Distribution",
+      "ticket": "Ticket (optional)",
+      "cancel": "Cancel",
+      "start": "Start the build",
+      "going": "Building {{image}}…",
+      "finished": "Build of {{image}} finished",
+      "dismiss": "Hide",
+      "gone": "build-web no longer has this build.",
+      "open": "Build…",
+      "buildImage": "Build {{image}}",
+      "again": "Start a build",
+      "ticketPlaceholder": "SDAP-1234"
     }
   }
 }

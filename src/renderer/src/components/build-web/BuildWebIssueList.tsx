@@ -1,14 +1,19 @@
-import { Bot, Star } from 'lucide-react'
+import { Bot, SquareTerminal, Star } from 'lucide-react'
 import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
-import type { BuildWebIssuePatch, BuildWebIssueRow } from '../../../../shared/build-web-types'
+import type {
+  BuildWebIssuePatch,
+  BuildWebIssueRow,
+  BuildWebUser
+} from '../../../../shared/build-web-types'
 import { ISSUE_PAGE_SIZE, useBuildWebStore } from './build-web-store'
 import { BuildWebToneChip, ProductChip, TypeChip } from './BuildWebToneChip'
 import { BuildWebSortHeader } from './BuildWebSortHeader'
-import { PriorityPicker, StatusPicker } from './BuildWebRowPickers'
+import { AssigneePicker, PriorityPicker, StatusPicker } from './BuildWebRowPickers'
+import { useBuildWebAssignees } from './use-build-web-data'
 import { useIssueRowPatch } from './use-build-web-issue-write'
 
 function IssueRow({
@@ -16,6 +21,7 @@ function IssueRow({
   selected,
   open,
   busy,
+  users,
   onToggle,
   onOpen,
   onFavorite,
@@ -25,6 +31,7 @@ function IssueRow({
   selected: boolean
   open: boolean
   busy: boolean
+  users: BuildWebUser[]
   onToggle: () => void
   onOpen: () => void
   onFavorite: () => void
@@ -51,19 +58,38 @@ function IssueRow({
         <TypeChip type={issue.type} />
       </td>
       <td className="max-w-0 py-2 pr-3">
-        <button
-          type="button"
-          onClick={onOpen}
-          className="block w-full truncate text-left text-sm hover:underline focus-visible:underline focus-visible:outline-none"
-        >
-          {issue.title}
-        </button>
+        <div className="flex min-w-0 items-center gap-1.5">
+          {/* As in build-web: the model's queue is marked beside the task. */}
+          {issue.for_ai ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="shrink-0 text-chip-tone-purple">
+                  <Bot
+                    className="size-3.5"
+                    aria-label={translate('buildWeb.detail.forAi', 'Handed to AI')}
+                  />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{translate('buildWeb.detail.forAi', 'Handed to AI')}</TooltipContent>
+            </Tooltip>
+          ) : null}
+          <button
+            type="button"
+            onClick={onOpen}
+            className="block min-w-0 flex-1 truncate text-left text-sm hover:underline focus-visible:underline focus-visible:outline-none"
+          >
+            {issue.title}
+          </button>
+        </div>
       </td>
       <td className="w-40 py-2">
         <StatusPicker issue={issue} busy={busy} onPatch={onPatch} />
       </td>
       <td className="w-32 py-2">
         <PriorityPicker issue={issue} busy={busy} onPatch={onPatch} />
+      </td>
+      <td className="w-28 py-2 pr-2">
+        <AssigneePicker issue={issue} users={users} busy={busy} onPatch={onPatch} />
       </td>
       <td className="w-28 py-2">
         {issue.version_name ? (
@@ -80,8 +106,8 @@ function IssueRow({
           {issue.agent_session ? (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="text-chip-tone-purple">
-                  <Bot
+                <span className="text-chip-tone-blue">
+                  <SquareTerminal
                     className="size-3.5"
                     aria-label={translate('buildWeb.list.session', 'Agent session')}
                   />
@@ -126,12 +152,13 @@ export function BuildWebIssueList({
   const toggleSelected = useBuildWebStore((s) => s.toggleSelected)
   const openIssue = useBuildWebStore((s) => s.openIssue)
   const { busy, patch } = useIssueRowPatch()
+  const users = useBuildWebAssignees(issues.length > 0)
   const header = { sort: sort.sort, dir: sort.dir, onSort: sortBy }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="scrollbar-sleek min-h-0 flex-1 overflow-auto">
-        <table className="w-full min-w-[1000px] table-fixed border-collapse">
+        <table className="w-full min-w-[1100px] table-fixed border-collapse">
           <thead className="sticky top-0 z-10 bg-background">
             <tr className="border-b border-border text-left text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
               <th className="w-10 py-2 pl-3 md:pl-5">
@@ -167,6 +194,7 @@ export function BuildWebIssueList({
                 label={translate('buildWeb.list.priority', 'Priority')}
                 className="w-32"
               />
+              <th className="w-28 py-2">{translate('buildWeb.list.assignee', 'Assignee')}</th>
               <th className="w-28 py-2">{translate('buildWeb.list.release', 'Release')}</th>
               <BuildWebSortHeader
                 {...header}
@@ -187,6 +215,7 @@ export function BuildWebIssueList({
                 selected={selected.has(issue.id)}
                 open={openIssueId === issue.id}
                 busy={busy.has(issue.id)}
+                users={users}
                 onToggle={() => toggleSelected(issue.id)}
                 onOpen={() => openIssue(issue.id)}
                 onFavorite={() => onFavorite(issue)}

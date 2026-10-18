@@ -34,8 +34,17 @@ export async function callBuildWeb<M extends Method>(
       timeoutMs: buildWebHostWaitMs(method, args[0]) + BUILD_WEB_CLIENT_MARGIN_MS
     })
   }
-  const api = window.api.buildWeb
-  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: `fn` is api[method], whose parameters and result are exactly ArgsOf<M> and ResultOf<M>; TS cannot correlate a generic key with its member.
-  const fn = api[method] as (...callArgs: ArgsOf<M>) => Promise<ResultOf<M>>
+  const member: unknown = window.api.buildWeb[method]
+  // Why: a window opened before an update keeps the old preload, which lacks newer methods.
+  if (typeof member !== 'function') {
+    throw new Error(
+      translate(
+        'buildWeb.client.restart',
+        'This window was opened before Orca was updated. Restart Orca to use this.'
+      )
+    )
+  }
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: `member` is api[method], whose parameters and result are exactly ArgsOf<M> and ResultOf<M>; TS cannot correlate a generic key with its member.
+  const fn = member as (...callArgs: ArgsOf<M>) => Promise<ResultOf<M>>
   return fn(...args)
 }

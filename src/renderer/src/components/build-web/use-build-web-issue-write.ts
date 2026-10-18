@@ -64,7 +64,7 @@ export function toastJiraOutcome(
 }
 
 /**
- * A field change from a list row. The priority shows at once; the status only once the console
+ * A field change from a list row. The priority and the assignee show at once; the status only once the console
  * took it, because it moves Jira too. `busy` holds the ids being written.
  */
 export function useIssueRowPatch(): {
@@ -80,7 +80,11 @@ export function useIssueRowPatch(): {
       if (!(await confirmStatusMove(issue, change))) {
         return
       }
-      const before: Partial<BuildWebIssueRow> = { status: issue.status, priority: issue.priority }
+      const before: Partial<BuildWebIssueRow> = {
+        status: issue.status,
+        priority: issue.priority,
+        assignee: issue.assignee
+      }
       if (change.status === undefined) {
         patchRow(issue.id, change)
       }

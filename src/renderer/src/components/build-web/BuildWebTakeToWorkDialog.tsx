@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { WorkspaceCombobox } from '@/components/automations/WorkspaceCombobox'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
@@ -16,13 +17,17 @@ import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebTarget } from './use-build-web-data'
 import {
+  batchWorktreeName,
   buildWebBatchPrompt,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
+  takeToWorkRepos,
   batchCheckMessage,
   validateBuildWebBatch
 } from './build-web-take-to-work'
 import { launchBuildWebBatch } from './build-web-agent-launch'
+import { createBatchWorktree } from './build-web-new-worktree'
+import { TakeToWorkNewWorktree, type NewWorktreeDraft } from './TakeToWorkNewWorktree'
 import { BuildWebToneChip, ProductChip, StatusChip } from './BuildWebToneChip'
 
 function Option({
@@ -73,18 +78,56 @@ function TakeToWorkForm({
   )
   const [noWorktree, setNoWorktree] = useState(() => useBuildWebStore.getState().noWorktree)
   const [auto, setAuto] = useState(false)
+  const [mode, setMode] = useState<'existing' | 'new'>(() =>
+    worktrees.length ? 'existing' : 'new'
+  )
+  const ownRepos = useMemo(() => takeToWorkRepos(repos).repos, [repos])
+  const [draft, setDraft] = useState<NewWorktreeDraft>(() => ({
+    repoId: ownRepos[0]?.id ?? '',
+    name: batchWorktreeName(issues.map((i) => i.key)),
+    baseBranch: ''
+  }))
+  // Why: a worktree made for the batch is where the session works; the skill must not make another.
+  const workHere = mode === 'new' || noWorktree
   const check = validateBuildWebBatch(issues)
   const held = issues.filter((i) => i.agent_session)
   const worktree = worktrees.find((w) => w.id === worktreeId) ?? null
   const prompt = check.ok
     ? buildWebBatchPrompt(
         issues.map((i) => i.key),
-        { noWorktree, auto }
+        { noWorktree: workHere, auto }
       )
     : ''
 
+  const ready =
+    check.ok &&
+    Boolean(baseUrl) &&
+    (mode === 'new' ? Boolean(draft.repoId && draft.name.trim()) : Boolean(worktree))
   const start = (): void => {
-    if (!worktree || !check.ok || !baseUrl) {
+    if (!check.ok || !baseUrl) {
+      return
+    }
+    if (mode === 'new') {
+      if (!draft.repoId || !draft.name.trim()) {
+        return
+      }
+      onClose()
+      void (async () => {
+        const created = await createBatchWorktree({ ...draft, name: draft.name.trim() })
+        if (created) {
+          remember(created.id, noWorktree)
+          await launchBuildWebBatch({
+            target,
+            baseUrl,
+            worktree: created,
+            issues,
+            flags: { noWorktree: true, auto }
+          })
+        }
+      })()
+      return
+    }
+    if (!worktree) {
       return
     }
     remember(worktree.id, noWorktree)
@@ -103,7 +146,7 @@ function TakeToWorkForm({
         <DialogDescription>
           {translate(
             'buildWeb.take.description',
-            'A new Claude session in an existing worktree gets only the build-web-tasks skill call.'
+            'A new Claude session in the worktree gets only the build-web-tasks skill call.'
           )}
         </DialogDescription>
       </DialogHeader>
@@ -133,37 +176,55 @@ function TakeToWorkForm({
         <span className="text-sm font-medium">
           {translate('buildWeb.take.worktree', 'Worktree')}
         </span>
-        <WorkspaceCombobox
-          worktrees={worktrees}
-          value={worktreeId ?? ''}
-          onValueChange={setWorktreeId}
-        />
-        <p className="text-xs text-muted-foreground">
-          {matchedRepo
-            ? translate(
-                'buildWeb.take.worktreeHint',
-                'Worktrees of sa-dc-ap-products. The skill must be up to date in the one you pick.'
-              )
-            : translate(
-                'buildWeb.take.noRepo',
-                'No sa-dc-ap-products repository found; showing every git worktree.'
-              )}
-        </p>
+        <Tabs value={mode} onValueChange={(next) => setMode(next === 'new' ? 'new' : 'existing')}>
+          <TabsList>
+            <TabsTrigger value="existing" disabled={!worktrees.length}>
+              {translate('buildWeb.take.existing', 'Existing worktree')}
+            </TabsTrigger>
+            <TabsTrigger value="new">
+              {translate('buildWeb.take.createNew', 'Create a new worktree')}
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
       </div>
+      {mode === 'new' ? (
+        <TakeToWorkNewWorktree repos={ownRepos} draft={draft} onChange={setDraft} />
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          <WorkspaceCombobox
+            worktrees={worktrees}
+            value={worktreeId ?? ''}
+            onValueChange={setWorktreeId}
+          />
+          <p className="text-xs text-muted-foreground">
+            {matchedRepo
+              ? translate(
+                  'buildWeb.take.worktreeHint',
+                  'Worktrees of sa-dc-ap-products. The skill must be up to date in the one you pick.'
+                )
+              : translate(
+                  'buildWeb.take.noRepo',
+                  'No sa-dc-ap-products repository found; showing every git worktree.'
+                )}
+          </p>
+        </div>
+      )}
       <p className="text-sm">
         <span className="text-muted-foreground">{translate('buildWeb.take.agent', 'Agent')}: </span>
         {translate('buildWeb.take.claude', 'Claude Code')}
       </p>
       <div className="flex flex-col gap-2">
-        <Option
-          checked={noWorktree}
-          onChange={setNoWorktree}
-          title={translate('buildWeb.take.noWorktree', 'Work in this worktree')}
-          hint={translate(
-            'buildWeb.take.noWorktreeHint',
-            'The skill does not create its own worktree'
-          )}
-        />
+        {mode === 'existing' ? (
+          <Option
+            checked={noWorktree}
+            onChange={setNoWorktree}
+            title={translate('buildWeb.take.noWorktree', 'Work in this worktree')}
+            hint={translate(
+              'buildWeb.take.noWorktreeHint',
+              'The skill does not create its own worktree'
+            )}
+          />
+        ) : null}
         <Option
           checked={auto}
           onChange={setAuto}
@@ -194,7 +255,7 @@ function TakeToWorkForm({
         <Button variant="ghost" onClick={onClose}>
           {translate('buildWeb.take.cancel', 'Cancel')}
         </Button>
-        <Button disabled={!check.ok || !worktree} onClick={start}>
+        <Button disabled={!ready} onClick={start}>
           {translate('buildWeb.take.start', 'Start session')}
         </Button>
       </DialogFooter>
@@ -202,7 +263,7 @@ function TakeToWorkForm({
   )
 }
 
-/** Pick an existing worktree and start a Claude session there with only the skill call. */
+/** Pick an existing worktree or make one, and start a Claude session there with only the skill call. */
 export function BuildWebTakeToWorkDialog({
   issues,
   onClose

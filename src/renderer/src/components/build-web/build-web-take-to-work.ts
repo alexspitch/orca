@@ -108,21 +108,33 @@ export function buildWebBatchPrompt(keys: string[], flags: TakeToWorkFlags): str
     .join(' ')
 }
 
+/** Git repositories of the build-web monorepo (by folder name), or every git repository if none match. */
+export function takeToWorkRepos(repos: readonly Repo[]): { repos: Repo[]; matchedRepo: boolean } {
+  const gitRepos = repos.filter((repo) => isGitRepoKind(repo))
+  const ours = gitRepos.filter((repo) =>
+    /sa-dc-ap-products/i.test(`${repo.path} ${repo.displayName}`)
+  )
+  return ours.length ? { repos: ours, matchedRepo: true } : { repos: gitRepos, matchedRepo: false }
+}
+
 /** Live git worktrees of the build-web repository (by folder name), or every live one if none match. */
 export function takeToWorkCandidates(
   repos: readonly Repo[],
   worktreesByRepo: Record<string, Worktree[] | undefined>
 ): { worktrees: Worktree[]; matchedRepo: boolean } {
-  const gitRepos = repos.filter((repo) => isGitRepoKind(repo))
-  const ours = gitRepos.filter((repo) =>
-    /sa-dc-ap-products/i.test(`${repo.path} ${repo.displayName}`)
-  )
   const pick = (list: readonly Repo[]) =>
     list.flatMap((repo) => (worktreesByRepo[repo.id] ?? []).filter((w) => !w.isArchived))
-  const matched = pick(ours)
+  const own = takeToWorkRepos(repos)
+  const matched = own.matchedRepo ? pick(own.repos) : []
   return matched.length
     ? { worktrees: matched, matchedRepo: true }
-    : { worktrees: pick(gitRepos), matchedRepo: false }
+    : { worktrees: pick(repos.filter((repo) => isGitRepoKind(repo))), matchedRepo: false }
+}
+
+/** A name for the batch's own worktree: its keys, lower-cased, at most three of them. */
+export function batchWorktreeName(keys: string[]): string {
+  const named = keys.slice(0, 3).map((k) => k.toLowerCase().replace(/\./g, '-'))
+  return keys.length > 3 ? `${named.join('-')}-batch` : named.join('-')
 }
 
 /** The active worktree when it is a candidate, else the last one used, else the first. */

@@ -9,8 +9,11 @@ import type {
   BuildWebIssueQueryParams,
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
+  BuildWebImageBuildParams,
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
+  BuildWebRunParams,
+  BuildWebVersionBranchesParams,
   BuildWebCommitDiffParams,
   BuildWebCommitsParams,
   BuildWebGuideParams,
@@ -56,6 +59,11 @@ import {
   refreshBuildWebGuideImages,
   saveBuildWebGuide
 } from '../build-web/build-web-runs'
+import {
+  getBuildWebRun,
+  listBuildWebVersionBranches,
+  startBuildWebImageBuild
+} from '../build-web/build-web-image-builds'
 
 type In<T extends z.ZodTypeAny> = z.infer<T>
 
@@ -131,6 +139,18 @@ export class RuntimeBuildWebCommands {
 
   buildWebPushImages(args: In<typeof BuildWebImagePushParams>) {
     return pushBuildWebImages(args)
+  }
+
+  buildWebVersionBranches(args: In<typeof BuildWebVersionBranchesParams>) {
+    return listBuildWebVersionBranches(args.product)
+  }
+
+  buildWebStartImageBuild(args: In<typeof BuildWebImageBuildParams>) {
+    return startBuildWebImageBuild(args)
+  }
+
+  buildWebGetRun(args: In<typeof BuildWebRunParams>) {
+    return getBuildWebRun(args.runId)
   }
 
   buildWebGetIssueRun(args: In<typeof BuildWebIssueId>) {

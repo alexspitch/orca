@@ -9,7 +9,10 @@ import {
   BuildWebIssueQueryParams,
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
+  BuildWebImageBuildParams,
   BuildWebImagePushParams,
+  BuildWebRunParams,
+  BuildWebVersionBranchesParams,
   BuildWebIssueUpdateParams,
   BuildWebCommitDiffParams,
   BuildWebCommitsParams,
@@ -130,6 +133,24 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebImagePushParams,
     handler: async (params, { runtime }) => runtime.buildWebPushImages(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.versionBranches',
+    permission: 'workspace',
+    params: BuildWebVersionBranchesParams,
+    handler: async (params, { runtime }) => runtime.buildWebVersionBranches(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.startImageBuild',
+    permission: 'workspace',
+    params: BuildWebImageBuildParams,
+    handler: async (params, { runtime }) => runtime.buildWebStartImageBuild(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.getRun',
+    permission: 'workspace',
+    params: BuildWebRunParams,
+    handler: async (params, { runtime }) => runtime.buildWebGetRun(params)
   }),
   defineMethod({
     name: 'buildWeb.getIssueRun',

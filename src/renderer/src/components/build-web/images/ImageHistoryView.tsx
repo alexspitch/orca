@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ArrowLeft, ExternalLink, Hammer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { translate } from '@/i18n/i18n'
@@ -16,6 +16,9 @@ import {
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
 import { useImagePicks } from './use-image-picks'
+import { ImageBuildDialog } from './ImageBuildDialog'
+import { ImageBuildProgress } from './ImageBuildProgress'
+import { useBuildWebStore } from '../build-web-store'
 import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import {
@@ -30,6 +33,7 @@ import { IMAGE_PAGE_SIZE, toggled, useImageHistory, useImageSort } from './use-b
 const DISTS = ['rhel', 'redos'] as const
 const PUSHED = ['yes', 'no'] as const
 const STATUSES = ['success', 'failed', 'running'] as const
+const RUNNING_REFRESH_MS = 20_000
 const keyOf = (b: BuildWebImageBuild) => `${b.run_id}|${b.dist}|${b.number}`
 
 export function ImageHistoryView({
@@ -65,6 +69,18 @@ export function ImageHistoryView({
   }
   const { data, loading, error, reload } = useImageHistory(target, true, args)
   const builds = data?.builds ?? []
+  const canBuild = useBuildWebStore((s) => s.status?.perms.includes('build') === true)
+  const [building, setBuilding] = useState(false)
+  const product = data?.builds[0]?.product || image.split('/')[0]
+  const runningNow = data?.counts.statuses.running ?? 0
+  // Why: a build started elsewhere (build-web, a train) shows its outcome without a manual refresh.
+  useEffect(() => {
+    if (!runningNow) {
+      return
+    }
+    const timer = window.setInterval(() => reload(true), RUNNING_REFRESH_MS)
+    return () => window.clearInterval(timer)
+  }, [reload, runningNow])
   const pushedLabel = (v: (typeof PUSHED)[number]) =>
     v === 'yes'
       ? translate('buildWeb.images.inRegistry', 'in registry')
@@ -78,6 +94,12 @@ export function ImageHistoryView({
           {translate('buildWeb.images.allImages', 'All images')}
         </Button>
         <span className="font-mono text-sm font-semibold">{image}</span>
+        {canBuild ? (
+          <Button variant="outline" size="sm" onClick={() => setBuilding(true)}>
+            <Hammer />
+            {translate('buildWeb.imageBuild.open', 'Build…')}
+          </Button>
+        ) : null}
         {baseUrl ? (
           <Button
             variant="ghost"
@@ -86,7 +108,7 @@ export function ImageHistoryView({
               void window.api.shell.openUrl(`${baseUrl}/images?image=${encodeURIComponent(image)}`)
             }
           >
-            {translate('buildWeb.images.buildInBuildWeb', 'Build in build-web')}
+            {translate('buildWeb.images.openInBuildWeb', 'Open in build-web')}
             <ExternalLink />
           </Button>
         ) : null}
@@ -143,6 +165,14 @@ export function ImageHistoryView({
           }}
         />
       </div>
+      <ImageBuildProgress target={target} image={image} onSettled={() => reload(true)} />
+      <ImageBuildDialog
+        open={building}
+        onOpenChange={setBuilding}
+        target={target}
+        image={image}
+        product={product}
+      />
       <ImageTableState
         error={error}
         loading={loading}

@@ -84,6 +84,15 @@ export type BuildWebImageHistory = {
 /** What the sidebar badge shows: images building right now. */
 export type BuildWebImageSummary = { running: number }
 
+/** A build of one image from the console's Images: the version is the branch it is built from. */
+export type BuildWebImageBuildArgs = {
+  image: string
+  /** master or a release branch of the image's product. */
+  branch: string
+  dist: 'both' | 'rhel' | 'redos'
+  ticket?: string
+}
+
 export type BuildWebImagePushArgs = {
   runId: string
   combos: { image: string; dist: string; branch: string }[]

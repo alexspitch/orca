@@ -18,7 +18,7 @@ import {
   buildWebRequest,
   type BuildWebResponseLimit
 } from './build-web-request'
-import { recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
+import { consoleUrlOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 
 const DIFF_MAX_CHARS = 512 * 1024
 const DIFF_RESPONSE_LIMIT: BuildWebResponseLimit = {
@@ -28,7 +28,7 @@ const DIFF_RESPONSE_LIMIT: BuildWebResponseLimit = {
 const SHOT_MAX_BYTES = 2 * 1024 * 1024
 const enc = encodeURIComponent
 
-function buildOf(value: unknown): BuildWebRunBuild | null {
+function buildOf(value: unknown, baseUrl: string): BuildWebRunBuild | null {
   const v = recordOf(value)
   if (!v || typeof v.image !== 'string') {
     return null
@@ -39,7 +39,7 @@ function buildOf(value: unknown): BuildWebRunBuild | null {
     branch: textOf(v.branch),
     status: textOf(v.status),
     number: typeof v.build_number === 'number' ? v.build_number : null,
-    url: textOrNull(v.build_url),
+    url: consoleUrlOf(textOrNull(v.build_url), baseUrl),
     tags: textsOf(v.image_tags),
     pushed: v.pushed === true,
     main_tag_pushed: v.pushed === true && v.main_tag_skipped !== true,
@@ -48,7 +48,7 @@ function buildOf(value: unknown): BuildWebRunBuild | null {
   }
 }
 
-export function runOf(value: unknown): BuildWebRun | null {
+export function runOf(value: unknown, baseUrl: string): BuildWebRun | null {
   const v = recordOf(value)
   if (!v || typeof v.id !== 'string') {
     return null
@@ -65,7 +65,7 @@ export function runOf(value: unknown): BuildWebRun | null {
     jira_action: textOrNull(v.jira_action),
     jira_url: textOrNull(v.jira_url),
     builds: (Array.isArray(v.builds) ? v.builds : [])
-      .map(buildOf)
+      .map((b) => buildOf(b, baseUrl))
       .filter((b): b is BuildWebRunBuild => b !== null)
   }
 }
@@ -76,7 +76,7 @@ export async function getBuildWebIssueRun(issueId: string): Promise<BuildWebRun 
   const answer = recordOf(
     await buildWebRequest({ ...credential, path: `/api/tms/issues/${enc(issueId)}/run` })
   )
-  return runOf(answer?.run)
+  return runOf(answer?.run, credential.baseUrl)
 }
 
 /** Publish every pushable build of the run; the moving main tag only when asked. */
@@ -109,7 +109,8 @@ export function saveBuildWebGuide(
         method: 'PATCH',
         path: `/api/guide/${enc(runId)}`,
         body: { guide }
-      })
+      }),
+      credential.baseUrl
     )
   })
 }
@@ -126,7 +127,8 @@ export function refreshBuildWebGuideImages(
         method: 'POST',
         path: `/api/guide/${enc(runId)}/refresh-images`,
         body: { guide }
-      })
+      }),
+      credential.baseUrl
     )
   })
 }

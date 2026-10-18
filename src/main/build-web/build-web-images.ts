@@ -12,7 +12,7 @@ import { requireBuildWebCredential } from './build-web-connection'
 import { getBuildWebCredentialGeneration, getStoredBuildWebMetadata } from './credential-store'
 import { buildWebMutation, buildWebRequest, type BuildWebResponseLimit } from './build-web-request'
 import { BUILD_WEB_CATALOG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
-import { numberOf, recordOf, textOf, textOrNull } from './build-web-response-fields'
+import { consoleUrlOf, numberOf, recordOf, textOf, textOrNull } from './build-web-response-fields'
 import {
   imageHistory,
   imagePage,
@@ -46,19 +46,6 @@ export function invalidateBuildWebImageCatalog(): void {
 
 const STATUSES: readonly BuildWebImageBuild['status'][] = ['success', 'failed', 'running']
 
-/** A Jenkins log as is; a log the console or an agent keeps (a path) on the console's origin. */
-function logUrlOf(url: string | null, baseUrl: string): string | null {
-  if (!url) {
-    return null
-  }
-  try {
-    const resolved = new URL(url, `${baseUrl}/`)
-    return resolved.protocol === 'https:' || resolved.protocol === 'http:' ? resolved.href : null
-  } catch {
-    return null
-  }
-}
-
 function buildOf(value: unknown, baseUrl: string): BuildWebImageBuild | null {
   const v = recordOf(value)
   const status = STATUSES.find((s) => s === v?.status)
@@ -82,7 +69,7 @@ function buildOf(value: unknown, baseUrl: string): BuildWebImageBuild | null {
     pushed_main_tag: v.pushed_main_tag === true,
     main_tag_on: textOrNull(v.main_tag_on),
     run_id: v.run_id,
-    url: logUrlOf(textOrNull(v.url), baseUrl)
+    url: consoleUrlOf(textOrNull(v.url), baseUrl)
   }
 }
 
