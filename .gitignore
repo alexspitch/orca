@@ -181,3 +181,7 @@ ci-shards/
 /.build/windows-native-benchmark/
 
 .local/static-analysis-research/
+
+# Local ops: custom-build scripts and server notes, and the clean worktree custom builds are made in
+/orca-server-setup/
+/orca-custom-build/
