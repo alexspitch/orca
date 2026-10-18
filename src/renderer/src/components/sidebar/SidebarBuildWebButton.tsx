@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { HideSidebarMenu } from './sidebar-nav-controls'
+import { useBuildWebStore } from '../build-web/build-web-store'
 
 /** «Issues»: build-web's tasks and images. Hidden with the sidebar menu, shown again from Settings. */
 export function SidebarBuildWebButton(): React.JSX.Element | null {
@@ -20,7 +21,11 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
       <ContextMenuTrigger asChild>
         <button
           type="button"
-          onClick={openPage}
+          onClick={() => {
+            // Why: the sidebar item means the list — even from a card already open on the page.
+            useBuildWebStore.getState().openIssue(null)
+            openPage()
+          }}
           aria-current={active ? 'page' : undefined}
           className={cn(
             'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
