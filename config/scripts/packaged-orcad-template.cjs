@@ -135,7 +135,13 @@ async function finalizePackagedOrcadTemplate(resourcesDir, options) {
     }
     resealOrcadTemplateManifest(templateDir, machO)
   }
-  verifyPackagedOrcadTemplate(resourcesDir)
+  verifyPackagedOrcadTemplate(resourcesDir, packagedOrcadTemplateTargets(env))
+}
+
+/** Custom builds ship a partial template (config/scripts/build-custom.mjs); releases check every target. */
+function packagedOrcadTemplateTargets(env = process.env) {
+  const targets = env.ORCA_ORCAD_TEMPLATE_TARGETS?.split(',').filter(Boolean)
+  return targets?.length ? targets : undefined
 }
 
 /** `inner-signing-list.txt` lines are app-relative Windows paths; keep the template's. */
@@ -155,7 +161,7 @@ function resealSignedWindowsApp(appDir, signedListFile) {
     return
   }
   resealOrcadTemplateManifest(join(resourcesDir, ORCAD_TEMPLATE_RESOURCE_DIR), signed)
-  verifyPackagedOrcadTemplate(resourcesDir)
+  verifyPackagedOrcadTemplate(resourcesDir, packagedOrcadTemplateTargets())
   console.log(`[packaged-orcad-template] resealed ${signed.length} signed template file(s)`)
 }
 

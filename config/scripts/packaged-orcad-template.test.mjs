@@ -117,6 +117,29 @@ describe('packaged orcad template', () => {
     expect(() => assertOrcadTemplateBuilt(resourcesDir, {})).not.toThrow()
   })
 
+  it('accepts a partial template only for the targets a custom build names', async () => {
+    quietly()
+    const { resourcesDir, templateDir, manifestPath } = await createResources()
+    const manifest = JSON.parse(await readFile(manifestPath, 'utf8'))
+    for (const target of Object.keys(manifest.targets)) {
+      if (target !== 'linux-x64-glibc') {
+        delete manifest.targets[target]
+        await rm(join(templateDir, ORCAD_TEMPLATE_TARGETS_DIR, target), { recursive: true })
+      }
+    }
+    await writeFile(manifestPath, JSON.stringify(manifest))
+
+    await expect(
+      finalizePackagedOrcadTemplate(resourcesDir, { platform: 'linux', env: {} })
+    ).rejects.toThrow('target manifest inventory')
+    await expect(
+      finalizePackagedOrcadTemplate(resourcesDir, {
+        platform: 'linux',
+        env: { ORCA_ORCAD_TEMPLATE_TARGETS: 'linux-x64-glibc' }
+      })
+    ).resolves.toBeUndefined()
+  })
+
   it('reseals the Windows files SignPath returned, by their app-relative list', async () => {
     quietly()
     const appDir = await tempRoot()

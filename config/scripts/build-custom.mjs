@@ -96,6 +96,7 @@ export function runCustomBuild(
   const requiredSlot =
     platform === 'mac' ? 'linux-x64-glibc' : `linux-${resolveLinuxBuildArch()}-glibc`
   const targets = orcadTemplateTargets(resolve('out/orcad-prebuilds'), requiredSlot)
+  env.ORCA_ORCAD_TEMPLATE_TARGETS = targets.join(',')
   execFile(
     process.execPath,
     ['config/scripts/build-orcad-template.mjs', '--targets', targets.join(',')],
