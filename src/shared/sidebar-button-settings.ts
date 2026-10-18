@@ -10,6 +10,11 @@ export type SidebarButtonSettings = {
   showBuildWebButton?: boolean
   /** The «Images» shortcut to build-web's images, with the count of builds running now. */
   showBuildWebImagesButton?: boolean
-  /** The «Trains» shortcut to build-web's build trains. */
+  /** The «Trains» shortcut to build-web's build trains; unset, it follows «Issues». */
   showBuildWebTrainsButton?: boolean
+}
+
+/** Trains came after Issues: someone already on build-web sees it without a trip to Settings. */
+export function showsBuildWebTrains(settings: SidebarButtonSettings | null | undefined): boolean {
+  return settings?.showBuildWebTrainsButton ?? settings?.showBuildWebButton === true
 }

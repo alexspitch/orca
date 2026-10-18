@@ -5,10 +5,11 @@ import { cn } from '@/lib/utils'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { HideSidebarMenu } from './sidebar-nav-controls'
+import { showsBuildWebTrains } from '../../../../shared/sidebar-button-settings'
 
 /** «Trains»: build-web's build trains. Hidden with the sidebar menu, shown again from Settings. */
 export function SidebarBuildWebTrainsButton(): React.JSX.Element | null {
-  const show = useAppStore((s) => s.settings?.showBuildWebTrainsButton === true)
+  const show = useAppStore((s) => showsBuildWebTrains(s.settings))
   const active = useAppStore((s) => s.activeView === 'build-web-trains')
   const openPage = useAppStore((s) => s.openBuildWebTrainsPage)
   const updateSettings = useAppStore((s) => s.updateSettings)

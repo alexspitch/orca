@@ -159,7 +159,6 @@ export function buildDefaultSettings(args: {
     showSkillsButton: false,
     showBuildWebButton: false,
     showBuildWebImagesButton: false,
-    showBuildWebTrainsButton: false,
     showMobileButton: true,
     showPinnedWorktreesInGroups: false,
     ctrlTabOrderMode: 'mru',

@@ -9,13 +9,14 @@ import { callBuildWeb } from '../build-web/build-web-client'
 import { BuildWebConnectForm } from '../build-web/BuildWebConnect'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
+import { showsBuildWebTrains } from '../../../../shared/sidebar-button-settings'
 
 /** build-web: connect, test, replace the token, disconnect, and bring the sidebar item back. */
 export function BuildWebIntegrationCard(): React.JSX.Element {
   const { target } = useBuildWebTarget()
   const showButton = useAppStore((s) => s.settings?.showBuildWebButton === true)
   const showImagesButton = useAppStore((s) => s.settings?.showBuildWebImagesButton === true)
-  const showTrainsButton = useAppStore((s) => s.settings?.showBuildWebTrainsButton === true)
+  const showTrainsButton = useAppStore((s) => showsBuildWebTrains(s.settings))
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [status, setStatus] = useState<BuildWebConnectionStatus | null>(null)
   const [replacing, setReplacing] = useState(false)
