@@ -1,5 +1,6 @@
 import type { UISlice, UISliceGet, UISliceSet } from './ui-slice-contract'
 import { rewindHistoryIndexPastView } from '../worktree-nav-history'
+import { createUiGitLogActions } from './ui-slice-git-log-actions'
 
 /** Where a build-web page returns to: another build-web page carries over its own origin. */
 function buildWebOrigin(state: UISlice): UISlice['previousViewBeforeBuildWeb'] {
@@ -9,6 +10,9 @@ function buildWebOrigin(state: UISlice): UISlice['previousViewBeforeBuildWeb'] {
   if (state.activeView === 'build-web-images') {
     return state.previousViewBeforeBuildWebImages
   }
+  if (state.activeView === 'git-log') {
+    return state.previousViewBeforeGitLog
+  }
   return state.activeView === 'build-web-trains'
     ? state.previousViewBeforeBuildWebTrains
     : state.activeView
@@ -16,6 +20,7 @@ function buildWebOrigin(state: UISlice): UISlice['previousViewBeforeBuildWeb'] {
 
 export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<UISlice> {
   return {
+    ...createUiGitLogActions(set),
     openActivityPage: () => {
       set((state) => ({
         activeView: 'activity',

@@ -14,6 +14,7 @@ import { SidebarTaskNavButton } from './SidebarTaskNavButton'
 import { SidebarBuildWebButton } from './SidebarBuildWebButton'
 import { SidebarBuildWebImagesButton } from './SidebarBuildWebImagesButton'
 import { SidebarBuildWebTrainsButton } from './SidebarBuildWebTrainsButton'
+import { SidebarGitLogButton } from './SidebarGitLogButton'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 import { translate } from '@/i18n/i18n'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
@@ -125,6 +126,7 @@ const SidebarNav = React.memo(function SidebarNav() {
       <SidebarBuildWebButton />
       <SidebarBuildWebImagesButton />
       <SidebarBuildWebTrainsButton />
+      <SidebarGitLogButton />
       {showArtifactsButton ? (
         <ContextMenu>
           <ContextMenuTrigger asChild>

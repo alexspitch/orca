@@ -273,6 +273,13 @@ import {
   FolderWorkspaceUpdate
 } from './folder-workspace-params'
 import {
+  GitChangedPathsParams,
+  GitLogOperationParams,
+  GitLogPageParams,
+  GitRefsContainingParams,
+  GitTreeAtRevisionParams
+} from './git-log-page-params'
+import {
   GitBranchCompare,
   GitBranchDiff,
   GitBulkPaths,
@@ -1042,6 +1049,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'git.bulkUnstage': GitBulkPaths,
   'git.cancelGenerateCommitMessage': WorktreeSelectorOfGitParams,
   'git.cancelGeneratePullRequestFields': WorktreeSelectorOfGitParams,
+  'git.changedPaths': GitChangedPathsParams,
   'git.checkIgnored': GitCheckIgnored,
   'git.checkout': GitCheckout,
   'git.commit': GitCommit,
@@ -1058,14 +1066,19 @@ export const RPC_PARAMS_BY_METHOD = {
   'git.generatePullRequestFields': GitGeneratePullRequestFields,
   'git.history': GitHistory,
   'git.localBranches': WorktreeSelectorOfGitParams,
+  'git.logOperation': GitLogOperationParams,
+  'git.logPage': GitLogPageParams,
   'git.pull': GitTargetedRemote,
   'git.push': GitPush,
   'git.rebaseFromBase': GitRebaseFromBase,
+  'git.refs': WorktreeSelectorOfGitParams,
+  'git.refsContaining': GitRefsContainingParams,
   'git.remoteCommitUrl': GitRemoteCommitUrl,
   'git.remoteFileUrl': GitRemoteFileUrl,
   'git.stage': GitFilePath,
   'git.status': GitStatusParams,
   'git.submoduleStatus': GitSubmoduleStatus,
+  'git.treeAtRevision': GitTreeAtRevisionParams,
   'git.unstage': GitFilePath,
   'git.upstreamStatus': GitTargetedRemote,
   'github.addIssueComment': IssueComment,

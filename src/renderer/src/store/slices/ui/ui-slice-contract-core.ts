@@ -126,6 +126,7 @@ export type UiViewHistory =
   | 'build-web'
   | 'build-web-images'
   | 'build-web-trains'
+  | 'git-log'
 
 /** build-web's pages: moving between them keeps where the first one was opened from. */
 export type BuildWebView = 'build-web' | 'build-web-images' | 'build-web-trains'

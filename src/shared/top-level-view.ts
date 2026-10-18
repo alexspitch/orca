@@ -14,7 +14,8 @@ const TOP_LEVEL_VIEW_LOOKUP: Record<TopLevelView, true> = {
   mobile: true,
   'build-web': true,
   'build-web-images': true,
-  'build-web-trains': true
+  'build-web-trains': true,
+  'git-log': true
 }
 
 export function isTopLevelView(value: unknown): value is TopLevelView {

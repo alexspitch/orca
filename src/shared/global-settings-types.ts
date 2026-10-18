@@ -42,6 +42,7 @@ import type {
   TaskViewPresetId
 } from './ui-chrome-types'
 import type { SidebarButtonSettings } from './sidebar-button-settings'
+import type { GitLogSettings } from './git-log-settings'
 import type { WorktreeVisibilityDefaults } from './repo-types'
 
 export type { WorktreeVisibilityDefaults } from './repo-types'
@@ -50,7 +51,8 @@ export type { WorktreeVisibilityDefaults } from './repo-types'
 export type MiniMaxEndpoint = 'overseas' | 'cn'
 
 export type GlobalSettings = GlobalSettingsBase &
-  SidebarButtonSettings & {
+  SidebarButtonSettings &
+  GitLogSettings & {
     workspaceDir: string
     /** Host-owned defaults used when a repository has no explicit visibility override. */
     worktreeVisibilityDefaults?: WorktreeVisibilityDefaults
