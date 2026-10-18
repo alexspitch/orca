@@ -99,4 +99,6 @@ export function registerBuildWebTaskHandlers(): void {
   handle('trainActions', BuildWebTrainActionsParams, (args) => commands.buildWebTrainActions(args))
   handle('trainPreview', BuildWebTrainParams, (args) => commands.buildWebTrainPreview(args))
   handle('runTrain', BuildWebTrainParams, (args) => commands.buildWebRunTrain(args))
+  ipcMain.handle('buildWeb:watch', () => commands.buildWebWatch())
+  ipcMain.handle('buildWeb:watchCheck', () => commands.buildWebWatchCheck())
 }

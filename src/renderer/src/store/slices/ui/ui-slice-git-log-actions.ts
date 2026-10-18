@@ -28,6 +28,9 @@ export function gitLogOrigin(state: UISlice): GitLogOrigin {
   if (view === 'build-web-images') {
     return viaBuildWeb(state.previousViewBeforeBuildWebImages)
   }
+  if (view === 'build-web-testing') {
+    return viaBuildWeb(state.previousViewBeforeBuildWebTesting)
+  }
   return view === 'build-web-trains' ? viaBuildWeb(state.previousViewBeforeBuildWebTrains) : view
 }
 

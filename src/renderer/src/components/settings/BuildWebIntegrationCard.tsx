@@ -9,7 +9,10 @@ import { callBuildWeb } from '../build-web/build-web-client'
 import { BuildWebConnectForm } from '../build-web/BuildWebConnect'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
-import { showsBuildWebTrains } from '../../../../shared/sidebar-button-settings'
+import {
+  showsBuildWebTesting,
+  showsBuildWebTrains
+} from '../../../../shared/sidebar-button-settings'
 
 /** build-web: connect, test, replace the token, disconnect, and bring the sidebar item back. */
 export function BuildWebIntegrationCard(): React.JSX.Element {
@@ -17,6 +20,7 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
   const showButton = useAppStore((s) => s.settings?.showBuildWebButton === true)
   const showImagesButton = useAppStore((s) => s.settings?.showBuildWebImagesButton === true)
   const showTrainsButton = useAppStore((s) => showsBuildWebTrains(s.settings))
+  const showTestingButton = useAppStore((s) => showsBuildWebTesting(s.settings))
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [status, setStatus] = useState<BuildWebConnectionStatus | null>(null)
   const [replacing, setReplacing] = useState(false)
@@ -165,6 +169,25 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
             checked={showTrainsButton}
             onCheckedChange={(checked) =>
               void updateSettings({ showBuildWebTrainsButton: checked })
+            }
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>
+            <span className="block">
+              {translate('buildWeb.settings.showTestingInSidebar', 'Show Testing in sidebar')}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {translate(
+                'buildWeb.settings.showTestingInSidebarHint',
+                'Tasks in testing whose images are not published yet'
+              )}
+            </span>
+          </span>
+          <Switch
+            checked={showTestingButton}
+            onCheckedChange={(checked) =>
+              void updateSettings({ showBuildWebTestingButton: checked })
             }
           />
         </label>

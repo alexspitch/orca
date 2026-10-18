@@ -17,3 +17,18 @@ describe('Issues and Images pages', () => {
     expect(store.getState().activeView).toBe('terminal')
   })
 })
+
+describe('the Testing page', () => {
+  it('returns to where the user started, also after opening a task from it', () => {
+    const store = createUIStore()
+    store.setState({ activeView: 'tasks' })
+    store.getState().openBuildWebTrainsPage()
+    store.getState().openBuildWebTestingPage()
+    store.getState().closeBuildWebTestingPage()
+    expect(store.getState().activeView).toBe('tasks')
+    store.getState().openBuildWebTestingPage()
+    store.getState().openBuildWebPage()
+    store.getState().closeBuildWebPage()
+    expect(store.getState().activeView).toBe('tasks')
+  })
+})

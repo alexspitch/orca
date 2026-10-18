@@ -16,6 +16,7 @@ const RIGHT_SIDEBAR_SUPPRESSED_VIEWS = new Set<ActiveView>([
   'build-web',
   'build-web-images',
   'build-web-trains',
+  'build-web-testing',
   'git-log'
 ])
 

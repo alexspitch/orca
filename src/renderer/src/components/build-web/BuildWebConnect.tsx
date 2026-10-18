@@ -38,7 +38,8 @@ export function BuildWebConnectForm({
         void useAppStore.getState().updateSettings({
           showBuildWebButton: true,
           showBuildWebImagesButton: true,
-          showBuildWebTrainsButton: true
+          showBuildWebTrainsButton: true,
+          showBuildWebTestingButton: true
         })
         onConnected(result.status)
       } else {

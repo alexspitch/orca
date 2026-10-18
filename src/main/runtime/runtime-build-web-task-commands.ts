@@ -57,6 +57,7 @@ import {
   listBuildWebTrains,
   runBuildWebTrainNow
 } from '../build-web/build-web-trains'
+import { checkBuildWebWatch, getBuildWebWatch } from '../build-web/build-web-watch'
 import {
   cancelBuildWebJob,
   findBuildWebShotsJob,
@@ -246,5 +247,13 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebRunTrain(args: In<typeof BuildWebTrainParams>) {
     return runBuildWebTrainNow(args.trainId)
+  }
+
+  buildWebWatch() {
+    return getBuildWebWatch()
+  }
+
+  buildWebWatchCheck() {
+    return checkBuildWebWatch()
   }
 }

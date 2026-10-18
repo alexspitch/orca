@@ -133,5 +133,7 @@ export type TopLevelView =
   | 'build-web-images'
   /** build-web's build trains, read and departed by hand. */
   | 'build-web-trains'
+  /** build-web's tasks in testing whose images are not published yet (its «Watch»). */
+  | 'build-web-testing'
   /** A project's git log across all branches, as WebStorm's Git › Log. */
   | 'git-log'

@@ -15,6 +15,7 @@ const TOP_LEVEL_VIEW_LOOKUP: Record<TopLevelView, true> = {
   'build-web': true,
   'build-web-images': true,
   'build-web-trains': true,
+  'build-web-testing': true,
   'git-log': true
 }
 

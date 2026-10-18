@@ -963,6 +963,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.trainRuns': BuildWebTrainRunsParams,
   'buildWeb.updateIssue': BuildWebIssueUpdateParams,
   'buildWeb.versionBranches': BuildWebVersionBranchesParams,
+  'buildWeb.watch': null,
+  'buildWeb.watchCheck': null,
   'clipboard.abortImageUpload': AbortImageUpload,
   'clipboard.appendImageUploadChunk': AppendImageUploadChunk,
   'clipboard.commitImageUpload': CommitImageUpload,

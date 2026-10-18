@@ -12,9 +12,16 @@ export type SidebarButtonSettings = {
   showBuildWebImagesButton?: boolean
   /** The «Trains» shortcut to build-web's build trains; unset, it follows «Issues». */
   showBuildWebTrainsButton?: boolean
+  /** The «Testing» shortcut to build-web's watch; unset, it follows «Issues». */
+  showBuildWebTestingButton?: boolean
 }
 
 /** Trains came after Issues: someone already on build-web sees it without a trip to Settings. */
 export function showsBuildWebTrains(settings: SidebarButtonSettings | null | undefined): boolean {
   return settings?.showBuildWebTrainsButton ?? settings?.showBuildWebButton === true
+}
+
+/** Testing came after Issues as well, and is shown the same way. */
+export function showsBuildWebTesting(settings: SidebarButtonSettings | null | undefined): boolean {
+  return settings?.showBuildWebTestingButton ?? settings?.showBuildWebButton === true
 }

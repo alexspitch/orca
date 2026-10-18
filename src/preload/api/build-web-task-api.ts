@@ -6,6 +6,7 @@ import type {
   BuildWebTrainPreview,
   BuildWebTrainRunPage
 } from '../../shared/build-web-train-types'
+import type { BuildWebWatchCheck, BuildWebWatchState } from '../../shared/build-web-watch-types'
 import type {
   BuildWebAdoptResult,
   BuildWebBranch,
@@ -117,4 +118,6 @@ export type BuildWebTaskApi = {
   trainActions: (args: { trainId: string; runId: string }) => Promise<BuildWebTrainAction[]>
   trainPreview: (args: { trainId: string }) => Promise<BuildWebTrainPreview>
   runTrain: (args: { trainId: string }) => Promise<BuildWebMutationResult<true>>
+  watch: () => Promise<BuildWebWatchState>
+  watchCheck: () => Promise<BuildWebMutationResult<BuildWebWatchCheck>>
 }

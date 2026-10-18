@@ -20721,7 +20721,9 @@
       "searchKeyword": "build-web",
       "searchIssues": "issues",
       "showTrainsInSidebar": "Show Trains in sidebar",
-      "showTrainsInSidebarHint": "Build trains: their windows, and a departure by hand"
+      "showTrainsInSidebarHint": "Build trains: their windows, and a departure by hand",
+      "showTestingInSidebar": "Show Testing in sidebar",
+      "showTestingInSidebarHint": "Tasks in testing whose images are not published yet"
     },
     "sidebar": {
       "issues": "Issues",
@@ -20729,7 +20731,8 @@
       "imagesBuilding": "{{label}}, {{count}} building",
       "issuesBlockers": "{{label}}, {{count}} blockers",
       "blockersHint": "Open tasks at the highest priority (Jira Highest, Blocker, Critical)",
-      "trains": "Trains"
+      "trains": "Trains",
+      "testing": "Testing"
     },
     "priority": {
       "highest": "Highest",
@@ -21086,6 +21089,38 @@
       "os": "OS",
       "build": "Build",
       "registryTags": "Registry and tags"
+    },
+    "testing": {
+      "about": "Watching {{watching}} · build the missing images and publish them on → {{done}} · every {{seconds}}s",
+      "auto": "Auto-publish",
+      "autoConsole": "on {{done}} in build-web",
+      "autoJira": "on Jira → {{done}}",
+      "autoNext": "joins at the next check",
+      "autoOff": "off",
+      "building": "{{count}} building",
+      "busy": "A check was already running — try again in a moment.",
+      "changed": "Changed",
+      "checkNow": "Check now",
+      "checkResult": "Checked {{checked}} ticket(s): {{transitions}} status change(s), {{images}} image(s) queued for push.",
+      "checked": "Checked",
+      "checkedBuilds": "{{builds}} of them to be built first.",
+      "checking": "Checking…",
+      "dismiss": "Dismiss",
+      "jira": "Jira",
+      "lastAction": "Last action",
+      "loading": "Loading the watch…",
+      "noAccess": "build-web has not given you its Watch section. Ask a build-web administrator for it.",
+      "none": "Nothing to watch — no task in {{watching}} has images left to build or publish.",
+      "off": "Monitoring is off on this console (WATCH_ENABLED=0): nothing is built or published automatically. Check now still works.",
+      "status": "Status",
+      "task": "Task",
+      "title": "Testing",
+      "toBuild": "{{count}} to build",
+      "toBuildHint": "{{where}} — never built; built on the move to {{done}}",
+      "toPush": "{{count}} to push",
+      "versionTag": "{{count}} version tag",
+      "versionTagHint": "{{where}} — published under the build tag only; the version tag moves on {{done}}",
+      "work": "Image work left"
     }
   },
   "gitLog": {

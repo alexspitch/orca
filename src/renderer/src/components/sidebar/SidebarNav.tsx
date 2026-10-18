@@ -14,6 +14,7 @@ import { SidebarTaskNavButton } from './SidebarTaskNavButton'
 import { SidebarBuildWebButton } from './SidebarBuildWebButton'
 import { SidebarBuildWebImagesButton } from './SidebarBuildWebImagesButton'
 import { SidebarBuildWebTrainsButton } from './SidebarBuildWebTrainsButton'
+import { SidebarBuildWebTestingButton } from './SidebarBuildWebTestingButton'
 import { SidebarGitLogButton } from './SidebarGitLogButton'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 import { translate } from '@/i18n/i18n'
@@ -126,6 +127,7 @@ const SidebarNav = React.memo(function SidebarNav() {
       <SidebarBuildWebButton />
       <SidebarBuildWebImagesButton />
       <SidebarBuildWebTrainsButton />
+      <SidebarBuildWebTestingButton />
       <SidebarGitLogButton />
       {showArtifactsButton ? (
         <ContextMenu>

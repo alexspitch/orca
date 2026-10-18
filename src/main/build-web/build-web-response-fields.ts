@@ -7,6 +7,13 @@ export function recordOf(value: unknown): Record<string, unknown> | null {
     : null
 }
 
+/** The objects of an array answer; anything else in it is dropped. */
+export function recordsOf(value: unknown): Record<string, unknown>[] {
+  return (Array.isArray(value) ? value : [])
+    .map(recordOf)
+    .filter((v): v is Record<string, unknown> => v !== null)
+}
+
 export function textOf(value: unknown): string {
   return typeof value === 'string' ? value : ''
 }

@@ -21,7 +21,9 @@ export const BUILD_WEB_LONG_METHODS: ReadonlySet<string> = new Set([
   'detectImages',
   'fetchRepo',
   'standVersion',
-  'refreshIssueVersion'
+  'refreshIssueVersion',
+  // A watcher pass asks Jira about every watched ticket.
+  'watchCheck'
 ])
 
 /** The host's own wait for one `buildWeb.*` call, so a client never cuts a healthy answer off. */

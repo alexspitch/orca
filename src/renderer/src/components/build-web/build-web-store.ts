@@ -18,6 +18,9 @@ import {
   type QuickFilter
 } from './build-web-view-prefs'
 
+/** The full-screen card's tabs, as build-web's task card has them. */
+export type BuildWebCardTab = 'overview' | 'build' | 'guide' | 'commits'
+
 /** The statuses a task is still being worked in — the list's default. */
 export const OPEN_STATUSES = BUILD_WEB_OPEN_STATUSES
 
@@ -75,7 +78,9 @@ type BuildWebState = {
   patchIssue: (id: string, patch: Partial<BuildWebIssueRow>) => void
   toggleSelected: (id: string) => void
   clearSelection: () => void
-  openIssue: (id: string | null, fullScreen?: boolean) => void
+  /** The tab the full-screen card opens on. */
+  openTab: BuildWebCardTab
+  openIssue: (id: string | null, fullScreen?: boolean, tab?: BuildWebCardTab) => void
   expandToFullScreen: () => void
   /** Back one level: to the side card it came from, or to the list. */
   collapseFullScreen: () => void
@@ -105,6 +110,7 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   error: null,
   selected: new Set(),
   openIssueId: null,
+  openTab: 'overview',
   fullScreen: false,
   fullScreenFromDrawer: false,
   lastWorktreeId: null,
@@ -185,8 +191,8 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
       return { selected }
     }),
   clearSelection: () => set({ selected: new Set() }),
-  openIssue: (openIssueId, fullScreen = false) =>
-    set({ openIssueId, fullScreen, fullScreenFromDrawer: false }),
+  openIssue: (openIssueId, fullScreen = false, openTab = 'overview') =>
+    set({ openIssueId, fullScreen, fullScreenFromDrawer: false, openTab }),
   expandToFullScreen: () =>
     set((state) => (state.openIssueId ? { fullScreen: true, fullScreenFromDrawer: true } : {})),
   collapseFullScreen: () =>

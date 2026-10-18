@@ -8,7 +8,7 @@ import {
 import { callBuildWeb } from '../build-web-client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { translate } from '@/i18n/i18n'
-import { useBuildWebStore } from '../build-web-store'
+import { useBuildWebStore, type BuildWebCardTab } from '../build-web-store'
 import { useBuildWebTarget } from '../use-build-web-data'
 import { useBuildWebIssueDetail } from '../use-build-web-issue-detail'
 import { BuildWebListState } from '../BuildWebListState'
@@ -20,7 +20,7 @@ import { IssueCommitsTab } from './IssueCommitsTab'
 import { imageTally, readsRuns, writesRuns } from './issue-card-facts'
 import { useIssueRun } from './use-issue-run'
 
-type CardTab = 'overview' | 'build' | 'guide' | 'commits'
+type CardTab = BuildWebCardTab
 const TABS: readonly CardTab[] = ['overview', 'build', 'guide', 'commits']
 const NO_PERMS: string[] = []
 
@@ -36,11 +36,11 @@ export function BuildWebIssueFullScreen({
   const collapseFullScreen = useBuildWebStore((s) => s.collapseFullScreen)
   const openIssue = useBuildWebStore((s) => s.openIssue)
   const state = useBuildWebIssueDetail(issueId)
-  const [tab, setTab] = useState<CardTab>('overview')
+  const [tab, setTab] = useState<CardTab>(() => useBuildWebStore.getState().openTab)
   // Where the first build is headed: kept here until the task has a run to store it on.
   const [firstTesting, setFirstTesting] = useState<BuildWebTestingStatus>('Testing')
   // Why: a tab stays mounted once opened, so a guide draft or a comment survives a tab switch.
-  const [visited, setVisited] = useState<ReadonlySet<CardTab>>(() => new Set(['overview']))
+  const [visited, setVisited] = useState<ReadonlySet<CardTab>>(() => new Set(['overview', tab]))
   const runsVisible = readsRuns(perms)
   const {
     run,
@@ -92,6 +92,8 @@ export function BuildWebIssueFullScreen({
     }
   }
   const tabs = TABS.filter((t) => showRuns || (t !== 'build' && t !== 'guide'))
+  // Why: opened on Build for a task without one (a subtask, no rights), it shows Overview.
+  const current = tabs.includes(tab) ? tab : 'overview'
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <IssueHeader
@@ -103,7 +105,7 @@ export function BuildWebIssueFullScreen({
         onBackToList={() => openIssue(null)}
       />
       <Tabs
-        value={tab}
+        value={current}
         onValueChange={(v) => open(TABS.find((t) => t === v) ?? 'overview')}
         className="flex min-h-0 flex-1 flex-col"
       >
@@ -117,7 +119,7 @@ export function BuildWebIssueFullScreen({
           </TabsList>
         </div>
         <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-5">
-          <TabsContent value="overview" forceMount hidden={tab !== 'overview'}>
+          <TabsContent value="overview" forceMount hidden={current !== 'overview'}>
             <IssueOverviewTab
               target={target}
               state={state}
@@ -129,7 +131,7 @@ export function BuildWebIssueFullScreen({
             />
           </TabsContent>
           {showRuns && visited.has('build') ? (
-            <TabsContent value="build" forceMount hidden={tab !== 'build'}>
+            <TabsContent value="build" forceMount hidden={current !== 'build'}>
               <IssueBuildTab
                 target={target}
                 detail={detail}
@@ -142,7 +144,7 @@ export function BuildWebIssueFullScreen({
             </TabsContent>
           ) : null}
           {showRuns && visited.has('guide') ? (
-            <TabsContent value="guide" forceMount hidden={tab !== 'guide'}>
+            <TabsContent value="guide" forceMount hidden={current !== 'guide'}>
               <IssueGuideTab
                 target={target}
                 detail={detail}
@@ -155,7 +157,7 @@ export function BuildWebIssueFullScreen({
             </TabsContent>
           ) : null}
           {visited.has('commits') ? (
-            <TabsContent value="commits" forceMount hidden={tab !== 'commits'}>
+            <TabsContent value="commits" forceMount hidden={current !== 'commits'}>
               <IssueCommitsTab target={target} issueId={detail.id} />
             </TabsContent>
           ) : null}
