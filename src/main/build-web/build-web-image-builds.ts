@@ -60,7 +60,10 @@ export function startBuildWebImageBuild(
       ...credential,
       method: 'POST',
       path: `/api/runs/${enc(runId)}/builds`,
-      body: { combos: dists.map((dist) => ({ image: args.image, dist, branch: args.branch })) }
+      body: {
+        combos: dists.map((dist) => ({ image: args.image, dist, branch: args.branch })),
+        ...(args.skipTests ? { skipTests: true } : {})
+      }
     })
     // Why: the catalog behind Images and the badge must show the new build as running.
     invalidateBuildWebImageCatalog()

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ import type { BuildWebImageBuildArgs } from '../../../../../shared/build-web-ima
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { useImageBuildRuns, versionOfBranch } from './image-build-runs'
+import { testsChoice } from '../issue/build/run-cells'
 
 const DISTS: BuildWebImageBuildArgs['dist'][] = ['both', 'rhel', 'redos']
 
@@ -49,6 +51,10 @@ function BuildForm({
   const [branch, setBranch] = useState('')
   const [dist, setDist] = useState<BuildWebImageBuildArgs['dist']>('both')
   const [ticket, setTicket] = useState('')
+  // Off by default: a build from the tree goes without the offline suites unless asked.
+  const [runTests, setRunTests] = useState(false)
+  // Empty until read (or on an older host): every build then runs the tests, as Jenkins does.
+  const [treeBranches, setTreeBranches] = useState<ReadonlySet<string>>(new Set())
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -77,6 +83,21 @@ function BuildForm({
     }
   }, [initialBranch, product, target])
 
+  useEffect(() => {
+    let alive = true
+    callBuildWeb(target, 'branches')
+      .then((list) => {
+        if (alive) {
+          setTreeBranches(new Set(list.filter((b) => b.fromTree).map((b) => b.name)))
+        }
+      })
+      .catch(() => {})
+    return () => {
+      alive = false
+    }
+  }, [target])
+  const tests = testsChoice(branch ? [branch] : [], treeBranches, runTests)
+
   const start = async (): Promise<void> => {
     setBusy(true)
     setError(null)
@@ -85,7 +106,8 @@ function BuildForm({
         image,
         branch,
         dist,
-        ...(ticket.trim() ? { ticket: ticket.trim() } : {})
+        ...(ticket.trim() ? { ticket: ticket.trim() } : {}),
+        ...(tests.skipTests ? { skipTests: true } : {})
       })
       if (!result.ok) {
         setError(result.error)
@@ -170,6 +192,32 @@ function BuildForm({
             onChange={(event) => setTicket(event.target.value)}
             placeholder={translate('buildWeb.imageBuild.ticketPlaceholder', 'SDAP-1234')}
           />
+        </div>
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="image-build-tests"
+            emphasis="strong"
+            className="mt-0.5"
+            checked={!tests.skipTests}
+            disabled={tests.forced || !branch}
+            onCheckedChange={(checked) => setRunTests(checked === true)}
+          />
+          <div className="flex flex-col gap-0.5">
+            <Label htmlFor="image-build-tests">
+              {translate('buildWeb.run.runTests', 'Run tests')}
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              {tests.forced
+                ? translate(
+                    'buildWeb.run.testsForced',
+                    'Jenkins runs this build, and it always runs the tests'
+                  )
+                : translate(
+                    'buildWeb.imageBuild.testsOff',
+                    'unticked, the build goes without the offline suites'
+                  )}
+            </p>
+          </div>
         </div>
         {error ? (
           <p role="alert" className="text-sm text-destructive">

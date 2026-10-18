@@ -75,6 +75,23 @@ describe('image builds', () => {
     expect(mocks.invalidate).toHaveBeenCalled()
   })
 
+  it('asks for a build without tests only when told to', async () => {
+    mocks.request.mockResolvedValueOnce({ id: 'run-1' }).mockResolvedValueOnce({ ok: true })
+    await startBuildWebImageBuild({
+      image: 'sa/api',
+      branch: 'master',
+      dist: 'rhel',
+      skipTests: true
+    })
+    expect(mocks.request.mock.calls[1][0].body).toEqual({
+      combos: [{ image: 'sa/api', dist: 'rhel', branch: 'master' }],
+      skipTests: true
+    })
+    mocks.request.mockResolvedValueOnce({ id: 'run-2' }).mockResolvedValueOnce({ ok: true })
+    await startBuildWebImageBuild({ image: 'sa/api', branch: 'master', dist: 'rhel' })
+    expect(mocks.request.mock.calls[3][0].body).not.toHaveProperty('skipTests')
+  })
+
   it('reads a run with log links on the console', async () => {
     mocks.request.mockResolvedValueOnce({
       id: 'run-9',

@@ -20736,7 +20736,8 @@
       "open": "Build…",
       "buildImage": "Build {{image}}",
       "again": "Start a build",
-      "ticketPlaceholder": "SDAP-1234"
+      "ticketPlaceholder": "SDAP-1234",
+      "testsOff": "unticked, the build goes without the offline suites"
     },
     "log": {
       "finished": "The build is over.",

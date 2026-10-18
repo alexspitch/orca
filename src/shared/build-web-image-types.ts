@@ -101,6 +101,8 @@ export type BuildWebImageBuildArgs = {
   branch: string
   dist: 'both' | 'rhel' | 'redos'
   ticket?: string
+  /** Build without the offline suites; only a build from the tree may, Jenkins always runs them. */
+  skipTests?: boolean
 }
 
 export type BuildWebImagePushArgs = {

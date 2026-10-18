@@ -173,7 +173,8 @@ export const BuildWebImageBuildParams = z.object({
     .string()
     .trim()
     .regex(/^([A-Z][A-Z0-9_]*-\d+)?$/, 'A ticket looks like SDAP-1234')
-    .optional()
+    .optional(),
+  skipTests: z.boolean().optional()
 })
 export const BuildWebPushRunParams = z.object({ runId: Id, moveMainTag: z.boolean() })
 export const BuildWebGuideParams = z.object({ runId: Id, guide: z.string().max(200_000) })
