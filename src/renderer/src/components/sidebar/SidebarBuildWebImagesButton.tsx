@@ -6,16 +6,22 @@ import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { callBuildWeb } from '../build-web/build-web-client'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
+import { useImageBuildRuns } from '../build-web/images/image-build-runs'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 
 const POLL_MS = 60_000
-// Why: not connected, no access or a locked token will not fix itself within a minute.
-const FAILED_POLL_MS = 5 * 60_000
+// Why a minute, not more: a token locked at launch unlocks as soon as Issues or Images opens.
+const FAILED_POLL_MS = 60_000
 
 /** Images building right now in build-web, or null when unknown (not connected, no access). */
 function useRunningImageCount(enabled: boolean): number | null {
   const { target } = useBuildWebTarget()
   const [running, setRunning] = useState<number | null>(null)
+  // Why: opening a build-web page (which unlocks the token) or starting a build reads at once.
+  const onBuildWebPage = useAppStore(
+    (s) => s.activeView === 'build-web' || s.activeView === 'build-web-images'
+  )
+  const started = useImageBuildRuns((s) => s.runs.length)
   useEffect(() => {
     if (!enabled) {
       setRunning(null)
@@ -48,7 +54,7 @@ function useRunningImageCount(enabled: boolean): number | null {
       alive = false
       window.clearTimeout(timer)
     }
-  }, [enabled, target])
+  }, [enabled, onBuildWebPage, started, target])
   return running
 }
 
