@@ -7,6 +7,7 @@ import { isMissingUpdateManifestFailure, isPrereleaseVersion } from '../updater-
 import type { CheckFailureSource } from './updater-state'
 import type { UpdateCheckVariant } from './updater-types'
 import { ReleaseFeedPreflightError } from './updater-state'
+import { getCustomUpdateFeed } from './custom-update-feed'
 import { UpdaterInstallExecution } from './updater-install-execution'
 
 /** Owns concrete release-feed pinning and the one-shot prerelease fallback. */
@@ -116,8 +117,17 @@ export abstract class UpdaterReleaseFeed extends UpdaterInstallExecution {
   ): Promise<'ready' | 'not-available'> {
     const attemptId = this.activeUpdateCheckAttemptId
     const autoUpdater = this.getAutoUpdater()
-    // Why: the latest/download redirect can move between check and download, so pin the concrete tag (prerelease users resolve any channel, stable only stable).
     const currentVersion = app.getVersion()
+    const customFeed = getCustomUpdateFeed()
+    if (customFeed) {
+      // Why: a custom build updates only from the feed it was packaged with; any upstream tag would replace it.
+      this.clearPrereleaseFallbackContext()
+      this.clearPublishingWindowLastGoodCheck()
+      console.info(`[updater] custom feed: current=${currentVersion} → ${customFeed.url}`)
+      autoUpdater.setFeedURL({ provider: 'generic', url: customFeed.url })
+      return 'ready'
+    }
+    // Why: the latest/download redirect can move between check and download, so pin the concrete tag (prerelease users resolve any channel, stable only stable).
     const isPerfCheck = variant === 'perf'
     const includePrerelease =
       isPerfCheck || this.includePrereleaseActive || isPrereleaseVersion(currentVersion)

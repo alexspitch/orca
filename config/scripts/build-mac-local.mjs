@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-export function createLocalBuildVersion(baseVersion, timestamp, commit) {
+export function createLocalBuildVersion(baseVersion, timestamp, commit, label = 'local') {
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(baseVersion)) {
     throw new Error(`Package version is not valid semver: ${baseVersion}`)
   }
@@ -13,18 +13,18 @@ export function createLocalBuildVersion(baseVersion, timestamp, commit) {
   if (!sanitizedCommit) {
     throw new Error('Git commit identity is empty.')
   }
-  const suffix = `local.${timestamp}.${sanitizedCommit}`
+  const suffix = `${label}.${timestamp}.${sanitizedCommit}`
   return baseVersion.includes('-') ? `${baseVersion}.${suffix}` : `${baseVersion}-${suffix}`
 }
 
-export function getLocalBuildIdentity() {
+export function getLocalBuildIdentity(label = 'local') {
   const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'))
   const commit = execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], {
     encoding: 'utf8'
   }).trim()
   return {
     commit,
-    version: createLocalBuildVersion(packageJson.version, Date.now(), commit)
+    version: createLocalBuildVersion(packageJson.version, Date.now(), commit, label)
   }
 }
 
