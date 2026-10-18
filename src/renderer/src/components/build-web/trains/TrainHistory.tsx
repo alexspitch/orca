@@ -1,5 +1,5 @@
-import { Fragment, useCallback, useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, RefreshCw } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { ChevronRight, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { translate } from '@/i18n/i18n'
@@ -10,7 +10,7 @@ import { callBuildWeb } from '../build-web-client'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { useBuildLogViewer } from '../images/build-log-viewer'
 import { buildsInFlight, isWindowOver, ticketsSummary, windowSummary } from './train-window'
-import { TrainWindowDetails } from './TrainWindowDetails'
+import { TrainRunDialog } from './TrainRunDialog'
 import { trainRunTone } from './train-tones'
 
 const PAGE = 25
@@ -18,7 +18,7 @@ const PAGE = 25
 const LIVE_POLL_MS = 4000
 const when = (iso: string) => new Date(iso).toLocaleString()
 const GRID =
-  'grid grid-cols-[32px_170px_110px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.3fr)] items-center gap-x-3'
+  'grid grid-cols-[170px_110px_minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.3fr)_32px] items-center gap-x-3'
 
 /** One train's windows, newest first; the windows that did nothing are folded away by default. */
 export function TrainHistory({
@@ -66,6 +66,9 @@ export function TrainHistory({
     void load()
   }, [load])
 
+  // Why by id: the dialog follows the history's re-reads while its window is still going.
+  const openRun = runs.find((r) => r.id === open) ?? null
+
   // A window that has not ended changes on its own: its builds start and finish, it deploys.
   const going = runs.some((r) => !isWindowOver(r))
   useEffect(() => {
@@ -111,90 +114,87 @@ export function TrainHistory({
       </div>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
       <div className="scrollbar-sleek min-h-0 flex-1 overflow-auto rounded-md border border-border">
-        <div className="min-w-[860px] text-sm">
+        <div className="min-w-[760px] text-sm">
           <div
-            className={`${GRID} sticky top-0 z-10 min-h-8 border-b border-border bg-muted px-2 text-2xs font-semibold tracking-wide text-muted-foreground uppercase`}
+            className={`${GRID} sticky top-0 z-10 min-h-8 border-b border-border bg-muted px-3 text-2xs font-semibold tracking-wide text-muted-foreground uppercase`}
           >
-            <span />
             <span>{translate('buildWeb.trains.window', 'Window')}</span>
             <span>{translate('buildWeb.trains.status', 'Status')}</span>
             <span>{translate('buildWeb.trains.images', 'Images')}</span>
             <span>{translate('buildWeb.trains.tasks', 'Tasks')}</span>
             <span>{translate('buildWeb.trains.reason', 'Reason')}</span>
+            <span />
           </div>
           {runs.map((r) => (
-            <Fragment key={r.id}>
-              <div
-                className={cn(
-                  GRID,
-                  'min-h-10 border-b border-border/60 px-2',
-                  r.status === 'failed' && 'bg-destructive/5'
-                )}
-              >
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  aria-expanded={open === r.id}
-                  aria-label={translate(
-                    'buildWeb.trains.whatHappened',
-                    'What happened in this window'
-                  )}
-                  onClick={() => setOpen(open === r.id ? null : r.id)}
-                >
-                  {open === r.id ? <ChevronDown /> : <ChevronRight />}
-                </Button>
-                <span className="font-mono text-xs">{when(r.window_at)}</span>
-                <span>
-                  <BuildWebToneChip label={r.status} tone={trainRunTone(r.status)} />
-                </span>
-                <span className="flex min-w-0 items-center gap-2">
-                  <span
-                    className={cn('truncate', r.problems > 0 && 'text-destructive')}
-                    title={r.images.map((i) => `${i.image} (${i.dist})`).join('\n')}
-                  >
-                    {windowSummary(r)}
+            // Why a click on the row: the whole window is the target; the chevron is its keyboard way in.
+            <div
+              key={r.id}
+              onClick={() => setOpen(r.id)}
+              className={cn(
+                GRID,
+                'min-h-10 cursor-pointer border-b border-border/60 px-3 hover:bg-muted/40',
+                r.status === 'failed' && 'bg-destructive/5'
+              )}
+            >
+              <span className="font-mono text-xs">{when(r.window_at)}</span>
+              <span>
+                <BuildWebToneChip label={r.status} tone={trainRunTone(r.status)} />
+              </span>
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="truncate">{windowSummary({ ...r, problems: 0 })}</span>
+                {r.problems > 0 ? (
+                  <span className="shrink-0 text-destructive">
+                    {translate('buildWeb.trains.errorsCount', 'errors {{n}}', {
+                      n: String(r.problems)
+                    })}
                   </span>
-                  {buildsInFlight(r.live_builds).map((b) =>
-                    b.build_url ? (
-                      <button
-                        key={`${b.image}|${b.dist}`}
-                        type="button"
-                        className="text-xs text-primary hover:underline"
-                        title={`${b.image} (${b.dist})`}
-                        onClick={() =>
-                          b.build_url &&
+                ) : null}
+                {buildsInFlight(r.live_builds).map((b) =>
+                  b.build_url ? (
+                    <button
+                      key={`${b.image}|${b.dist}`}
+                      type="button"
+                      className="text-xs text-primary hover:underline"
+                      title={`${b.image} (${b.dist})`}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        if (b.build_url) {
                           useBuildLogViewer
                             .getState()
                             .show(b.build_url, `${b.image} (${b.dist}) #${b.build_number ?? ''}`)
                         }
-                      >
-                        #{b.build_number ?? '…'}
-                      </button>
-                    ) : null
-                  )}
-                </span>
-                <span className="truncate text-xs">{ticketsSummary(r)}</span>
-                <span
-                  className={cn(
-                    'truncate text-xs',
-                    r.status === 'failed' ? 'text-destructive' : 'text-muted-foreground'
-                  )}
-                  title={r.error ?? undefined}
-                >
-                  {r.error ?? ''}
-                </span>
-              </div>
-              {open === r.id ? (
-                <div className="border-b border-border bg-muted/30">
-                  <TrainWindowDetails
-                    target={target}
-                    trainId={train.id}
-                    run={r}
-                    onOpenIssue={onOpenIssue}
-                  />
-                </div>
-              ) : null}
-            </Fragment>
+                      }}
+                    >
+                      #{b.build_number ?? '…'}
+                    </button>
+                  ) : null
+                )}
+              </span>
+              <span className="truncate text-xs">{ticketsSummary(r)}</span>
+              <span
+                className={cn(
+                  'truncate text-xs',
+                  r.status === 'failed' ? 'text-destructive' : 'text-muted-foreground'
+                )}
+                title={r.error ?? undefined}
+              >
+                {r.error ?? ''}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                aria-label={translate(
+                  'buildWeb.trains.whatHappened',
+                  'What happened in this window'
+                )}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setOpen(r.id)
+                }}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
           ))}
           {runs.length === 0 && !loading ? (
             <p className="p-3 text-xs text-muted-foreground">
@@ -211,6 +211,15 @@ export function TrainHistory({
           ) : null}
         </div>
       </div>
+      {openRun ? (
+        <TrainRunDialog
+          target={target}
+          train={train}
+          run={openRun}
+          onClose={() => setOpen(null)}
+          onOpenIssue={onOpenIssue}
+        />
+      ) : null}
       {total > PAGE ? (
         <PaginationBar
           currentPage={page}

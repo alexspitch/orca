@@ -21052,7 +21052,17 @@
       "errorsCount": "errors {{n}}",
       "movedCount": "moved {{n}}",
       "deliveredCount": "delivered {{n}}",
-      "leftCount": "left {{n}}"
+      "leftCount": "left {{n}}",
+      "runOf": "Run {{date}}",
+      "onStand": "stand {{stand}}",
+      "errorsTitle": "Errors",
+      "journalTitle": "Journal",
+      "close": "Close",
+      "moreTags": "Show {{n}} more",
+      "image": "Image",
+      "os": "OS",
+      "build": "Build",
+      "registryTags": "Registry and tags"
     }
   }
 }

@@ -153,7 +153,7 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
       </div>
       {error ? <p className="text-xs text-destructive">{error}</p> : null}
       <div className="scrollbar-sleek shrink-0 overflow-x-auto rounded-md border border-border">
-        <div className="min-w-[980px] text-sm">
+        <div className="min-w-[820px] text-sm">
           <div
             className={`${GRID} min-h-8 border-b border-border bg-muted/50 px-3 text-2xs font-semibold tracking-wide text-muted-foreground uppercase`}
           >
@@ -191,7 +191,7 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
               </span>
               <span className="truncate text-xs">{t.stand_name}</span>
               <span className="truncate font-mono text-xs">{t.hours.join(', ') || '—'}</span>
-              <span className="flex min-w-0 items-center gap-1.5 text-xs">
+              <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 py-1 text-xs">
                 <span className="truncate">{when(t.last_window)}</span>
                 {t.window_due && t.enabled ? (
                   <span
