@@ -3,24 +3,21 @@ import { RefreshCw } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import { isPushable } from '../../../../../shared/build-web-image-push'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
-import { BuildWebListState } from '../BuildWebListState'
 import { BuildStatusCell, LogCell, RegistryCell, formatBuildTime } from './image-build-cells'
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
 import { useImagePicks } from './use-image-picks'
+import {
+  FoundCount,
+  ImagePages,
+  ImageSearch,
+  ImageTableState,
+  VersionSelect
+} from './image-view-parts'
 import { IMAGE_PAGE_SIZE, toggled, useImagePage } from './use-build-web-images'
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'other'] as const
@@ -67,35 +64,17 @@ export function ImageListView({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2 md:px-5">
-        <Input
+        <ImageSearch
           value={q}
-          onChange={(event) => {
-            setQ(event.target.value)
-            setPage(0)
-          }}
+          wide
           placeholder={translate('buildWeb.images.search', 'Search by image or tag')}
-          aria-label={translate('buildWeb.images.search', 'Search by image or tag')}
-          className="h-8 w-64"
-          data-escape-clears-value="true"
+          onChange={(next) => (setQ(next), setPage(0))}
         />
-        <Select value={version} onValueChange={(next) => (setVersion(next), setPage(0))}>
-          <SelectTrigger
-            size="sm"
-            aria-label={translate('buildWeb.images.version', 'Product version')}
-          >
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">
-              {translate('buildWeb.images.allVersions', 'All versions')}
-            </SelectItem>
-            {(data?.versions ?? []).map((v) => (
-              <SelectItem key={v} value={v}>
-                {v}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <VersionSelect
+          value={version}
+          versions={data?.versions ?? []}
+          onChange={(next) => (setVersion(next), setPage(0))}
+        />
         <div className="flex-1" />
         <ImagePushMenu
           target={target}
@@ -116,12 +95,7 @@ export function ImageListView({
         >
           <RefreshCw />
         </Button>
-        <span className="text-xs whitespace-nowrap text-muted-foreground">
-          {translate('buildWeb.images.found', '{{shown}} of {{of}}', {
-            shown: data?.total ?? 0,
-            of: data?.of ?? 0
-          })}
-        </span>
+        <FoundCount shown={data?.total ?? 0} of={data?.of ?? 0} />
       </div>
       <div className="flex flex-wrap gap-1.5 px-3 py-2 md:px-5">
         <FilterChips
@@ -139,22 +113,18 @@ export function ImageListView({
           onToggle={(d) => (setDists(toggled(dists, d)), setPage(0))}
         />
       </div>
-      {error ? (
-        <BuildWebListState kind="error" error={error} onRetry={() => reload(true)} />
-      ) : rows.length === 0 ? (
-        loading ? (
-          <BuildWebListState
-            kind="loading"
-            loadingLabel={translate('buildWeb.images.loading', 'Loading images…')}
-          />
-        ) : (
-          <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
-            {narrowed
-              ? translate('buildWeb.images.noneFiltered', 'Nothing matches these filters.')
-              : translate('buildWeb.images.none', 'No images.')}
-          </p>
-        )
-      ) : (
+      <ImageTableState
+        error={error}
+        loading={loading}
+        empty={rows.length === 0}
+        emptyText={
+          narrowed
+            ? translate('buildWeb.images.noneFiltered', 'Nothing matches these filters.')
+            : translate('buildWeb.images.none', 'No images.')
+        }
+        onRetry={() => reload(true)}
+      />
+      {error || rows.length === 0 ? null : (
         <div className="scrollbar-sleek min-h-0 flex-1 overflow-auto">
           <table className="w-full min-w-[900px] table-fixed border-collapse">
             <thead className="sticky top-0 z-10 bg-background">
@@ -232,14 +202,7 @@ export function ImageListView({
           </table>
         </div>
       )}
-      {data && data.total > IMAGE_PAGE_SIZE ? (
-        <PaginationBar
-          currentPage={page}
-          totalPages={Math.ceil(data.total / IMAGE_PAGE_SIZE)}
-          loadingTarget={loading ? page : null}
-          onPageChange={setPage}
-        />
-      ) : null}
+      <ImagePages total={data?.total ?? 0} page={page} loading={loading} onPageChange={setPage} />
     </div>
   )
 }

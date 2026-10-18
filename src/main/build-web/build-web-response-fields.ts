@@ -24,7 +24,3 @@ export function textsOf(value: unknown): string[] {
     ? value.filter((item): item is string => typeof item === 'string')
     : []
 }
-
-export function isMissingFileError(error: unknown): boolean {
-  return error instanceof Error && 'code' in error && error.code === 'ENOENT'
-}
