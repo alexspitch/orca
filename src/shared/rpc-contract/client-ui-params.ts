@@ -119,7 +119,8 @@ export const TopLevelViewSchema = z.enum([
   'artifacts',
   'mobile',
   'build-web',
-  'build-web-images'
+  'build-web-images',
+  'build-web-trains'
 ])
 
 export const UiUpdateFields = z

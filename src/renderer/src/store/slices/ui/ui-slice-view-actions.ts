@@ -1,6 +1,19 @@
 import type { UISlice, UISliceGet, UISliceSet } from './ui-slice-contract'
 import { rewindHistoryIndexPastView } from '../worktree-nav-history'
 
+/** Where a build-web page returns to: another build-web page carries over its own origin. */
+function buildWebOrigin(state: UISlice): UISlice['previousViewBeforeBuildWeb'] {
+  if (state.activeView === 'build-web') {
+    return state.previousViewBeforeBuildWeb
+  }
+  if (state.activeView === 'build-web-images') {
+    return state.previousViewBeforeBuildWebImages
+  }
+  return state.activeView === 'build-web-trains'
+    ? state.previousViewBeforeBuildWebTrains
+    : state.activeView
+}
+
 export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<UISlice> {
   return {
     openActivityPage: () => {
@@ -101,26 +114,23 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
     openBuildWebPage: () =>
       set((state) => ({
         activeView: 'build-web',
-        previousViewBeforeBuildWeb:
-          state.activeView === 'build-web'
-            ? state.previousViewBeforeBuildWeb
-            : state.activeView === 'build-web-images'
-              ? state.previousViewBeforeBuildWebImages
-              : state.activeView
+        previousViewBeforeBuildWeb: buildWebOrigin(state)
       })),
     closeBuildWebPage: () => set((state) => ({ activeView: state.previousViewBeforeBuildWeb })),
     openBuildWebImagesPage: () =>
       set((state) => ({
         activeView: 'build-web-images',
-        previousViewBeforeBuildWebImages:
-          state.activeView === 'build-web-images'
-            ? state.previousViewBeforeBuildWebImages
-            : state.activeView === 'build-web'
-              ? state.previousViewBeforeBuildWeb
-              : state.activeView
+        previousViewBeforeBuildWebImages: buildWebOrigin(state)
       })),
     closeBuildWebImagesPage: () =>
       set((state) => ({ activeView: state.previousViewBeforeBuildWebImages })),
+    openBuildWebTrainsPage: () =>
+      set((state) => ({
+        activeView: 'build-web-trains',
+        previousViewBeforeBuildWebTrains: buildWebOrigin(state)
+      })),
+    closeBuildWebTrainsPage: () =>
+      set((state) => ({ activeView: state.previousViewBeforeBuildWebTrains })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

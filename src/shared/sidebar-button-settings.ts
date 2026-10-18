@@ -10,4 +10,6 @@ export type SidebarButtonSettings = {
   showBuildWebButton?: boolean
   /** The «Images» shortcut to build-web's images, with the count of builds running now. */
   showBuildWebImagesButton?: boolean
+  /** The «Trains» shortcut to build-web's build trains. */
+  showBuildWebTrainsButton?: boolean
 }

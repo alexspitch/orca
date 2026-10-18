@@ -68,5 +68,10 @@ export const buildWebApi = {
   createJiraIssue: (args) => ipcRenderer.invoke('buildWeb:createJiraIssue', args),
   editComment: (args) => ipcRenderer.invoke('buildWeb:editComment', args),
   deleteComment: (args) => ipcRenderer.invoke('buildWeb:deleteComment', args),
-  pushProgress: (args) => ipcRenderer.invoke('buildWeb:pushProgress', args)
+  pushProgress: (args) => ipcRenderer.invoke('buildWeb:pushProgress', args),
+  listTrains: () => ipcRenderer.invoke('buildWeb:listTrains'),
+  trainRuns: (args) => ipcRenderer.invoke('buildWeb:trainRuns', args),
+  trainActions: (args) => ipcRenderer.invoke('buildWeb:trainActions', args),
+  trainPreview: (args) => ipcRenderer.invoke('buildWeb:trainPreview', args),
+  runTrain: (args) => ipcRenderer.invoke('buildWeb:runTrain', args)
 } satisfies PreloadApi['buildWeb']

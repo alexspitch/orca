@@ -32,7 +32,10 @@ export function useBuildWebBadge(
   const [badge, setBadge] = useState<BuildWebBadge | null>(null)
   // Why: opening a build-web page (which unlocks the token) or starting a build reads at once.
   const onBuildWebPage = useAppStore(
-    (s) => s.activeView === 'build-web' || s.activeView === 'build-web-images'
+    (s) =>
+      s.activeView === 'build-web' ||
+      s.activeView === 'build-web-images' ||
+      s.activeView === 'build-web-trains'
   )
   const started = useImageBuildRuns((s) => s.runs.length)
   const kicks = useBadgeKicks((s) => s.kicks)

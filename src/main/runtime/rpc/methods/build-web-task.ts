@@ -19,6 +19,9 @@ import {
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
   BuildWebPushProgressParams,
+  BuildWebTrainActionsParams,
+  BuildWebTrainParams,
+  BuildWebTrainRunsParams,
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
@@ -243,5 +246,35 @@ export const BUILD_WEB_TASK_METHODS = [
     permission: 'workspace',
     params: BuildWebPushProgressParams,
     handler: async (params, { runtime }) => runtime.buildWebPushProgress(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.listTrains',
+    permission: 'workspace',
+    params: null,
+    handler: async (_params, { runtime }) => runtime.buildWebListTrains()
+  }),
+  defineMethod({
+    name: 'buildWeb.trainRuns',
+    permission: 'workspace',
+    params: BuildWebTrainRunsParams,
+    handler: async (params, { runtime }) => runtime.buildWebTrainRuns(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.trainActions',
+    permission: 'workspace',
+    params: BuildWebTrainActionsParams,
+    handler: async (params, { runtime }) => runtime.buildWebTrainActions(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.trainPreview',
+    permission: 'workspace',
+    params: BuildWebTrainParams,
+    handler: async (params, { runtime }) => runtime.buildWebTrainPreview(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.runTrain',
+    permission: 'workspace',
+    params: BuildWebTrainParams,
+    handler: async (params, { runtime }) => runtime.buildWebRunTrain(params)
   })
 ]

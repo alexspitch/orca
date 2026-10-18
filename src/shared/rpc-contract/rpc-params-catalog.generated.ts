@@ -185,7 +185,10 @@ import {
   BuildWebRunId,
   BuildWebStandParams,
   BuildWebTestingParams,
-  BuildWebTmsStandsParams
+  BuildWebTmsStandsParams,
+  BuildWebTrainActionsParams,
+  BuildWebTrainParams,
+  BuildWebTrainRunsParams
 } from './build-web-task-params'
 import { ClientEventsUnsubscribeParams } from './client-events-params'
 import {
@@ -921,6 +924,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.listImages': BuildWebImagePageParams,
   'buildWeb.listIssues': BuildWebIssueQueryParams,
   'buildWeb.listStands': null,
+  'buildWeb.listTrains': null,
   'buildWeb.listUiAccounts': null,
   'buildWeb.listVersions': BuildWebVersionsParams,
   'buildWeb.noteProviderSession': BuildWebProviderSessionParams,
@@ -933,6 +937,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.removeRunImages': BuildWebRunCombosParams,
   'buildWeb.resolveStand': BuildWebRunId,
   'buildWeb.runFreshness': BuildWebFreshnessParams,
+  'buildWeb.runTrain': BuildWebTrainParams,
   'buildWeb.saveGuide': BuildWebGuideParams,
   'buildWeb.setAgentSession': BuildWebAgentSessionParams,
   'buildWeb.setFavorite': BuildWebFavoriteParams,
@@ -946,6 +951,9 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.status': null,
   'buildWeb.testConnection': null,
   'buildWeb.tmsStands': BuildWebTmsStandsParams,
+  'buildWeb.trainActions': BuildWebTrainActionsParams,
+  'buildWeb.trainPreview': BuildWebTrainParams,
+  'buildWeb.trainRuns': BuildWebTrainRunsParams,
   'buildWeb.updateIssue': BuildWebIssueUpdateParams,
   'buildWeb.versionBranches': BuildWebVersionBranchesParams,
   'clipboard.abortImageUpload': AbortImageUpload,

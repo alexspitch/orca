@@ -1,6 +1,12 @@
 import type { BuildWebJiraOutcome, BuildWebMutationResult } from '../../shared/build-web-types'
 import type { BuildWebPushProgress } from '../../shared/build-web-image-types'
 import type {
+  BuildWebTrain,
+  BuildWebTrainAction,
+  BuildWebTrainPreview,
+  BuildWebTrainRunPage
+} from '../../shared/build-web-train-types'
+import type {
   BuildWebAdoptResult,
   BuildWebBranch,
   BuildWebCombo,
@@ -101,4 +107,14 @@ export type BuildWebTaskApi = {
     commentId: string
   }) => Promise<BuildWebMutationResult<{ jira: BuildWebJiraOutcome | null }>>
   pushProgress: (args: { runIds: string[] }) => Promise<BuildWebPushProgress[]>
+  listTrains: () => Promise<BuildWebTrain[]>
+  trainRuns: (args: {
+    trainId: string
+    limit: number
+    offset: number
+    withActions: boolean
+  }) => Promise<BuildWebTrainRunPage>
+  trainActions: (args: { trainId: string; runId: string }) => Promise<BuildWebTrainAction[]>
+  trainPreview: (args: { trainId: string }) => Promise<BuildWebTrainPreview>
+  runTrain: (args: { trainId: string }) => Promise<BuildWebMutationResult<true>>
 }

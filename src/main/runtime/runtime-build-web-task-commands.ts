@@ -20,6 +20,9 @@ import type {
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
   BuildWebPushProgressParams,
+  BuildWebTrainActionsParams,
+  BuildWebTrainParams,
+  BuildWebTrainRunsParams,
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
@@ -47,6 +50,13 @@ import {
 } from '../build-web/build-web-issue-build-start'
 import { readBuildWebGuideStream, startBuildWebGuide } from '../build-web/build-web-guide-stream'
 import { buildWebPushProgress } from '../build-web/build-web-push-progress'
+import {
+  getBuildWebTrainPreview,
+  listBuildWebTrainActions,
+  listBuildWebTrainRuns,
+  listBuildWebTrains,
+  runBuildWebTrainNow
+} from '../build-web/build-web-trains'
 import {
   cancelBuildWebJob,
   findBuildWebShotsJob,
@@ -216,5 +226,25 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebPushProgress(args: In<typeof BuildWebPushProgressParams>) {
     return buildWebPushProgress(args.runIds)
+  }
+
+  buildWebListTrains() {
+    return listBuildWebTrains()
+  }
+
+  buildWebTrainRuns(args: In<typeof BuildWebTrainRunsParams>) {
+    return listBuildWebTrainRuns(args.trainId, args.limit, args.offset, args.withActions)
+  }
+
+  buildWebTrainActions(args: In<typeof BuildWebTrainActionsParams>) {
+    return listBuildWebTrainActions(args.trainId, args.runId)
+  }
+
+  buildWebTrainPreview(args: In<typeof BuildWebTrainParams>) {
+    return getBuildWebTrainPreview(args.trainId)
+  }
+
+  buildWebRunTrain(args: In<typeof BuildWebTrainParams>) {
+    return runBuildWebTrainNow(args.trainId)
   }
 }

@@ -35,9 +35,11 @@ export function BuildWebConnectForm({
       if (result.ok) {
         setToken('')
         // Why: the sidebar items are hidden until build-web is connected — most users never use it.
-        void useAppStore
-          .getState()
-          .updateSettings({ showBuildWebButton: true, showBuildWebImagesButton: true })
+        void useAppStore.getState().updateSettings({
+          showBuildWebButton: true,
+          showBuildWebImagesButton: true,
+          showBuildWebTrainsButton: true
+        })
         onConnected(result.status)
       } else {
         setError(result.error)

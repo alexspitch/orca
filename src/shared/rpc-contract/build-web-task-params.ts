@@ -58,6 +58,14 @@ export const BuildWebGuideTargetParams = z.object({
   accountId: z.union([Id, z.null()]).optional()
 })
 export const BuildWebJobParams = z.object({ jobId: Id })
+export const BuildWebTrainParams = z.object({ trainId: Id })
+export const BuildWebTrainRunsParams = z.object({
+  trainId: Id,
+  limit: z.number().int().min(1).max(200),
+  offset: z.number().int().min(0).max(100_000),
+  withActions: z.boolean()
+})
+export const BuildWebTrainActionsParams = z.object({ trainId: Id, runId: Id })
 export const BuildWebPushProgressParams = z.object({ runIds: z.array(Id).max(50) })
 export const BuildWebJiraKeyParams = z.object({ jiraKey: JiraKey })
 export const BuildWebJiraTransitionParams = z.object({

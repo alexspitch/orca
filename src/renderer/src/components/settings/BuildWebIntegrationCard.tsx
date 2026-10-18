@@ -15,6 +15,7 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
   const { target } = useBuildWebTarget()
   const showButton = useAppStore((s) => s.settings?.showBuildWebButton === true)
   const showImagesButton = useAppStore((s) => s.settings?.showBuildWebImagesButton === true)
+  const showTrainsButton = useAppStore((s) => s.settings?.showBuildWebTrainsButton === true)
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [status, setStatus] = useState<BuildWebConnectionStatus | null>(null)
   const [replacing, setReplacing] = useState(false)
@@ -144,6 +145,25 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
             checked={showImagesButton}
             onCheckedChange={(checked) =>
               void updateSettings({ showBuildWebImagesButton: checked })
+            }
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>
+            <span className="block">
+              {translate('buildWeb.settings.showTrainsInSidebar', 'Show Trains in sidebar')}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {translate(
+                'buildWeb.settings.showTrainsInSidebarHint',
+                'Build trains: their windows, and a departure by hand'
+              )}
+            </span>
+          </span>
+          <Switch
+            checked={showTrainsButton}
+            onCheckedChange={(checked) =>
+              void updateSettings({ showBuildWebTrainsButton: checked })
             }
           />
         </label>

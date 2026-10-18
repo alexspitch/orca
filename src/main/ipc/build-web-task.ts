@@ -20,6 +20,9 @@ import {
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
   BuildWebPushProgressParams,
+  BuildWebTrainActionsParams,
+  BuildWebTrainParams,
+  BuildWebTrainRunsParams,
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
@@ -91,4 +94,9 @@ export function registerBuildWebTaskHandlers(): void {
     commands.buildWebDeleteComment(args)
   )
   handle('pushProgress', BuildWebPushProgressParams, (args) => commands.buildWebPushProgress(args))
+  ipcMain.handle('buildWeb:listTrains', () => commands.buildWebListTrains())
+  handle('trainRuns', BuildWebTrainRunsParams, (args) => commands.buildWebTrainRuns(args))
+  handle('trainActions', BuildWebTrainActionsParams, (args) => commands.buildWebTrainActions(args))
+  handle('trainPreview', BuildWebTrainParams, (args) => commands.buildWebTrainPreview(args))
+  handle('runTrain', BuildWebTrainParams, (args) => commands.buildWebRunTrain(args))
 }

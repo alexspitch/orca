@@ -131,3 +131,5 @@ export type TopLevelView =
   | 'build-web'
   /** build-web's images, a sidebar item of its own. */
   | 'build-web-images'
+  /** build-web's build trains, read and departed by hand. */
+  | 'build-web-trains'

@@ -24,6 +24,7 @@ const SkillsPage = lazy(() => import('../components/skills/SkillsPage'))
 const ArtifactsPage = lazy(() => import('../components/artifacts/ArtifactsPage'))
 const BuildWebPage = lazy(() => import('../components/build-web/BuildWebPage'))
 const BuildWebImagesPage = lazy(() => import('../components/build-web/images/BuildWebImagesPage'))
+const BuildWebTrainsPage = lazy(() => import('../components/build-web/trains/BuildWebTrainsPage'))
 const WorkspaceSpacePage = lazy(() => import('../components/workspace-space/WorkspaceSpacePage'))
 const MobilePage = lazy(() => import('../components/mobile/MobilePage'))
 const Terminal = lazy(() => import('../components/Terminal'))
@@ -75,6 +76,7 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
       {activeView === 'artifacts' ? <ArtifactsPage /> : null}
       {activeView === 'build-web' ? <BuildWebPage /> : null}
       {activeView === 'build-web-images' ? <BuildWebImagesPage /> : null}
+      {activeView === 'build-web-trains' ? <BuildWebTrainsPage /> : null}
       {activeView === 'tasks' ? <TaskPage /> : null}
       {activeView === 'automations' ? <AutomationsPage /> : null}
       {activeView === 'activity' ? <ActivityPrototypePage /> : null}
@@ -164,7 +166,8 @@ export function AppWorkspaceShell(props: {
               layout.activeView !== 'automations' &&
               layout.activeView !== 'artifacts' &&
               layout.activeView !== 'build-web' &&
-              layout.activeView !== 'build-web-images' ? (
+              layout.activeView !== 'build-web-images' &&
+              layout.activeView !== 'build-web-trains' ? (
                 <div className="titlebar">{titlebarMainStrip}</div>
               ) : null}
               <div className="relative flex flex-1 min-w-0 min-h-0 overflow-hidden">
