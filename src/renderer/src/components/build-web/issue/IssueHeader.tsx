@@ -20,13 +20,16 @@ export function IssueHeader({
   saving,
   onSave,
   onTakeToWork,
-  onCollapse
+  onCollapse,
+  onBackToList
 }: {
   detail: BuildWebIssueDetail
   saving: boolean
   onSave: (patch: BuildWebIssuePatch) => void
   onTakeToWork: () => void
   onCollapse: () => void
+  /** The «Issues» crumb: the list, with no card open. */
+  onBackToList: () => void
 }): React.JSX.Element {
   const next = nextStatus(detail.status, Boolean(detail.parent_id))
   return (
@@ -37,7 +40,7 @@ export function IssueHeader({
       >
         <button
           type="button"
-          onClick={onCollapse}
+          onClick={onBackToList}
           className="flex items-center gap-1 hover:text-foreground"
         >
           <ChevronLeft className="size-3.5" />

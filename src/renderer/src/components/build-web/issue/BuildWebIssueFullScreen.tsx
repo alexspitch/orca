@@ -27,7 +27,8 @@ export function BuildWebIssueFullScreen({
   const { target } = useBuildWebTarget()
   const issueId = useBuildWebStore((s) => s.openIssueId)
   const perms = useBuildWebStore((s) => s.status?.perms ?? NO_PERMS)
-  const setFullScreen = useBuildWebStore((s) => s.setFullScreen)
+  const collapseFullScreen = useBuildWebStore((s) => s.collapseFullScreen)
+  const openIssue = useBuildWebStore((s) => s.openIssue)
   const state = useBuildWebIssueDetail(issueId)
   const [tab, setTab] = useState<CardTab>('overview')
   // Why: a tab stays mounted once opened, so a guide draft or a comment survives a tab switch.
@@ -69,7 +70,8 @@ export function BuildWebIssueFullScreen({
         saving={state.saving}
         onSave={(patch) => void state.save(patch)}
         onTakeToWork={() => onTakeToWork([detail])}
-        onCollapse={() => setFullScreen(false)}
+        onCollapse={collapseFullScreen}
+        onBackToList={() => openIssue(null)}
       />
       <Tabs
         value={tab}

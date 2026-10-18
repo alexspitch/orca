@@ -71,6 +71,17 @@ describe('build-web store', () => {
     expect(useBuildWebStore.getState().sort.dir).toBe('asc')
   })
 
+  it('collapses a full card to where it came from: the side card, or the list', () => {
+    const store = useBuildWebStore.getState()
+    store.openIssue('1')
+    useBuildWebStore.getState().expandToFullScreen()
+    useBuildWebStore.getState().collapseFullScreen()
+    expect(useBuildWebStore.getState()).toMatchObject({ openIssueId: '1', fullScreen: false })
+    useBuildWebStore.getState().openIssue('2', true)
+    useBuildWebStore.getState().collapseFullScreen()
+    expect(useBuildWebStore.getState()).toMatchObject({ openIssueId: null, fullScreen: false })
+  })
+
   it('forgets another host’s tasks when the host changes', () => {
     const store = useBuildWebStore.getState()
     store.setIssues([row('1')], 1)

@@ -83,7 +83,7 @@ export function BuildWebIssueDrawer({
                 variant="ghost"
                 size="icon-sm"
                 disabled={!openIssueId}
-                onClick={() => openIssueId && openIssue(openIssueId, true)}
+                onClick={() => useBuildWebStore.getState().expandToFullScreen()}
                 aria-label={translate('buildWeb.detail.fullScreen', 'Open full screen')}
               >
                 <Maximize2 />

@@ -64,7 +64,7 @@ export default function BuildWebPage(): React.JSX.Element {
   useBuildWebPageEscape(() => {
     const current = useBuildWebStore.getState()
     if (current.fullScreen) {
-      current.setFullScreen(false)
+      current.collapseFullScreen()
     } else if (current.openIssueId) {
       openIssue(null)
     } else {

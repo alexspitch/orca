@@ -62,6 +62,8 @@ type BuildWebState = {
   selected: ReadonlySet<string>
   openIssueId: string | null
   fullScreen: boolean
+  /** The full-screen card was expanded from the side card, so collapsing returns there. */
+  fullScreenFromDrawer: boolean
   /** The worktree «Take to work» used last, and whether it worked in it (`-no-worktree`). */
   lastWorktreeId: string | null
   noWorktree: boolean
@@ -82,7 +84,9 @@ type BuildWebState = {
   toggleSelected: (id: string) => void
   clearSelection: () => void
   openIssue: (id: string | null, fullScreen?: boolean) => void
-  setFullScreen: (fullScreen: boolean) => void
+  expandToFullScreen: () => void
+  /** Back one level: to the side card it came from, or to the list. */
+  collapseFullScreen: () => void
   rememberTakeToWork: (worktreeId: string, noWorktree: boolean) => void
 }
 
@@ -110,6 +114,7 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   selected: new Set(),
   openIssueId: null,
   fullScreen: false,
+  fullScreenFromDrawer: false,
   lastWorktreeId: null,
   noWorktree: true,
   setStatus: (contextKey, status) =>
@@ -188,8 +193,16 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
       return { selected }
     }),
   clearSelection: () => set({ selected: new Set() }),
-  openIssue: (openIssueId, fullScreen = false) => set({ openIssueId, fullScreen }),
-  setFullScreen: (fullScreen) => set({ fullScreen }),
+  openIssue: (openIssueId, fullScreen = false) =>
+    set({ openIssueId, fullScreen, fullScreenFromDrawer: false }),
+  expandToFullScreen: () =>
+    set((state) => (state.openIssueId ? { fullScreen: true, fullScreenFromDrawer: true } : {})),
+  collapseFullScreen: () =>
+    set((state) =>
+      state.fullScreenFromDrawer
+        ? { fullScreen: false, fullScreenFromDrawer: false }
+        : { fullScreen: false, openIssueId: null }
+    ),
   rememberTakeToWork: (lastWorktreeId, noWorktree) => set({ lastWorktreeId, noWorktree })
 }))
 
