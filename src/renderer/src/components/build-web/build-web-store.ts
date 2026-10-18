@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import {
+  BUILD_WEB_OPEN_STATUSES,
   BUILD_WEB_STATUSES,
   type BuildWebConnectionStatus,
   type BuildWebIssueQuery,
@@ -17,17 +18,7 @@ import {
 } from './build-web-view-prefs'
 
 /** The statuses a task is still being worked in — the list's default. */
-export const OPEN_STATUSES: readonly BuildWebStatus[] = [
-  'todo',
-  'planned',
-  'inprogress',
-  'paused',
-  'awaiting_response',
-  'deploying',
-  'build_failed',
-  'testing',
-  'testing_external'
-]
+export const OPEN_STATUSES = BUILD_WEB_OPEN_STATUSES
 
 /** «К работе» in build-web: what is waiting for hands, not for a train or a tester. */
 export const TO_WORK_STATUSES: readonly BuildWebStatus[] = [

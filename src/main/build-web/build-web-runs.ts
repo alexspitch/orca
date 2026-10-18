@@ -43,6 +43,12 @@ function buildOf(value: unknown, baseUrl: string): BuildWebRunBuild | null {
     tags: textsOf(v.image_tags),
     pushed: v.pushed === true,
     main_tag_pushed: v.pushed === true && v.main_tag_skipped !== true,
+    main_tag_skipped: v.main_tag_skipped === true,
+    skipped_tags: (Array.isArray(v.skipped_tags) ? v.skipped_tags : [])
+      .map(recordOf)
+      .filter((t): t is Record<string, unknown> => t !== null)
+      .map((t) => ({ ref: textOf(t.ref), reason: textOf(t.reason) })),
+    started_at: textOrNull(v.started_at),
     tests_skipped: v.tests_skipped === true,
     error: textOrNull(v.error)
   }
@@ -57,6 +63,9 @@ export function runOf(value: unknown, baseUrl: string): BuildWebRun | null {
     id: v.id,
     status: textOf(v.status),
     branch: textOf(v.branch),
+    ticket: textOrNull(v.ticket),
+    dist_type: textOf(v.dist_type),
+    error: textOrNull(v.error),
     user: textOf(v.user),
     created_at: textOf(v.created_at),
     testing_status: textOf(v.testing_status),

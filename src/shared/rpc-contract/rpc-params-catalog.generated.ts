@@ -869,6 +869,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.guideShot': BuildWebGuideShotParams,
   'buildWeb.imageSummary': null,
   'buildWeb.issueCommits': BuildWebCommitsParams,
+  'buildWeb.issueSummary': null,
   'buildWeb.listAssignees': null,
   'buildWeb.listImageBuilds': BuildWebImageHistoryParams,
   'buildWeb.listImages': BuildWebImagePageParams,

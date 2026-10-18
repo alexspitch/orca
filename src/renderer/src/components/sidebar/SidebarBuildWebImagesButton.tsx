@@ -1,62 +1,19 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Package } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { callBuildWeb } from '../build-web/build-web-client'
-import { useBuildWebTarget } from '../build-web/use-build-web-data'
-import { useImageBuildRuns } from '../build-web/images/image-build-runs'
 import { HideSidebarMenu } from './sidebar-nav-controls'
+import { useBuildWebBadge, type BuildWebBadge } from './use-build-web-badge'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 
-const POLL_MS = 60_000
-// Why a minute, not more: a token locked at launch unlocks as soon as Issues or Images opens.
-const FAILED_POLL_MS = 60_000
-
-/** Images building right now in build-web, or null when unknown (not connected, no access). */
-function useRunningImageCount(enabled: boolean): number | null {
-  const { target } = useBuildWebTarget()
-  const [running, setRunning] = useState<number | null>(null)
-  // Why: opening a build-web page (which unlocks the token) or starting a build reads at once.
-  const onBuildWebPage = useAppStore(
-    (s) => s.activeView === 'build-web' || s.activeView === 'build-web-images'
-  )
-  const started = useImageBuildRuns((s) => s.runs.length)
-  useEffect(() => {
-    if (!enabled) {
-      setRunning(null)
-      return
-    }
-    let alive = true
-    let timer = 0
-    const read = async (): Promise<void> => {
-      let delay = POLL_MS
-      // Why: a hidden window has nobody to show the count to; skip the console round-trip.
-      if (document.visibilityState !== 'hidden') {
-        try {
-          const summary = await callBuildWeb(target, 'imageSummary')
-          if (alive) {
-            setRunning(summary.running)
-          }
-        } catch {
-          delay = FAILED_POLL_MS
-          if (alive) {
-            setRunning(null)
-          }
-        }
-      }
-      if (alive) {
-        timer = window.setTimeout(() => void read(), delay)
-      }
-    }
-    void read()
-    return () => {
-      alive = false
-      window.clearTimeout(timer)
-    }
-  }, [enabled, onBuildWebPage, started, target])
-  return running
-}
+const readRunning = (target: RuntimeClientTarget): Promise<BuildWebBadge> =>
+  callBuildWeb(target, 'imageSummary').then((summary) => ({
+    count: summary.running,
+    capped: false
+  }))
 
 /** «Images»: build-web's images, with how many are building right now. */
 export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
@@ -64,7 +21,7 @@ export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
   const active = useAppStore((s) => s.activeView === 'build-web-images')
   const openPage = useAppStore((s) => s.openBuildWebImagesPage)
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const running = useRunningImageCount(show)
+  const running = useBuildWebBadge(show, readRunning)?.count ?? null
   if (!show) {
     return null
   }

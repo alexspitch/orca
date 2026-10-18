@@ -14,7 +14,7 @@ export function buildStatusLabel(status: BuildWebImageBuild['status']): string {
     case 'failed':
       return translate('buildWeb.images.failed', 'failed')
     case 'running':
-      return translate('buildWeb.images.running', 'running')
+      return translate('buildWeb.images.inProgress', 'in progress')
   }
 }
 

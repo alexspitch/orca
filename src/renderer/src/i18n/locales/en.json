@@ -20555,7 +20555,8 @@
       "allVersions": "All versions",
       "found": "{{shown}} of {{of}}",
       "openInBuildWeb": "Open in build-web",
-      "buildingNow": "building now"
+      "buildingNow": "building now",
+      "inProgress": "in progress"
     },
     "card": {
       "overview": "Overview",
@@ -20637,7 +20638,9 @@
     "sidebar": {
       "issues": "Issues",
       "images": "Images",
-      "imagesBuilding": "{{label}}, {{count}} building"
+      "imagesBuilding": "{{label}}, {{count}} building",
+      "issuesBlockers": "{{label}}, {{count}} blockers",
+      "blockersHint": "Open tasks at the highest priority (Jira Highest, Blocker, Critical)"
     },
     "priority": {
       "highest": "Highest",

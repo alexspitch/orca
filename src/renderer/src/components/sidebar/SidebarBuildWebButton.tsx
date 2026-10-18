@@ -6,6 +6,15 @@ import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 import { useBuildWebStore } from '../build-web/build-web-store'
+import { callBuildWeb } from '../build-web/build-web-client'
+import { useBuildWebBadge, type BuildWebBadge } from './use-build-web-badge'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
+
+const readBlockers = (target: RuntimeClientTarget): Promise<BuildWebBadge> =>
+  callBuildWeb(target, 'issueSummary').then((summary) => ({
+    count: summary.blockers,
+    capped: summary.capped
+  }))
 
 /** «Issues»: build-web's tasks and images. Hidden with the sidebar menu, shown again from Settings. */
 export function SidebarBuildWebButton(): React.JSX.Element | null {
@@ -13,9 +22,11 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
   const active = useAppStore((s) => s.activeView === 'build-web')
   const openPage = useAppStore((s) => s.openBuildWebPage)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  const blockers = useBuildWebBadge(show, readBlockers)
   if (!show) {
     return null
   }
+  const label = translate('buildWeb.sidebar.issues', 'Issues')
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -27,6 +38,22 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
             openPage()
           }}
           aria-current={active ? 'page' : undefined}
+          aria-label={
+            blockers?.count
+              ? translate('buildWeb.sidebar.issuesBlockers', '{{label}}, {{shown}} blockers', {
+                  label,
+                  shown: blockers.capped ? `${blockers.count}+` : String(blockers.count)
+                })
+              : label
+          }
+          title={
+            blockers?.count
+              ? translate(
+                  'buildWeb.sidebar.blockersHint',
+                  'Open tasks at the highest priority (Jira Highest, Blocker, Critical)'
+                )
+              : undefined
+          }
           className={cn(
             'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
             active
@@ -38,7 +65,15 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
             className={cn('size-4 shrink-0', !active && 'text-worktree-sidebar-foreground/30')}
             strokeWidth={active ? 2.25 : 1.75}
           />
-          <span className="flex-1">{translate('buildWeb.sidebar.issues', 'Issues')}</span>
+          <span className="flex-1">{label}</span>
+          {blockers?.count ? (
+            <span
+              aria-hidden="true"
+              className="min-w-5 rounded-full bg-chip-tone-red/15 px-1.5 text-center text-2xs leading-5 text-chip-tone-red tabular-nums"
+            >
+              {blockers.capped ? `${blockers.count}+` : blockers.count}
+            </span>
+          ) : null}
         </button>
       </ContextMenuTrigger>
       <HideSidebarMenu onHide={() => void updateSettings({ showBuildWebButton: false })} />

@@ -33,6 +33,7 @@ import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-buil
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'other'] as const
 const DISTS = ['rhel', 'redos'] as const
+// In progress first: the quick filter for what is building now.
 const STATUS_FILTERS = ['running', 'failed'] as const
 const RUNNING_REFRESH_MS = 20_000
 const productName = (p: string) =>
@@ -152,11 +153,7 @@ export function ImageListView({
           options={STATUS_FILTERS}
           counts={data?.counts.statuses ?? {}}
           selected={statuses}
-          label={(st) =>
-            st === 'running'
-              ? translate('buildWeb.images.buildingNow', 'building now')
-              : buildStatusLabel(st)
-          }
+          label={buildStatusLabel}
           onToggle={(st) => (setStatuses(toggled(statuses, st)), setPage(0))}
         />
       </div>

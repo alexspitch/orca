@@ -40,6 +40,7 @@ export const LOCAL_STORAGE_MODULE_DISPOSITIONS: Record<string, WslMoveFieldDispo
   ...Object.fromEntries(
     [
       'src/renderer/src/components/browser-pane/annotate/use-markup-draw-hint.ts',
+      'src/renderer/src/components/build-web/build-web-view-prefs.ts',
       'src/renderer/src/components/feature-tips/FeatureTipsModal.tsx',
       'src/renderer/src/components/feature-wall/BrowserUseSkillSetupCard.tsx',
       'src/renderer/src/components/feature-wall/feature-wall-completion-persistence.ts',

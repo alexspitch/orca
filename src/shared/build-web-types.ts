@@ -134,6 +134,22 @@ export type BuildWebIssueQuery = {
   offset?: number
 }
 
+/** The statuses a task is still being worked in. */
+export const BUILD_WEB_OPEN_STATUSES: readonly BuildWebStatus[] = [
+  'todo',
+  'planned',
+  'inprogress',
+  'paused',
+  'awaiting_response',
+  'deploying',
+  'build_failed',
+  'testing',
+  'testing_external'
+]
+
+/** The Issues badge: open tasks at the top priority (Jira's Highest, Blocker, Critical). */
+export type BuildWebIssueSummary = { blockers: number; capped: boolean }
+
 export type BuildWebIssuePage = { issues: BuildWebIssueRow[]; total: number }
 
 export type BuildWebIssuePatch = Partial<{

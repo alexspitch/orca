@@ -48,7 +48,8 @@ export function isBackgroundRuntimeMethod(method: string): boolean {
     method === 'git.branchCompare' ||
     method === 'git.upstreamStatus' ||
     method === 'worktree.prefetchCreateBase' ||
-    method === 'buildWeb.imageSummary'
+    method === 'buildWeb.imageSummary' ||
+    method === 'buildWeb.issueSummary'
   )
 }
 

@@ -60,6 +60,7 @@ import {
   refreshBuildWebGuideImages,
   saveBuildWebGuide
 } from '../build-web/build-web-runs'
+import { buildWebIssueSummary } from '../build-web/build-web-issue-summary'
 import {
   getBuildWebRun,
   listBuildWebVersionBranches,
@@ -125,6 +126,10 @@ export class RuntimeBuildWebCommands {
 
   buildWebClearAgentSession(args: In<typeof BuildWebClearSessionParams>) {
     return clearBuildWebAgentSession(args.id, args.surfaceId)
+  }
+
+  buildWebIssueSummary() {
+    return buildWebIssueSummary()
   }
 
   buildWebImageSummary() {

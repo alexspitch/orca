@@ -17,6 +17,7 @@ export const buildWebApi = {
   noteProviderSession: (args) => ipcRenderer.invoke('buildWeb:noteProviderSession', args),
   clearAgentSession: (args) => ipcRenderer.invoke('buildWeb:clearAgentSession', args),
   imageSummary: () => ipcRenderer.invoke('buildWeb:imageSummary'),
+  issueSummary: () => ipcRenderer.invoke('buildWeb:issueSummary'),
   listImages: (args) => ipcRenderer.invoke('buildWeb:listImages', args),
   listImageBuilds: (args) => ipcRenderer.invoke('buildWeb:listImageBuilds', args),
   pushImages: (args) => ipcRenderer.invoke('buildWeb:pushImages', args),

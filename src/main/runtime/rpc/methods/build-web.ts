@@ -112,6 +112,12 @@ export const BUILD_WEB_METHODS = [
     handler: async (params, { runtime }) => runtime.buildWebClearAgentSession(params)
   }),
   defineMethod({
+    name: 'buildWeb.issueSummary',
+    permission: 'workspace',
+    params: null,
+    handler: async (_params, { runtime }) => runtime.buildWebIssueSummary()
+  }),
+  defineMethod({
     name: 'buildWeb.imageSummary',
     permission: 'workspace',
     params: null,
