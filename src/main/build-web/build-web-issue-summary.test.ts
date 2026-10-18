@@ -31,4 +31,18 @@ describe('issue summary', () => {
     await buildWebIssueSummary()
     expect(mocks.list).toHaveBeenCalledTimes(1)
   })
+
+  it('counts within the list filters, any status when none is chosen, and caches by them', async () => {
+    mocks.list.mockResolvedValue({ issues: [{ priority: 5 }], total: 1 })
+    await buildWebIssueSummary({ mine: true, status: [], product: ['dc'] })
+    expect(mocks.list.mock.calls[0][0]).toMatchObject({
+      mine: true,
+      ai: false,
+      status: undefined,
+      product: ['dc']
+    })
+    await buildWebIssueSummary({ mine: true, status: ['todo'], product: ['dc'] })
+    expect(mocks.list).toHaveBeenCalledTimes(2)
+    expect(mocks.list.mock.calls[1][0]).toMatchObject({ status: ['todo'] })
+  })
 })

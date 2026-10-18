@@ -41,6 +41,16 @@ export const BuildWebIssueQueryParams = z.object({
 
 export const BuildWebIssueId = z.object({ id: Id })
 
+// Why every field optional: a client predating the filters asks with no params at all.
+export const BuildWebIssueSummaryParams = z.object({
+  mine: z.boolean().optional(),
+  ai: z.boolean().optional(),
+  favorite: z.boolean().optional(),
+  jira: z.boolean().optional(),
+  status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
+  product: z.array(Product).max(5).optional()
+})
+
 export const BuildWebVersionsParams = z.object({ product: Product })
 
 export const BuildWebIssueUpdateParams = z.object({

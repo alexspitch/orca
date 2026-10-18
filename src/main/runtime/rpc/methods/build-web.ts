@@ -6,6 +6,7 @@ import {
   BuildWebConnect,
   BuildWebFavoriteParams,
   BuildWebIssueId,
+  BuildWebIssueSummaryParams,
   BuildWebIssueQueryParams,
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
@@ -114,8 +115,8 @@ export const BUILD_WEB_METHODS = [
   defineMethod({
     name: 'buildWeb.issueSummary',
     permission: 'workspace',
-    params: null,
-    handler: async (_params, { runtime }) => runtime.buildWebIssueSummary()
+    params: BuildWebIssueSummaryParams,
+    handler: async (params, { runtime }) => runtime.buildWebIssueSummary(params)
   }),
   defineMethod({
     name: 'buildWeb.imageSummary',

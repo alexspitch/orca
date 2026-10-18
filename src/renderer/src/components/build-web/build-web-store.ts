@@ -6,6 +6,7 @@ import {
   type BuildWebIssueQuery,
   type BuildWebIssueRow,
   type BuildWebIssueSort,
+  type BuildWebIssueSummaryQuery,
   type BuildWebProduct,
   type BuildWebStatus
 } from '../../../../shared/build-web-types'
@@ -216,6 +217,21 @@ export function issueQueryOf(
     status: state.statuses.size
       ? BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s))
       : undefined,
+    product: state.product === 'all' ? undefined : [state.product]
+  }
+}
+
+/** The filters the sidebar's blocker count follows: the list's, without its search and paging. */
+export function issueSummaryQueryOf(
+  state: Pick<BuildWebState, 'quick' | 'statuses' | 'product'>
+): BuildWebIssueSummaryQuery {
+  return {
+    mine: state.quick.has('mine'),
+    ai: state.quick.has('ai'),
+    favorite: state.quick.has('favorite'),
+    jira: state.quick.has('jira'),
+    // Why an empty list rather than none: «any status» here, where none means the open ones.
+    status: BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s)),
     product: state.product === 'all' ? undefined : [state.product]
   }
 }

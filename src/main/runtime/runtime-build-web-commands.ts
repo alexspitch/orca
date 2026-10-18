@@ -6,6 +6,7 @@ import type {
   BuildWebConnect,
   BuildWebFavoriteParams,
   BuildWebIssueId,
+  BuildWebIssueSummaryParams,
   BuildWebIssueQueryParams,
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
@@ -128,8 +129,8 @@ export class RuntimeBuildWebCommands {
     return clearBuildWebAgentSession(args.id, args.surfaceId)
   }
 
-  buildWebIssueSummary() {
-    return buildWebIssueSummary()
+  buildWebIssueSummary(args: In<typeof BuildWebIssueSummaryParams> = {}) {
+    return buildWebIssueSummary(args)
   }
 
   buildWebImageSummary() {

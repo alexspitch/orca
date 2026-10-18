@@ -1,20 +1,14 @@
-import React from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { ListTodo } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { cn } from '@/lib/utils'
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { HideSidebarMenu } from './sidebar-nav-controls'
-import { useBuildWebStore } from '../build-web/build-web-store'
+import { issueSummaryQueryOf, useBuildWebStore } from '../build-web/build-web-store'
 import { callBuildWeb } from '../build-web/build-web-client'
 import { useBuildWebBadge, type BuildWebBadge } from './use-build-web-badge'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
-
-const readBlockers = (target: RuntimeClientTarget): Promise<BuildWebBadge> =>
-  callBuildWeb(target, 'issueSummary').then((summary) => ({
-    count: summary.blockers,
-    capped: summary.capped
-  }))
 
 /** «Issues»: build-web's tasks and images. Hidden with the sidebar menu, shown again from Settings. */
 export function SidebarBuildWebButton(): React.JSX.Element | null {
@@ -22,6 +16,22 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
   const active = useAppStore((s) => s.activeView === 'build-web')
   const openPage = useAppStore((s) => s.openBuildWebPage)
   const updateSettings = useAppStore((s) => s.updateSettings)
+  // Why the list's filters: the number is the blockers among the tasks the Issues page shows.
+  const quick = useBuildWebStore((s) => s.quick)
+  const statuses = useBuildWebStore((s) => s.statuses)
+  const product = useBuildWebStore((s) => s.product)
+  const filters = useMemo(
+    () => issueSummaryQueryOf({ quick, statuses, product }),
+    [product, quick, statuses]
+  )
+  const readBlockers = useCallback(
+    (target: RuntimeClientTarget): Promise<BuildWebBadge> =>
+      callBuildWeb(target, 'issueSummary', filters).then((summary) => ({
+        count: summary.blockers,
+        capped: summary.capped
+      })),
+    [filters]
+  )
   const blockers = useBuildWebBadge(show, readBlockers)
   if (!show) {
     return null
@@ -50,7 +60,7 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
             blockers?.count
               ? translate(
                   'buildWeb.sidebar.blockersHint',
-                  'Open tasks at the highest priority (Jira Highest, Blocker, Critical)'
+                  'Tasks at the highest priority (Jira Highest, Blocker, Critical) among those the Issues filters show'
                 )
               : undefined
           }

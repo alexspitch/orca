@@ -8,6 +8,7 @@ import type {
   BuildWebIssueQuery,
   BuildWebCommentOutcome,
   BuildWebIssueSummary,
+  BuildWebIssueSummaryQuery,
   BuildWebMutationResult,
   BuildWebProduct,
   BuildWebUpdateOutcome,
@@ -77,7 +78,7 @@ export type BuildWebApi = {
     surfaceId: string
   }) => Promise<BuildWebMutationResult<true>>
   imageSummary: () => Promise<BuildWebImageSummary>
-  issueSummary: () => Promise<BuildWebIssueSummary>
+  issueSummary: (args?: BuildWebIssueSummaryQuery) => Promise<BuildWebIssueSummary>
   listImages: (args: BuildWebImagePageArgs & { refresh?: boolean }) => Promise<BuildWebImagePage>
   listImageBuilds: (
     args: BuildWebImageHistoryArgs & { refresh?: boolean }

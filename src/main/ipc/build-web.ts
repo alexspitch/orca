@@ -7,6 +7,7 @@ import {
   BuildWebConnect,
   BuildWebFavoriteParams,
   BuildWebIssueId,
+  BuildWebIssueSummaryParams,
   BuildWebIssueQueryParams,
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
@@ -45,7 +46,9 @@ export function registerBuildWebHandlers(): void {
   ipcMain.handle('buildWeb:testConnection', () => commands.buildWebTestConnection())
   ipcMain.handle('buildWeb:listAssignees', () => commands.buildWebListAssignees())
   ipcMain.handle('buildWeb:imageSummary', () => commands.buildWebImageSummary())
-  ipcMain.handle('buildWeb:issueSummary', () => commands.buildWebIssueSummary())
+  ipcMain.handle('buildWeb:issueSummary', (_event, args: unknown) =>
+    commands.buildWebIssueSummary(BuildWebIssueSummaryParams.parse(args ?? {}))
+  )
   handle('listImages', BuildWebImagePageParams, (args) => commands.buildWebListImages(args))
   handle('listImageBuilds', BuildWebImageHistoryParams, (args) =>
     commands.buildWebListImageBuilds(args)

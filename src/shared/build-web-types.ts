@@ -161,8 +161,14 @@ export const BUILD_WEB_OPEN_STATUSES: readonly BuildWebStatus[] = [
   'testing_external'
 ]
 
-/** The Issues badge: open tasks at the top priority (Jira's Highest, Blocker, Critical). */
+/** The Issues badge: tasks at the top priority (Jira's Highest, Blocker, Critical). */
 export type BuildWebIssueSummary = { blockers: number; capped: boolean }
+
+/** The list's filters the badge counts within; without a status, the open ones. */
+export type BuildWebIssueSummaryQuery = Pick<
+  BuildWebIssueQuery,
+  'mine' | 'ai' | 'favorite' | 'jira' | 'status' | 'product'
+>
 
 export type BuildWebIssuePage = { issues: BuildWebIssueRow[]; total: number }
 
