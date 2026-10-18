@@ -2,6 +2,7 @@ import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebImageBuild } from '../../../../../shared/build-web-image-types'
 import { BuildWebToneChip } from '../BuildWebToneChip'
+import { useBuildLogViewer } from './build-log-viewer'
 import { imageBuildTone } from '../build-web-tones'
 
 // Cells the image list and an image's history share, so both read as one table.
@@ -59,7 +60,9 @@ export function LogCell({ build }: { build: BuildWebImageBuild }): React.JSX.Ele
   return (
     <button
       type="button"
-      onClick={() => void window.api.shell.openUrl(url)}
+      onClick={() =>
+        useBuildLogViewer.getState().show(url, `${build.image} (${build.dist}) #${build.number}`)
+      }
       className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
     >
       #{build.number}

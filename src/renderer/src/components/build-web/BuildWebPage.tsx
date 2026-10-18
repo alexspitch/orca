@@ -25,6 +25,7 @@ import { BuildWebIssueDrawer } from './BuildWebIssueDrawer'
 import { BuildWebSelectionBar } from './BuildWebSelectionBar'
 import { BuildWebTakeToWorkDialog } from './BuildWebTakeToWorkDialog'
 import { BuildWebIssueFullScreen } from './issue/BuildWebIssueFullScreen'
+import { BuildLogDialog } from './images/BuildLogDialog'
 
 /** Defers the visible spinner so a fast local answer never flashes one (STYLEGUIDE, UX rule 1). */
 function useDeferred(active: boolean, delayMs = 200): boolean {
@@ -56,6 +57,9 @@ export default function BuildWebPage(): React.JSX.Element {
   const fullScreen = useBuildWebStore((s) => s.fullScreen)
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const [taking, setTaking] = useState<BuildWebIssueRow[] | null>(null)
+
+  // Why on leaving: coming back to Issues shows the list, not the card that was open before.
+  useEffect(() => () => useBuildWebStore.getState().openIssue(null), [])
 
   useBuildWebPageEscape(() => {
     const current = useBuildWebStore.getState()
@@ -169,6 +173,7 @@ export default function BuildWebPage(): React.JSX.Element {
       )}
       <BuildWebIssueDrawer onTakeToWork={setTaking} />
       <BuildWebTakeToWorkDialog issues={taking} onClose={() => setTaking(null)} />
+      <BuildLogDialog target={target} />
     </main>
   )
 }

@@ -99,6 +99,7 @@ describe('build-web store', () => {
       mine: true,
       ai: false,
       favorite: false,
+      jira: false,
       sort: 'updated_at',
       dir: 'desc',
       limit: ISSUE_PAGE_SIZE,

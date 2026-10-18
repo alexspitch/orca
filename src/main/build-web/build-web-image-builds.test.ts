@@ -18,8 +18,12 @@ vi.mock('./build-web-request', async (importOriginal) => ({
   buildWebRequest: mocks.request
 }))
 
-const { getBuildWebRun, listBuildWebVersionBranches, startBuildWebImageBuild } =
-  await import('./build-web-image-builds')
+const {
+  getBuildWebRun,
+  listBuildWebVersionBranches,
+  readBuildWebBuildLog,
+  startBuildWebImageBuild
+} = await import('./build-web-image-builds')
 
 beforeEach(() => {
   mocks.request.mockReset()
@@ -88,5 +92,19 @@ describe('image builds', () => {
       status: 'building',
       url: 'https://bw.test/api/local-builds/7/log'
     })
+  })
+
+  it('reads a log from the offset, sending the console its own log path', async () => {
+    mocks.request.mockResolvedValueOnce({ text: 'step 1\n', next: 7, done: false })
+    const piece = await readBuildWebBuildLog('https://bw.test/api/local-builds/7/log', 0)
+    expect(piece).toEqual({ text: 'step 1\n', next: 7, done: false })
+    expect(mocks.request.mock.calls[0][0].path).toBe(
+      '/api/build-log?url=%2Fapi%2Flocal-builds%2F7%2Flog&offset=0'
+    )
+    mocks.request.mockResolvedValueOnce({ text: '', next: 9, done: true })
+    await readBuildWebBuildLog('https://jenkins.test/job/x/12/', 9)
+    expect(mocks.request.mock.calls[1][0].path).toContain(
+      encodeURIComponent('https://jenkins.test/job/x/12/')
+    )
   })
 })

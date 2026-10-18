@@ -1,4 +1,4 @@
-import { Bot, Star, User } from 'lucide-react'
+import { Bot, Star, Ticket, User } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
@@ -12,14 +12,15 @@ import { translate } from '@/i18n/i18n'
 import type { BuildWebProduct } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { BuildWebStatusFilter, BuildWebToWorkToggle } from './BuildWebStatusFilter'
-import { viewLabel } from './build-web-labels'
+import { quickFilterLabel } from './build-web-labels'
 import { ProductChip } from './BuildWebToneChip'
 import { QUICK_FILTERS, type QuickFilter } from './build-web-view-prefs'
 
 const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
   mine: <User />,
   ai: <Bot />,
-  favorite: <Star />
+  favorite: <Star />,
+  jira: <Ticket />
 }
 const PRODUCTS: readonly BuildWebProduct[] = ['sa', 'dc', 'ap', 'storage', 'tools']
 
@@ -50,7 +51,7 @@ export function BuildWebFilters(): React.JSX.Element {
         {QUICK_FILTERS.map((q) => (
           <ToggleGroupItem key={q} value={q}>
             {QUICK_ICON[q]}
-            {viewLabel(q)}
+            {quickFilterLabel(q)}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>

@@ -8,6 +8,7 @@ import { BuildWebConnect } from '../BuildWebConnect'
 import { BuildWebListState } from '../BuildWebListState'
 import { ImageListView } from './ImageListView'
 import { ImageHistoryView } from './ImageHistoryView'
+import { BuildLogDialog } from './BuildLogDialog'
 
 /** build-web's Images section: the newest build of every image, and one image's history. */
 export default function BuildWebImagesPage(): React.JSX.Element {
@@ -58,6 +59,7 @@ export default function BuildWebImagesPage(): React.JSX.Element {
       ) : (
         <ImageListView target={target} onOpenImage={setImage} />
       )}
+      <BuildLogDialog target={target} />
     </main>
   )
 }

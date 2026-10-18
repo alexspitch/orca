@@ -12,6 +12,7 @@ import {
   BuildWebImageBuildParams,
   BuildWebImagePushParams,
   BuildWebRunParams,
+  BuildWebBuildLogParams,
   BuildWebVersionBranchesParams,
   BuildWebIssueUpdateParams,
   BuildWebCommitDiffParams,
@@ -151,6 +152,12 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebRunParams,
     handler: async (params, { runtime }) => runtime.buildWebGetRun(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.buildLog',
+    permission: 'workspace',
+    params: BuildWebBuildLogParams,
+    handler: async (params, { runtime }) => runtime.buildWebBuildLog(params)
   }),
   defineMethod({
     name: 'buildWeb.getIssueRun',

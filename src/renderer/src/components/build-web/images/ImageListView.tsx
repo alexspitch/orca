@@ -6,7 +6,13 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import { isPushable } from '../../../../../shared/build-web-image-push'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
-import { BuildStatusCell, LogCell, RegistryCell, formatBuildTime } from './image-build-cells'
+import {
+  BuildStatusCell,
+  LogCell,
+  RegistryCell,
+  buildStatusLabel,
+  formatBuildTime
+} from './image-build-cells'
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
 import { useImagePicks } from './use-image-picks'
@@ -27,6 +33,7 @@ import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-buil
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'other'] as const
 const DISTS = ['rhel', 'redos'] as const
+const STATUS_FILTERS = ['running', 'failed'] as const
 const RUNNING_REFRESH_MS = 20_000
 const productName = (p: string) =>
   p === 'other'
@@ -45,6 +52,7 @@ export function ImageListView({
   const [q, setQ] = useState('')
   const [products, setProducts] = useState<string[]>([])
   const [dists, setDists] = useState<string[]>([])
+  const [statuses, setStatuses] = useState<(typeof STATUS_FILTERS)[number][]>([])
   const [version, setVersion] = useState('all')
   const [page, setPage] = useState(0)
   const picks = useImagePicks()
@@ -55,6 +63,7 @@ export function ImageListView({
     q,
     products,
     dists,
+    statuses,
     version: version === 'all' ? undefined : version,
     page,
     pageSize: IMAGE_PAGE_SIZE
@@ -76,11 +85,14 @@ export function ImageListView({
     const timer = window.setInterval(() => reload(true), RUNNING_REFRESH_MS)
     return () => window.clearInterval(timer)
   }, [anyRunning, reload])
-  const narrowed = Boolean(q.trim() || products.length || dists.length || version !== 'all')
+  const narrowed = Boolean(
+    q.trim() || products.length || dists.length || statuses.length || version !== 'all'
+  )
   const reset = () => {
     setQ('')
     setProducts([])
     setDists([])
+    setStatuses([])
     setVersion('all')
     setPage(0)
   }
@@ -135,6 +147,17 @@ export function ImageListView({
           selected={dists}
           label={(d) => d}
           onToggle={(d) => (setDists(toggled(dists, d)), setPage(0))}
+        />
+        <FilterChips
+          options={STATUS_FILTERS}
+          counts={data?.counts.statuses ?? {}}
+          selected={statuses}
+          label={(st) =>
+            st === 'running'
+              ? translate('buildWeb.images.buildingNow', 'building now')
+              : buildStatusLabel(st)
+          }
+          onToggle={(st) => (setStatuses(toggled(statuses, st)), setPage(0))}
         />
       </div>
       <ImageBuildProgress target={target} onSettled={() => reload(true)} />

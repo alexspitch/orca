@@ -30,6 +30,9 @@ export function issueListQuery(query: BuildWebIssueQuery): string {
       params.set(name, 'yes')
     }
   }
+  if (query.jira) {
+    params.set('jira', 'yes')
+  }
   const q = query.q?.trim()
   if (q) {
     params.set('q', q)

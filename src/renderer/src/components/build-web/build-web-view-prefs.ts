@@ -8,7 +8,7 @@ import {
 // Per-viewer conveniences kept in localStorage (as the GitHub project column widths are): the
 // Issues page's quick filters and sort, and the side card's width. Lost storage just means defaults.
 
-export const QUICK_FILTERS = ['mine', 'ai', 'favorite'] as const
+export const QUICK_FILTERS = ['mine', 'ai', 'favorite', 'jira'] as const
 export type QuickFilter = (typeof QUICK_FILTERS)[number]
 
 export type IssueSortState = { sort: BuildWebIssueSort; dir: 'asc' | 'desc' }
@@ -22,6 +22,8 @@ type ViewPrefs = {
   statuses: BuildWebStatus[] | null
   sort: IssueSortState
   drawerWidth: number
+  /** The side panel of each full-screen card tab, by tab. */
+  panelWidths: Record<string, number>
 }
 
 const STORAGE_KEY = 'orca.buildWeb.viewPrefs'
@@ -29,7 +31,8 @@ const DEFAULTS: ViewPrefs = {
   quick: ['mine'],
   statuses: null,
   sort: { sort: 'updated_at', dir: 'desc' },
-  drawerWidth: DRAWER_DEFAULT_WIDTH
+  drawerWidth: DRAWER_DEFAULT_WIDTH,
+  panelWidths: {}
 }
 
 function prefsOf(raw: unknown): ViewPrefs {
@@ -48,9 +51,18 @@ function prefsOf(raw: unknown): ViewPrefs {
   const statuses = Array.isArray(v.statuses)
     ? BUILD_WEB_STATUSES.filter((s) => v.statuses.includes(s))
     : null
+  const panelWidths: Record<string, number> = {}
+  if (v.panelWidths && typeof v.panelWidths === 'object') {
+    for (const [key, value] of Object.entries(v.panelWidths)) {
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        panelWidths[key] = Math.round(value)
+      }
+    }
+  }
   return {
     quick,
     statuses,
+    panelWidths,
     sort: sort ? { sort, dir: sortRaw.dir === 'asc' ? 'asc' : 'desc' } : DEFAULTS.sort,
     drawerWidth:
       width === null ? DEFAULTS.drawerWidth : Math.max(DRAWER_MIN_WIDTH, Math.round(width))

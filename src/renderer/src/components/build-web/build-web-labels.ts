@@ -49,6 +49,10 @@ export function viewLabel(view: BuildWebView): string {
   }
 }
 
+export function quickFilterLabel(filter: 'mine' | 'ai' | 'favorite' | 'jira'): string {
+  return filter === 'jira' ? translate('buildWeb.view.jira', 'Jira') : viewLabel(filter)
+}
+
 export function productLabel(product: BuildWebIssueProduct): string {
   if (product === 'unknown') {
     return translate('buildWeb.product.unknown', 'Unknown')

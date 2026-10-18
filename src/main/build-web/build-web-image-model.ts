@@ -88,7 +88,10 @@ export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): B
     .map((i) => ({ image: i.image, product: i.product, last: last.get(i.image) ?? null }))
     .filter((row) => (!args.version && !dists.length) || row.last)
     .filter((row) => textMatches(row.image))
-  const filtered = byFilters.filter((row) => inProducts(row.product))
+  const inScope = byFilters.filter((row) => inProducts(row.product))
+  const filtered = args.statuses?.length
+    ? inScope.filter((row) => row.last && args.statuses?.includes(row.last.status))
+    : inScope
   const sort = args.sort
   // Why the row's own name and product: an image with no matching build still has both.
   const rowCell = (row: BuildWebImageRow) =>
@@ -112,7 +115,11 @@ export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): B
     rows: pageOf(rows, args.page, args.pageSize),
     total: rows.length,
     of: catalog.images.length,
-    counts: { products: countBy(byFilters, (row) => row.product), dists: distCounts },
+    counts: {
+      products: countBy(byFilters, (row) => row.product),
+      dists: distCounts,
+      statuses: countBy(inScope, (row) => row.last?.status ?? null)
+    },
     versions: [...new Set(versionLists.flat())]
   }
 }

@@ -50,14 +50,24 @@ export type BuildWebImageFilters = {
   version?: string
 }
 
-export type BuildWebImagePageArgs = BuildWebImageFilters & { page: number; pageSize: number }
+export type BuildWebImagePageArgs = BuildWebImageFilters & {
+  /** Rows whose last build has one of these statuses. */
+  statuses?: BuildWebImageBuildStatus[]
+  page: number
+  pageSize: number
+}
 
 export type BuildWebImagePage = {
   rows: BuildWebImageRow[]
   /** Rows matching the filters, and all rows. */
   total: number
   of: number
-  counts: { products: Record<string, number>; dists: Record<string, number> }
+  counts: {
+    products: Record<string, number>
+    dists: Record<string, number>
+    /** By the status of each row's last build; absent from hosts older than the status filter. */
+    statuses?: Record<string, number>
+  }
   versions: string[]
 }
 

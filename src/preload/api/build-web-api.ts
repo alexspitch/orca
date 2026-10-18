@@ -26,6 +26,7 @@ import type {
   BuildWebCommitDiff,
   BuildWebCommitList,
   BuildWebGuideShot,
+  BuildWebLogPiece,
   BuildWebRun
 } from '../../shared/build-web-run-types'
 
@@ -83,6 +84,7 @@ export type BuildWebApi = {
     args: BuildWebImageBuildArgs
   ) => Promise<BuildWebMutationResult<{ runId: string }>>
   getRun: (args: { runId: string }) => Promise<BuildWebRun | null>
+  buildLog: (args: { url: string; offset: number }) => Promise<BuildWebLogPiece>
   getIssueRun: (args: { id: string }) => Promise<BuildWebRun | null>
   pushRun: (args: { runId: string; moveMainTag: boolean }) => Promise<BuildWebMutationResult<true>>
   saveGuide: (args: {

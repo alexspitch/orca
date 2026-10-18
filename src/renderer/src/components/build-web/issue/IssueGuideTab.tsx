@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import CommentMarkdown from '@/components/sidebar/CommentMarkdown'
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
+import { ResizableSplit } from './ResizableSplit'
 import type { BuildWebIssueDetail } from '../../../../../shared/build-web-types'
 import type { BuildWebRun } from '../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
@@ -149,8 +150,32 @@ export function IssueGuideTab({
     })
 
   return (
-    <div className="flex flex-wrap gap-5">
-      <section className="flex min-w-0 flex-[999_1_560px] flex-col gap-3">
+    <ResizableSplit
+      panel="guide"
+      side="right"
+      defaultWidth={340}
+      minWidth={260}
+      aside={
+        <aside className="flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4 text-sm">
+          <h3 className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
+            {translate('buildWeb.card.jira', 'Jira')}
+          </h3>
+          {detail.jira_key ? (
+            <>
+              <JiraStatusLine jiraKey={detail.jira_key} status={detail.jira_status} />
+              <Button variant="outline" size="sm" disabled={busy} onClick={() => void publish()}>
+                {translate('buildWeb.guide.publish', 'Publish to Jira')}
+              </Button>
+            </>
+          ) : (
+            <p className="text-muted-foreground">
+              {translate('buildWeb.guide.noJira', 'The task has no Jira issue.')}
+            </p>
+          )}
+        </aside>
+      }
+    >
+      <section className="flex min-w-0 flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <Tabs value={mode} onValueChange={(v) => setMode(v === 'edit' ? 'edit' : 'view')}>
             <TabsList>
@@ -206,23 +231,6 @@ export function IssueGuideTab({
           </div>
         )}
       </section>
-      <aside className="flex min-w-0 flex-[1_1_300px] flex-col gap-3 rounded-lg border border-border bg-card p-4 text-sm xl:max-w-[380px]">
-        <h3 className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
-          {translate('buildWeb.card.jira', 'Jira')}
-        </h3>
-        {detail.jira_key ? (
-          <>
-            <JiraStatusLine jiraKey={detail.jira_key} status={detail.jira_status} />
-            <Button variant="outline" size="sm" disabled={busy} onClick={() => void publish()}>
-              {translate('buildWeb.guide.publish', 'Publish to Jira')}
-            </Button>
-          </>
-        ) : (
-          <p className="text-muted-foreground">
-            {translate('buildWeb.guide.noJira', 'The task has no Jira issue.')}
-          </p>
-        )}
-      </aside>
-    </div>
+    </ResizableSplit>
   )
 }

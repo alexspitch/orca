@@ -7,6 +7,7 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { runStatusTone } from '../build-web-tones'
+import { useBuildLogViewer } from './build-log-viewer'
 import {
   isBuildGoing,
   useImageBuildRuns,
@@ -103,7 +104,12 @@ function RunProgress({
           {b.url ? (
             <button
               type="button"
-              onClick={() => b.url && void window.api.shell.openUrl(b.url)}
+              onClick={() =>
+                b.url &&
+                useBuildLogViewer
+                  .getState()
+                  .show(b.url, `${b.image} (${b.dist}) #${b.number ?? ''}`)
+              }
               className="text-muted-foreground hover:text-foreground hover:underline"
             >
               #{b.number ?? '—'}

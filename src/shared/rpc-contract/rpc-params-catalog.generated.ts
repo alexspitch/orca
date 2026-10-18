@@ -140,6 +140,7 @@ import { ScreencastUnsubscribe } from './browser-screencast-params'
 import { BrowserOpenUrlParams, BrowserTabCreateParams } from './browser-tab-create-params'
 import {
   BuildWebAgentSessionParams,
+  BuildWebBuildLogParams,
   BuildWebClearSessionParams,
   BuildWebCommentParams,
   BuildWebCommitDiffParams,
@@ -857,6 +858,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'browser.viewport': Viewport,
   'browser.wait': Wait,
   'buildWeb.addComment': BuildWebCommentParams,
+  'buildWeb.buildLog': BuildWebBuildLogParams,
   'buildWeb.clearAgentSession': BuildWebClearSessionParams,
   'buildWeb.commitDiff': BuildWebCommitDiffParams,
   'buildWeb.connect': BuildWebConnect,

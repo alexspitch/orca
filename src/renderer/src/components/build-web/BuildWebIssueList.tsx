@@ -1,4 +1,5 @@
-import { Bot, SquareTerminal, Star } from 'lucide-react'
+import { Bot, Maximize2, SquareTerminal, Star } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -24,6 +25,7 @@ function IssueRow({
   users,
   onToggle,
   onOpen,
+  onOpenFull,
   onFavorite,
   onPatch
 }: {
@@ -34,6 +36,7 @@ function IssueRow({
   users: BuildWebUser[]
   onToggle: () => void
   onOpen: () => void
+  onOpenFull: () => void
   onFavorite: () => void
   onPatch: (patch: BuildWebIssuePatch) => void
 }): React.JSX.Element {
@@ -76,10 +79,27 @@ function IssueRow({
           <button
             type="button"
             onClick={onOpen}
-            className="block min-w-0 flex-1 truncate text-left text-sm hover:underline focus-visible:underline focus-visible:outline-none"
+            className="block min-w-0 truncate text-left text-sm hover:underline focus-visible:underline focus-visible:outline-none"
           >
             {issue.title}
           </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                onClick={onOpenFull}
+                aria-label={translate('buildWeb.list.openFull', 'Open {{key}} full screen', {
+                  key: issue.key
+                })}
+              >
+                <Maximize2 />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {translate('buildWeb.detail.fullScreen', 'Open full screen')}
+            </TooltipContent>
+          </Tooltip>
         </div>
       </td>
       <td className="w-40 py-2">
@@ -218,6 +238,7 @@ export function BuildWebIssueList({
                 users={users}
                 onToggle={() => toggleSelected(issue.id)}
                 onOpen={() => openIssue(issue.id)}
+                onOpenFull={() => openIssue(issue.id, true)}
                 onFavorite={() => onFavorite(issue)}
                 onPatch={(change) => void patch(issue, change)}
               />

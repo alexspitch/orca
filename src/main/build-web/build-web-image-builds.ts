@@ -1,10 +1,10 @@
 import type { BuildWebImageBuildArgs } from '../../shared/build-web-image-types'
-import type { BuildWebRun } from '../../shared/build-web-run-types'
+import type { BuildWebLogPiece, BuildWebRun } from '../../shared/build-web-run-types'
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
 import { invalidateBuildWebImageCatalog } from './build-web-images'
 import { buildWebMutation, buildWebRequest } from './build-web-request'
-import { recordOf, textOf, textsOf } from './build-web-response-fields'
+import { numberOf, recordOf, textOf, textsOf } from './build-web-response-fields'
 import { runOf } from './build-web-runs'
 
 // Building one image from Images, after build-web's ImageBuildDialog: a run for the image on the
@@ -75,4 +75,24 @@ export async function getBuildWebRun(runId: string): Promise<BuildWebRun | null>
     await buildWebRequest({ ...credential, path: `/api/runs/${enc(runId)}` }),
     credential.baseUrl
   )
+}
+
+/**
+ * A piece of a build log, as build-web's log dialog reads it. The console accepts its own log paths
+ * and Jenkins URLs; a log Orca resolved onto the console's origin goes back to its path.
+ */
+export async function readBuildWebBuildLog(url: string, offset: number): Promise<BuildWebLogPiece> {
+  const credential = requireBuildWebCredential()
+  const own = url.startsWith(`${credential.baseUrl}/`) ? url.slice(credential.baseUrl.length) : url
+  const answer = recordOf(
+    await buildWebRequest({
+      ...credential,
+      path: `/api/build-log?url=${enc(own)}&offset=${offset}`
+    })
+  )
+  return {
+    text: textOf(answer?.text),
+    next: numberOf(answer?.next, offset),
+    done: answer?.done === true
+  }
 }

@@ -119,6 +119,12 @@ describe('image model', () => {
     expect(history.builds.map((b) => b.tag)).toEqual(['3.1b1', '3.1b2'])
   })
 
+  it('narrows to the rows whose last build is running or failed, and counts them', () => {
+    const running = imagePage(catalog, { page: 0, pageSize: 50, statuses: ['running'] })
+    expect(running.rows.map((r) => r.image).sort()).toEqual(['dc/asr', 'sa/ui'])
+    expect(running.counts.statuses).toEqual({ success: 1, running: 2 })
+  })
+
   it('pages, and an unknown page size falls back to 50', () => {
     const many: ImageCatalog = {
       ...catalog,

@@ -13,6 +13,7 @@ import type {
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
   BuildWebRunParams,
+  BuildWebBuildLogParams,
   BuildWebVersionBranchesParams,
   BuildWebCommitDiffParams,
   BuildWebCommitsParams,
@@ -62,6 +63,7 @@ import {
 import {
   getBuildWebRun,
   listBuildWebVersionBranches,
+  readBuildWebBuildLog,
   startBuildWebImageBuild
 } from '../build-web/build-web-image-builds'
 
@@ -151,6 +153,10 @@ export class RuntimeBuildWebCommands {
 
   buildWebGetRun(args: In<typeof BuildWebRunParams>) {
     return getBuildWebRun(args.runId)
+  }
+
+  buildWebBuildLog(args: In<typeof BuildWebBuildLogParams>) {
+    return readBuildWebBuildLog(args.url, args.offset)
   }
 
   buildWebGetIssueRun(args: In<typeof BuildWebIssueId>) {

@@ -17,6 +17,7 @@ import { BuildWebListState } from '../BuildWebListState'
 import { imageTally } from './issue-card-facts'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { runStatusTone } from '../build-web-tones'
+import { useBuildLogViewer } from '../images/build-log-viewer'
 
 export function IssueBuildTab({
   target,
@@ -175,12 +176,14 @@ export function IssueBuildTab({
                   />
                 </td>
                 <td className="py-2">
-                  {b.url && /^https?:\/\//.test(b.url) ? (
+                  {b.url ? (
                     <button
                       type="button"
                       onClick={() => {
                         if (b.url) {
-                          void window.api.shell.openUrl(b.url)
+                          useBuildLogViewer
+                            .getState()
+                            .show(b.url, `${b.image} (${b.dist}) #${b.number ?? ''}`)
                         }
                       }}
                       className="text-xs text-muted-foreground hover:text-foreground hover:underline"

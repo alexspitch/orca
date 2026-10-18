@@ -13,6 +13,7 @@ import {
   BuildWebImageBuildParams,
   BuildWebImagePushParams,
   BuildWebRunParams,
+  BuildWebBuildLogParams,
   BuildWebVersionBranchesParams,
   BuildWebIssueUpdateParams,
   BuildWebCommitDiffParams,
@@ -55,6 +56,7 @@ export function registerBuildWebHandlers(): void {
     commands.buildWebStartImageBuild(args)
   )
   handle('getRun', BuildWebRunParams, (args) => commands.buildWebGetRun(args))
+  handle('buildLog', BuildWebBuildLogParams, (args) => commands.buildWebBuildLog(args))
   handle('connect', BuildWebConnect, (args) => commands.buildWebConnect(args))
   handle('listIssues', BuildWebIssueQueryParams, (args) => commands.buildWebListIssues(args))
   handle('getIssue', BuildWebIssueId, (args) => commands.buildWebGetIssue(args))

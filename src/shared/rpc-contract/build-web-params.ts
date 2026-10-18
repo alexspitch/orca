@@ -25,6 +25,7 @@ export const BuildWebIssueQueryParams = z.object({
   mine: z.boolean().optional(),
   ai: z.boolean().optional(),
   favorite: z.boolean().optional(),
+  jira: z.boolean().optional(),
   sort: z.enum(BUILD_WEB_ISSUE_SORTS).optional(),
   dir: z.enum(['asc', 'desc']).optional(),
   q: z.string().max(500).optional(),
@@ -96,7 +97,13 @@ const ImageFilters = {
   refresh: z.boolean().optional()
 }
 
-export const BuildWebImagePageParams = z.object(ImageFilters)
+export const BuildWebImagePageParams = z.object({
+  ...ImageFilters,
+  statuses: z
+    .array(z.enum(['success', 'failed', 'running']))
+    .max(3)
+    .optional()
+})
 
 export const BuildWebImageHistoryParams = z.object({
   ...ImageFilters,
@@ -121,6 +128,10 @@ export const BuildWebImagePushParams = z.object({
 })
 
 export const BuildWebRunParams = z.object({ runId: Id })
+export const BuildWebBuildLogParams = z.object({
+  url: required('Missing log', 2048),
+  offset: z.number().int().min(0)
+})
 export const BuildWebVersionBranchesParams = z.object({ product: ShortText })
 export const BuildWebImageBuildParams = z.object({
   image: required('Missing image', 300),

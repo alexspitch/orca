@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
+import { ResizableSplit } from './ResizableSplit'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import type { IssueDetailState } from '../use-build-web-issue-detail'
 import { callBuildWeb } from '../build-web-client'
@@ -133,8 +134,51 @@ export function IssueOverviewTab({
     return null
   }
   return (
-    <div className="flex flex-wrap gap-5">
-      <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-4">
+    <ResizableSplit
+      panel="overview"
+      side="right"
+      defaultWidth={360}
+      minWidth={280}
+      aside={
+        <aside className="flex min-w-0 flex-col gap-4">
+          <Panel title={translate('buildWeb.card.properties', 'Properties')}>
+            <BuildWebIssueFields
+              detail={detail}
+              assignees={state.assignees}
+              versions={state.versions}
+              disabled={state.saving}
+              onSave={(patch) => void state.save(patch)}
+            />
+          </Panel>
+          <Panel title={translate('buildWeb.card.work', 'Work')}>
+            <div className="flex flex-col items-start gap-1 text-xs">
+              {detail.branches.map((branch, n) => (
+                <span key={branch} className="flex items-center gap-1">
+                  <BuildWebToneChip label={branch} tone={null} mono />
+                  {n === 0 ? (
+                    <span className="font-sans text-muted-foreground">
+                      {' '}
+                      — {translate('buildWeb.card.buildBranch', 'build')}
+                    </span>
+                  ) : null}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {translate('buildWeb.card.commitPrefix', 'Commits prefixed {{key}}', {
+                key: detail.key
+              })}
+            </p>
+          </Panel>
+          {detail.jira_key ? (
+            <Panel title={translate('buildWeb.card.jira', 'Jira')}>
+              <JiraStatusLine jiraKey={detail.jira_key} status={detail.jira_status} />
+            </Panel>
+          ) : null}
+        </aside>
+      }
+    >
+      <div className="flex min-w-0 flex-col gap-4">
         <Panel title={translate('buildWeb.detail.description', 'Description')}>
           <BuildWebIssueDescription detail={detail} />
         </Panel>
@@ -146,42 +190,6 @@ export function IssueOverviewTab({
           <CommentComposer target={target} state={state} />
         </Panel>
       </div>
-      <aside className="flex min-w-0 flex-[1_1_320px] flex-col gap-4 xl:max-w-[400px]">
-        <Panel title={translate('buildWeb.card.properties', 'Properties')}>
-          <BuildWebIssueFields
-            detail={detail}
-            assignees={state.assignees}
-            versions={state.versions}
-            disabled={state.saving}
-            onSave={(patch) => void state.save(patch)}
-          />
-        </Panel>
-        <Panel title={translate('buildWeb.card.work', 'Work')}>
-          <div className="flex flex-col items-start gap-1 text-xs">
-            {detail.branches.map((branch, n) => (
-              <span key={branch} className="flex items-center gap-1">
-                <BuildWebToneChip label={branch} tone={null} mono />
-                {n === 0 ? (
-                  <span className="font-sans text-muted-foreground">
-                    {' '}
-                    — {translate('buildWeb.card.buildBranch', 'build')}
-                  </span>
-                ) : null}
-              </span>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {translate('buildWeb.card.commitPrefix', 'Commits prefixed {{key}}', {
-              key: detail.key
-            })}
-          </p>
-        </Panel>
-        {detail.jira_key ? (
-          <Panel title={translate('buildWeb.card.jira', 'Jira')}>
-            <JiraStatusLine jiraKey={detail.jira_key} status={detail.jira_status} />
-          </Panel>
-        ) : null}
-      </aside>
-    </div>
+    </ResizableSplit>
   )
 }

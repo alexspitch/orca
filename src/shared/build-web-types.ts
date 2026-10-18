@@ -123,6 +123,8 @@ export type BuildWebIssueQuery = {
   mine?: boolean
   ai?: boolean
   favorite?: boolean
+  /** Only tasks linked to a Jira ticket. */
+  jira?: boolean
   sort?: BuildWebIssueSort
   dir?: 'asc' | 'desc'
   q?: string

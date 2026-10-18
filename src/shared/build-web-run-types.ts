@@ -1,5 +1,8 @@
 // A task's build in build-web, and its guide and commits, as Orca's full-screen card shows them.
 
+/** A piece of a build log from `offset`; `next` is where the following read starts. */
+export type BuildWebLogPiece = { text: string; next: number; done: boolean }
+
 export type BuildWebRunBuild = {
   image: string
   dist: string

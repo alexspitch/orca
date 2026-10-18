@@ -23,6 +23,7 @@ export const buildWebApi = {
   versionBranches: (args) => ipcRenderer.invoke('buildWeb:versionBranches', args),
   startImageBuild: (args) => ipcRenderer.invoke('buildWeb:startImageBuild', args),
   getRun: (args) => ipcRenderer.invoke('buildWeb:getRun', args),
+  buildLog: (args) => ipcRenderer.invoke('buildWeb:buildLog', args),
   getIssueRun: (args) => ipcRenderer.invoke('buildWeb:getIssueRun', args),
   pushRun: (args) => ipcRenderer.invoke('buildWeb:pushRun', args),
   saveGuide: (args) => ipcRenderer.invoke('buildWeb:saveGuide', args),

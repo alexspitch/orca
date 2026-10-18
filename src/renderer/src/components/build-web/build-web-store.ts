@@ -10,7 +10,6 @@ import {
 } from '../../../../shared/build-web-types'
 import {
   nextSort,
-  QUICK_FILTERS,
   readViewPrefs,
   writeViewPrefs,
   type IssueSortState,
@@ -51,6 +50,7 @@ type BuildWebState = {
   sort: IssueSortState
   page: number
   drawerWidth: number
+  panelWidths: Readonly<Record<string, number>>
   query: string
   /** The statuses shown; empty means any status. */
   statuses: ReadonlySet<BuildWebStatus>
@@ -70,6 +70,7 @@ type BuildWebState = {
   sortBy: (sort: BuildWebIssueSort) => void
   setPage: (page: number) => void
   setDrawerWidth: (width: number) => void
+  setPanelWidth: (panel: string, width: number) => void
   setQuery: (query: string) => void
   toggleStatus: (status: BuildWebStatus) => void
   setStatuses: (statuses: readonly BuildWebStatus[]) => void
@@ -88,6 +89,8 @@ type BuildWebState = {
 const prefs = readViewPrefs()
 
 export const ISSUE_PAGE_SIZE = 50
+/** The quick filters an older host knows as its single `view`. */
+const VIEW_FILTERS = ['mine', 'ai', 'favorite'] as const
 
 export const useBuildWebStore = create<BuildWebState>()((set) => ({
   contextKey: null,
@@ -96,6 +99,7 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   sort: prefs.sort,
   page: 0,
   drawerWidth: prefs.drawerWidth,
+  panelWidths: prefs.panelWidths,
   query: '',
   statuses: new Set(prefs.statuses ?? OPEN_STATUSES),
   product: 'all',
@@ -135,6 +139,12 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
     writeViewPrefs({ drawerWidth })
     set({ drawerWidth })
   },
+  setPanelWidth: (panel, width) =>
+    set((state) => {
+      const panelWidths = { ...state.panelWidths, [panel]: width }
+      writeViewPrefs({ panelWidths })
+      return { panelWidths }
+    }),
   // Why page 0: a narrower filter may have fewer pages than the one being read.
   setQuery: (query) => set({ query, page: 0 }),
   toggleStatus: (status) =>
@@ -189,10 +199,11 @@ export function issueQueryOf(
 ): BuildWebIssueQuery {
   return {
     // Why: a host older than the flags reads only `view`, which holds one quick filter at most.
-    view: QUICK_FILTERS.find((q) => state.quick.has(q)) ?? 'all',
+    view: VIEW_FILTERS.find((q) => state.quick.has(q)) ?? 'all',
     mine: state.quick.has('mine'),
     ai: state.quick.has('ai'),
     favorite: state.quick.has('favorite'),
+    jira: state.quick.has('jira'),
     sort: state.sort.sort,
     dir: state.sort.dir,
     limit: ISSUE_PAGE_SIZE,
