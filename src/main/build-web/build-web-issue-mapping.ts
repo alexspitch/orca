@@ -80,7 +80,14 @@ export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | 
 function commentOf(value: unknown): BuildWebComment | null {
   const v = recordOf(value)
   return v && typeof v.id === 'string'
-    ? { id: v.id, author: textOf(v.author), body: textOf(v.body), created_at: textOf(v.created_at) }
+    ? {
+        id: v.id,
+        author: textOf(v.author),
+        body: textOf(v.body),
+        created_at: textOf(v.created_at),
+        edited_at: textOrNull(v.edited_at),
+        jira_sync: v.jira_sync === true
+      }
     : null
 }
 
@@ -105,8 +112,12 @@ export function issueDetailOf(baseUrl: string, value: unknown): BuildWebIssueDet
     ...row,
     description: textOf(issue.description),
     steps: Array.isArray(issue.steps) ? issue.steps.map(stepOf) : [],
+    stand_id: textOrNull(issue.stand_id),
     stand_name: textOrNull(issue.stand_name),
+    stand_mode: textOf(issue.stand_mode),
+    version: textOf(issue.version),
     jira_status: textOf(issue.jira_status),
+    jira_fix_version: textOf(issue.jira_fix_version),
     created_by: textOf(issue.created_by),
     created_at: textOf(issue.created_at),
     updated_by: textOf(issue.updated_by),

@@ -12,6 +12,7 @@ import {
   TypeChip
 } from '../BuildWebToneChip'
 import { BuildWebSessionBadge } from '../BuildWebSessionBadge'
+import { EditableTitle } from '../BuildWebIssueEditors'
 import { nextStatus } from './issue-card-facts'
 
 /** The full-screen card's head: where it is, what it is, and the moves out of it. */
@@ -59,7 +60,12 @@ export function IssueHeader({
       </nav>
       <div className="flex flex-wrap items-start gap-3">
         <div className="flex min-w-0 flex-1 basis-[28rem] flex-col gap-2">
-          <h1 className="text-lg leading-snug font-semibold">{detail.title}</h1>
+          <EditableTitle
+            detail={detail}
+            saving={saving}
+            onSave={onSave}
+            className="text-lg leading-snug font-semibold"
+          />
           <div className="flex flex-wrap items-center gap-2">
             <StatusChip status={detail.status} />
             <ProductChip product={detail.product} />

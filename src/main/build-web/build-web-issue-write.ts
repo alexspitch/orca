@@ -83,6 +83,44 @@ export function addBuildWebComment(
   })
 }
 
+/** Correct one's own comment; a comment kept in step with Jira is corrected there too. */
+export function editBuildWebComment(
+  id: string,
+  commentId: string,
+  body: string
+): Promise<BuildWebMutationResult<{ jira: BuildWebJiraOutcome | null }>> {
+  return buildWebMutation(async () => {
+    const credential = requireBuildWebCredential()
+    const answer = recordOf(
+      await buildWebRequest({
+        ...credential,
+        method: 'PATCH',
+        path: issuePath(id, `/comments/${encodeURIComponent(commentId)}`),
+        body: { body }
+      })
+    )
+    return { jira: jiraOutcomeOf(answer?.jira) }
+  })
+}
+
+/** Take one's own comment back, its files with it. */
+export function deleteBuildWebComment(
+  id: string,
+  commentId: string
+): Promise<BuildWebMutationResult<{ jira: BuildWebJiraOutcome | null }>> {
+  return buildWebMutation(async () => {
+    const credential = requireBuildWebCredential()
+    const answer = recordOf(
+      await buildWebRequest({
+        ...credential,
+        method: 'DELETE',
+        path: issuePath(id, `/comments/${encodeURIComponent(commentId)}`)
+      })
+    )
+    return { jira: jiraOutcomeOf(answer?.jira) }
+  })
+}
+
 export type BuildWebSessionInput = Pick<
   BuildWebAgentSession,
   'surface_kind' | 'surface_id' | 'worktree_name' | 'execution_host_id' | 'agent' | 'started_at'

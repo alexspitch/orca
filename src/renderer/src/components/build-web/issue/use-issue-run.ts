@@ -46,5 +46,6 @@ export function useIssueRun(
       void load()
     }
   }, [enabled, load])
-  return { run, error, setRun, reload: () => void load() }
+  const reload = useCallback(() => void load(), [load])
+  return { run, error, setRun, reload }
 }

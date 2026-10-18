@@ -1,5 +1,11 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import type { BuildWebIssueRow } from '../../../../../shared/build-web-types'
+import {
+  BUILD_WEB_TESTING_STATUSES,
+  type BuildWebTestingStatus
+} from '../../../../../shared/build-web-run-types'
+import { callBuildWeb } from '../build-web-client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { translate } from '@/i18n/i18n'
 import { useBuildWebStore } from '../build-web-store'
@@ -31,6 +37,8 @@ export function BuildWebIssueFullScreen({
   const openIssue = useBuildWebStore((s) => s.openIssue)
   const state = useBuildWebIssueDetail(issueId)
   const [tab, setTab] = useState<CardTab>('overview')
+  // Where the first build is headed: kept here until the task has a run to store it on.
+  const [firstTesting, setFirstTesting] = useState<BuildWebTestingStatus>('Testing')
   // Why: a tab stays mounted once opened, so a guide draft or a comment survives a tab switch.
   const [visited, setVisited] = useState<ReadonlySet<CardTab>>(() => new Set(['overview']))
   const runsVisible = readsRuns(perms)
@@ -48,6 +56,27 @@ export function BuildWebIssueFullScreen({
     return <BuildWebListState kind="loading" />
   }
   const tally = run ? imageTally(run) : null
+  // A subtask's build is its parent's: it has no Build or Guide of its own.
+  const showRuns = runsVisible && !detail.parent_id
+  const open = (next: CardTab) => {
+    setTab(next)
+    setVisited((seen) => (seen.has(next) ? seen : new Set([...seen, next])))
+  }
+  const testing = {
+    value: run
+      ? (BUILD_WEB_TESTING_STATUSES.find((s) => s === run.testing_status) ?? 'Testing')
+      : firstTesting,
+    onChange: (next: BuildWebTestingStatus) => {
+      if (!run) {
+        setFirstTesting(next)
+        return
+      }
+      void callBuildWeb(target, 'setTestingStatus', { runId: run.id, testingStatus: next }).then(
+        (result) => (result.ok ? setRun(result.value ?? run) : toast.error(result.error)),
+        (failure) => toast.error(failure instanceof Error ? failure.message : String(failure))
+      )
+    }
+  }
   const label = (t: CardTab) => {
     switch (t) {
       case 'overview':
@@ -62,7 +91,7 @@ export function BuildWebIssueFullScreen({
         return translate('buildWeb.card.commits', 'Commits')
     }
   }
-  const tabs = TABS.filter((t) => runsVisible || (t !== 'build' && t !== 'guide'))
+  const tabs = TABS.filter((t) => showRuns || (t !== 'build' && t !== 'guide'))
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <IssueHeader
@@ -75,11 +104,7 @@ export function BuildWebIssueFullScreen({
       />
       <Tabs
         value={tab}
-        onValueChange={(v) => {
-          const next = TABS.find((t) => t === v) ?? 'overview'
-          setTab(next)
-          setVisited((seen) => (seen.has(next) ? seen : new Set([...seen, next])))
-        }}
+        onValueChange={(v) => open(TABS.find((t) => t === v) ?? 'overview')}
         className="flex min-h-0 flex-1 flex-col"
       >
         <div className="px-3 md:px-5">
@@ -93,9 +118,17 @@ export function BuildWebIssueFullScreen({
         </div>
         <div className="scrollbar-sleek min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-5">
           <TabsContent value="overview" forceMount hidden={tab !== 'overview'}>
-            <IssueOverviewTab target={target} state={state} />
+            <IssueOverviewTab
+              target={target}
+              state={state}
+              run={run}
+              showRuns={showRuns}
+              testing={testing}
+              onOpenBuild={() => open('build')}
+              onOpenIssue={(id) => openIssue(id, true)}
+            />
           </TabsContent>
-          {runsVisible && visited.has('build') ? (
+          {showRuns && visited.has('build') ? (
             <TabsContent value="build" forceMount hidden={tab !== 'build'}>
               <IssueBuildTab
                 target={target}
@@ -103,11 +136,12 @@ export function BuildWebIssueFullScreen({
                 run={run}
                 error={runError}
                 canWrite={writesRuns(perms)}
-                onPushed={reloadRun}
+                testing={testing.value}
+                onChanged={reloadRun}
               />
             </TabsContent>
           ) : null}
-          {runsVisible && visited.has('guide') ? (
+          {showRuns && visited.has('guide') ? (
             <TabsContent value="guide" forceMount hidden={tab !== 'guide'}>
               <IssueGuideTab
                 target={target}
@@ -116,6 +150,7 @@ export function BuildWebIssueFullScreen({
                 error={runError}
                 canWrite={writesRuns(perms)}
                 onRun={setRun}
+                onOpenBuild={() => open('build')}
               />
             </TabsContent>
           ) : null}

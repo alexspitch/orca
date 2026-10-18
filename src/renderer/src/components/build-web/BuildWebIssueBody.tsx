@@ -42,32 +42,6 @@ export function BuildWebIssueSteps({
   )
 }
 
-export function BuildWebIssueComments({
-  detail
-}: {
-  detail: BuildWebIssueDetail
-}): React.JSX.Element {
-  if (detail.comments.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        {translate('buildWeb.detail.noComments', 'No comments.')}
-      </p>
-    )
-  }
-  return (
-    <ul className="flex flex-col gap-3">
-      {detail.comments.map((c) => (
-        <li key={c.id} className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {c.author} · {new Date(c.created_at).toLocaleString()}
-          </span>
-          <CommentMarkdown content={c.body} variant="compact" className="text-sm" />
-        </li>
-      ))}
-    </ul>
-  )
-}
-
 export function SectionTitle({ children }: { children: React.ReactNode }): React.JSX.Element {
   return (
     <h3 className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">

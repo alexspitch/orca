@@ -8,30 +8,14 @@ import { translate } from '@/i18n/i18n'
 import { ResizableSplit } from './ResizableSplit'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import type { IssueDetailState } from '../use-build-web-issue-detail'
+import type { BuildWebIssuePatch } from '../../../../../shared/build-web-types'
+import type { BuildWebRun, BuildWebTestingStatus } from '../../../../../shared/build-web-run-types'
 import { callBuildWeb } from '../build-web-client'
-import { BuildWebIssueFields } from '../BuildWebIssueFields'
-import { BuildWebToneChip, JiraStatusLine } from '../BuildWebToneChip'
-import {
-  BuildWebIssueComments,
-  BuildWebIssueDescription,
-  BuildWebIssueSteps,
-  SectionTitle
-} from '../BuildWebIssueBody'
-
-function Panel({
-  title,
-  children
-}: {
-  title: string
-  children: React.ReactNode
-}): React.JSX.Element {
-  return (
-    <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4 text-card-foreground">
-      <SectionTitle>{title}</SectionTitle>
-      {children}
-    </section>
-  )
-}
+import { BuildWebIssueProperties } from '../BuildWebIssueProperties'
+import { BuildWebIssueComments } from '../BuildWebIssueComments'
+import { EditableDescription, EditableSteps } from '../BuildWebIssueEditors'
+import { BuildWebToneChip } from '../BuildWebToneChip'
+import { BuildSummaryCard, JiraCard, OverviewPanel } from './IssueOverviewCards'
 
 function CommentComposer({
   target,
@@ -124,33 +108,50 @@ function CommentComposer({
 
 export function IssueOverviewTab({
   target,
-  state
+  state,
+  run,
+  showRuns,
+  testing,
+  onOpenBuild,
+  onOpenIssue
 }: {
   target: RuntimeClientTarget
   state: IssueDetailState
+  /** The task's run, for the «Build» card; shown only where runs are read and the task is not a subtask. */
+  run: BuildWebRun | null | undefined
+  showRuns: boolean
+  testing: { value: BuildWebTestingStatus; onChange: (value: BuildWebTestingStatus) => void } | null
+  onOpenBuild: () => void
+  onOpenIssue: (id: string) => void
 }) {
   const detail = state.detail
   if (!detail) {
     return null
   }
+  const save = (patch: BuildWebIssuePatch) => void state.save(patch)
   return (
     <ResizableSplit
       panel="overview"
       side="right"
-      defaultWidth={360}
-      minWidth={280}
+      defaultWidth={380}
+      minWidth={300}
       aside={
         <aside className="flex min-w-0 flex-col gap-4">
-          <Panel title={translate('buildWeb.card.properties', 'Properties')}>
-            <BuildWebIssueFields
+          {showRuns ? <BuildSummaryCard run={run} onOpenBuild={onOpenBuild} /> : null}
+          <OverviewPanel title={translate('buildWeb.card.properties', 'Properties')}>
+            <BuildWebIssueProperties
+              target={target}
               detail={detail}
               assignees={state.assignees}
               versions={state.versions}
               disabled={state.saving}
-              onSave={(patch) => void state.save(patch)}
+              onSave={state.save}
+              onReload={state.reload}
+              testing={showRuns ? testing : null}
+              onOpenParent={onOpenIssue}
             />
-          </Panel>
-          <Panel title={translate('buildWeb.card.work', 'Work')}>
+          </OverviewPanel>
+          <OverviewPanel title={translate('buildWeb.card.work', 'Work')}>
             <div className="flex flex-col items-start gap-1 text-xs">
               {detail.branches.map((branch, n) => (
                 <span key={branch} className="flex items-center gap-1">
@@ -169,26 +170,20 @@ export function IssueOverviewTab({
                 key: detail.key
               })}
             </p>
-          </Panel>
-          {detail.jira_key ? (
-            <Panel title={translate('buildWeb.card.jira', 'Jira')}>
-              <JiraStatusLine jiraKey={detail.jira_key} status={detail.jira_status} />
-            </Panel>
-          ) : null}
+          </OverviewPanel>
+          <JiraCard target={target} detail={detail} canCreate onCreated={state.reload} />
         </aside>
       }
     >
       <div className="flex min-w-0 flex-col gap-4">
-        <Panel title={translate('buildWeb.detail.description', 'Description')}>
-          <BuildWebIssueDescription detail={detail} />
-        </Panel>
-        <Panel title={translate('buildWeb.detail.steps', 'Steps')}>
-          <BuildWebIssueSteps detail={detail} />
-        </Panel>
-        <Panel title={translate('buildWeb.detail.comments', 'Comments')}>
-          <BuildWebIssueComments detail={detail} />
+        <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 text-card-foreground">
+          <EditableDescription detail={detail} canEdit saving={state.saving} onSave={save} />
+          <EditableSteps detail={detail} canEdit saving={state.saving} onSave={save} />
+        </section>
+        <OverviewPanel title={translate('buildWeb.detail.comments', 'Comments')}>
+          <BuildWebIssueComments target={target} detail={detail} onChanged={state.reload} />
           <CommentComposer target={target} state={state} />
-        </Panel>
+        </OverviewPanel>
       </div>
     </ResizableSplit>
   )

@@ -23,11 +23,16 @@ export function nextStatus(status: BuildWebIssueStatus, subtask: boolean): Build
   return 'inprogress'
 }
 
-/** Images of a run: how many built and out of how many — an image counts once. */
-export function imageTally(run: BuildWebRun): { ok: number; total: number } {
+/** Images of a run: how many built, how many only failed, out of how many — an image counts once. */
+export function imageTally(run: BuildWebRun): { ok: number; failed: number; total: number } {
   const all = new Set(run.builds.map((b) => b.image))
   const ok = new Set(run.builds.filter((b) => b.status === 'SUCCESS').map((b) => b.image))
-  return { ok: ok.size, total: all.size }
+  const failed = new Set(
+    run.builds
+      .filter((b) => (b.status === 'FAILURE' || b.status === 'ABORTED') && !ok.has(b.image))
+      .map((b) => b.image)
+  )
+  return { ok: ok.size, failed: failed.size, total: all.size }
 }
 
 /** Whether the token owner may read runs (build or history) — the Build and Guide tabs. */
@@ -42,9 +47,20 @@ export function guideShotSlugs(markdown: string): string[] {
   return [...new Set([...markdown.matchAll(SHOT_RE)].map((m) => m[2]))]
 }
 
-/** The guide with each `shot:` image pointed at a blob URL; unknown shots become plain text. */
-export function withShotUrls(markdown: string, urls: Record<string, string>): string {
-  return markdown.replace(SHOT_RE, (_all, alt: string, slug: string) =>
-    urls[slug] ? `![${alt}](${urls[slug]})` : `[${alt || slug}]`
-  )
+/**
+ * The guide with each `shot:` image pointed at a blob URL. A frame not read yet is its caption; a
+ * frame the console does not have says so — the text is written before the pictures exist.
+ */
+export function withShotUrls(
+  markdown: string,
+  urls: Record<string, string>,
+  missing: ReadonlySet<string> = new Set(),
+  notTaken = 'not taken'
+): string {
+  return markdown.replace(SHOT_RE, (_all, alt: string, slug: string) => {
+    if (urls[slug]) {
+      return `![${alt}](${urls[slug]})`
+    }
+    return missing.has(slug) ? `_${notTaken}: ${alt || slug}_` : `[${alt || slug}]`
+  })
 }

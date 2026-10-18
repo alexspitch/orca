@@ -6,6 +6,7 @@ import { RuntimeBrowserScreencastController } from './runtime-browser-screencast
 import { createRuntimeBrowserCommands } from './runtime-browser-commands-factory'
 import { RuntimeJiraCommands } from './runtime-jira-commands'
 import { RuntimeBuildWebCommands } from './runtime-build-web-commands'
+import { RuntimeBuildWebTaskCommands } from './runtime-build-web-task-commands'
 import type { RpcBinarySender } from './rpc/rpc-binary-sender'
 
 type PublicMethods<T> = Pick<T, keyof T>
@@ -26,6 +27,7 @@ type BrowserSurface = Omit<PublicMethods<RuntimeBrowserCommands>, 'browserScreen
 export type RuntimeEdgeCommandSurface = BrowserSurface &
   PublicMethods<RuntimeJiraCommands> &
   PublicMethods<RuntimeBuildWebCommands> &
+  PublicMethods<RuntimeBuildWebTaskCommands> &
   PublicMethods<RuntimeEmulatorCommands>
 
 type ScreencastDependencies = ConstructorParameters<typeof RuntimeBrowserScreencastController>[0]
@@ -141,6 +143,7 @@ function bindNamedMethods<T extends object>(
 export class RuntimeEdgeCommandController {
   private readonly jira: RuntimeJiraCommands
   private readonly buildWeb = new RuntimeBuildWebCommands()
+  private readonly buildWebTask = new RuntimeBuildWebTaskCommands()
   private readonly browser: RuntimeBrowserCommands
   private readonly screencasts: RuntimeBrowserScreencastController
   private readonly emulator: RuntimeEmulatorCommands
@@ -164,6 +167,7 @@ export class RuntimeEdgeCommandController {
     this.surface = {
       ...bindPrefixedMethods(this.jira, 'jira'),
       ...bindPrefixedMethods(this.buildWeb, 'buildWeb'),
+      ...bindPrefixedMethods(this.buildWebTask, 'buildWeb'),
       ...bindNamedMethods(this.browser, BROWSER_COMMAND_NAMES),
       ...bindPrefixedMethods(this.emulator, 'emulator'),
       browserScreencast: (params, options) => this.screencasts.start(params, options)

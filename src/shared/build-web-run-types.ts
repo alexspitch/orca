@@ -40,6 +40,11 @@ export type BuildWebRun = {
   guide_updated_at: string | null
   jira_action: string | null
   jira_url: string | null
+  /** The stand and the UI account the guide's screenshots are taken from. */
+  shot_stand_id: string | null
+  shot_account_id: string | null
+  /** The task the run belongs to; null for a run made outside a task. */
+  issue_id: string | null
   builds: BuildWebRunBuild[]
 }
 
@@ -79,6 +84,8 @@ export type BuildWebLastBuilt = {
   state: 'up-to-date' | 'changed' | 'never-built' | 'no-image' | 'unknown'
   build_number: number | null
   built_at: string | null
+  /** The CI build tag the entry names. */
+  ref: string | null
   published: boolean | null
   changed: string[]
 }
@@ -91,11 +98,22 @@ export type BuildWebFreshnessRef = {
   subject: string
 }
 
+export type BuildWebFreshnessState = 'current' | 'stale' | 'unknown'
+
 export type BuildWebBuildFreshness = {
+  /** image|dist|branch */
   key: string
-  state: 'current' | 'stale' | 'unknown'
+  state: BuildWebFreshnessState
   built_at: string | null
+  built_from: 'build-tag' | 'triggered' | null
+  /** The reference commit's date — what `state` compared the build against. */
   ref_at: string | null
+  /** A later CI build the registry does not serve: publishing it may be all that is missing. */
+  newer_unpublished: {
+    build_number: number
+    at: string | null
+    state: BuildWebFreshnessState
+  } | null
 }
 
 export type BuildWebFreshness = {
@@ -122,3 +140,14 @@ export type BuildWebDetect = {
 }
 
 export type BuildWebAdoptResult = { run: BuildWebRun | null; reason: string | null }
+
+/** A task's first build: the images on its release branch, the rest each on its own branch. */
+export type BuildWebIssueRunArgs = {
+  issueId: string
+  ticket: string
+  branch: string
+  images: string[]
+  extra: BuildWebCombo[]
+  testingStatus: BuildWebTestingStatus
+  detected: Record<string, unknown> | null
+}

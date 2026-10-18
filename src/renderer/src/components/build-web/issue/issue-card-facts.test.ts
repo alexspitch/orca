@@ -26,6 +26,9 @@ describe('card facts', () => {
     expect(withShotUrls(md, { 'login-1': 'blob:1' })).toBe(
       'a ![login](blob:1) b [x_2] ![web](https://e.test/p.png)'
     )
+    expect(withShotUrls(md, {}, new Set(['x_2']), 'not taken')).toBe(
+      'a [login] b _not taken: x_2_ ![web](https://e.test/p.png)'
+    )
   })
 })
 

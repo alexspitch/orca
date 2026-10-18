@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { create } from 'zustand'
 import { useAppStore } from '@/store'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
@@ -9,6 +10,18 @@ const POLL_MS = 60_000
 const FAILED_POLL_MS = 60_000
 
 export type BuildWebBadge = { count: number; capped: boolean }
+
+// Why: a build started from a task's Build tab must show on the Images item at once, like one
+// started from Images (which the tracked runs above already signal).
+const useBadgeKicks = create<{ kicks: number; kick: () => void }>()((set) => ({
+  kicks: 0,
+  kick: () => set((state) => ({ kicks: state.kicks + 1 }))
+}))
+
+/** Read the sidebar numbers again now — something on the console just changed them. */
+export function useBuildWebBadgeKick(): () => void {
+  return useBadgeKicks((s) => s.kick)
+}
 
 /** A build-web number for a sidebar item, or null when unknown (not connected, no access). */
 export function useBuildWebBadge(
@@ -22,6 +35,7 @@ export function useBuildWebBadge(
     (s) => s.activeView === 'build-web' || s.activeView === 'build-web-images'
   )
   const started = useImageBuildRuns((s) => s.runs.length)
+  const kicks = useBadgeKicks((s) => s.kicks)
   useEffect(() => {
     if (!enabled) {
       setBadge(null)
@@ -54,6 +68,6 @@ export function useBuildWebBadge(
       alive = false
       window.clearTimeout(timer)
     }
-  }, [enabled, onBuildWebPage, read, started, target])
+  }, [enabled, kicks, onBuildWebPage, read, started, target])
   return badge
 }

@@ -90,13 +90,27 @@ export type BuildWebIssueRow = {
 
 export type BuildWebStep = { text?: string; action?: string; expected?: string }
 
-export type BuildWebComment = { id: string; author: string; body: string; created_at: string }
+export type BuildWebComment = {
+  id: string
+  author: string
+  body: string
+  created_at: string
+  /** When the author last corrected it; null when never. */
+  edited_at: string | null
+  /** Kept in step with the task's Jira issue: an edit and the delete go there too. */
+  jira_sync: boolean
+}
 
 export type BuildWebIssueDetail = BuildWebIssueRow & {
   description: string
   steps: BuildWebStep[]
+  stand_id: string | null
   stand_name: string | null
+  /** The stand's mode and the product version on it, frozen when read — see refreshIssueVersion. */
+  stand_mode: string
+  version: string
   jira_status: string
+  jira_fix_version: string
   created_by: string
   created_at: string
   updated_by: string
@@ -159,7 +173,19 @@ export type BuildWebIssuePatch = Partial<{
   assignee: string
   version_id: string | null
   for_ai: boolean
+  type: string
+  description: string
+  /** One line per step to reproduce. */
+  steps: { text: string }[]
+  /** Another product clears the release and the stand on the console: they were the old one's. */
+  product: BuildWebProduct
+  stand_id: string | null
+  stand_mode: string
+  version: string
 }>
+
+/** build-web's three kinds of task. */
+export const BUILD_WEB_ISSUE_TYPES = ['bug', 'improvement', 'chore'] as const
 
 /** The console's mirror of a status move or comment to Jira. */
 export type BuildWebJiraOutcome = { ok: true; status: string } | { ok: false; error: string }

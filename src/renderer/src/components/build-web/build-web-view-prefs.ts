@@ -24,7 +24,20 @@ type ViewPrefs = {
   drawerWidth: number
   /** The side panel of each full-screen card tab, by tab. */
   panelWidths: Record<string, number>
+  /** How a task's build list is narrowed — its own, by run id, as build-web keeps it. */
+  runFilters: Record<string, RunFilter>
+  /** Hide the images not built yet, in every build list. */
+  hidePending: boolean
 }
+
+export const RUN_DISTS = ['all', 'rhel', 'redos'] as const
+export const RUN_PRODUCT_FILTERS = ['all', 'sa', 'dc', 'ap', 'storage'] as const
+export type RunFilter = {
+  dist: (typeof RUN_DISTS)[number]
+  product: (typeof RUN_PRODUCT_FILTERS)[number]
+}
+// Why a cap: one entry per build ever opened would grow without end.
+const RUN_FILTERS_KEPT = 30
 
 const STORAGE_KEY = 'orca.buildWeb.viewPrefs'
 const DEFAULTS: ViewPrefs = {
@@ -32,7 +45,24 @@ const DEFAULTS: ViewPrefs = {
   statuses: null,
   sort: { sort: 'updated_at', dir: 'desc' },
   drawerWidth: DRAWER_DEFAULT_WIDTH,
-  panelWidths: {}
+  panelWidths: {},
+  runFilters: {},
+  hidePending: false
+}
+
+function runFiltersOf(raw: unknown): Record<string, RunFilter> {
+  const out: Record<string, RunFilter> = {}
+  if (!raw || typeof raw !== 'object') {
+    return out
+  }
+  for (const [runId, value] of Object.entries(raw).slice(-RUN_FILTERS_KEPT)) {
+    const v = value && typeof value === 'object' ? Object.fromEntries(Object.entries(value)) : {}
+    out[runId] = {
+      dist: RUN_DISTS.find((d) => d === v.dist) ?? 'all',
+      product: RUN_PRODUCT_FILTERS.find((p) => p === v.product) ?? 'all'
+    }
+  }
+  return out
 }
 
 function prefsOf(raw: unknown): ViewPrefs {
@@ -63,6 +93,8 @@ function prefsOf(raw: unknown): ViewPrefs {
     quick,
     statuses,
     panelWidths,
+    runFilters: runFiltersOf(v.runFilters),
+    hidePending: v.hidePending === true,
     sort: sort ? { sort, dir: sortRaw.dir === 'asc' ? 'asc' : 'desc' } : DEFAULTS.sort,
     drawerWidth:
       width === null ? DEFAULTS.drawerWidth : Math.max(DRAWER_MIN_WIDTH, Math.round(width))
@@ -92,4 +124,14 @@ export function nextSort(current: IssueSortState, sort: BuildWebIssueSort): Issu
     return { sort, dir: current.dir === 'asc' ? 'desc' : 'asc' }
   }
   return { sort, dir: sort === 'priority' || sort === 'updated_at' ? 'desc' : 'asc' }
+}
+
+/** A task build's filters; a build never narrowed shows everything. */
+export function readRunFilter(runId: string): RunFilter {
+  return readViewPrefs().runFilters[runId] ?? { dist: 'all', product: 'all' }
+}
+
+export function writeRunFilter(runId: string, filter: RunFilter): void {
+  const { [runId]: _previous, ...rest } = readViewPrefs().runFilters
+  writeViewPrefs({ runFilters: runFiltersOf({ ...rest, [runId]: filter }) })
 }

@@ -7,13 +7,11 @@ import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebIssueDetail } from './use-build-web-issue-detail'
-import { BuildWebIssueFields } from './BuildWebIssueFields'
-import {
-  BuildWebIssueComments,
-  BuildWebIssueDescription,
-  BuildWebIssueSteps,
-  SectionTitle
-} from './BuildWebIssueBody'
+import { BuildWebIssueProperties } from './BuildWebIssueProperties'
+import { BuildWebIssueComments } from './BuildWebIssueComments'
+import { EditableDescription, EditableSteps, EditableTitle } from './BuildWebIssueEditors'
+import { SectionTitle } from './BuildWebIssueBody'
+import { useBuildWebTarget } from './use-build-web-data'
 import { BuildWebSessionBadge } from './BuildWebSessionBadge'
 import { PriorityChip, ProductChip, StatusChip, TypeChip } from './BuildWebToneChip'
 import { useBuildWebDrawerWidth } from './use-build-web-drawer-width'
@@ -27,7 +25,8 @@ export function BuildWebIssueDrawer({
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const fullScreen = useBuildWebStore((s) => s.fullScreen)
   const openIssue = useBuildWebStore((s) => s.openIssue)
-  const { detail, error, assignees, versions, saving, save } = useBuildWebIssueDetail(
+  const { target } = useBuildWebTarget()
+  const { detail, error, assignees, versions, saving, save, reload } = useBuildWebIssueDetail(
     fullScreen ? null : openIssueId
   )
   const open = openIssueId !== null && !fullScreen
@@ -112,26 +111,40 @@ export function BuildWebIssueDrawer({
               {detail.agent_session ? (
                 <BuildWebSessionBadge session={detail.agent_session} />
               ) : null}
-              <BuildWebIssueFields
+              <EditableTitle
                 detail={detail}
-                assignees={assignees}
-                versions={versions}
-                disabled={saving}
+                saving={saving}
+                onSave={(patch) => void save(patch)}
+                className="text-base leading-snug font-semibold"
+              />
+              <section className="flex flex-col gap-2">
+                <SectionTitle>{translate('buildWeb.card.properties', 'Properties')}</SectionTitle>
+                <BuildWebIssueProperties
+                  target={target}
+                  detail={detail}
+                  assignees={assignees}
+                  versions={versions}
+                  disabled={saving}
+                  onSave={save}
+                  onReload={reload}
+                  onOpenParent={(id) => openIssue(id)}
+                />
+              </section>
+              <EditableDescription
+                detail={detail}
+                canEdit
+                saving={saving}
+                onSave={(patch) => void save(patch)}
+              />
+              <EditableSteps
+                detail={detail}
+                canEdit
+                saving={saving}
                 onSave={(patch) => void save(patch)}
               />
               <section className="flex flex-col gap-2">
-                <SectionTitle>
-                  {translate('buildWeb.detail.description', 'Description')}
-                </SectionTitle>
-                <BuildWebIssueDescription detail={detail} />
-              </section>
-              <section className="flex flex-col gap-2">
-                <SectionTitle>{translate('buildWeb.detail.steps', 'Steps')}</SectionTitle>
-                <BuildWebIssueSteps detail={detail} />
-              </section>
-              <section className="flex flex-col gap-2">
                 <SectionTitle>{translate('buildWeb.detail.comments', 'Comments')}</SectionTitle>
-                <BuildWebIssueComments detail={detail} />
+                <BuildWebIssueComments target={target} detail={detail} onChanged={reload} />
               </section>
             </>
           )}

@@ -11,6 +11,15 @@ import { useBuildWebStore } from './build-web-store'
 import { useBuildWebTarget } from './use-build-web-data'
 import { toastJiraOutcome, useConfirmStatusMove } from './use-build-web-issue-write'
 
+const CARD_FIELDS = [
+  'product',
+  'stand_id',
+  'stand_mode',
+  'version',
+  'description',
+  'steps'
+] as const
+
 export type IssueDetailState = {
   detail: BuildWebIssueDetail | null
   error: string | null
@@ -105,6 +114,11 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
           patchRow(current.id, issue)
         }
         toastJiraOutcome(patch, result.value.jira)
+        // Why: the answer is a list row; the card's own fields (stand, its version, the text, the
+        // releases of another product) are read again whole.
+        if (CARD_FIELDS.some((field) => field in patch)) {
+          void load()
+        }
       } catch (failure) {
         onOwnCard(() => current)
         toast.error(failure instanceof Error ? failure.message : String(failure))
@@ -112,8 +126,9 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
         setSavingId((busy) => (busy === current.id ? null : busy))
       }
     },
-    [confirmStatusMove, detail, patchRow, saving, target]
+    [confirmStatusMove, detail, load, patchRow, saving, target]
   )
 
-  return { detail, error, assignees, versions, saving, save, reload: () => void load() }
+  const reload = useCallback(() => void load(), [load])
+  return { detail, error, assignees, versions, saving, save, reload }
 }

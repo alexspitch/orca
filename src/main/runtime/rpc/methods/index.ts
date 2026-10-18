@@ -37,6 +37,7 @@ import { LINEAR_METHODS } from './linear'
 import { LINEAR_AGENT_ACCESS_METHODS } from './linear-agent-access'
 import { JIRA_METHODS } from './jira'
 import { BUILD_WEB_METHODS } from './build-web'
+import { BUILD_WEB_TASK_METHODS } from './build-web-task'
 import { SSH_METHODS } from './ssh'
 import { MANAGED_SERVER_METHODS } from './managed-server'
 import { SPEECH_METHODS } from './speech'
@@ -122,6 +123,7 @@ export const ALL_RPC_METHODS = [
   ...LINEAR_AGENT_ACCESS_METHODS,
   ...JIRA_METHODS,
   ...BUILD_WEB_METHODS,
+  ...BUILD_WEB_TASK_METHODS,
   ...SSH_METHODS,
   ...MANAGED_SERVER_METHODS,
   ...SPEECH_METHODS,

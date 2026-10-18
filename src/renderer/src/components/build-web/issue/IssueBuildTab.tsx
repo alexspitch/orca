@@ -1,42 +1,73 @@
-import { useState } from 'react'
-import { CloudUpload, ExternalLink } from 'lucide-react'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
+import { useEffect, useRef, useState } from 'react'
+import { Loader2 } from 'lucide-react'
+import { formatUiRelativeTimeFromDate } from '@/i18n/relative-time-format'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueDetail } from '../../../../../shared/build-web-types'
-import type { BuildWebRun } from '../../../../../shared/build-web-run-types'
+import type { BuildWebRun, BuildWebTestingStatus } from '../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebListState } from '../BuildWebListState'
-import { imageTally } from './issue-card-facts'
 import { BuildWebToneChip } from '../BuildWebToneChip'
-import { runStatusTone } from '../build-web-tones'
-import { useBuildLogViewer } from '../images/build-log-viewer'
+import { loginOf } from '../build-web-labels'
+import { IssueNewBuild } from './build/IssueNewBuild'
+import { IssueRunProgress } from './build/IssueRunProgress'
 
+const SETTLED = new Set(['success', 'failed', 'partial', 'pending'])
+
+/**
+ * The task's «Build» tab, after build-web's IssueBuilds. A task has one run: without it the tab
+ * looks for images already built after the task's last commit, then offers the form that makes
+ * the run; with it, the run's own build screen.
+ */
 export function IssueBuildTab({
   target,
   detail,
   run,
   error,
   canWrite,
-  onPushed
+  testing,
+  onChanged
 }: {
   target: RuntimeClientTarget
   detail: BuildWebIssueDetail
   run: BuildWebRun | null | undefined
   error: string | null
   canWrite: boolean
-  onPushed: () => void
+  /** Where the first build is headed, chosen in Properties before the task has a run. */
+  testing: BuildWebTestingStatus
+  /** Read the task's run again — it was made, or its status moved. */
+  onChanged: () => void
 }): React.JSX.Element {
-  const [pushing, setPushing] = useState(false)
+  const [adopt, setAdopt] = useState<'busy' | 'none' | null>(null)
+  const adoptedFor = useRef<string | null>(null)
+
+  // Once per task without a run: the console makes one only when something is already built.
+  useEffect(() => {
+    if (run !== null || error || !canWrite || adoptedFor.current === detail.id) {
+      return
+    }
+    adoptedFor.current = detail.id
+    let alive = true
+    setAdopt('busy')
+    callBuildWeb(target, 'adoptBuilt', { id: detail.id, testingStatus: testing })
+      .then((result) => {
+        if (result.ok && result.value.run) {
+          onChanged()
+        }
+        if (alive) {
+          setAdopt(
+            result.ok && !result.value.run && result.value.reason === 'none built' ? 'none' : null
+          )
+        }
+      })
+      .catch(() => alive && setAdopt(null))
+    return () => {
+      alive = false
+    }
+  }, [canWrite, detail.id, error, onChanged, run, target, testing])
+
   if (error) {
-    return <BuildWebListState kind="error" error={error} onRetry={onPushed} />
+    return <BuildWebListState kind="error" error={error} onRetry={onChanged} />
   }
   if (run === undefined) {
     return (
@@ -46,169 +77,70 @@ export function IssueBuildTab({
       />
     )
   }
-  const openInBuildWeb = () => void window.api.shell.openUrl(detail.url)
   if (run === null) {
-    return (
-      <div className="flex flex-col items-start gap-3">
+    if (!canWrite) {
+      return (
         <p className="text-sm text-muted-foreground">
-          {translate('buildWeb.build.none', 'The task has no build yet.')}
+          {translate(
+            'buildWeb.build.noRight',
+            'The task has no build yet, and you have no right to build.'
+          )}
         </p>
-        <Button variant="outline" size="sm" onClick={openInBuildWeb}>
-          {translate('buildWeb.build.inBuildWeb', 'Build in build-web')}
-          <ExternalLink />
-        </Button>
+      )
+    }
+    return (
+      <div className="flex flex-col gap-3">
+        {adopt ? (
+          <p className="flex items-center gap-2 text-xs text-muted-foreground">
+            {adopt === 'busy' ? <Loader2 className="size-3.5 animate-spin" /> : null}
+            {adopt === 'busy'
+              ? translate(
+                  'buildWeb.build.adopting',
+                  'Looking for images already built after the task’s last commit…'
+                )
+              : translate(
+                  'buildWeb.build.noneBuilt',
+                  'No images were built after the task’s last commit.'
+                )}
+          </p>
+        ) : null}
+        <IssueNewBuild
+          target={target}
+          issue={{ id: detail.id, key: detail.key, branch: detail.branches[0] ?? 'master' }}
+          testing={testing}
+          onStarted={onChanged}
+        />
       </div>
     )
   }
-  const tally = imageTally(run)
-  const built = run.builds.filter((b) => b.status === 'SUCCESS')
-  const offersBuildTag = built.some((b) => !b.pushed)
-  const offersMainTag = built.some((b) => !b.main_tag_pushed)
-  const push = async (moveMainTag: boolean): Promise<void> => {
-    setPushing(true)
-    try {
-      const result = await callBuildWeb(target, 'pushRun', { runId: run.id, moveMainTag })
-      if (result.ok) {
-        toast.success(
-          translate('buildWeb.images.pushStarted', 'Push started — build-web publishes the tags.')
-        )
-        onPushed()
-      } else {
-        toast.error(result.error)
-      }
-    } catch (failure) {
-      toast.error(failure instanceof Error ? failure.message : String(failure))
-    } finally {
-      setPushing(false)
-    }
-  }
   return (
-    <div className="flex flex-col gap-4">
-      <section className="flex flex-wrap items-center gap-6 rounded-lg border border-border bg-card p-4 text-sm">
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {translate('buildWeb.build.status', 'Status')}
-          </span>
-          <BuildWebToneChip label={run.status} tone={runStatusTone(run.status)} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {translate('buildWeb.build.branch', 'Branch')}
-          </span>
-          <BuildWebToneChip label={run.branch} tone={null} mono />
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {translate('buildWeb.build.images', 'Images')}
-          </span>
-          <span>
-            {tally.ok} / {tally.total}
-          </span>
-        </div>
-        <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground">
-            {translate('buildWeb.build.testing', 'Testing')}
-          </span>
-          <span>{run.testing_status || '—'}</span>
-        </div>
-        <div className="flex-1" />
-        {canWrite && (offersBuildTag || offersMainTag) ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" disabled={pushing}>
-                <CloudUpload />
-                {translate('buildWeb.images.push', 'Push to registry')}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {offersBuildTag ? (
-                <DropdownMenuItem onSelect={() => void push(false)}>
-                  {translate('buildWeb.images.pushBuildTag', 'Build tag only')}
-                </DropdownMenuItem>
-              ) : null}
-              {offersMainTag ? (
-                <DropdownMenuItem onSelect={() => void push(true)}>
-                  {translate('buildWeb.images.pushBoth', 'Build tag and main tag')}
-                </DropdownMenuItem>
-              ) : null}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
-        <Button variant="outline" size="sm" onClick={openInBuildWeb}>
-          {translate('buildWeb.build.inBuildWeb', 'Build in build-web')}
-          <ExternalLink />
-        </Button>
-      </section>
-      <div className="scrollbar-sleek overflow-x-auto rounded-lg border border-border">
-        <table className="w-full min-w-[760px] table-fixed border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-border text-left text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
-              <th className="px-3 py-2">{translate('buildWeb.images.image', 'Image')}</th>
-              <th className="w-16 py-2">{translate('buildWeb.images.dist', 'dist')}</th>
-              <th className="w-40 py-2">{translate('buildWeb.build.branch', 'Branch')}</th>
-              <th className="w-28 py-2">{translate('buildWeb.build.status', 'Status')}</th>
-              <th className="w-24 py-2">{translate('buildWeb.build.tests', 'Tests')}</th>
-              <th className="w-20 py-2">{translate('buildWeb.images.log', 'Log')}</th>
-              <th className="w-28 py-2 pr-3">
-                {translate('buildWeb.images.registry', 'Registry')}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {run.builds.map((b) => (
-              <tr key={`${b.image}|${b.dist}|${b.branch}`} className="border-b border-border">
-                <td className="truncate px-3 py-2 font-mono text-xs">{b.image}</td>
-                <td className="py-2 text-xs">{b.dist}</td>
-                <td className="py-2 pr-2">
-                  <BuildWebToneChip label={b.branch} tone={null} mono />
-                </td>
-                <td className="py-2">
-                  <BuildWebToneChip label={b.status} tone={runStatusTone(b.status)} />
-                </td>
-                <td className="py-2">
-                  <BuildWebToneChip
-                    label={
-                      b.tests_skipped
-                        ? translate('buildWeb.build.skipped', 'skipped')
-                        : translate('buildWeb.build.ran', 'ran')
-                    }
-                    tone={b.tests_skipped ? 'amber' : 'neutral'}
-                  />
-                </td>
-                <td className="py-2">
-                  {b.url ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (b.url) {
-                          useBuildLogViewer
-                            .getState()
-                            .show(b.url, `${b.image} (${b.dist}) #${b.number ?? ''}`)
-                        }
-                      }}
-                      className="text-xs text-muted-foreground hover:text-foreground hover:underline"
-                    >
-                      #{b.number ?? '—'}
-                    </button>
-                  ) : null}
-                </td>
-                <td className="py-2 pr-3">
-                  {b.status === 'SUCCESS' ? (
-                    <BuildWebToneChip
-                      label={
-                        b.pushed
-                          ? translate('buildWeb.images.pushed', 'pushed')
-                          : translate('buildWeb.images.notPushed', 'not pushed')
-                      }
-                      tone={b.pushed ? 'green' : 'amber'}
-                    />
-                  ) : null}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <h2 className="text-base font-semibold">{translate('buildWeb.card.build', 'Build')}</h2>
+        <BuildWebToneChip label={run.branch} tone={null} mono />
+        <BuildWebToneChip
+          label={
+            run.dist_type === 'both'
+              ? translate('buildWeb.build.bothDists', 'rhel + redos')
+              : run.dist_type
+          }
+          tone={null}
+        />
+        <span className="text-xs text-muted-foreground">
+          {loginOf(run.user)} · {formatUiRelativeTimeFromDate(run.created_at)}
+        </span>
       </div>
+      <IssueRunProgress
+        key={run.id}
+        target={target}
+        run={run}
+        canWrite={canWrite}
+        onStatus={(status) => {
+          if (SETTLED.has(status)) {
+            onChanged()
+          }
+        }}
+      />
     </div>
   )
 }

@@ -157,7 +157,7 @@ export default function BuildWebPage(): React.JSX.Element {
       ) : !connected ? (
         <BuildWebConnect target={target} onConnected={(next) => setStatus(contextKey, next)} />
       ) : fullScreen && openIssueId ? (
-        <BuildWebIssueFullScreen onTakeToWork={setTaking} />
+        <BuildWebIssueFullScreen key={openIssueId} onTakeToWork={setTaking} />
       ) : (
         <>
           <BuildWebFilters />

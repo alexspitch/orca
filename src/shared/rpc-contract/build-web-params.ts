@@ -1,5 +1,9 @@
 import { z } from 'zod'
-import { BUILD_WEB_ISSUE_SORTS, BUILD_WEB_STATUSES } from '../build-web-types'
+import {
+  BUILD_WEB_ISSUE_SORTS,
+  BUILD_WEB_ISSUE_TYPES,
+  BUILD_WEB_STATUSES
+} from '../build-web-types'
 import { BUILD_WEB_IMAGE_SORTS } from '../build-web-image-types'
 
 // One object per call: the web client's generic proxy sends `buildWeb.<name>(args)`,
@@ -48,11 +52,29 @@ export const BuildWebIssueUpdateParams = z.object({
       priority: z.number().int().min(1).max(5).optional(),
       assignee: ShortText.optional(),
       version_id: z.union([ShortText, z.null()]).optional(),
-      for_ai: z.boolean().optional()
+      for_ai: z.boolean().optional(),
+      type: z.enum(BUILD_WEB_ISSUE_TYPES).optional(),
+      product: Product.optional(),
+      stand_id: z.union([Id, z.null()]).optional(),
+      stand_mode: ShortText.optional(),
+      version: ShortText.optional(),
+      description: z.string().max(100_000).optional(),
+      steps: z
+        .array(z.object({ text: z.string().max(4000) }))
+        .max(200)
+        .optional()
     })
     // Why strip, not strict: a newer client may send a field this host does not know yet.
     .strip()
 })
+
+export const BuildWebCommentEditParams = z.object({
+  id: Id,
+  commentId: Id,
+  body: required('Write a comment', 4000)
+})
+
+export const BuildWebCommentDeleteParams = z.object({ id: Id, commentId: Id })
 
 export const BuildWebFavoriteParams = z.object({ id: Id, on: z.boolean() })
 

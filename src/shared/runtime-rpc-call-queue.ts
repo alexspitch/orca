@@ -1,5 +1,6 @@
 import { abortSignalReason } from './abort-signal-reason'
 import { REMOTE_RUNTIME_MAX_PREPARED_RPC_BYTES } from './remote-runtime-memory-limits'
+import { BUILD_WEB_LONG_METHODS } from './build-web-timeouts'
 
 const DEFAULT_REMOTE_RUNTIME_CALL_CONCURRENCY = 8
 const DEFAULT_REMOTE_RUNTIME_BACKGROUND_CALL_CONCURRENCY = 2
@@ -63,7 +64,8 @@ function isLongWaitRuntimeMethod(method: string): boolean {
     // build-web: a git fetch on the console, or its whole build catalog.
     method === 'buildWeb.issueCommits' ||
     method === 'buildWeb.listImages' ||
-    method === 'buildWeb.listImageBuilds'
+    method === 'buildWeb.listImageBuilds' ||
+    (method.startsWith('buildWeb.') && BUILD_WEB_LONG_METHODS.has(method.slice('buildWeb.'.length)))
   )
 }
 

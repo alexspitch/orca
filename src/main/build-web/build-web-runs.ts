@@ -73,6 +73,9 @@ export function runOf(value: unknown, baseUrl: string): BuildWebRun | null {
     guide_updated_at: textOrNull(v.guide_updated_at),
     jira_action: textOrNull(v.jira_action),
     jira_url: textOrNull(v.jira_url),
+    shot_stand_id: textOrNull(v.shot_stand_id),
+    shot_account_id: textOrNull(v.shot_account_id),
+    issue_id: textOrNull(v.issue_id),
     builds: (Array.isArray(v.builds) ? v.builds : [])
       .map((b) => buildOf(b, baseUrl))
       .filter((b): b is BuildWebRunBuild => b !== null)
