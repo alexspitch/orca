@@ -3,7 +3,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { customBuildEnvironment } from './build-custom.mjs'
+import { customBaseVersion, customBuildEnvironment, orcadTemplateTargets } from './build-custom.mjs'
 import { fileNamesOf, readNewestManifests } from './publish-custom-build.mjs'
 
 const require = createRequire(import.meta.url)
@@ -18,6 +18,31 @@ describe('custom build environment', () => {
     expect(env.ORCA_UPDATE_RELEASE_NOTES_URL).toBe('https://tw.spitch-dev.ai:8585/orca')
     expect(env.ORCA_LOCAL_BUILD_VERSION).toBe(identity.version)
     expect(env.CSC_NAME).toBe('Orca Custom Builds')
+  })
+
+  it('versions above the newest upstream release, so hosts on it do not see a downgrade', () => {
+    expect(customBaseVersion('1.4.214', ['v1.4.224', 'v1.4.215', 'v1.4.230-rc.1', 'x'])).toBe(
+      '1.4.225'
+    )
+    expect(customBaseVersion('1.5.0', ['v1.4.224'])).toBe('1.5.0')
+    expect(customBaseVersion('1.4.214', [])).toBe('1.4.214')
+  })
+
+  it('requires the orcad slot the build deploys and ships every slot it has', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'orca-prebuilds-'))
+    try {
+      expect(() => orcadTemplateTargets(dir, 'linux-x64-glibc')).toThrow(/linux-x64-glibc/)
+      writeFileSync(
+        join(dir, 'manifest.json'),
+        JSON.stringify({ slots: { 'linux-x64-glibc': {}, 'darwin-arm64': {} } })
+      )
+      expect(orcadTemplateTargets(dir, 'linux-x64-glibc')).toEqual([
+        'linux-x64-glibc',
+        'darwin-arm64'
+      ])
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
   })
 
   it('follows BW_URL and leaves Linux unsigned', () => {
