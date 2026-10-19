@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshCw, X } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,10 @@ import { useBuildWebStatus, useBuildWebTarget } from '../use-build-web-data'
 import { useBuildWebPageEscape } from '../use-build-web-page-escape'
 import { BuildWebConnect } from '../BuildWebConnect'
 import { BuildWebListState } from '../BuildWebListState'
+import { BuildLogDialog } from '../images/BuildLogDialog'
+import { ImagePushProgress } from '../images/ImagePushProgress'
+import { writesRuns } from '../issue/issue-card-facts'
+import { TestingIssueDialog } from './TestingIssueDialog'
 import { TestingTable } from './TestingTable'
 
 const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
@@ -44,11 +48,23 @@ function checkNote(result: BuildWebWatchTick): string {
 }
 
 /** The watch, after build-web's WatchView: what is left, a pass on demand, and the task behind a row. */
-function TestingView({ target }: { target: RuntimeClientTarget }): React.JSX.Element {
+function TestingView({
+  target,
+  perms
+}: {
+  target: RuntimeClientTarget
+  perms: string[]
+}): React.JSX.Element {
   const [state, setState] = useState<BuildWebWatchState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const [note, setNote] = useState<string | null>(null)
+  const [branches, setBranches] = useState<{ name: string; fromTree: boolean }[]>([])
+  // Empty until read (or on an older host): every build started here then runs the tests.
+  const treeBranches = useMemo(
+    () => new Set(branches.filter((b) => b.fromTree).map((b) => b.name)),
+    [branches]
+  )
 
   const load = useCallback(async () => {
     try {
@@ -61,6 +77,9 @@ function TestingView({ target }: { target: RuntimeClientTarget }): React.JSX.Ele
   useEffect(() => {
     void load()
   }, [load])
+  useEffect(() => {
+    void callBuildWeb(target, 'branches').then(setBranches, () => setBranches([]))
+  }, [target])
 
   const checkNow = async () => {
     setChecking(true)
@@ -81,9 +100,9 @@ function TestingView({ target }: { target: RuntimeClientTarget }): React.JSX.Ele
     }
   }
 
+  // Over the list, not on Issues: the list keeps its place, and closing the card reads it again.
   const openTask = (issueId: string, tab: BuildWebCardTab) => {
-    useBuildWebStore.getState().openIssue(issueId, tab !== 'overview', tab)
-    useAppStore.getState().openBuildWebPage()
+    useBuildWebStore.getState().openIssue(issueId, true, tab)
   }
 
   if (state === null) {
@@ -155,6 +174,7 @@ function TestingView({ target }: { target: RuntimeClientTarget }): React.JSX.Ele
           </Button>
         </div>
       ) : null}
+      <ImagePushProgress target={target} onSettled={() => void load()} />
       {state.entries.length === 0 ? (
         <p className="px-3 py-10 text-center text-sm text-muted-foreground">
           {translate(
@@ -164,8 +184,17 @@ function TestingView({ target }: { target: RuntimeClientTarget }): React.JSX.Ele
           )}
         </p>
       ) : (
-        <TestingTable entries={state.entries} done={done} onOpenTask={openTask} />
+        <TestingTable
+          entries={state.entries}
+          done={done}
+          onOpenTask={openTask}
+          target={target}
+          canWrite={writesRuns(perms)}
+          treeBranches={treeBranches}
+          onChanged={() => void load()}
+        />
       )}
+      <TestingIssueDialog onClosed={() => void load()} />
     </div>
   )
 }
@@ -208,7 +237,7 @@ export default function BuildWebTestingPage(): React.JSX.Element {
       ) : !connected ? (
         <BuildWebConnect target={target} onConnected={(next) => setStatus(contextKey, next)} />
       ) : status.perms.includes('watch') ? (
-        <TestingView target={target} />
+        <TestingView target={target} perms={status.perms} />
       ) : (
         <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
           {translate(
@@ -217,6 +246,7 @@ export default function BuildWebTestingPage(): React.JSX.Element {
           )}
         </p>
       )}
+      <BuildLogDialog target={target} />
     </main>
   )
 }

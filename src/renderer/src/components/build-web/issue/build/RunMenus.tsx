@@ -49,11 +49,16 @@ function buildOptions(): { pushAfter: BuildWebPushAfter; title: string; hint: st
   ]
 }
 
+/** Held by the caller when the menu's rows have to be read before it opens. */
+type MenuOpen = { open?: boolean; onOpenChange?: (open: boolean) => void }
+
 export function BuildMenu({
   combos,
   treeBranches,
   disabled,
   onBuild,
+  open,
+  onOpenChange,
   children
 }: {
   combos: BuildWebCombo[]
@@ -62,7 +67,7 @@ export function BuildMenu({
   onBuild: (combos: BuildWebCombo[], pushAfter: BuildWebPushAfter, skipTests: boolean) => void
   /** The trigger. */
   children: React.ReactNode
-}): React.JSX.Element {
+} & MenuOpen): React.JSX.Element {
   // «Run tests» is off again every time the menu closes, as in build-web.
   const [runTests, setRunTests] = useState(false)
   const tests = testsChoice(
@@ -71,7 +76,15 @@ export function BuildMenu({
     runTests
   )
   return (
-    <DropdownMenu onOpenChange={(open) => !open && setRunTests(false)}>
+    <DropdownMenu
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) {
+          setRunTests(false)
+        }
+        onOpenChange?.(next)
+      }}
+    >
       <DropdownMenuTrigger asChild disabled={disabled}>
         {children}
       </DropdownMenuTrigger>
@@ -115,16 +128,18 @@ export function PushMenu({
   cells,
   disabled,
   onPush,
+  open,
+  onOpenChange,
   children
 }: {
   cells: Cell[]
   disabled?: boolean
   onPush: (cells: Cell[], moveMainTag: boolean) => void
   children: React.ReactNode
-}): React.JSX.Element {
+} & MenuOpen): React.JSX.Element {
   const allPushed = cells.every((c) => c.pushed)
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild disabled={disabled}>
         {children}
       </DropdownMenuTrigger>

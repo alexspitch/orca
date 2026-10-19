@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildWebWatchEntry } from '../../../../../shared/build-web-watch-types'
+import type { Cell } from '../issue/build/run-cells'
 import {
   autoKindOf,
   jiraStatusShown,
   sortWatchEntries,
   taskStatusOf,
+  workCells,
   workChips,
   workTotal
 } from './testing-rows'
@@ -111,5 +113,41 @@ describe('auto-publish', () => {
     expect(autoKindOf(entry({ auto: 'console' }))).toBe('console')
     expect(autoKindOf(entry({ auto: 'none' }))).toBe('off')
     expect(autoKindOf(entry({}))).toBeNull()
+  })
+})
+
+describe('workCells', () => {
+  const cell = (image: string, patch: Partial<Cell>): Cell => ({
+    image,
+    dist: 'rhel',
+    branch: 'origin/dc-release-3.0',
+    state: 'done',
+    number: 1,
+    url: null,
+    status: 'SUCCESS',
+    tags: [`docker.spitch.ch/${image}:3.0b1`, `docker.spitch.ch/${image}:3.0`],
+    pushed: false,
+    mainTagSkipped: false,
+    skippedTags: [],
+    startedAt: null,
+    testsSkipped: false,
+    ...patch
+  })
+  const cells = [
+    cell('dc/never', { state: 'pending', status: null, tags: [] }),
+    cell('dc/built', {}),
+    cell('dc/tag', { pushed: true, mainTagSkipped: true }),
+    cell('dc/going', { state: 'building', status: null }),
+    cell('dc/out', { pushed: true }),
+    cell('dc/broken', { status: 'FAILURE' })
+  ]
+  const images = (kind: Parameters<typeof workCells>[1]) =>
+    workCells(cells, kind).map((c) => c.image)
+
+  it('picks the rows each chip stands for, as the console counts them', () => {
+    expect(images('build')).toEqual(['dc/never'])
+    expect(images('push')).toEqual(['dc/built'])
+    expect(images('tag')).toEqual(['dc/tag'])
+    expect(images('flight')).toEqual(['dc/going'])
   })
 })

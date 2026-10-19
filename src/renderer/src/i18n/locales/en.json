@@ -20404,7 +20404,13 @@
       "search": "Search by key or title",
       "quick": "Quick filters",
       "toWork": "To work",
-      "statusCount": "{{count}} statuses"
+      "statusCount": "{{count}} statuses",
+      "foldAll": "Hide subtasks",
+      "unfoldAll": "Show subtasks"
+    },
+    "subtasks": {
+      "blocked": "Open subtasks: {{count}} — the task will not close or go out to deploy.",
+      "none": "No subtasks. A problem found while checking the task is filed under it in build-web."
     },
     "detail": {
       "noDescription": "No description.",
@@ -20454,7 +20460,10 @@
       "changePriority": "Change the priority of {{key}}",
       "assignee": "Assignee",
       "changeAssignee": "Change the assignee of {{key}}",
-      "openFull": "Open {{key}} full screen"
+      "openFull": "Open {{key}} full screen",
+      "foldFamily": "Hide the subtasks of {{key}}",
+      "unfoldFamily": "Show {{count}} subtask(s) of {{key}}",
+      "subtaskCount": "Subtasks: {{count}}, open: {{open}}"
     },
     "state": {
       "loading": "Loading tasks…",
@@ -20593,6 +20602,7 @@
       "build": "Build",
       "guide": "Guide & Jira",
       "commits": "Commits",
+      "subtasks": "Subtasks {{count}}",
       "jira": "Jira",
       "path": "Path",
       "byline": "{{author}} · created {{created}}",
@@ -21126,6 +21136,13 @@
       "toPush": "{{count}} to push",
       "versionTag": "{{count}} version tag",
       "versionTagHint": "{{where}} — published under the build tag only; the version tag moves on {{done}}",
+      "toBuildAct": "{{where}} — never built; click to build it now and choose what to publish",
+      "toPushAct": "{{where}} — built, not in the registry; click to publish",
+      "versionTagAct": "{{where}} — published under the build tag only; click to move the version tag now (never onto an older build)",
+      "buildingHint": "{{where}} — click to follow the build",
+      "nothingLeft": "Nothing left to do here — the list is read again.",
+      "buildStarted": "Build started on build-web.",
+      "cardHint": "The task card, over the Testing list",
       "work": "Image work left"
     }
   },

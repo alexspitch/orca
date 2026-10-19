@@ -3,6 +3,7 @@ import type {
   BuildWebWatchEntry,
   BuildWebWatchRun
 } from '../../../../../shared/build-web-watch-types'
+import { isSelectable, unpushedCells, type Cell } from '../issue/build/run-cells'
 
 // The rows of the «Testing» page: what each task has left to do with its images, in what order.
 
@@ -24,6 +25,22 @@ export function workChips(run: BuildWebWatchRun | null): WorkChip[] {
     { kind: 'flight', count: run.in_flight }
   ]
   return chips.filter((chip) => chip.count > 0)
+}
+
+/** The rows of the run a chip stands for, read when its menu opens: the same rules the console counts by. */
+export function workCells(cells: Cell[], kind: WorkKind): Cell[] {
+  switch (kind) {
+    case 'build':
+      return cells.filter((c) => c.state === 'pending')
+    case 'push':
+      return unpushedCells(cells)
+    case 'tag':
+      return cells.filter(
+        (c) => isSelectable(c) && c.status === 'SUCCESS' && c.pushed && c.mainTagSkipped
+      )
+    case 'flight':
+      return cells.filter((c) => c.state === 'queued' || c.state === 'building')
+  }
 }
 
 /** Every image still to build, publish or finish: the number the work column sorts by. */

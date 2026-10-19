@@ -24,7 +24,7 @@ import { BuildWebListState } from './BuildWebListState'
 import { BuildWebIssueDrawer } from './BuildWebIssueDrawer'
 import { BuildWebSelectionBar } from './BuildWebSelectionBar'
 import { BuildWebTakeToWorkDialog } from './BuildWebTakeToWorkDialog'
-import { openNamedTaskSession, taskSessionName } from './build-web-task-session'
+import { useTakeToWork } from './use-take-to-work'
 import { BuildWebIssueFullScreen } from './issue/BuildWebIssueFullScreen'
 import { BuildLogDialog } from './images/BuildLogDialog'
 
@@ -57,13 +57,7 @@ export default function BuildWebPage(): React.JSX.Element {
   const spinning = useDeferred(loading)
   const fullScreen = useBuildWebStore((s) => s.fullScreen)
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
-  const [taking, setTaking] = useState<BuildWebIssueRow[] | null>(null)
-  // Why: a session already named after the task is where its work goes on, not a second one.
-  const takeToWork = (picked: BuildWebIssueRow[]): void => {
-    if (!openNamedTaskSession(taskSessionName(picked.map((issue) => issue.key)))) {
-      setTaking(picked)
-    }
-  }
+  const { taking, takeToWork, closeTaking } = useTakeToWork()
 
   // Why on leaving: coming back to Issues shows the list, not the card that was open before.
   useEffect(() => () => useBuildWebStore.getState().openIssue(null), [])
@@ -179,7 +173,7 @@ export default function BuildWebPage(): React.JSX.Element {
         </>
       )}
       <BuildWebIssueDrawer onTakeToWork={takeToWork} />
-      <BuildWebTakeToWorkDialog issues={taking} onClose={() => setTaking(null)} />
+      <BuildWebTakeToWorkDialog issues={taking} onClose={closeTaking} />
       <BuildLogDialog target={target} />
     </main>
   )

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type {
   BuildWebWatchEntry,
   BuildWebWatchRun
 } from '../../../../../shared/build-web-watch-types'
+import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import type { BuildWebCardTab } from '../build-web-store'
 import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip, StatusChip } from '../BuildWebToneChip'
@@ -21,6 +21,7 @@ import {
   type WorkChip,
   type WorkKind
 } from './testing-rows'
+import { TestingWorkChip } from './TestingWorkChip'
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '—')
 const openUrl = (url: string) => void window.api.shell.openUrl(url)
@@ -47,24 +48,45 @@ function workLabel({ kind, count }: WorkChip): string {
   }
 }
 
-function workHint(chip: WorkChip, run: BuildWebWatchRun, done: string): string {
+function workHint(chip: WorkChip, run: BuildWebWatchRun, done: string, acts: boolean): string {
   const where = `${run.branch} · ${when(run.created_at)}`
   switch (chip.kind) {
     case 'build':
-      return translate(
-        'buildWeb.testing.toBuildHint',
-        '{{where}} — never built; built on the move to {{done}}',
-        { where, done }
-      )
-    case 'tag':
-      return translate(
-        'buildWeb.testing.versionTagHint',
-        '{{where}} — published under the build tag only; the version tag moves on {{done}}',
-        { where, done }
-      )
+      return acts
+        ? translate(
+            'buildWeb.testing.toBuildAct',
+            '{{where}} — never built; click to build it now and choose what to publish',
+            { where }
+          )
+        : translate(
+            'buildWeb.testing.toBuildHint',
+            '{{where}} — never built; built on the move to {{done}}',
+            { where, done }
+          )
     case 'push':
+      return acts
+        ? translate(
+            'buildWeb.testing.toPushAct',
+            '{{where}} — built, not in the registry; click to publish',
+            { where }
+          )
+        : where
+    case 'tag':
+      return acts
+        ? translate(
+            'buildWeb.testing.versionTagAct',
+            '{{where}} — published under the build tag only; click to move the version tag now (never onto an older build)',
+            { where }
+          )
+        : translate(
+            'buildWeb.testing.versionTagHint',
+            '{{where}} — published under the build tag only; the version tag moves on {{done}}',
+            { where, done }
+          )
     case 'flight':
-      return where
+      return translate('buildWeb.testing.buildingHint', '{{where}} — click to follow the build', {
+        where
+      })
   }
 }
 
@@ -83,17 +105,26 @@ function autoLabel(kind: AutoKind | null, done: string): string {
   }
 }
 
+/** What a row's chips need to act: who asks, whether they may write runs, and where to report back. */
+type ChipContext = {
+  target: RuntimeClientTarget
+  canWrite: boolean
+  treeBranches: ReadonlySet<string>
+  onChanged: () => void
+}
+
 /** The watched tasks, after build-web's WatchView, with the work left counted per kind. */
 export function TestingTable({
   entries,
   done,
-  onOpenTask
+  onOpenTask,
+  ...chips
 }: {
   entries: BuildWebWatchEntry[]
   /** The statuses the images go out on, as the console names them. */
   done: string
   onOpenTask: (issueId: string, tab: BuildWebCardTab) => void
-}): React.JSX.Element {
+} & ChipContext): React.JSX.Element {
   const [sorting, setSorting] = useState<Sorting>({ sort: null, dir: 'asc' })
   const onSort = (sort: WatchSort) =>
     setSorting((current) =>
@@ -164,6 +195,7 @@ export function TestingTable({
               done={done}
               onOpenTask={onOpenTask}
               onOpenWork={openWork}
+              chips={chips}
             />
           ))}
         </tbody>
@@ -176,12 +208,14 @@ function TestingRow({
   entry,
   done,
   onOpenTask,
-  onOpenWork
+  onOpenWork,
+  chips
 }: {
   entry: BuildWebWatchEntry
   done: string
   onOpenTask: (issueId: string, tab: BuildWebCardTab) => void
   onOpenWork: (entry: BuildWebWatchEntry, run: BuildWebWatchRun) => void
+  chips: ChipContext
 }): React.JSX.Element {
   const key = taskKeyOf(entry)
   const status = taskStatusOf(entry)
@@ -230,20 +264,17 @@ function TestingRow({
         {run ? (
           <span className="flex flex-wrap items-center gap-1">
             {workChips(run).map((chip) => (
-              <Tooltip key={chip.kind}>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    onClick={() => onOpenWork(entry, run)}
-                    className="rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                  >
-                    <BuildWebToneChip label={workLabel(chip)} tone={WORK_TONE[chip.kind]} />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent side="top" sideOffset={4}>
-                  {workHint(chip, run, done)}
-                </TooltipContent>
-              </Tooltip>
+              <TestingWorkChip
+                key={chip.kind}
+                {...chips}
+                run={run}
+                chip={chip}
+                label={workLabel(chip)}
+                hint={workHint(chip, run, done, chips.canWrite && chip.kind !== 'flight')}
+                tone={WORK_TONE[chip.kind]}
+                onOpen={() => onOpenWork(entry, run)}
+                onStarted={chips.onChanged}
+              />
             ))}
           </span>
         ) : (
