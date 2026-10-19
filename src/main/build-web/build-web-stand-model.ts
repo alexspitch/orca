@@ -11,6 +11,8 @@ import { recordOf, recordsOf, textOf, textOrNull, textsOf } from './build-web-re
 // build-web's answers about stands, narrowed; and the cards grouped into the stands people mean.
 
 const PASSWORDS: readonly BuildWebStandAccount['password'][] = ['set', 'missing', 'broken']
+// Why: the page is about the products' own stands; storage and tools cards are left out.
+const STAND_PAGE_PRODUCTS: ReadonlySet<string> = new Set(['ap', 'dc', 'sa'])
 
 function lockOf(value: unknown): BuildWebStandLock | null {
   const lock = recordOf(value)
@@ -58,10 +60,16 @@ function groupName(cards: BuildWebStandCard[]): string {
   return commonName(names) || names.join(' · ')
 }
 
-/** One stand per host, directory and branch: the cards over it are products of one machine. */
+/**
+ * One stand per host, directory and branch: the cards over it are products of one machine. Only
+ * the AP, DC and SA cards count.
+ */
 export function standGroupsOf(cards: BuildWebStandCard[]): BuildWebStandGroup[] {
   const byKey = new Map<string, BuildWebStandCard[]>()
   for (const card of cards) {
+    if (!card.product || !STAND_PAGE_PRODUCTS.has(card.product)) {
+      continue
+    }
     const key = JSON.stringify([card.sshHost, card.dir, card.branch ?? ''])
     byKey.set(key, [...(byKey.get(key) ?? []), card])
   }
@@ -100,6 +108,7 @@ export function standServiceOf(value: Record<string, unknown>): BuildWebStandSer
     status: textOf(value.status),
     container: textOrNull(value.container),
     build: textOf(value.build) || null,
+    imageCreatedAt: textOf(value.image_created) || null,
     startedAt: textOf(value.started_at) || null
   }
 }

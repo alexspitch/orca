@@ -46,6 +46,8 @@ export type BuildWebStandService = {
   container: string | null
   /** The immutable `<ver>b<N>` tag the container runs; null when unknown. */
   build: string | null
+  /** When the image the container runs was built; null from an older build-web. */
+  imageCreatedAt: string | null
   startedAt: string | null
 }
 

@@ -1,14 +1,14 @@
-import type { WebContents } from 'electron'
+import type { InputEvent, WebContents } from 'electron'
 import { browserManager } from './browser-manager'
 
 // Sign a freshly opened browser page in: armed for one page id before its tab exists, it fills the
-// login form once when that page lands on it. The credentials never reach the renderer.
+// login form once when that page lands on it by itself. The credentials never reach the renderer.
 
 export type LoginAutofillCredentials = {
   username: string
   password: string
-  /** Only a login page on this hostname gets them; the port may differ (an auth portal). */
-  hostname: string
+  /** The UI being signed in to; only its own login page, or its auth portal's, gets them. */
+  uiUrl: string
 }
 
 type Armed = LoginAutofillCredentials & {
@@ -18,20 +18,46 @@ type Armed = LoginAutofillCredentials & {
 }
 
 const ARMED_MS = 3 * 60_000
+// Why: a login page reached after the reader acted in the tab (a logout) is theirs, not the tab's
+// opening sign-in — filling it would put them straight back into the app they just left.
+const READER_ACTIONS: ReadonlySet<InputEvent['type']> = new Set([
+  'mouseDown',
+  'rawKeyDown',
+  'keyDown',
+  'touchStart',
+  'pointerDown',
+  'gestureTap'
+])
 const armed = new Map<string, Armed>()
 let subscribed = false
 
-/** The auth portal's own login page, not one that came back with a refusal. */
-export function isLoginPage(url: string, hostname: string): boolean {
+function originOf(url: string | null): string | null {
+  try {
+    return url ? new URL(url).origin : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * The login page of this UI, not one that came back with a refusal: on the UI's own host (any
+ * port), or an auth portal elsewhere whose OAuth `redirect_uri` leads back to the UI.
+ */
+export function isLoginPage(url: string, uiUrl: string): boolean {
   let parsed: URL
+  let ui: URL
   try {
     parsed = new URL(url)
+    ui = new URL(uiUrl)
   } catch {
     return false
   }
+  const forThisUi =
+    parsed.hostname === ui.hostname ||
+    originOf(parsed.searchParams.get('redirect_uri')) === ui.origin
   return (
     (parsed.protocol === 'https:' || parsed.protocol === 'http:') &&
-    parsed.hostname === hostname &&
+    forThisUi &&
     /\/login(\/|$)/.test(parsed.pathname) &&
     !parsed.searchParams.has('error_message')
   )
@@ -85,7 +111,7 @@ function watchGuest(browserPageId: string, guest: WebContents): void {
     return
   }
   const tryFill = (): void => {
-    if (guest.isDestroyed() || !isLoginPage(guest.getURL(), entry.hostname)) {
+    if (guest.isDestroyed() || !isLoginPage(guest.getURL(), entry.uiUrl)) {
       return
     }
     disarm(browserPageId)
@@ -94,15 +120,22 @@ function watchGuest(browserPageId: string, guest: WebContents): void {
       .catch(() => {})
   }
   const onDestroyed = (): void => disarm(browserPageId)
+  const onInput = (_event: unknown, input: InputEvent): void => {
+    if (READER_ACTIONS.has(input.type)) {
+      disarm(browserPageId)
+    }
+  }
   entry.unwatch?.()
   entry.unwatch = () => {
     guest.off('did-finish-load', tryFill)
     guest.off('did-navigate-in-page', tryFill)
+    guest.off('input-event', onInput)
     guest.off('destroyed', onDestroyed)
   }
   guest.on('did-finish-load', tryFill)
   // Why: a single-page app moves to its login route without a load.
   guest.on('did-navigate-in-page', tryFill)
+  guest.on('input-event', onInput)
   guest.once('destroyed', onDestroyed)
   if (!guest.isLoading()) {
     tryFill()

@@ -8,8 +8,6 @@ import {
 export type StandTab = 'services' | 'users'
 
 type StandViewPrefs = {
-  /** The sidebar group shows its stands. */
-  expanded: boolean
   /** The stand last opened, by its group key. */
   selectedKey: string | null
   tab: StandTab
@@ -18,7 +16,6 @@ type StandViewPrefs = {
 
 const STORAGE_KEY = 'orca.buildWeb.standPrefs'
 const DEFAULTS: StandViewPrefs = {
-  expanded: false,
   selectedKey: null,
   tab: 'services',
   logTail: 2000
@@ -30,7 +27,6 @@ function prefsOf(raw: unknown): StandViewPrefs {
   }
   const v = Object.fromEntries(Object.entries(raw))
   return {
-    expanded: v.expanded === true,
     selectedKey: typeof v.selectedKey === 'string' ? v.selectedKey : null,
     tab: v.tab === 'users' ? 'users' : 'services',
     logTail: BUILD_WEB_STAND_LOG_TAILS.find((n) => n === v.logTail) ?? DEFAULTS.logTail

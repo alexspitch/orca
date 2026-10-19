@@ -62,7 +62,7 @@ describe('logging in to a stand', () => {
     expect(mocks.arm).toHaveBeenCalledWith('page-1', {
       username: 'admin@x.ch',
       password: 'pa$$w0rd',
-      hostname: 'dc31.test'
+      uiUrl: 'https://dc31.test:23101'
     })
     expect(result).toEqual({
       ok: true,

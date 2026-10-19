@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2, LogIn, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type {
@@ -10,13 +17,13 @@ import type {
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebListState } from '../BuildWebListState'
-import { BuildWebToneChip } from '../BuildWebToneChip'
 import {
   accountLoginBlockedBy,
   openStandLogin,
   standLoginBlockedBy,
   useStandLoginContext
 } from './stand-login'
+import { StandProductChip, standProductOf } from './StandProductChip'
 
 const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
 
@@ -32,6 +39,7 @@ export function StandUsersTab({
   const [error, setError] = useState<string | null>(null)
   const [opening, setOpening] = useState<string | null>(null)
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({})
+  const [product, setProduct] = useState('all')
   const context = useStandLoginContext(target)
   const blocked = standLoginBlockedBy(context)
   const cardIds = group.cards.map((c) => c.id).join(',')
@@ -90,10 +98,37 @@ export function StandUsersTab({
     )
   }
   const cardOf = (id: string) => group.cards.find((c) => c.id === id)
-  const several = group.cards.length > 1
+  const products = [
+    ...new Set(group.cards.map((c) => standProductOf(c.product)).filter((p) => p !== null))
+  ]
+  const several = products.length > 1
+  const shown =
+    several && product !== 'all'
+      ? accounts.filter((a) => cardOf(a.standId)?.product === product)
+      : accounts
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex items-center gap-2">
+        {several ? (
+          <Select value={product} onValueChange={setProduct}>
+            <SelectTrigger
+              size="sm"
+              aria-label={translate('buildWeb.stands.users.product', 'Application')}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                {translate('buildWeb.stands.users.allProducts', 'All applications')}
+              </SelectItem>
+              {products.map((p) => (
+                <SelectItem key={p} value={p}>
+                  <StandProductChip product={p} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
         <span className="text-xs text-muted-foreground">
           {blocked ??
             translate(
@@ -116,12 +151,17 @@ export function StandUsersTab({
           {error}
         </p>
       ) : null}
-      {accounts.length === 0 ? (
+      {shown.length === 0 ? (
         <p className="px-3 py-10 text-center text-sm text-muted-foreground">
-          {translate(
-            'buildWeb.stands.users.none',
-            'No UI logins on this stand. They are added in build-web, on the stand’s card.'
-          )}
+          {accounts.length === 0
+            ? translate(
+                'buildWeb.stands.users.none',
+                'No UI logins on this stand. They are added in build-web, on the stand’s card.'
+              )
+            : translate(
+                'buildWeb.stands.users.noneForProduct',
+                'No UI logins for this application.'
+              )}
         </p>
       ) : (
         <div className="scrollbar-sleek min-h-0 overflow-auto rounded-md border border-border">
@@ -134,13 +174,15 @@ export function StandUsersTab({
                 <th className="w-[14%] py-2">{translate('buildWeb.stands.users.role', 'Role')}</th>
                 <th className="py-2">{translate('buildWeb.stands.users.project', 'Project')}</th>
                 {several ? (
-                  <th className="w-[14%] py-2">{translate('buildWeb.stands.users.ui', 'UI')}</th>
+                  <th className="w-[14%] py-2">
+                    {translate('buildWeb.stands.users.ui', 'Application')}
+                  </th>
                 ) : null}
                 <th className="w-44 py-2 pr-3" />
               </tr>
             </thead>
             <tbody>
-              {accounts.map((account) => {
+              {shown.map((account) => {
                 const card = cardOf(account.standId)
                 const reason = accountLoginBlockedBy(account, card)
                 const rowError = rowErrors[account.id]
@@ -163,7 +205,7 @@ export function StandUsersTab({
                     </td>
                     {several ? (
                       <td className="max-w-0 py-2">
-                        <BuildWebToneChip label={card?.product ?? card?.name ?? '—'} tone={null} />
+                        <StandProductChip product={card?.product ?? null} />
                       </td>
                     ) : null}
                     <td className="py-1.5 pr-3">

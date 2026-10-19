@@ -1,10 +1,13 @@
 import http from 'node:http'
 
-// A build-web console on loopback with the stand routes the Stands page reads, plus a stand UI whose
-// portal login form records what was typed into it.
+// A build-web console on loopback with the stand routes the Stands page reads, plus a stand UI (on
+// `localhost`) whose auth portal (on `127.0.0.1`, another host, as on the real stands) records what
+// was typed into its login form.
 
 export type BuildWebConsoleMock = {
   baseUrl: string
+  /** The stand's UI, on another host than its portal. */
+  uiUrl: string
   password: string
   logins: { username: string; password: string }[]
   ops: { standId: string; kind: string; services: string[] }[]
@@ -41,6 +44,7 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
   let openStreams = 0
   let jobReads = 0
   let base = ''
+  let ui = ''
 
   const card = (over: Record<string, unknown>) => ({
     ssh_host: '10.0.0.1',
@@ -48,7 +52,7 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
     branch: 'release/3.1',
     enabled: true,
     lock: null,
-    ui_url: `${base}/app`,
+    ui_url: `${ui}/app`,
     ...over
   })
 
@@ -66,6 +70,13 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
         stands: [
           card({ id: 'c-dc', name: '3.1 box DC', product: 'dc', products: ['dc'] }),
           card({ id: 'c-ap', name: '3.1 box AP', product: 'ap', products: ['ap'] }),
+          card({
+            id: 'c-st',
+            name: 'storage box',
+            dir: '/opt/storage',
+            product: 'storage',
+            products: []
+          }),
           card({
             id: 'c-sa',
             name: 'sa 2.16',
@@ -90,6 +101,7 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
             container: 'box-ib-1',
             running_image: 'docker.spitch.ch/dc/ib-script-engine:3.1',
             build: '3.1b11830',
+            image_created: '2026-10-18T21:05:11Z',
             started_at: '2026-10-19T06:00:00Z'
           },
           {
@@ -163,14 +175,26 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
                   password: 'missing'
                 }
               ]
-            : []
+            : stand === 'c-ap'
+              ? [
+                  {
+                    id: 'acc-ap',
+                    description: 'AP admin',
+                    email: 'ap@box.test',
+                    stand_id: 'c-ap',
+                    role_key: 'admin',
+                    project_name: '',
+                    password: 'set'
+                  }
+                ]
+              : []
       })
     }
     if (path === '/api/ui-accounts/acc-admin/credentials' && req.method === 'POST') {
       return json(res, 200, {
         email: 'admin@box.test',
         password: PASSWORD,
-        ui_url: `${base}/app`,
+        ui_url: `${ui}/app`,
         stand_id: 'c-dc',
         stand_name: '3.1 box DC'
       })
@@ -195,19 +219,32 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
     if (path === '/api/deploys/job-1/log') {
       return json(res, 200, { log: '::phase:: compose\nok\n', running: false })
     }
-    if (path === '/app') {
-      res.writeHead(302, { location: '/login' })
+    // The UI keeps its own session cookie; signing in goes through the portal and its callback.
+    const signedIn = (req.headers.cookie ?? '').includes('app_session=1')
+    const portalLogin = `${base}/login?response_type=code&client_id=dc&redirect_uri=${encodeURIComponent(`${ui}/dc_callback`)}`
+    if (path === '/app' || (path === '/app/home' && !signedIn)) {
+      res.writeHead(302, { location: signedIn ? '/app/home' : portalLogin })
       return res.end()
     }
     if (path === '/login' && req.method === 'POST') {
       const form = new URLSearchParams(await readBody(req))
       logins.push({ username: form.get('username') ?? '', password: form.get('password') ?? '' })
-      res.writeHead(302, { location: '/app/home' })
+      res.writeHead(302, { location: `${ui}/dc_callback` })
+      return res.end()
+    }
+    if (path === '/dc_callback') {
+      res.writeHead(302, { location: '/app/home', 'set-cookie': 'app_session=1; Path=/' })
+      return res.end()
+    }
+    if (path === '/logout') {
+      res.writeHead(302, { location: portalLogin, 'set-cookie': 'app_session=; Path=/; Max-Age=0' })
       return res.end()
     }
     if (path === '/login' || path === '/app/home') {
       res.writeHead(200, { 'content-type': 'text/html' })
-      return res.end(path === '/login' ? LOGIN_PAGE : '<p>Signed in</p>')
+      return res.end(
+        path === '/login' ? LOGIN_PAGE : '<p>Signed in</p><a href="/logout">Log out</a>'
+      )
     }
     json(res, 404, { error: 'not here' })
   })
@@ -217,8 +254,10 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
     throw new Error('the mock console has no port')
   }
   base = `http://127.0.0.1:${address.port}`
+  ui = `http://localhost:${address.port}`
   return {
     baseUrl: base,
+    uiUrl: ui,
     password: PASSWORD,
     logins,
     ops,

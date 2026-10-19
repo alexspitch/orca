@@ -13,11 +13,12 @@ import { BuildWebConnect } from '../BuildWebConnect'
 import { BuildWebListState } from '../BuildWebListState'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { useStandGroups } from './stand-groups-store'
+import { StandProductChip } from './StandProductChip'
 import { StandServicesTab } from './StandServicesTab'
 import { StandUsersTab } from './StandUsersTab'
 
 function StandFacts({ group }: { group: BuildWebStandGroup }): React.JSX.Element {
-  const products = [...new Set(group.cards.flatMap((c) => c.products))]
+  const products = [...new Set(group.cards.map((c) => c.product))]
   return (
     <span className="flex min-w-0 flex-wrap items-center gap-1.5">
       <span className="truncate font-mono text-xs text-muted-foreground">
@@ -25,7 +26,7 @@ function StandFacts({ group }: { group: BuildWebStandGroup }): React.JSX.Element
       </span>
       {group.branch ? <BuildWebToneChip label={group.branch} tone={null} mono /> : null}
       {products.map((p) => (
-        <BuildWebToneChip key={p} label={p} tone="neutral" />
+        <StandProductChip key={p} product={p} />
       ))}
       {group.enabled ? null : (
         <BuildWebToneChip label={translate('buildWeb.stands.disabled', 'disabled')} tone="faint" />

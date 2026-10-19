@@ -5,7 +5,7 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import { callBuildWeb } from '../build-web-client'
 import { readStandViewPrefs, writeStandViewPrefs, type StandTab } from './stand-view-prefs'
 
-// The stands directory, shared by the sidebar group and the page: one read serves both.
+// The stands directory and the stand picked on the page.
 
 // Why: the directory changes when someone edits a card in build-web — rarely.
 const FRESH_MS = 60_000
@@ -17,13 +17,11 @@ type StandGroupsState = {
   loading: boolean
   loadedAt: number
   selectedKey: string | null
-  expanded: boolean
   tab: StandTab
   /** The operation followed on each stand, by group key. */
   jobs: Record<string, BuildWebJob>
   load: (target: RuntimeClientTarget, contextKey: string, force?: boolean) => Promise<void>
   select: (key: string | null) => void
-  setExpanded: (expanded: boolean) => void
   setTab: (tab: StandTab) => void
   setJob: (key: string, job: BuildWebJob | null) => void
 }
@@ -38,7 +36,6 @@ export const useStandGroups = create<StandGroupsState>()((set, get) => ({
   loading: false,
   loadedAt: 0,
   selectedKey: prefs.selectedKey,
-  expanded: prefs.expanded,
   tab: prefs.tab,
   jobs: {},
   load: async (target, contextKey, force = false) => {
@@ -68,10 +65,6 @@ export const useStandGroups = create<StandGroupsState>()((set, get) => ({
   select: (key) => {
     writeStandViewPrefs({ selectedKey: key })
     set({ selectedKey: key })
-  },
-  setExpanded: (expanded) => {
-    writeStandViewPrefs({ expanded })
-    set({ expanded })
   },
   setTab: (tab) => {
     writeStandViewPrefs({ tab })

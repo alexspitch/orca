@@ -1,5 +1,5 @@
 /**
- * The Stands page against a build-web console on loopback: the sidebar group, a stand's services
+ * The Stands page against a build-web console on loopback: the list of stands, a stand's services
  * with their build numbers, a followed log with find, a restart and an up -d, and a login that
  * fills the stand portal's form without the password ever reaching the window.
  */
@@ -24,7 +24,8 @@ test.afterEach(async () => {
 })
 
 test('a stand: services, a followed log, operations and a login', async ({
-  orcaPage
+  orcaPage,
+  electronApp
 }, testInfo) => {
   test.setTimeout(180_000)
   await waitForSessionReady(orcaPage)
@@ -45,10 +46,15 @@ test('a stand: services, a followed log, operations and a login', async ({
     }, mock.baseUrl)
     expect(connected).toBe(true)
 
-    await orcaPage.getByRole('button', { name: 'Show stands' }).click()
-    await orcaPage.getByRole('button', { name: '3.1 box', exact: true }).click()
+    await orcaPage.getByRole('button', { name: 'Stands', exact: true }).click()
+    await expect(orcaPage.getByRole('button', { name: /^sa 2\.16/ })).toBeVisible()
+    await expect(orcaPage.getByRole('button', { name: /^storage box/ })).toHaveCount(0)
+    await shot('stand-directory')
+    await orcaPage.getByRole('button', { name: /^3\.1 box/ }).click()
     await expect(orcaPage.getByRole('heading', { name: '3.1 box' })).toBeVisible()
     await expect(orcaPage.getByText('#11830')).toBeVisible()
+    const builtAt = await orcaPage.evaluate(() => new Date('2026-10-18T21:05:11Z').toLocaleString())
+    await expect(orcaPage.getByText(builtAt)).toBeVisible()
     await expect(orcaPage.getByText('running · healthy')).toBeVisible()
     await shot('stand-services')
 
@@ -84,6 +90,12 @@ test('a stand: services, a followed log, operations and a login', async ({
       'true'
     )
     await expect(orcaPage.getByText('No password is set.')).toBeVisible()
+    await orcaPage.getByRole('combobox', { name: 'Application' }).click()
+    await orcaPage.getByRole('option', { name: 'AP', exact: true }).click()
+    await expect(orcaPage.getByText('ap@box.test')).toBeVisible()
+    await expect(orcaPage.getByText('admin@box.test')).toHaveCount(0)
+    await orcaPage.getByRole('combobox', { name: 'Application' }).click()
+    await orcaPage.getByRole('option', { name: 'All applications' }).click()
     // Why: the tab triggers fade their colours; the picture is taken once they settle.
     await orcaPage.waitForTimeout(400)
     await shot('stand-users')
@@ -93,13 +105,57 @@ test('a stand: services, a followed log, operations and a login', async ({
       .click()
     await expect
       .poll(async () =>
-        (await getBrowserTabs(orcaPage, worktreeId)).some((t) => t.url?.startsWith(mock.baseUrl))
+        (await getBrowserTabs(orcaPage, worktreeId)).some((t) => t.url?.startsWith(mock.uiUrl))
       )
       .toBe(true)
     await expect
       .poll(() => mock.logins, { timeout: 30_000 })
       .toEqual([{ username: 'admin@box.test', password: mock.password }])
     expect(await orcaPage.evaluate(() => document.body.innerText)).not.toContain(mock.password)
+
+    // Log in again: the profile's session is alive, so the app opens with no form — and a logout
+    // made in that tab must show the form, not sign the reader straight back in.
+    await orcaPage.evaluate(() => window.__store?.getState().openBuildWebStandsPage())
+    await orcaPage
+      .getByRole('row', { name: /admin@box\.test/ })
+      .getByRole('button', { name: 'Log in' })
+      .click()
+    const home = `${mock.uiUrl}/app/home`
+    const guestIds = async () =>
+      electronApp.evaluate(
+        ({ webContents }, url) =>
+          webContents
+            .getAllWebContents()
+            .filter((w) => w.getType() === 'webview' && w.getURL() === url)
+            .map((w) => w.id),
+        home
+      )
+    await expect.poll(async () => (await guestIds()).length, { timeout: 30_000 }).toBe(2)
+    const second = Math.max(...(await guestIds()))
+    await electronApp.evaluate(
+      async ({ webContents }, { id, logout }) => {
+        const guest = webContents.fromId(id)
+        if (!guest) {
+          throw new Error('the second login tab is gone')
+        }
+        guest.sendInputEvent({ type: 'mouseDown', x: 20, y: 20, button: 'left', clickCount: 1 })
+        guest.sendInputEvent({ type: 'mouseUp', x: 20, y: 20, button: 'left', clickCount: 1 })
+        await guest.loadURL(logout)
+      },
+      { id: second, logout: `${mock.uiUrl}/logout` }
+    )
+    await expect
+      .poll(
+        () =>
+          electronApp.evaluate(
+            ({ webContents }, id) => webContents.fromId(id)?.getURL() ?? '',
+            second
+          ),
+        { timeout: 15_000 }
+      )
+      .toContain('/login')
+    await orcaPage.waitForTimeout(2000)
+    expect(mock.logins).toHaveLength(1)
   } finally {
     await stopCapture()
   }

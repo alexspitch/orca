@@ -48,13 +48,24 @@ afterEach(() => {
 })
 
 describe('the portal’s login page', () => {
+  const ui = 'https://dc31.test:23101'
+
   it('is the login path on the stand’s host, any port, not a refusal', () => {
-    expect(isLoginPage('https://dc.test:8443/login?x=1', 'dc.test')).toBe(true)
-    expect(isLoginPage('https://dc.test/auth/login', 'dc.test')).toBe(true)
-    expect(isLoginPage('https://dc.test/login?error_message=login.errors.x', 'dc.test')).toBe(false)
-    expect(isLoginPage('https://evil.test/login', 'dc.test')).toBe(false)
-    expect(isLoginPage('https://dc.test/loginhelp', 'dc.test')).toBe(false)
-    expect(isLoginPage('file:///login', '')).toBe(false)
+    expect(isLoginPage('https://dc31.test:8443/login?x=1', ui)).toBe(true)
+    expect(isLoginPage('https://dc31.test/auth/login', ui)).toBe(true)
+    expect(isLoginPage('https://dc31.test/login?error_message=login.errors.x', ui)).toBe(false)
+    expect(isLoginPage('https://evil.test/login', ui)).toBe(false)
+    expect(isLoginPage('https://dc31.test/loginhelp', ui)).toBe(false)
+    expect(isLoginPage('file:///login', ui)).toBe(false)
+  })
+
+  it('is an auth portal on another host whose OAuth redirect leads back to this UI', () => {
+    const portal = 'https://dc30.test:23102/login?response_type=code&client_id=dc&redirect_uri='
+    expect(isLoginPage(`${portal}${encodeURIComponent(`${ui}/dc_callback`)}`, ui)).toBe(true)
+    expect(isLoginPage(`${portal}https://dc31.test:23101/dc_callback`, ui)).toBe(true)
+    expect(isLoginPage(`${portal}https://other.test:23101/cb`, ui)).toBe(false)
+    expect(isLoginPage(`${portal}https://dc31.test:9999/cb`, ui)).toBe(false)
+    expect(isLoginPage('https://dc30.test:23102/login', ui)).toBe(false)
   })
 
   it('carries the values as string literals the page cannot break out of', () => {
@@ -67,7 +78,7 @@ describe('the portal’s login page', () => {
 
 describe('filling the form of an armed page', () => {
   it('fills once, on the login page, and never on another page', async () => {
-    armLoginAutofill('page-1', { username: 'u@x', password: 'secret', hostname: 'dc.test' })
+    armLoginAutofill('page-1', { username: 'u@x', password: 'secret', uiUrl: 'https://dc.test' })
     const guest = new FakeGuest()
     mocks.listener?.('page-1', guest)
     guest.land('https://dc.test:23101/app')
@@ -79,6 +90,18 @@ describe('filling the form of an armed page', () => {
     expect(guest.scripts).toHaveLength(1)
   })
 
+  it('leaves a login page alone that the reader reached by acting in the tab, as a logout', () => {
+    armLoginAutofill('page-4', { username: 'u', password: 'p', uiUrl: 'https://dc.test' })
+    const guest = new FakeGuest()
+    mocks.listener?.('page-4', guest)
+    // Signed in already: the app opens, no form to fill.
+    guest.land('https://dc.test/app')
+    guest.emit('input-event', {}, { type: 'mouseMove' })
+    guest.emit('input-event', {}, { type: 'mouseDown' })
+    guest.land('https://dc.test/login')
+    expect(guest.scripts).toHaveLength(0)
+  })
+
   it('leaves a page alone that was never armed, or armed too long ago', async () => {
     vi.useFakeTimers()
     const other = new FakeGuest()
@@ -86,7 +109,7 @@ describe('filling the form of an armed page', () => {
     other.land('https://dc.test/login')
     expect(other.scripts).toHaveLength(0)
 
-    armLoginAutofill('page-3', { username: 'u', password: 'p', hostname: 'dc.test' })
+    armLoginAutofill('page-3', { username: 'u', password: 'p', uiUrl: 'https://dc.test' })
     vi.advanceTimersByTime(4 * 60_000)
     const late = new FakeGuest()
     mocks.listener?.('page-3', late)

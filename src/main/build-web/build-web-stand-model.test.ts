@@ -29,6 +29,18 @@ describe('stands as people mean them', () => {
     ])
   })
 
+  it('shows only the AP, DC and SA stands, and only those cards of a machine', () => {
+    const groups = standGroupsOf([
+      card({ id: 'dc', name: 'box dc' }),
+      card({ id: 'st', name: 'box storage', product: 'storage' }),
+      card({ id: 'tools', name: 'tools', dir: '/opt/tools', product: 'tools' }),
+      card({ id: 'none', name: 'unset', dir: '/opt/none', product: null }),
+      card({ id: 'ap', name: 'ap', dir: '/opt/ap', product: 'ap' }),
+      card({ id: 'sa', name: 'sa', dir: '/opt/sa', product: 'sa' })
+    ])
+    expect(groups.map((g) => g.cards.map((c) => c.id))).toEqual([['ap'], ['dc'], ['sa']])
+  })
+
   it('keeps a stand apart by branch even over one directory', () => {
     expect(standGroupsOf([card({ id: 'a' }), card({ id: 'b', branch: 'master' })])).toHaveLength(2)
   })
@@ -94,6 +106,7 @@ describe('what a stand runs', () => {
           container: 'c',
           running_image: 'x:3.1',
           build: '3.1b11830',
+          image_created: '2026-10-18T21:05:11Z',
           started_at: '2026-10-19T08:00:00Z'
         },
         { service: 'old', image: 'y:1', state: 'absent', container: null, running_image: null },
@@ -102,8 +115,16 @@ describe('what a stand runs', () => {
       details_error: null
     })
     expect(status.services).toHaveLength(2)
-    expect(status.services[0].build).toBe('3.1b11830')
-    expect(status.services[1]).toMatchObject({ build: null, startedAt: null, status: '' })
+    expect(status.services[0]).toMatchObject({
+      build: '3.1b11830',
+      imageCreatedAt: '2026-10-18T21:05:11Z'
+    })
+    expect(status.services[1]).toMatchObject({
+      build: null,
+      imageCreatedAt: null,
+      startedAt: null,
+      status: ''
+    })
   })
 
   it('reads a login without ever expecting its password', () => {

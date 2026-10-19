@@ -72,12 +72,12 @@ function ServiceRow({
         current && 'bg-accent'
       )}
     >
-      <td className="max-w-0 py-2 pl-3">
+      <td className="max-w-0 py-2 pr-3 pl-3">
         <span className="block truncate font-mono text-xs" title={service.container ?? undefined}>
           {service.service}
         </span>
       </td>
-      <td className="max-w-0 py-2">
+      <td className="max-w-0 py-2 pr-3">
         <BuildWebToneChip label={serviceStateLabel(service)} tone={serviceStateTone(service)} />
         {service.status ? (
           <span className="mt-0.5 block truncate text-2xs text-muted-foreground">
@@ -86,7 +86,7 @@ function ServiceRow({
         ) : null}
       </td>
       {compact ? null : (
-        <td className="max-w-0 py-2">
+        <td className="max-w-0 py-2 pr-3">
           <span
             className="block truncate font-mono text-xs text-muted-foreground"
             title={service.image}
@@ -103,18 +103,30 @@ function ServiceRow({
         </td>
       )}
       {compact ? null : (
-        <td className="max-w-0 py-2">
-          <span className="block truncate font-mono text-xs">{image.tag}</span>
+        <td className="max-w-0 py-2 pr-3">
+          <span className="block truncate font-mono text-xs" title={image.tag}>
+            {image.tag}
+          </span>
         </td>
       )}
-      <td className="py-2">
+      <td className="max-w-0 py-2 pr-3">
         {build ? (
-          <span className="font-mono text-xs" title={service.build ?? undefined}>
+          <span className="block font-mono text-xs" title={service.build ?? undefined}>
             #{build}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="block text-xs text-muted-foreground">—</span>
         )}
+        {service.imageCreatedAt ? (
+          <span
+            className="mt-0.5 block truncate text-2xs text-muted-foreground"
+            title={translate('buildWeb.stands.services.builtAt', 'Image built {{when}}', {
+              when: when(service.imageCreatedAt)
+            })}
+          >
+            {when(service.imageCreatedAt)}
+          </span>
+        ) : null}
       </td>
       {compact ? null : (
         <td className="py-2 text-xs whitespace-nowrap text-muted-foreground">
@@ -176,9 +188,9 @@ export function StandServicesTable({
               <th className="py-2">{translate('buildWeb.stands.services.image', 'Image')}</th>
             )}
             {compact ? null : (
-              <th className="w-24 py-2">{translate('buildWeb.stands.services.tag', 'Tag')}</th>
+              <th className="w-28 py-2">{translate('buildWeb.stands.services.tag', 'Tag')}</th>
             )}
-            <th className="w-20 py-2">{translate('buildWeb.stands.services.build', 'Build')}</th>
+            <th className="w-40 py-2">{translate('buildWeb.stands.services.build', 'Build')}</th>
             {compact ? null : (
               <th className="w-40 py-2">
                 {translate('buildWeb.stands.services.started', 'Started')}

@@ -17,6 +17,7 @@ const service = (over: Partial<BuildWebStandService> = {}): BuildWebStandService
   status: 'Up 2 hours',
   container: 'sa31-sa-backend-1',
   build: '3.1b11830',
+  imageCreatedAt: '2026-10-18T21:05:11Z',
   startedAt: '2026-10-19T08:00:00Z',
   ...over
 })

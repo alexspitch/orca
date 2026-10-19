@@ -20781,11 +20781,7 @@
       "recaps": "Recaps",
       "imagesFailed": "{{label}}, {{count}} failed",
       "imagesFailedHint": "Images whose last build failed, as the Images page counts them",
-      "hideStands": "Hide stands",
-      "showStands": "Show stands",
-      "stands": "Stands",
-      "standsLoading": "Loading…",
-      "noStands": "No stands"
+      "stands": "Stands"
     },
     "priority": {
       "highest": "Highest",
@@ -21266,7 +21262,8 @@
         "image": "Image",
         "tag": "Tag",
         "build": "Build",
-        "started": "Started"
+        "started": "Started",
+        "builtAt": "Image built {{when}}"
       },
       "refresh": "Read again",
       "users": {
@@ -21276,7 +21273,7 @@
         "account": "Login",
         "role": "Role",
         "project": "Project",
-        "ui": "UI",
+        "ui": "Application",
         "logIn": "Log in",
         "useDesktop": "Log in from the desktop app.",
         "viaServer": "build-web is connected through an Orca server; log in from the app that holds the token.",
@@ -21284,7 +21281,10 @@
         "remoteBrowser": "This workspace’s browser runs on an Orca server; open a local workspace to log in.",
         "noUi": "The stand has no UI address.",
         "passwordBroken": "The password does not decrypt.",
-        "passwordMissing": "No password is set."
+        "passwordMissing": "No password is set.",
+        "product": "Application",
+        "allProducts": "All applications",
+        "noneForProduct": "No UI logins for this application."
       }
     }
   },

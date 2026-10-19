@@ -65,7 +65,7 @@ export function startBuildWebStandLogin(args: {
     }
     const title = `${textOf(answer?.stand_name) || hostname} · ${email}`
     const profile = await profileFor(title)
-    armLoginAutofill(args.browserPageId, { username: email, password, hostname })
+    armLoginAutofill(args.browserPageId, { username: email, password, uiUrl: url })
     return { profileId: profile.id, partition: profile.partition, url, title }
   })
 }
