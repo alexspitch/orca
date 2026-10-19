@@ -20550,7 +20550,9 @@
     "client": {
       "updateServer": "This Orca server does not support build-web yet. Update the server to use Issues.",
       "restart": "This window was opened before Orca was updated. Restart Orca to use this.",
-      "updateServerStands": "This Orca server does not support Stands yet. Update the server to use them."
+      "updateServerStands": "This Orca server does not support Stands yet. Update the server to use them.",
+      "updateServerTestHistory": "This Orca server does not support Test history yet. Update the server to use it.",
+      "updateServerTrainsRolling": "This Orca server does not count the images trains roll out yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -20781,7 +20783,11 @@
       "recaps": "Recaps",
       "imagesFailed": "{{label}}, {{count}} failed",
       "imagesFailedHint": "Images whose last build failed, as the Images page counts them",
-      "stands": "Stands"
+      "stands": "Stands",
+      "testingFailed": "{{label}}, {{count}} failed",
+      "testingFailedHint": "Tests that failed in the last nightly run of master",
+      "trainsRolling": "{{label}}, {{count}} rolling out",
+      "trainsRollingHint": "Images on their way to a stand in {{trains}} train(s)"
     },
     "priority": {
       "highest": "Highest",
@@ -20822,7 +20828,9 @@
       "following": "Following the log…",
       "trimmed": "Earlier lines are not shown.",
       "openInBrowser": "Open in browser",
-      "title": "Build log"
+      "title": "Build log",
+      "complete": "The log is complete.",
+      "testTitle": "Test log"
     },
     "comment": {
       "notInJira": "Saved, but Jira was not updated: {{error}}",
@@ -21158,7 +21166,6 @@
       "jira": "Jira",
       "lastAction": "Last action",
       "loading": "Loading the watch…",
-      "noAccess": "build-web has not given you its Watch section. Ask a build-web administrator for it.",
       "none": "Nothing to watch — no task in {{watching}} has images left to build or publish.",
       "off": "Monitoring is off on this console (WATCH_ENABLED=0): nothing is built or published automatically. Check now still works.",
       "status": "Status",
@@ -21176,7 +21183,12 @@
       "nothingLeft": "Nothing left to do here — the list is read again.",
       "buildStarted": "Build started on build-web.",
       "cardHint": "The task card, over the Testing list",
-      "work": "Image work left"
+      "work": "Image work left",
+      "noSection": "build-web has not given you its {{section}} section. Ask a build-web administrator for it.",
+      "tabs": {
+        "watch": "In testing",
+        "history": "Test history"
+      }
     },
     "recaps": {
       "loadingReport": "Loading the report…",
@@ -21294,6 +21306,130 @@
         "allProducts": "All applications",
         "noneForProduct": "No UI logins for this application."
       }
+    },
+    "testHistory": {
+      "retries": "{{count}} retry(ies)",
+      "noDuration": "no duration recorded",
+      "closeCard": "Close the test card",
+      "loadingCase": "Reading the test’s history…",
+      "oneRun": "One run in the history — nothing to compare with.",
+      "runsInHistory": "{{count}} run(s) in the history",
+      "flips": "{{count}} status change(s) at the same commit",
+      "noFlips": "no status change at an unchanged commit",
+      "average": "{{duration}} on average",
+      "statusOverRuns": "Status, oldest to newest",
+      "durationOverRuns": "Duration",
+      "loading": "Loading the test history…",
+      "empty": "No runs yet. The history fills after the first one; the delta appears from the second run of the same scope.",
+      "loadingRun": "Reading the run…",
+      "runGone": "build-web no longer has this run.",
+      "filter": {
+        "all": "All",
+        "failed": "Failed",
+        "flaky": "Retried",
+        "skipped": "Skipped"
+      },
+      "retried": "retried",
+      "redWorkspaces": "workspaces red",
+      "inAll": "in all",
+      "filterLabel": "Which tests",
+      "noJobsInRun": "The run has no jobs.",
+      "noWorkspaceForFilter": "No workspaces for this filter.",
+      "flakyRetries": "{{count}} retry(ies) inside the run",
+      "flakyFlips": "{{count}} status change(s) at the same commit",
+      "col": {
+        "change": "Change",
+        "test": "Test",
+        "workspace": "Workspace",
+        "was": "Was",
+        "now": "Now"
+      },
+      "nothingChanged": "Nothing changed since the previous run.",
+      "omitted": "{{count}} more changed test(s) are not listed; By test shows every test.",
+      "unchangedNote": "{{count}} unchanged test(s) are under By test.",
+      "firstRun": "first run of this scope — no delta",
+      "emptyDelta": "no change against {{previous}}",
+      "against": "against {{previous}}",
+      "jobs": "{{count}} job(s)",
+      "notComparable": "Runs of a different scope: missing tests were not counted — a test absent here means its suite did not run, not that it is gone.",
+      "tabs": {
+        "changes": "Changes · {{count}}",
+        "tests": "By test"
+      },
+      "kind": {
+        "all": "All",
+        "nightly": "Nightly",
+        "manual": "Manual"
+      },
+      "kindLabel": "Which runs",
+      "runCount": "{{count}} run(s)",
+      "reload": "Read the runs again",
+      "noneOfKind": "No runs of this kind.",
+      "listEnd": "End of the list: build-web sends its newest {{total}} runs.",
+      "map": {
+        "passed": "passed",
+        "failed": "failed",
+        "skipped": "has skipped tests",
+        "empty": "no tests",
+        "title": "Workspace map",
+        "hint": "a square opens its workspace in By test",
+        "failedCount": "{{count}} failed",
+        "skippedCount": "{{count}} with skips"
+      },
+      "family": {
+        "applications": "Applications",
+        "packages": "Packages",
+        "plugins": "Plugins",
+        "e2e": "e2e",
+        "other": "Other"
+      },
+      "passedOnRetry": "passed on retry {{count}}",
+      "jobFlaky": "red beside the other suites, green on its own",
+      "log": "Log",
+      "loadingTests": "Reading the tests…",
+      "noReport": "No tests in the report — see the log.",
+      "noneForFilter": "No tests for this filter.",
+      "noFile": "no file",
+      "status": {
+        "running": "running",
+        "queued": "queued",
+        "passed": "passed",
+        "failed": "failed",
+        "loadError": "the suite did not start — no result",
+        "empty": "no test was collected",
+        "timeout": "killed by the watchdog (timeout or silence)",
+        "cancelled": "cancelled",
+        "skipped": "skipped"
+      },
+      "change": {
+        "broken": "passed, now fails",
+        "stillFailing": "failed and fails",
+        "fixed": "failed, now passes",
+        "new": "not in the previous run",
+        "flaky": "changed status with the code unchanged",
+        "disappeared": "was there and is gone: removed or no longer built",
+        "unchanged": "unchanged"
+      },
+      "andMore": "{{first}} and {{more}} more",
+      "scopeTest": "test",
+      "scopeTests": "tests",
+      "scopeFile": "file",
+      "scopeFiles": "files",
+      "scopePhases": "harness phases",
+      "scopeTag": "by tag",
+      "workspaces": "{{count}} workspace(s)",
+      "nightly": "Nightly run of master",
+      "recheck": "Recheck of the red",
+      "noJobs": "no jobs",
+      "scopeSuite": "whole suite",
+      "noResults": "{{count}} job(s), no results",
+      "workingTree": "working tree",
+      "inWorkingTree": "{{branch}} (in the working tree)",
+      "today": "Today, {{date}}",
+      "yesterday": "Yesterday, {{date}}",
+      "outcomes": "passed {{passed}}, failed {{failed}}, skipped {{skipped}}",
+      "junit": "junit.xml",
+      "shard": "shard {{index}}/{{total}}"
     }
   },
   "gitLog": {

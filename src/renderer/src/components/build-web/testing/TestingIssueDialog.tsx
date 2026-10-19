@@ -36,7 +36,7 @@ export function TestingIssueDialog({ onClosed }: { onClosed: () => void }): Reac
       >
         <DialogContent
           showCloseButton={false}
-          className="flex h-[88vh] flex-col overflow-hidden sm:max-w-[min(1280px,94vw)]"
+          className="flex h-[88vh] flex-col overflow-hidden sm:max-w-[min(1536px,94vw)]"
         >
           <VisuallyHidden.Root asChild>
             <DialogTitle>{translate('buildWeb.detail.task', 'Task')}</DialogTitle>

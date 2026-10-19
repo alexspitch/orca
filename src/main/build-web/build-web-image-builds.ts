@@ -13,6 +13,7 @@ import { runOf } from './build-web-runs'
 const PRODUCTS_WITH_RELEASES = new Set(['sa', 'dc', 'ap', 'storage', 'tools'])
 const enc = encodeURIComponent
 const collator = new Intl.Collator(undefined, { numeric: true })
+const TEST_JOB_LOG = /^\/api\/tests\/runs\/[^/?#]+\/jobs\/[^/?#]+\/log$/
 
 /** master and the product's release branches, the newest release first; `other` has only master. */
 export async function listBuildWebVersionBranches(product: string): Promise<string[]> {
@@ -87,6 +88,14 @@ export async function getBuildWebRun(runId: string): Promise<BuildWebRun | null>
 export async function readBuildWebBuildLog(url: string, offset: number): Promise<BuildWebLogPiece> {
   const credential = requireBuildWebCredential()
   const own = url.startsWith(`${credential.baseUrl}/`) ? url.slice(credential.baseUrl.length) : url
+  if (TEST_JOB_LOG.test(own)) {
+    // Why: /api/build-log refuses a test job's log; its own route reads 1 MiB from `offset`.
+    const piece = recordOf(
+      await buildWebRequest({ ...credential, path: `${own}?offset=${offset}` })
+    )
+    const next = numberOf(piece?.offset, offset)
+    return { text: textOf(piece?.text), next, done: next >= numberOf(piece?.size, next) }
+  }
   const answer = recordOf(
     await buildWebRequest({
       ...credential,

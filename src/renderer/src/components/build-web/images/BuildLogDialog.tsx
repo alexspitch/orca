@@ -18,7 +18,17 @@ import { useBuildLog } from './use-build-log'
 // Why: useBuildLog already keeps the tail by characters; this only bounds the line count.
 const KEEP_LINES = 100_000
 
-function LogBody({ target, url }: { target: RuntimeClientTarget; url: string }): React.JSX.Element {
+function LogBody({
+  target,
+  url,
+  test,
+  webUrl
+}: {
+  target: RuntimeClientTarget
+  url: string
+  test: boolean
+  webUrl: string
+}): React.JSX.Element {
   const { text, done, trimmed, error } = useBuildLog(target, url)
   const log = useMemo(() => logLinesOf(text, KEEP_LINES), [text])
   return (
@@ -28,7 +38,11 @@ function LogBody({ target, url }: { target: RuntimeClientTarget; url: string }):
         toolbar={
           <>
             {done ? (
-              translate('buildWeb.log.finished', 'The build is over.')
+              test ? (
+                translate('buildWeb.log.complete', 'The log is complete.')
+              ) : (
+                translate('buildWeb.log.finished', 'The build is over.')
+              )
             ) : (
               <>
                 <Loader2 className="size-3 animate-spin" />
@@ -41,7 +55,7 @@ function LogBody({ target, url }: { target: RuntimeClientTarget; url: string }):
           </>
         }
         trailing={
-          <Button variant="ghost" size="sm" onClick={() => void window.api.shell.openUrl(url)}>
+          <Button variant="ghost" size="sm" onClick={() => void window.api.shell.openUrl(webUrl)}>
             {translate('buildWeb.log.openInBrowser', 'Open in browser')}
             <ExternalLink />
           </Button>
@@ -67,9 +81,21 @@ export function BuildLogDialog({ target }: { target: RuntimeClientTarget }): Rea
           <DialogTitle>
             <span className="font-mono text-sm">{log?.title}</span>
           </DialogTitle>
-          <DialogDescription>{translate('buildWeb.log.title', 'Build log')}</DialogDescription>
+          <DialogDescription>
+            {log?.kind === 'test'
+              ? translate('buildWeb.log.testTitle', 'Test log')
+              : translate('buildWeb.log.title', 'Build log')}
+          </DialogDescription>
         </DialogHeader>
-        {log ? <LogBody key={log.url} target={target} url={log.url} /> : null}
+        {log ? (
+          <LogBody
+            key={log.url}
+            target={target}
+            url={log.url}
+            test={log.kind === 'test'}
+            webUrl={log.webUrl ?? log.url}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   )

@@ -41,6 +41,7 @@ import { BUILD_WEB_METHODS } from './build-web'
 import { BUILD_WEB_TASK_METHODS } from './build-web-task'
 import { BUILD_WEB_WATCH_METHODS } from './build-web-watch'
 import { BUILD_WEB_RECAP_METHODS } from './build-web-recaps'
+import { BUILD_WEB_TEST_HISTORY_METHODS } from './build-web-test-history'
 import { BUILD_WEB_STAND_METHODS } from './build-web-stands'
 import { SSH_METHODS } from './ssh'
 import { MANAGED_SERVER_METHODS } from './managed-server'
@@ -131,6 +132,7 @@ export const ALL_RPC_METHODS = [
   ...BUILD_WEB_TASK_METHODS,
   ...BUILD_WEB_WATCH_METHODS,
   ...BUILD_WEB_RECAP_METHODS,
+  ...BUILD_WEB_TEST_HISTORY_METHODS,
   ...BUILD_WEB_STAND_METHODS,
   ...SSH_METHODS,
   ...MANAGED_SERVER_METHODS,

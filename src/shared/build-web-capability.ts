@@ -3,3 +3,9 @@ export const BUILD_WEB_RUNTIME_CAPABILITY = 'build-web.v1'
 
 /** A runtime that serves the «Stands» page's `buildWeb.stand*` methods. */
 export const BUILD_WEB_STANDS_RUNTIME_CAPABILITY = 'build-web-stands.v1'
+
+/** A runtime that serves Testing's «Test history» tab: `buildWeb.test*` and test-job logs. */
+export const BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY = 'build-web-test-history.v1'
+
+/** A runtime that counts the images trains are rolling out, for the Trains item. */
+export const BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY = 'build-web-trains-rolling.v1'

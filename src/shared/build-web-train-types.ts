@@ -109,3 +109,6 @@ export type BuildWebTrainPreview = {
   tickets: { key: string; summary: string; boards: boolean; reason: string | null }[]
   problems: string[]
 }
+
+/** Images on their way to a stand now: those of the train windows building or deploying. */
+export type BuildWebTrainsRolling = { images: number; trains: number }

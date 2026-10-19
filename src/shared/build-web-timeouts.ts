@@ -5,6 +5,8 @@ export const BUILD_WEB_REQUEST_TIMEOUT_MS = 20_000
 export const BUILD_WEB_COMMITS_FETCH_TIMEOUT_MS = 90_000
 /** The whole build catalog behind the Images pages and badge. */
 export const BUILD_WEB_CATALOG_TIMEOUT_MS = 45_000
+/** A test run's detail: a nightly run's delta joins its ~33k cases with the run before. */
+export const BUILD_WEB_TEST_RUN_TIMEOUT_MS = 45_000
 /** Console work that reads git or the build server: detect, adopt, freshness, a fetch, a stand. */
 export const BUILD_WEB_LONG_TIMEOUT_MS = 120_000
 /** A guide written by the model: the console streams it for minutes. */
@@ -37,6 +39,9 @@ export function buildWebHostWaitMs(method: string, args: unknown): number {
   if (method === 'issueCommits') {
     const fetchFirst = typeof args === 'object' && args !== null && 'fetch' in args && args.fetch
     return fetchFirst === true ? BUILD_WEB_COMMITS_FETCH_TIMEOUT_MS : BUILD_WEB_REQUEST_TIMEOUT_MS
+  }
+  if (method === 'testRun') {
+    return BUILD_WEB_TEST_RUN_TIMEOUT_MS
   }
   return method === 'imageSummary' || method === 'listImages' || method === 'listImageBuilds'
     ? BUILD_WEB_CATALOG_TIMEOUT_MS

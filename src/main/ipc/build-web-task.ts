@@ -28,7 +28,9 @@ import {
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
+  BuildWebTestCaseParams,
   BuildWebTestingParams,
+  BuildWebTestWorkspaceParams,
   BuildWebTmsStandsParams
 } from '../../shared/rpc-contract/build-web-task-params'
 import { RuntimeBuildWebTaskCommands } from '../runtime/runtime-build-web-task-commands'
@@ -97,6 +99,7 @@ export function registerBuildWebTaskHandlers(): void {
   )
   handle('pushProgress', BuildWebPushProgressParams, (args) => commands.buildWebPushProgress(args))
   ipcMain.handle('buildWeb:listTrains', () => commands.buildWebListTrains())
+  ipcMain.handle('buildWeb:trainsRolling', () => commands.buildWebTrainsRolling())
   handle('trainRuns', BuildWebTrainRunsParams, (args) => commands.buildWebTrainRuns(args))
   handle('trainActions', BuildWebTrainActionsParams, (args) => commands.buildWebTrainActions(args))
   handle('trainPreview', BuildWebTrainParams, (args) => commands.buildWebTrainPreview(args))
@@ -105,4 +108,11 @@ export function registerBuildWebTaskHandlers(): void {
   ipcMain.handle('buildWeb:watchCheck', () => commands.buildWebWatchCheck())
   handle('recaps', BuildWebRecapsParams, (args) => commands.buildWebRecaps(args))
   handle('recapReport', BuildWebRecapReportParams, (args) => commands.buildWebRecapReport(args))
+  ipcMain.handle('buildWeb:testRuns', () => commands.buildWebTestRuns())
+  handle('testRun', BuildWebRunId, (args) => commands.buildWebTestRun(args))
+  handle('testRunWorkspace', BuildWebTestWorkspaceParams, (args) =>
+    commands.buildWebTestRunWorkspace(args)
+  )
+  handle('testCase', BuildWebTestCaseParams, (args) => commands.buildWebTestCase(args))
+  ipcMain.handle('buildWeb:testNightly', () => commands.buildWebTestNightly())
 }

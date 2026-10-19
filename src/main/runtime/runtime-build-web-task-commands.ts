@@ -28,7 +28,9 @@ import type {
   BuildWebRunCombosParams,
   BuildWebRunId,
   BuildWebStandParams,
+  BuildWebTestCaseParams,
   BuildWebTestingParams,
+  BuildWebTestWorkspaceParams,
   BuildWebTmsStandsParams
 } from '../../shared/rpc-contract/build-web-task-params'
 import {
@@ -53,6 +55,7 @@ import {
 import { readBuildWebGuideStream, startBuildWebGuide } from '../build-web/build-web-guide-stream'
 import { buildWebPushProgress } from '../build-web/build-web-push-progress'
 import {
+  countBuildWebRollingImages,
   getBuildWebTrainPreview,
   listBuildWebTrainActions,
   listBuildWebTrainRuns,
@@ -61,6 +64,13 @@ import {
 } from '../build-web/build-web-trains'
 import { checkBuildWebWatch, getBuildWebWatch } from '../build-web/build-web-watch'
 import { listBuildWebRecaps, readBuildWebRecapReport } from '../build-web/build-web-recaps'
+import {
+  getBuildWebLastNightly,
+  getBuildWebTestCase,
+  getBuildWebTestRun,
+  getBuildWebTestWorkspace,
+  listBuildWebTestRuns
+} from '../build-web/build-web-test-history'
 import {
   cancelBuildWebJob,
   findBuildWebShotsJob,
@@ -236,6 +246,10 @@ export class RuntimeBuildWebTaskCommands {
     return listBuildWebTrains()
   }
 
+  buildWebTrainsRolling() {
+    return countBuildWebRollingImages()
+  }
+
   buildWebTrainRuns(args: In<typeof BuildWebTrainRunsParams>) {
     return listBuildWebTrainRuns(args.trainId, args.limit, args.offset, args.withActions)
   }
@@ -266,5 +280,25 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebRecapReport(args: In<typeof BuildWebRecapReportParams>) {
     return readBuildWebRecapReport(args.runId, args.offset)
+  }
+
+  buildWebTestRuns() {
+    return listBuildWebTestRuns()
+  }
+
+  buildWebTestRun(args: In<typeof BuildWebRunId>) {
+    return getBuildWebTestRun(args.runId)
+  }
+
+  buildWebTestRunWorkspace(args: In<typeof BuildWebTestWorkspaceParams>) {
+    return getBuildWebTestWorkspace(args.runId, args.workspace)
+  }
+
+  buildWebTestCase(args: In<typeof BuildWebTestCaseParams>) {
+    return getBuildWebTestCase(args.key)
+  }
+
+  buildWebTestNightly() {
+    return getBuildWebLastNightly()
   }
 }

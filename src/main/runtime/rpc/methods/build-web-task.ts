@@ -254,6 +254,12 @@ export const BUILD_WEB_TASK_METHODS = [
     handler: async (_params, { runtime }) => runtime.buildWebListTrains()
   }),
   defineMethod({
+    name: 'buildWeb.trainsRolling',
+    permission: 'workspace',
+    params: null,
+    handler: async (_params, { runtime }) => runtime.buildWebTrainsRolling()
+  }),
+  defineMethod({
     name: 'buildWeb.trainRuns',
     permission: 'workspace',
     params: BuildWebTrainRunsParams,

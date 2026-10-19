@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshCw, X } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type {
@@ -18,8 +19,10 @@ import { BuildWebListState } from '../BuildWebListState'
 import { BuildLogDialog } from '../images/BuildLogDialog'
 import { ImagePushProgress } from '../images/ImagePushProgress'
 import { writesRuns } from '../issue/issue-card-facts'
+import { TestHistoryView } from './history/TestHistoryView'
 import { TestingIssueDialog } from './TestingIssueDialog'
 import { TestingTable } from './TestingTable'
+import { readTestingViewPrefs, writeTestingViewPrefs, type TestingTab } from './testing-view-prefs'
 
 const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
 
@@ -199,7 +202,75 @@ function TestingView({
   )
 }
 
-/** build-web's watch: tasks in testing whose images are not built or published yet. */
+function NoAccess({ section }: { section: string }): React.JSX.Element {
+  return (
+    <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
+      {translate(
+        'buildWeb.testing.noSection',
+        'build-web has not given you its {{section}} section. Ask a build-web administrator for it.',
+        { section }
+      )}
+    </p>
+  )
+}
+
+/** The two tabs: build-web's watch, and its test history. Both stay mounted once shown. */
+function TestingTabs({
+  target,
+  perms,
+  baseUrl
+}: {
+  target: RuntimeClientTarget
+  perms: string[]
+  baseUrl: string
+}): React.JSX.Element {
+  const [tab, setTab] = useState<TestingTab>(() => readTestingViewPrefs().tab)
+  const [historySeen, setHistorySeen] = useState(tab === 'history')
+  const pick = (value: string) => {
+    const next: TestingTab = value === 'history' ? 'history' : 'watch'
+    writeTestingViewPrefs({ tab: next })
+    setTab(next)
+    setHistorySeen((seen) => seen || next === 'history')
+  }
+  return (
+    <Tabs value={tab} onValueChange={pick} className="min-h-0 flex-1">
+      <div className="px-3 md:px-5">
+        <TabsList variant="line">
+          <TabsTrigger value="watch">
+            {translate('buildWeb.testing.tabs.watch', 'In testing')}
+          </TabsTrigger>
+          <TabsTrigger value="history">
+            {translate('buildWeb.testing.tabs.history', 'Test history')}
+          </TabsTrigger>
+        </TabsList>
+      </div>
+      <TabsContent value="watch" className="flex min-h-0 flex-col">
+        {perms.includes('watch') ? (
+          <TestingView target={target} perms={perms} />
+        ) : (
+          <NoAccess section="Watch" />
+        )}
+      </TabsContent>
+      {/* Why mounted once shown: the run picked and the workspaces opened survive a look at the watch. */}
+      <TabsContent
+        value="history"
+        forceMount
+        hidden={tab !== 'history'}
+        className="flex min-h-0 flex-col"
+      >
+        <div className="flex min-h-0 flex-1 flex-col px-3 pb-4 md:px-5">
+          {!historySeen ? null : perms.includes('tests') ? (
+            <TestHistoryView target={target} baseUrl={baseUrl} />
+          ) : (
+            <NoAccess section="Tests" />
+          )}
+        </div>
+      </TabsContent>
+    </Tabs>
+  )
+}
+
+/** build-web's watch and test history: tasks in testing with images left, and the test runs. */
 export default function BuildWebTestingPage(): React.JSX.Element {
   const closePage = useAppStore((s) => s.closeBuildWebTestingPage)
   const { target, contextKey } = useBuildWebTarget()
@@ -236,15 +307,13 @@ export default function BuildWebTestingPage(): React.JSX.Element {
         />
       ) : !connected ? (
         <BuildWebConnect target={target} onConnected={(next) => setStatus(contextKey, next)} />
-      ) : status.perms.includes('watch') ? (
-        <TestingView target={target} perms={status.perms} />
       ) : (
-        <p className="px-3 py-10 text-center text-sm text-muted-foreground md:px-5">
-          {translate(
-            'buildWeb.testing.noAccess',
-            'build-web has not given you its Watch section. Ask a build-web administrator for it.'
-          )}
-        </p>
+        <TestingTabs
+          key={contextKey}
+          target={target}
+          perms={status.perms}
+          baseUrl={status.baseUrl ?? ''}
+        />
       )}
       <BuildLogDialog target={target} />
     </main>

@@ -1,4 +1,5 @@
 import http from 'node:http'
+import { serveTestHistory } from './build-web-test-history-mock'
 
 // A build-web console on loopback with the stand routes the Stands page reads, plus a stand UI (on
 // `localhost`) whose auth portal (on `127.0.0.1`, another host, as on the real stands) records what
@@ -87,7 +88,7 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
       return json(res, 401, { error: 'no token' })
     }
     if (path === '/api/me') {
-      return json(res, 200, { authed: true, user: 'qa@box.test', perms: ['stands'] })
+      return json(res, 200, { authed: true, user: 'qa@box.test', perms: ['stands', 'tests'] })
     }
     if (path === '/api/stands') {
       return json(res, 200, {
@@ -288,7 +289,9 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
         path === '/login' ? LOGIN_PAGE : '<p>Signed in</p><a href="/logout">Log out</a>'
       )
     }
-    json(res, 404, { error: 'not here' })
+    if (!serveTestHistory(res, path, url, json)) {
+      json(res, 404, { error: 'not here' })
+    }
   })
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve))
   const address = server.address()

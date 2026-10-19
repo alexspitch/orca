@@ -1,6 +1,8 @@
 import {
   BUILD_WEB_RUNTIME_CAPABILITY,
-  BUILD_WEB_STANDS_RUNTIME_CAPABILITY
+  BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
+  BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY,
+  BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY
 } from '../../../../shared/build-web-capability'
 import {
   BUILD_WEB_CLIENT_MARGIN_MS,
@@ -15,7 +17,6 @@ type Method = keyof BuildWebApi
 type ArgsOf<M extends Method> = Parameters<BuildWebApi[M]>
 type ResultOf<M extends Method> = Awaited<ReturnType<BuildWebApi[M]>>
 
-// Why: the Stands page came after `build-web.v1`; an older server announces only that.
 const STAND_METHODS: ReadonlySet<Method> = new Set<Method>([
   'standGroups',
   'standStatus',
@@ -26,6 +27,45 @@ const STAND_METHODS: ReadonlySet<Method> = new Set<Method>([
   'standLogs',
   'stopStandLogs'
 ])
+const TEST_HISTORY_METHODS: ReadonlySet<Method> = new Set<Method>([
+  'testRuns',
+  'testRun',
+  'testRunWorkspace',
+  'testCase',
+  'testNightly'
+])
+
+// Why: these came after `build-web.v1`; an older server announces only what it serves.
+const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal: () => string }[] =
+  [
+    {
+      methods: STAND_METHODS,
+      capability: BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerStands',
+          'This Orca server does not support Stands yet. Update the server to use them.'
+        )
+    },
+    {
+      methods: TEST_HISTORY_METHODS,
+      capability: BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerTestHistory',
+          'This Orca server does not support Test history yet. Update the server to use it.'
+        )
+    },
+    {
+      methods: new Set<Method>(['trainsRolling']),
+      capability: BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerTrainsRolling',
+          'This Orca server does not count the images trains roll out yet. Update the server.'
+        )
+    }
+  ]
 
 /**
  * One call to build-web through whichever host holds the token: this app's main process,
@@ -45,14 +85,12 @@ export async function callBuildWeb<M extends Method>(
         'This Orca server does not support build-web yet. Update the server to use Issues.'
       )
     )
-    if (STAND_METHODS.has(method)) {
+    const newer = NEWER_METHODS.find((n) => n.methods.has(method))
+    if (newer) {
       await assertRuntimeEnvironmentCapability(
         target.environmentId,
-        BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
-        translate(
-          'buildWeb.client.updateServerStands',
-          'This Orca server does not support Stands yet. Update the server to use them.'
-        )
+        newer.capability,
+        newer.refusal()
       )
     }
     return callRuntimeRpc<ResultOf<M>>(target, `buildWeb.${method}`, args[0], {

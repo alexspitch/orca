@@ -124,4 +124,13 @@ describe('image builds', () => {
       encodeURIComponent('https://jenkins.test/job/x/12/')
     )
   })
+
+  it('reads a test job log from its own route, piece after piece to its size', async () => {
+    const url = 'https://bw.test/api/tests/runs/r1/jobs/j1/log'
+    mocks.request.mockResolvedValueOnce({ offset: 1024, size: 1500, text: 'a'.repeat(1024) })
+    expect(await readBuildWebBuildLog(url, 0)).toMatchObject({ next: 1024, done: false })
+    expect(mocks.request.mock.calls[0][0].path).toBe('/api/tests/runs/r1/jobs/j1/log?offset=0')
+    mocks.request.mockResolvedValueOnce({ offset: 1500, size: 1500, text: 'end' })
+    expect(await readBuildWebBuildLog(url, 1024)).toEqual({ text: 'end', next: 1500, done: true })
+  })
 })

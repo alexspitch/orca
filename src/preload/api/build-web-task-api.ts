@@ -4,7 +4,8 @@ import type {
   BuildWebTrain,
   BuildWebTrainAction,
   BuildWebTrainPreview,
-  BuildWebTrainRunPage
+  BuildWebTrainRunPage,
+  BuildWebTrainsRolling
 } from '../../shared/build-web-train-types'
 import type { BuildWebWatchCheck, BuildWebWatchState } from '../../shared/build-web-watch-types'
 import type {
@@ -12,6 +13,13 @@ import type {
   BuildWebRecapQuery,
   BuildWebRecapReportPiece
 } from '../../shared/build-web-recap-types'
+import type {
+  BuildWebLastNightly,
+  BuildWebTestCaseHistory,
+  BuildWebTestRun,
+  BuildWebTestRunDetail,
+  BuildWebTestWorkspace
+} from '../../shared/build-web-test-history-types'
 import type {
   BuildWebAdoptResult,
   BuildWebBranch,
@@ -114,6 +122,7 @@ export type BuildWebTaskApi = {
   }) => Promise<BuildWebMutationResult<{ jira: BuildWebJiraOutcome | null }>>
   pushProgress: (args: { runIds: string[] }) => Promise<BuildWebPushProgress[]>
   listTrains: () => Promise<BuildWebTrain[]>
+  trainsRolling: () => Promise<BuildWebTrainsRolling>
   trainRuns: (args: {
     trainId: string
     limit: number
@@ -127,4 +136,9 @@ export type BuildWebTaskApi = {
   watchCheck: () => Promise<BuildWebMutationResult<BuildWebWatchCheck>>
   recaps: (args: BuildWebRecapQuery) => Promise<BuildWebMutationResult<BuildWebRecapPage>>
   recapReport: (args: { runId: string; offset: number }) => Promise<BuildWebRecapReportPiece>
+  testRuns: () => Promise<BuildWebTestRun[]>
+  testRun: (args: { runId: string }) => Promise<BuildWebTestRunDetail | null>
+  testRunWorkspace: (args: { runId: string; workspace: string }) => Promise<BuildWebTestWorkspace>
+  testCase: (args: { key: string }) => Promise<BuildWebTestCaseHistory>
+  testNightly: () => Promise<BuildWebLastNightly | null>
 }

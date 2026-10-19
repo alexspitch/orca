@@ -8,6 +8,7 @@ import type {
   BuildWebTrainRun,
   BuildWebTrainRunPage,
   BuildWebTrainRunStatus,
+  BuildWebTrainsRolling,
   BuildWebTrainTicket
 } from '../../shared/build-web-train-types'
 import { requireBuildWebCredential } from './build-web-connection'
@@ -142,6 +143,30 @@ export async function listBuildWebTrains(): Promise<BuildWebTrain[]> {
           : null
       }
     })
+}
+
+// Why not scanning or reporting: before the build the images are not known, after the deploy they are on the stand.
+const ROLLING: ReadonlySet<BuildWebTrainRunStatus> = new Set(['building', 'deploying'])
+
+/** For the Trains item: the images of every train window now building or deploying. */
+export async function countBuildWebRollingImages(): Promise<BuildWebTrainsRolling> {
+  const credential = requireBuildWebCredential()
+  const rolling = records(
+    recordOf(await buildWebRequest({ ...credential, path: '/api/trains' }))?.trains
+  ).flatMap((t) => {
+    const last = recordOf(t.last_run)
+    return typeof t.id === 'string' && last && ROLLING.has(runStatusOf(last.status))
+      ? [{ trainId: t.id, runId: textOf(last.id) }]
+      : []
+  })
+  const counts = await Promise.all(
+    rolling.map(async ({ trainId, runId }) => {
+      // Why withActions: only skipped windows drop out, so the one going is on the first page.
+      const { runs } = await listBuildWebTrainRuns(trainId, 3, 0, true)
+      return runs.find((r) => r.id === runId)?.images.length ?? 0
+    })
+  )
+  return { images: counts.reduce((sum, n) => sum + n, 0), trains: rolling.length }
 }
 
 /** One page of a train's windows; `withActions` leaves out the windows that did nothing. */
