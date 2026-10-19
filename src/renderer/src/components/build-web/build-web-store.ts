@@ -59,9 +59,8 @@ type BuildWebState = {
   fullScreen: boolean
   /** The full-screen card was expanded from the side card, so collapsing returns there. */
   fullScreenFromDrawer: boolean
-  /** The worktree «Take to work» used last, and whether it worked in it (`-no-worktree`). */
+  /** The worktree «Take to work» used last. */
   lastWorktreeId: string | null
-  noWorktree: boolean
   setStatus: (contextKey: string, status: BuildWebConnectionStatus) => void
   toggleQuick: (filter: QuickFilter) => void
   sortBy: (sort: BuildWebIssueSort) => void
@@ -84,7 +83,7 @@ type BuildWebState = {
   expandToFullScreen: () => void
   /** Back one level: to the side card it came from, or to the list. */
   collapseFullScreen: () => void
-  rememberTakeToWork: (worktreeId: string, noWorktree: boolean) => void
+  rememberTakeToWork: (worktreeId: string) => void
 }
 
 const prefs = readViewPrefs()
@@ -114,7 +113,6 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   fullScreen: false,
   fullScreenFromDrawer: false,
   lastWorktreeId: null,
-  noWorktree: true,
   setStatus: (contextKey, status) =>
     set((state) =>
       // Why: another host's tasks must not stay on screen under this host's account.
@@ -201,7 +199,7 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
         ? { fullScreen: false, fullScreenFromDrawer: false }
         : { fullScreen: false, openIssueId: null }
     ),
-  rememberTakeToWork: (lastWorktreeId, noWorktree) => set({ lastWorktreeId, noWorktree })
+  rememberTakeToWork: (lastWorktreeId) => set({ lastWorktreeId })
 }))
 
 /** The list request for the current filters, sort and page. */

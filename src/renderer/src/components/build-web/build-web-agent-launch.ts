@@ -12,7 +12,8 @@ import type { Worktree } from '../../../../shared/worktree/types'
 import type { BuildWebSessionArgs } from '../../../../preload/api/build-web-api'
 import { callBuildWeb } from './build-web-client'
 import { buildWebBatchPrompt, type TakeToWorkFlags } from './build-web-take-to-work'
-import { taskSessionName } from './build-web-task-session'
+import { claudeNameArgs, taskSessionName } from './build-web-task-session'
+import { resolveTuiAgentLaunchArgs } from '../../../../shared/tui-agent-launch-defaults'
 
 // Plain module code, not a component effect: revealing the worktree leaves the Issues page.
 
@@ -122,7 +123,12 @@ export async function launchBuildWebBatch(args: {
   const { target, baseUrl, worktree, issues, flags } = args
   const keys = issues.map((i) => i.key)
   const prompt = buildWebBatchPrompt(keys, flags)
-  const sessionName = taskSessionName(keys)
+  const sessionName = taskSessionName(issues)
+  // Why the defaults too: launch arguments replace the user's own Claude arguments, not add to them.
+  const agentArgs = claudeNameArgs(
+    resolveTuiAgentLaunchArgs('claude', useAppStore.getState().settings?.agentDefaultArgs),
+    sessionName
+  )
   let revealFailed = false
   const result = launchAgentInNewTab({
     requestId: newAgentLaunchRequestId(),
@@ -130,6 +136,7 @@ export async function launchBuildWebBatch(args: {
     worktreeId: worktree.id,
     groupId: worktree.id,
     prompt,
+    agentArgs,
     promptDelivery: 'submit-after-ready',
     launchSource: 'build_web_page',
     quickCommandLabel: sessionName,

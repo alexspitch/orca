@@ -20491,8 +20491,6 @@
       "noRepo": "No sa-dc-ap-products repository found; showing every git worktree.",
       "agent": "Agent",
       "claude": "Claude Code",
-      "noWorktree": "Work in this worktree",
-      "noWorktreeHint": "The skill does not create its own worktree",
       "auto": "Auto mode",
       "autoHint": "No stop after the plans; only tasks handed to AI",
       "held": "Already held by a session: {{list}}. Starting replaces it.",
@@ -20508,11 +20506,12 @@
       "pickRepo": "Pick a repository",
       "name": "Name",
       "base": "Base branch",
-      "baseDefault": "Repository default",
       "newHint": "Orca creates the worktree, then the session works in it (-no-worktree).",
       "noRepoFound": "The repository is not available.",
       "createFailed": "Could not create the worktree: {{error}}",
-      "session": "Session"
+      "session": "Session",
+      "inThisWorktree": "The skill works in this worktree (-no-worktree) and never makes its own.",
+      "pickBase": "Pick the branch the worktree starts from."
     },
     "session": {
       "label": "Agent session",

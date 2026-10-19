@@ -77,7 +77,6 @@ function TakeToWorkForm({
       useBuildWebStore.getState().lastWorktreeId
     )
   )
-  const [noWorktree, setNoWorktree] = useState(() => useBuildWebStore.getState().noWorktree)
   const [auto, setAuto] = useState(false)
   const [mode, setMode] = useState<'existing' | 'new'>(() =>
     worktrees.length ? 'existing' : 'new'
@@ -88,42 +87,36 @@ function TakeToWorkForm({
     name: batchWorktreeName(issues.map((i) => i.key)),
     baseBranch: ''
   }))
-  // Why: a worktree made for the batch is where the session works; the skill must not make another.
-  const workHere = mode === 'new' || noWorktree
   const check = validateBuildWebBatch(issues)
   const held = issues.filter((i) => i.agent_session)
   const worktree = worktrees.find((w) => w.id === worktreeId) ?? null
   const prompt = check.ok
     ? buildWebBatchPrompt(
         issues.map((i) => i.key),
-        { noWorktree: workHere, auto }
+        { auto }
       )
     : ''
 
   const ready =
     check.ok &&
     Boolean(baseUrl) &&
-    (mode === 'new' ? Boolean(draft.repoId && draft.name.trim()) : Boolean(worktree))
+    (mode === 'new'
+      ? Boolean(draft.repoId && draft.name.trim() && draft.baseBranch.trim())
+      : Boolean(worktree))
   const start = (): void => {
     if (!check.ok || !baseUrl) {
       return
     }
     if (mode === 'new') {
-      if (!draft.repoId || !draft.name.trim()) {
+      if (!draft.repoId || !draft.name.trim() || !draft.baseBranch.trim()) {
         return
       }
       onClose()
       void (async () => {
         const created = await createBatchWorktree({ ...draft, name: draft.name.trim() })
         if (created) {
-          remember(created.id, noWorktree)
-          await launchBuildWebBatch({
-            target,
-            baseUrl,
-            worktree: created,
-            issues,
-            flags: { noWorktree: true, auto }
-          })
+          remember(created.id)
+          await launchBuildWebBatch({ target, baseUrl, worktree: created, issues, flags: { auto } })
         }
       })()
       return
@@ -131,9 +124,9 @@ function TakeToWorkForm({
     if (!worktree) {
       return
     }
-    remember(worktree.id, noWorktree)
+    remember(worktree.id)
     onClose()
-    void launchBuildWebBatch({ target, baseUrl, worktree, issues, flags: { noWorktree, auto } })
+    void launchBuildWebBatch({ target, baseUrl, worktree, issues, flags: { auto } })
   }
 
   return (
@@ -206,7 +199,11 @@ function TakeToWorkForm({
               : translate(
                   'buildWeb.take.noRepo',
                   'No sa-dc-ap-products repository found; showing every git worktree.'
-                )}
+                )}{' '}
+            {translate(
+              'buildWeb.take.inThisWorktree',
+              'The skill works in this worktree (-no-worktree) and never makes its own.'
+            )}
           </p>
         </div>
       )}
@@ -218,20 +215,9 @@ function TakeToWorkForm({
         <span className="text-muted-foreground">
           {translate('buildWeb.take.session', 'Session')}:{' '}
         </span>
-        <span className="font-mono text-xs">{taskSessionName(issues.map((i) => i.key))}</span>
+        <span className="text-xs">{taskSessionName(issues)}</span>
       </p>
       <div className="flex flex-col gap-2">
-        {mode === 'existing' ? (
-          <Option
-            checked={noWorktree}
-            onChange={setNoWorktree}
-            title={translate('buildWeb.take.noWorktree', 'Work in this worktree')}
-            hint={translate(
-              'buildWeb.take.noWorktreeHint',
-              'The skill does not create its own worktree'
-            )}
-          />
-        ) : null}
         <Option
           checked={auto}
           onChange={setAuto}

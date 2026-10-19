@@ -90,20 +90,18 @@ export function batchCheckMessage(check: BatchCheck): string | null {
   }
 }
 
-export type TakeToWorkFlags = { noWorktree: boolean; auto: boolean }
+export type TakeToWorkFlags = { auto: boolean }
 
-/** The skill call — only checked keys and fixed flags, never task text. */
+/**
+ * The skill call — only checked keys and fixed flags, never task text. Always `-no-worktree`: Orca
+ * makes the worktree the session runs in when one is wanted; the skill never makes its own.
+ */
 export function buildWebBatchPrompt(keys: string[], flags: TakeToWorkFlags): string {
   const unique = [...new Set(keys)]
   if (unique.length === 0 || unique.length > MAX_BATCH || unique.some((k) => !KEY_RE.test(k))) {
     throw new Error('invalid task keys')
   }
-  return [
-    '/build-web-tasks batch',
-    ...unique,
-    flags.noWorktree ? '-no-worktree' : '',
-    flags.auto ? '-auto' : ''
-  ]
+  return ['/build-web-tasks batch', ...unique, '-no-worktree', flags.auto ? '-auto' : '']
     .filter(Boolean)
     .join(' ')
 }

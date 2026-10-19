@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
-import { openNamedTaskSession, taskSessionName } from './build-web-task-session'
+import { openNamedTaskSession } from './build-web-task-session'
 
 /** «Take to work»: the session already named after the tasks when one is open, else the dialog that starts one. */
 export function useTakeToWork(): {
@@ -10,7 +10,7 @@ export function useTakeToWork(): {
 } {
   const [taking, setTaking] = useState<BuildWebIssueRow[] | null>(null)
   const takeToWork = (picked: BuildWebIssueRow[]): void => {
-    if (!openNamedTaskSession(taskSessionName(picked.map((issue) => issue.key)))) {
+    if (!openNamedTaskSession(picked)) {
       setTaking(picked)
     }
   }

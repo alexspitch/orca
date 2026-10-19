@@ -14,7 +14,7 @@ import type { Worktree } from '../../../../shared/worktree/types'
 export async function createBatchWorktree(args: {
   repoId: string
   name: string
-  /** Empty: the repository's default base. */
+  /** Always named: the dialog fills in the repository's default and lets the person pick another. */
   baseBranch: string
 }): Promise<Worktree | null> {
   const store = useAppStore.getState()
@@ -41,7 +41,7 @@ export async function createBatchWorktree(args: {
       .createWorktree(
         args.repoId,
         args.name,
-        args.baseBranch.trim() || undefined,
+        args.baseBranch.trim(),
         trust === 'skip' ? 'skip' : decision,
         undefined,
         'unknown',

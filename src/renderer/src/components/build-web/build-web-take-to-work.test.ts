@@ -72,16 +72,14 @@ describe('take to work batch', () => {
 })
 
 describe('skill call', () => {
-  it('is only the skill, the keys and fixed flags', () => {
-    expect(
-      buildWebBatchPrompt(['IS-1', 'SDAP-4242', 'IS-1'], { noWorktree: true, auto: false })
-    ).toBe('/build-web-tasks batch IS-1 SDAP-4242 -no-worktree')
-    expect(buildWebBatchPrompt(['IS-2.1'], { noWorktree: false, auto: true })).toBe(
-      '/build-web-tasks batch IS-2.1 -auto'
+  it('is only the skill, the keys and fixed flags, always in the session’s own worktree', () => {
+    expect(buildWebBatchPrompt(['IS-1', 'SDAP-4242', 'IS-1'], { auto: false })).toBe(
+      '/build-web-tasks batch IS-1 SDAP-4242 -no-worktree'
     )
-    expect(() =>
-      buildWebBatchPrompt(['IS-1 -auto; whoami'], { noWorktree: false, auto: false })
-    ).toThrow()
+    expect(buildWebBatchPrompt(['IS-2.1'], { auto: true })).toBe(
+      '/build-web-tasks batch IS-2.1 -no-worktree -auto'
+    )
+    expect(() => buildWebBatchPrompt(['IS-1 -auto; whoami'], { auto: false })).toThrow()
   })
 })
 
