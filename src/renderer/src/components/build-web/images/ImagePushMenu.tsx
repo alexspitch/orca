@@ -31,30 +31,51 @@ export function ImagePushMenu({
 }: {
   target: RuntimeClientTarget
   builds: BuildWebImageBuild[]
-  onPushed: () => void
+  /** After a push: `refused` names the runs whose request did not go, so their picks stay. */
+  onPushed: (refused: ReadonlySet<string>) => void
 }): React.JSX.Element {
   const [busy, setBusy] = useState(false)
   const track = useImagePushes((s) => s.track)
   const push = async (moveMainTag: boolean): Promise<void> => {
     setBusy(true)
-    try {
-      for (const request of pushRequests(builds, moveMainTag)) {
+    // Why every run is asked: one refused (an image gone from the build host) must not cost the rest.
+    const refused = new Map<string, string>()
+    let started = 0
+    for (const request of pushRequests(builds, moveMainTag)) {
+      const images = request.combos.map((c) => c.image).join(', ')
+      try {
         const result = await callBuildWeb(target, 'pushImages', request)
         if (!result.ok) {
-          toast.error(result.error)
-          return
+          refused.set(request.runId, `${images} — ${result.error}`)
+          continue
         }
+        started += request.combos.length
         track({ runId: request.runId, keys: request.combos.map(pushKeyOf), startedAt: Date.now() })
+      } catch (error) {
+        refused.set(
+          request.runId,
+          `${images} — ${error instanceof Error ? error.message : String(error)}`
+        )
       }
-      toast.success(
-        translate('buildWeb.images.pushStarted', 'Push started — build-web publishes the tags.')
-      )
-      onPushed()
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : String(error))
-    } finally {
-      setBusy(false)
     }
+    setBusy(false)
+    if (started > 0) {
+      toast.success(
+        translate(
+          'buildWeb.images.pushStartedCount',
+          'Push of {{count}} image(s) started — build-web publishes the tags.',
+          { count: started }
+        )
+      )
+    }
+    if (refused.size > 0) {
+      toast.error(
+        translate('buildWeb.images.pushRefused', 'Not pushed: {{why}}', {
+          why: [...refused.values()].join('; ')
+        })
+      )
+    }
+    onPushed(new Set(refused.keys()))
   }
   const label = builds.length
     ? translate('buildWeb.images.pushCount', 'Push to registry ({{count}})', {

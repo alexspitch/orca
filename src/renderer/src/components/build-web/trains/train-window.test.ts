@@ -12,6 +12,7 @@ import { trainActionLine } from './train-action-line'
 function run(extra: Partial<BuildWebTrainRun> = {}): BuildWebTrainRun {
   return {
     id: 'w1',
+    build_run_id: null,
     window_at: '2026-10-18T09:00:00Z',
     status: 'done',
     images: [],
@@ -49,7 +50,15 @@ describe('a window, read', () => {
     const report = windowReport(
       run({
         images: [
-          { image: 'dc/x', dist: 'rhel', why: ['IS-1'], tickets: [], current: null, publish: false }
+          {
+            image: 'dc/x',
+            dist: 'rhel',
+            why: ['IS-1'],
+            tickets: [],
+            current: null,
+            publish: false,
+            held: null
+          }
         ]
       }),
       [failed]
@@ -68,10 +77,19 @@ describe('a window, read', () => {
             dist: 'rhel',
             why: [],
             tickets: [],
-            current: { build_number: 7, image_tags: ['r/dc/a:1b7'] },
-            publish: false
+            current: { build_number: 7, image_tags: ['r/dc/a:1b7'], pushed: null },
+            publish: false,
+            held: null
           },
-          { image: 'dc/b', dist: 'rhel', why: ['IS-2'], tickets: [], current: null, publish: false }
+          {
+            image: 'dc/b',
+            dist: 'rhel',
+            why: ['IS-2'],
+            tickets: [],
+            current: null,
+            publish: false,
+            held: null
+          }
         ],
         live_builds: [
           {
@@ -124,18 +142,110 @@ describe('a window, read', () => {
         built: 1,
         problems: 2,
         images: [
-          { image: 'a', dist: 'rhel', why: [], tickets: [], current: null, publish: false },
+          {
+            image: 'a',
+            dist: 'rhel',
+            why: [],
+            tickets: [],
+            current: null,
+            publish: false,
+            held: null
+          },
           {
             image: 'b',
             dist: 'rhel',
             why: [],
             tickets: [],
-            current: { build_number: 1, image_tags: [] },
-            publish: false
+            current: { build_number: 1, image_tags: [], pushed: null },
+            publish: false,
+            held: null
           }
         ]
       })
     )
     expect(summary).toBe('built 1 of 1, not rebuilt 1, errors 2')
+  })
+
+  it('says whether each image is in the registry, from the build run first, then the journal', () => {
+    const image = (name: string, over: Record<string, unknown> = {}) => ({
+      image: name,
+      dist: 'rhel',
+      why: [],
+      tickets: [],
+      current: null,
+      publish: false,
+      held: null,
+      ...over
+    })
+    const built = (name: string) =>
+      action({
+        target: `${name} (rhel)`,
+        outcome: 'SUCCESS',
+        detail: { build_number: 1, tags: [] }
+      })
+    const report = windowReport(
+      run({
+        status: 'building',
+        images: [
+          image('a'),
+          image('b'),
+          image('c'),
+          image('d'),
+          image('k', { current: { build_number: 3, image_tags: [], pushed: true } })
+        ],
+        // A build finished by the console while the journal was last read.
+        live_builds: [
+          { image: 'd', dist: 'rhel', status: 'SUCCESS', build_number: 4, build_url: null }
+        ]
+      }),
+      [
+        built('a'),
+        built('b'),
+        built('c'),
+        action({ kind: 'push', target: 'c (rhel)', outcome: 'published' })
+      ],
+      new Map([
+        ['a (rhel)', true],
+        ['b (rhel)', false],
+        ['d (rhel)', true]
+      ])
+    )
+    expect(report.images.map((i) => [i.target, i.state, i.pushed])).toEqual([
+      ['a (rhel)', 'built', true],
+      ['b (rhel)', 'built', false],
+      ['c (rhel)', 'built', true],
+      ['d (rhel)', 'built', true],
+      ['k (rhel)', 'kept', true]
+    ])
+  })
+
+  it('holds an image the daily run found red, and says so in the journal', () => {
+    const report = windowReport(
+      run({
+        images: [
+          {
+            image: 'dc/x',
+            dist: 'rhel',
+            why: [],
+            tickets: [],
+            current: null,
+            publish: false,
+            held: { workspace: 'packages/a', red_commit: 'abcdef1234567', first_suspect: null }
+          }
+        ]
+      }),
+      []
+    )
+    expect(report.images[0]).toMatchObject({
+      state: 'held',
+      note: 'held: red tests in packages/a since abcdef1234'
+    })
+    const held = action({
+      kind: 'image_held',
+      target: 'dc/x (rhel)',
+      detail: { workspace: 'packages/a', tickets: ['SDAP-1'] }
+    })
+    expect(trainActionLine(held)).toBe('dc/x (rhel) held: red tests in packages/a, SDAP-1 wait')
+    expect(isProblem(held)).toBe(false)
   })
 })

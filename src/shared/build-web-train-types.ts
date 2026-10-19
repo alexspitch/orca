@@ -38,10 +38,15 @@ export type BuildWebTrainImage = {
   dist: string
   why: string[]
   tickets: string[]
-  /** A CI build that already holds every passenger's commits; the window does not rebuild it. */
-  current: { build_number: number; image_tags: string[] } | null
+  /**
+   * A CI build that already holds every passenger's commits; the window does not rebuild it.
+   * `pushed`: whether the registry holds it; null when the scan could not tell.
+   */
+  current: { build_number: number; image_tags: string[]; pushed: boolean | null } | null
   /** With `current`: the window publishes that build instead. */
   publish: boolean
+  /** Held back by red tests of the daily run: neither built nor deployed. */
+  held: { workspace: string; red_commit: string; first_suspect: string | null } | null
 }
 
 export type BuildWebTrainTicket = {
@@ -66,6 +71,8 @@ export type BuildWebTrainLiveBuild = {
 
 export type BuildWebTrainRun = {
   id: string
+  /** The build run holding the window's images, with whether each is pushed; null before it exists. */
+  build_run_id: string | null
   window_at: string
   status: BuildWebTrainRunStatus
   images: BuildWebTrainImage[]
@@ -88,6 +95,7 @@ export type BuildWebTrainActionKind =
   | 'jira_transition'
   | 'ticket_skipped'
   | 'failed'
+  | 'image_held'
 
 /** One thing a train did, written when it happened. */
 export type BuildWebTrainAction = {

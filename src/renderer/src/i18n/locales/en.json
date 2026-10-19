@@ -20621,7 +20621,9 @@
       "found": "{{shown}} of {{of}}",
       "openInBuildWeb": "Open in build-web",
       "buildingNow": "building now",
-      "inProgress": "in progress"
+      "inProgress": "in progress",
+      "pushStartedCount": "Push of {{count}} image(s) started — build-web publishes the tags.",
+      "pushRefused": "Not pushed: {{why}}"
     },
     "card": {
       "overview": "Overview",
@@ -21145,7 +21147,14 @@
       "image": "Image",
       "os": "OS",
       "build": "Build",
-      "registryTags": "Registry and tags"
+      "registryTags": "Registry and tags",
+      "imagePushed": "pushed",
+      "imageNotPushed": "built, not pushed",
+      "imageKeptNotPushed": "not rebuilt, not pushed",
+      "imageHeld": "held",
+      "heldLine": "{{target}} held: red tests in {{workspace}}{{waiting}}",
+      "held": "held: red tests in {{workspace}} since {{since}}",
+      "heldCount": "held {{n}}"
     },
     "testing": {
       "about": "Watching {{watching}} · build the missing images and publish them on → {{done}} · every {{seconds}}s",

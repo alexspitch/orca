@@ -1,26 +1,17 @@
 import { translate } from '@/i18n/i18n'
 import type {
   BuildWebTrainAction,
-  BuildWebTrainLiveBuild,
   BuildWebTrainRun,
   BuildWebTrainTicket
 } from '../../../../../shared/build-web-train-types'
 import { trainActionLine } from './train-action-line'
+import { windowImages, type WindowImage } from './train-window-images'
 
 // What one window did, laid out for a person, after build-web's train-window.ts: its images,
 // its tasks and its errors — from the run row (final states) and its journal (what happened).
 
-export type WindowImageState = 'built' | 'failed' | 'aborted' | 'kept' | 'building' | 'waiting'
-
-export type WindowImage = {
-  /** `image (dist)` — the journal's own build target. */
-  target: string
-  state: WindowImageState
-  build_number: number | null
-  build_url: string | null
-  tags: string[]
-  note: string
-}
+export type { WindowImage, WindowImageState } from './train-window-images'
+export { buildsInFlight } from './train-window-images'
 
 export type WindowTicket = {
   key: string
@@ -42,7 +33,6 @@ export type WindowReport = {
 }
 
 const ENDED: ReadonlySet<BuildWebTrainRun['status']> = new Set(['done', 'failed', 'skipped'])
-const IN_FLIGHT = new Set(['pending', 'queued', 'building'])
 
 export const isWindowOver = (run: Pick<BuildWebTrainRun, 'status'>): boolean =>
   ENDED.has(run.status)
@@ -120,80 +110,17 @@ function ticketLine(
   }
 }
 
-function fromBuild(target: string, b: BuildWebTrainAction | undefined, why: string): WindowImage {
-  if (!b) {
-    return { target, state: 'waiting', build_number: null, build_url: null, tags: [], note: why }
-  }
-  const tags = Array.isArray(b.detail.tags)
-    ? b.detail.tags.filter((t): t is string => typeof t === 'string')
-    : []
-  return {
-    target,
-    state: b.outcome === 'SUCCESS' ? 'built' : b.outcome === 'ABORTED' ? 'aborted' : 'failed',
-    build_number: typeof b.detail.build_number === 'number' ? b.detail.build_number : null,
-    build_url: typeof b.detail.build_url === 'string' ? b.detail.build_url : null,
-    // Why: a failed build's tags are the ones it would have made.
-    tags: b.outcome === 'SUCCESS' ? tags : [],
-    note: why
-  }
-}
-
-function fromLive(target: string, l: BuildWebTrainLiveBuild, why: string): WindowImage {
-  const state: WindowImageState =
-    l.status === 'SUCCESS'
-      ? 'built'
-      : l.status === 'ABORTED'
-        ? 'aborted'
-        : IN_FLIGHT.has(l.status)
-          ? 'building'
-          : 'failed'
-  return {
-    target,
-    state,
-    build_number: l.build_number,
-    build_url: l.build_url,
-    tags: [],
-    note: why
-  }
-}
-
-export function windowReport(run: BuildWebTrainRun, journal: BuildWebTrainAction[]): WindowReport {
+/**
+ * `pushed`: the window's build run, by `image (dist)`. It is what a push writes, whenever it happens;
+ * the journal records only the pushes made while the window was building.
+ */
+export function windowReport(
+  run: BuildWebTrainRun,
+  journal: BuildWebTrainAction[],
+  pushed: ReadonlyMap<string, boolean> = new Map()
+): WindowReport {
   const actions = journal.toSorted((a, b) => a.at.localeCompare(b.at))
-  const builds = new Map<string, BuildWebTrainAction>()
-  for (const a of actions) {
-    if (a.kind === 'build') {
-      builds.set(a.target, a)
-    }
-  }
-  const images: WindowImage[] = run.images.map((i) => {
-    const target = `${i.image} (${i.dist})`
-    const b = builds.get(target)
-    builds.delete(target)
-    if (i.current && !b) {
-      return {
-        target,
-        state: 'kept',
-        build_number: i.current.build_number,
-        build_url: null,
-        tags: i.current.image_tags,
-        note: translate(
-          'buildWeb.trains.kept',
-          'not rebuilt: the tasks’ commits are already in build #{{n}}',
-          {
-            n: String(i.current.build_number)
-          }
-        )
-      }
-    }
-    const live = b
-      ? undefined
-      : run.live_builds.find((l) => l.image === i.image && l.dist === i.dist)
-    return live ? fromLive(target, live, i.why.join(', ')) : fromBuild(target, b, i.why.join(', '))
-  })
-  // A build the journal has but the plan does not stays visible rather than dropped.
-  for (const [target, b] of builds) {
-    images.push(fromBuild(target, b, ''))
-  }
+  const images = windowImages(run, actions, pushed)
 
   const moves = new Map<string, BuildWebTrainAction>()
   const tasks = new Map<string, BuildWebTrainAction>()
@@ -233,15 +160,11 @@ export function windowReport(run: BuildWebTrainRun, journal: BuildWebTrainAction
   return { images, tickets, problems, other }
 }
 
-/** The builds of a window still going, for the history row. */
-export function buildsInFlight(live: BuildWebTrainLiveBuild[]): BuildWebTrainLiveBuild[] {
-  return live.filter((l) => IN_FLIGHT.has(l.status))
-}
-
 /** A window's result in one line for the history table. */
 export function windowSummary(run: BuildWebTrainRun): string {
-  const rebuilt = run.images.filter((i) => !i.current).length
-  const kept = run.images.length - rebuilt
+  const held = run.images.filter((i) => i.held).length
+  const rebuilt = run.images.filter((i) => !i.current && !i.held).length
+  const kept = run.images.length - rebuilt - held
   const parts = [
     rebuilt
       ? translate('buildWeb.trains.builtOf', 'built {{n}} of {{of}}', {
@@ -250,6 +173,7 @@ export function windowSummary(run: BuildWebTrainRun): string {
         })
       : '',
     kept ? translate('buildWeb.trains.keptCount', 'not rebuilt {{n}}', { n: String(kept) }) : '',
+    held ? translate('buildWeb.trains.heldCount', 'held {{n}}', { n: String(held) }) : '',
     run.problems
       ? translate('buildWeb.trains.errorsCount', 'errors {{n}}', { n: String(run.problems) })
       : ''

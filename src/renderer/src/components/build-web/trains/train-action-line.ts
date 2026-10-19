@@ -136,5 +136,18 @@ export function trainActionLine(action: BuildWebTrainAction): string {
         target: action.target,
         why
       })
+    case 'image_held': {
+      // A regression of the daily test run reaches the image; its tasks wait for the workspace.
+      const tickets = words(d.tickets)
+      return translate(
+        'buildWeb.trains.heldLine',
+        '{{target}} held: red tests in {{workspace}}{{waiting}}',
+        {
+          target: action.target,
+          workspace: text(d.workspace),
+          waiting: tickets.length ? `, ${tickets.join(', ')} wait` : ''
+        }
+      )
+    }
   }
 }

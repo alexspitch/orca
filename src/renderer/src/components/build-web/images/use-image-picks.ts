@@ -8,6 +8,8 @@ export function useImagePicks(): {
   toggle: (key: string, build: BuildWebImageBuild | null) => void
   builds: BuildWebImageBuild[]
   clear: () => void
+  /** Drop every pick but the builds `keep` names: what a push left behind stays picked. */
+  keepOnly: (keep: (build: BuildWebImageBuild) => boolean) => void
 } {
   const [picked, setPicked] = useState<ReadonlyMap<string, BuildWebImageBuild>>(new Map())
   return {
@@ -21,6 +23,7 @@ export function useImagePicks(): {
         return next
       }),
     builds: [...picked.values()].filter(isPushable),
-    clear: () => setPicked(new Map())
+    clear: () => setPicked(new Map()),
+    keepOnly: (keep) => setPicked((current) => new Map([...current].filter(([, b]) => keep(b))))
   }
 }

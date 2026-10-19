@@ -89,20 +89,34 @@ export function TrainRunDialog({
   onOpenIssue: (id: string) => void
 }): React.JSX.Element {
   const [actions, setActions] = useState<BuildWebTrainAction[] | null>(null)
+  const [pushed, setPushed] = useState<ReadonlyMap<string, boolean>>(new Map())
   const [journal, setJournal] = useState(false)
   const journalRef = useRef<HTMLElement>(null)
 
-  // The history is read again while a window is going; the journal follows each new read.
+  // The history is read again while a window is going; the journal and the push state follow
+  // each new read. Why the statuses: one build finishing changes neither the row nor the count.
+  const progress = `${run.status} ${run.updated_at} ${run.live_builds.map((b) => b.status).join(',')}`
   useEffect(() => {
     let alive = true
     void callBuildWeb(target, 'trainActions', { trainId: train.id, runId: run.id }).then(
       (next) => alive && setActions(next),
       () => alive && setActions([])
     )
+    // What a push writes, whenever it is made: the journal keeps only those of a building window.
+    if (run.build_run_id) {
+      void callBuildWeb(target, 'getRun', { runId: run.build_run_id }).then(
+        (buildRun) =>
+          alive &&
+          setPushed(
+            new Map((buildRun?.builds ?? []).map((b) => [`${b.image} (${b.dist})`, b.pushed]))
+          ),
+        () => undefined
+      )
+    }
     return () => {
       alive = false
     }
-  }, [run.id, run.updated_at, run.live_builds.length, target, train.id])
+  }, [progress, run.build_run_id, run.id, target, train.id])
 
   // Why: the journal opens below everything else; bring it into view rather than leave it unseen.
   useEffect(() => {
@@ -111,7 +125,7 @@ export function TrainRunDialog({
     }
   }, [journal])
 
-  const report = actions ? windowReport(run, actions) : null
+  const report = actions ? windowReport(run, actions, pushed) : null
   // A task left in place for a routine reason is noise here; it stays in the journal.
   const tickets = report ? report.tickets.filter((t) => t.outcome !== 'skipped' || t.buildTask) : []
   const skipped = report ? report.tickets.length - tickets.length : 0

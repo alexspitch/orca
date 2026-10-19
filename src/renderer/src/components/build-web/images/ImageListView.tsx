@@ -117,7 +117,7 @@ export function ImageListView({
         <ImagePushMenu
           target={target}
           builds={picks.builds}
-          onPushed={() => (picks.clear(), reload(true))}
+          onPushed={(refused) => (picks.keepOnly((b) => refused.has(b.run_id)), reload(true))}
         />
         {narrowed ? (
           <Button variant="ghost" size="sm" onClick={reset}>

@@ -3,16 +3,27 @@ import { translate } from '@/i18n/i18n'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import type { ChipTone } from '../build-web-tones'
 import { useBuildLogViewer } from '../images/build-log-viewer'
-import type { WindowImage, WindowImageState } from './train-window'
+import type { WindowImage } from './train-window'
 import { splitTarget, tagGroups } from './train-image-refs'
 
 const GRID =
-  'grid grid-cols-[100px_minmax(200px,1.1fr)_64px_72px_minmax(280px,2fr)] items-center gap-x-4'
+  'grid grid-cols-[150px_minmax(200px,1.1fr)_64px_72px_minmax(280px,2fr)] items-center gap-x-4'
 // Tags shown before «+N»: the build tag and its moving tag cover most rows.
 const TAGS_SHOWN = 3
 
-function imageState(state: WindowImageState): { label: string; tone: ChipTone | null } {
-  switch (state) {
+/** A built or kept image says whether it is in the registry: a push changes its row. */
+function imageState(image: WindowImage): { label: string; tone: ChipTone | null } {
+  if ((image.state === 'built' || image.state === 'kept') && image.pushed !== null) {
+    return image.pushed
+      ? { label: translate('buildWeb.trains.imagePushed', 'pushed'), tone: 'green' }
+      : image.state === 'built'
+        ? { label: translate('buildWeb.trains.imageNotPushed', 'built, not pushed'), tone: 'cyan' }
+        : {
+            label: translate('buildWeb.trains.imageKeptNotPushed', 'not rebuilt, not pushed'),
+            tone: 'cyan'
+          }
+  }
+  switch (image.state) {
     case 'built':
       return { label: translate('buildWeb.trains.imageBuilt', 'built'), tone: 'green' }
     case 'building':
@@ -25,6 +36,8 @@ function imageState(state: WindowImageState): { label: string; tone: ChipTone | 
       return { label: translate('buildWeb.trains.imageKept', 'not rebuilt'), tone: 'neutral' }
     case 'waiting':
       return { label: translate('buildWeb.trains.imageWaiting', 'not built'), tone: 'neutral' }
+    case 'held':
+      return { label: translate('buildWeb.trains.imageHeld', 'held'), tone: 'amber' }
   }
 }
 
@@ -97,7 +110,7 @@ export function TrainRunImages({ images }: { images: WindowImage[] }): React.JSX
         </div>
         {images.map((i) => {
           const { name, namespace, dist } = splitTarget(i.target)
-          const state = imageState(i.state)
+          const state = imageState(i)
           return (
             <div key={i.target} className={`${GRID} border-t border-border px-4 py-2.5`}>
               <span>

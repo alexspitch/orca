@@ -42,7 +42,8 @@ const KINDS: readonly BuildWebTrainActionKind[] = [
   'jira_comment',
   'jira_transition',
   'ticket_skipped',
-  'failed'
+  'failed',
+  'image_held'
 ]
 
 function records(value: unknown): Record<string, unknown>[] {
@@ -56,15 +57,27 @@ const runStatusOf = (value: unknown): BuildWebTrainRunStatus =>
 
 function imageOf(v: Record<string, unknown>): BuildWebTrainImage {
   const current = recordOf(v.current)
+  const held = recordOf(v.held)
   return {
     image: textOf(v.image),
     dist: textOf(v.dist),
     why: textsOf(v.why),
     tickets: textsOf(v.tickets),
     current: current
-      ? { build_number: numberOf(current.build_number), image_tags: textsOf(current.image_tags) }
+      ? {
+          build_number: numberOf(current.build_number),
+          image_tags: textsOf(current.image_tags),
+          pushed: typeof current.pushed === 'boolean' ? current.pushed : null
+        }
       : null,
-    publish: v.publish === true
+    publish: v.publish === true,
+    held: held
+      ? {
+          workspace: textOf(held.workspace),
+          red_commit: textOf(held.red_commit),
+          first_suspect: textOrNull(held.first_suspect)
+        }
+      : null
   }
 }
 
@@ -85,6 +98,7 @@ function ticketOf(v: Record<string, unknown>): BuildWebTrainTicket {
 function runOf(v: Record<string, unknown>): BuildWebTrainRun {
   return {
     id: textOf(v.id),
+    build_run_id: textOrNull(v.run_id),
     window_at: textOf(v.window_at),
     status: runStatusOf(v.status),
     images: records(v.images).map(imageOf),

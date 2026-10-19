@@ -127,8 +127,8 @@ export function ImageHistoryView({
         <ImagePushMenu
           target={target}
           builds={picks.builds}
-          onPushed={() => {
-            picks.clear()
+          onPushed={(refused) => {
+            picks.keepOnly((b) => refused.has(b.run_id))
             reload(true)
           }}
         />
