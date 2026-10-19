@@ -58,6 +58,31 @@ export const getNotificationsPaneSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
+    title: translate(
+      'auto.components.settings.notifications.search.3a9c7e1d05',
+      'Only When an Agent Needs Input'
+    ),
+    description: translate(
+      'auto.components.settings.notifications.search.f2b6d84a19',
+      'Notify and badge the app icon only when an agent is waiting on your answer or approval.'
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.notifications.search.ca8faa40d7',
+        'notifications'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.notifications.search.7fa07e9600',
+        'agent'
+      ),
+      ...translateSearchKeyword(
+        'auto.components.settings.notifications.search.8d4e2a6c3f',
+        'input'
+      ),
+      ...translateSearchKeyword('auto.components.settings.notifications.search.c5a1f97b0e', 'badge')
+    ]
+  },
+  {
     title: translate('auto.components.settings.notifications.search.a5edee1d99', 'Terminal Bell'),
     description: translate(
       'auto.components.settings.notifications.search.d3f1c48677',

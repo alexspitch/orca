@@ -21,6 +21,7 @@ import type {
   NotificationDispatchRequest,
   NotificationSettings
 } from '../../shared/notification-settings-types'
+import { isNotificationSourceAllowed } from '../../shared/notification-eligibility'
 import { getRepoIdFromWorktreeId } from '../../shared/worktree/id'
 import { buildNotificationOptions } from '../ipc/notification-options'
 import type { MobileNotificationDispatchEvent } from './runtime-mobile-notification-controller'
@@ -108,7 +109,7 @@ export function createStructuredAttentionMobileDelivery(
         getRuntimeDesktopSurface().translateNotification
       )
       // The same eligibility the desktop's own fan-out applies: these preferences gate the phone too.
-      const desktopAllowed = settings.enabled && settings.agentTaskComplete
+      const desktopAllowed = isNotificationSourceAllowed(settings, request)
       deps.dispatch({
         type: 'notification',
         emittedAt: deps.now(),

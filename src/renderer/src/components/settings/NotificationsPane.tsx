@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { Button } from '../ui/button'
 import { Separator } from '../ui/separator'
-import { BellRing, Bot, EyeOff, Siren } from 'lucide-react'
+import { BellRing, Bot, EyeOff, MessageCircleQuestionMark, Siren } from 'lucide-react'
 import { useAppStore } from '@/store'
 import {
   MacNotificationPermissionCard,
@@ -144,6 +144,25 @@ export function NotificationsPane({
         onToggle={() =>
           void updateNotificationSettings({
             agentTaskComplete: !notificationSettings.agentTaskComplete
+          })
+        }
+      />
+
+      {/* Why never disabled: it also decides what the app icon badge counts. */}
+      <NotificationSettingToggle
+        icon={<MessageCircleQuestionMark className="size-4" />}
+        label={translate(
+          'auto.components.settings.NotificationsPane.6e1f4b9a2c',
+          'Only When an Agent Needs Input'
+        )}
+        description={translate(
+          'auto.components.settings.NotificationsPane.b83d0c5e71',
+          'Desktop and phone alerts, and the app icon badge, only for an agent waiting on your answer or approval, not for one that just finished.'
+        )}
+        checked={notificationSettings.agentNeedsInputOnly}
+        onToggle={() =>
+          void updateNotificationSettings({
+            agentNeedsInputOnly: !notificationSettings.agentNeedsInputOnly
           })
         }
       />

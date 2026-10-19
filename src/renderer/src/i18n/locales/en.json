@@ -8185,7 +8185,9 @@
           "274af61bc0": "system",
           "6e6df3a09a": "Choose Custom File",
           "76e02467b8": "Change Custom File",
-          "d3756cf5bc": "disabled"
+          "d3756cf5bc": "disabled",
+          "6e1f4b9a2c": "Only When an Agent Needs Input",
+          "b83d0c5e71": "Desktop and phone alerts, and the app icon badge, only for an agent waiting on your answer or approval, not for one that just finished."
         },
         "OpenAiTranscriptionKeyDialog": {
           "fa83512e48": "Save Key",
@@ -10663,7 +10665,11 @@
             "host": "host",
             "remote": "remote",
             "ssh": "ssh",
-            "mute": "mute"
+            "mute": "mute",
+            "3a9c7e1d05": "Only When an Agent Needs Input",
+            "f2b6d84a19": "Notify and badge the app icon only when an agent is waiting on your answer or approval.",
+            "8d4e2a6c3f": "input",
+            "c5a1f97b0e": "badge"
           }
         },
         "orchestration": {
@@ -20398,13 +20404,7 @@
       "search": "Search by key or title",
       "quick": "Quick filters",
       "toWork": "To work",
-      "statusCount": "{{count}} statuses",
-      "foldAll": "Hide subtasks",
-      "unfoldAll": "Show subtasks"
-    },
-    "subtasks": {
-      "blocked": "Open subtasks: {{count}} — the task will not close or go out to deploy.",
-      "none": "No subtasks. A problem found while checking the task is filed under it in build-web."
+      "statusCount": "{{count}} statuses"
     },
     "detail": {
       "noDescription": "No description.",
@@ -20454,10 +20454,7 @@
       "changePriority": "Change the priority of {{key}}",
       "assignee": "Assignee",
       "changeAssignee": "Change the assignee of {{key}}",
-      "openFull": "Open {{key}} full screen",
-      "foldFamily": "Hide the subtasks of {{key}}",
-      "unfoldFamily": "Show {{count}} subtask(s) of {{key}}",
-      "subtaskCount": "Subtasks: {{count}}, open: {{open}}"
+      "openFull": "Open {{key}} full screen"
     },
     "state": {
       "loading": "Loading tasks…",
@@ -20602,7 +20599,6 @@
       "moveTo": "Move to “{{status}}”",
       "collapse": "Collapse",
       "commentJiraTitle": "Post this comment to Jira {{key}} too?",
-      "subtasks": "Subtasks {{count}}",
       "send": "Send",
       "commentNotInJira": "Saved, but not posted to Jira: {{error}}",
       "commentPlaceholder": "Comment…",

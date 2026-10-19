@@ -7899,7 +7899,9 @@
           "274af61bc0": "sistema",
           "6e6df3a09a": "Elegir archivo personalizado",
           "76e02467b8": "Cambiar archivo personalizado",
-          "d3756cf5bc": "desactivado"
+          "d3756cf5bc": "desactivado",
+          "6e1f4b9a2c": "Solo cuando un agente necesite tu respuesta",
+          "b83d0c5e71": "Las alertas en el escritorio y en el teléfono, y la insignia del icono de la app, solo para un agente que espera tu respuesta o aprobación, no para uno que acaba de terminar."
         },
         "OpenAiTranscriptionKeyDialog": {
           "fa83512e48": "Guardar clave",
@@ -10366,7 +10368,11 @@
             "host": "host",
             "remote": "remoto",
             "ssh": "ssh",
-            "mute": "silenciar"
+            "mute": "silenciar",
+            "3a9c7e1d05": "Solo cuando un agente necesite tu respuesta",
+            "f2b6d84a19": "Notifica y muestra la insignia en el icono de la app solo cuando un agente espera tu respuesta o aprobación.",
+            "8d4e2a6c3f": "respuesta",
+            "c5a1f97b0e": "insignia"
           }
         },
         "orchestration": {

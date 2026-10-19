@@ -15,6 +15,10 @@ import type { OrcaRuntimeService } from '../runtime/orca-runtime'
 import { buildNotificationOptions } from '../ipc/notification-options'
 import { translateMain } from '../i18n/main-i18n'
 import { reserveNotificationCooldown } from '../../shared/notification-burst-cooldown'
+import {
+  isNotificationSourceAllowed,
+  passesAgentNeedsInputOnly
+} from '../../shared/notification-eligibility'
 
 export type NotificationDeliveryDependencies = {
   readNotificationSettings: () => NotificationSettings
@@ -73,23 +77,24 @@ export function createNotificationDeliveryService(
 
   return {
     dispatch: (request) => {
+      const settings = deps.readNotificationSettings()
       // Why: light the tray attention dot before the cooldown/focus/enabled gates so they
-      // can't hold it back (clears on window show/restore; see index.ts).
-      if (request.source === 'agent-task-complete' || request.source === 'terminal-bell') {
+      // can't hold it back (clears on window show/restore; see index.ts). Needs-input-only
+      // keeps a plain finish off it, as it keeps one off the Dock badge.
+      if (
+        (request.source === 'agent-task-complete' || request.source === 'terminal-bell') &&
+        passesAgentNeedsInputOnly(settings, request)
+      ) {
         if (!deps.isWindowVisible(deps.findActiveWindow())) {
           deps.setTrayAttention(true)
         }
       }
 
-      const settings = deps.readNotificationSettings()
       const hostMuted =
         request.notificationSourceId !== undefined &&
         settings.mutedNotificationSourceIds.includes(request.notificationSourceId)
       // Machine mutes leave mobile eligibility and its cooldown unchanged.
-      const desktopAllowed =
-        settings.enabled &&
-        (request.source !== 'agent-task-complete' || settings.agentTaskComplete) &&
-        (request.source !== 'terminal-bell' || settings.terminalBell)
+      const desktopAllowed = isNotificationSourceAllowed(settings, request)
 
       const notificationOptions = buildNotificationOptions(request, translateMain)
 

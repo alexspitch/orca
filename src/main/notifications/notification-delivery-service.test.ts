@@ -16,6 +16,7 @@ function makeSettings(overrides: Partial<NotificationSettings> = {}): Notificati
   return {
     enabled: true,
     agentTaskComplete: true,
+    agentNeedsInputOnly: false,
     terminalBell: true,
     suppressWhenFocused: false,
     customSoundId: 'system',
@@ -113,6 +114,52 @@ describe('createNotificationDeliveryService', () => {
       expect.objectContaining({ desktopAllowed: false, source: 'agent-task-complete' })
     )
     expect(harness.order).toEqual(['tray', 'mobile'])
+  })
+
+  it('keeps a finish off the banner, tray dot and phone while needs-input only', () => {
+    const harness = makeHarness(makeSettings({ agentNeedsInputOnly: true }))
+    const service = createNotificationDeliveryService(harness.deps)
+
+    expect(service.dispatch(makeRequest({ agentState: 'done' }))).toEqual({
+      delivered: false,
+      reason: 'source-disabled'
+    })
+    // A process-exit completion carries no state and reads as a finish.
+    expect(service.dispatch(makeRequest({ worktreeId: 'wt-2', worktreeLabel: 'wt-2' }))).toEqual({
+      delivered: false,
+      reason: 'source-disabled'
+    })
+    expect(harness.setTrayAttention).not.toHaveBeenCalled()
+    expect(harness.dispatchMobileNotification).toHaveBeenCalledTimes(2)
+    for (const [event] of harness.dispatchMobileNotification.mock.calls) {
+      expect(event).toMatchObject({ desktopAllowed: false })
+    }
+  })
+
+  it.each(['blocked', 'waiting'] as const)(
+    'still announces a %s agent while needs-input only',
+    (agentState) => {
+      const harness = makeHarness(makeSettings({ agentNeedsInputOnly: true }))
+      const result = createNotificationDeliveryService(harness.deps).dispatch(
+        makeRequest({ agentState })
+      )
+
+      expect(result).toEqual({ delivered: true })
+      expect(harness.order).toEqual(['tray', 'mobile', 'native'])
+      expect(harness.dispatchMobileNotification.mock.calls[0]?.[0]).not.toHaveProperty(
+        'desktopAllowed'
+      )
+    }
+  )
+
+  it('leaves the terminal bell to its own switch while needs-input only', () => {
+    const harness = makeHarness(makeSettings({ agentNeedsInputOnly: true }))
+    const result = createNotificationDeliveryService(harness.deps).dispatch(
+      makeRequest({ source: 'terminal-bell' })
+    )
+
+    expect(result).toEqual({ delivered: true })
+    expect(harness.setTrayAttention).toHaveBeenCalledWith(true)
   })
 
   it('keeps the desktop source gates distinct per source', () => {

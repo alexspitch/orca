@@ -6,6 +6,8 @@ import type { NotificationSourceId } from './notification-source'
 export type NotificationSettings = {
   enabled: boolean
   agentTaskComplete: boolean
+  /** On: agent banners, phone pushes and the app-icon badge only for an agent waiting on the user. */
+  agentNeedsInputOnly: boolean
   terminalBell: boolean
   suppressWhenFocused: boolean
   customSoundId:

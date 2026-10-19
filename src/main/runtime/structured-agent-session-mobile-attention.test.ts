@@ -56,6 +56,7 @@ function settings(overrides: Partial<NotificationSettings> = {}): NotificationSe
   return {
     enabled: true,
     agentTaskComplete: true,
+    agentNeedsInputOnly: false,
     terminalBell: true,
     suppressWhenFocused: false,
     customSoundId: 'system',
@@ -147,6 +148,22 @@ describe('structured attention mobile delivery', () => {
     })
     h.delivery.deliver(PROMPT, SUMMARY)
     expect(h.sent[0]).toMatchObject({ desktopAllowed: false })
+  })
+
+  it('marks only a finish ineligible while needs-input only', () => {
+    const h = harness({
+      readNotificationSettings: () => settings({ agentNeedsInputOnly: true })
+    })
+    h.delivery.deliver(PROMPT, SUMMARY)
+    h.delivery.deliver(completion('success', true), SUMMARY)
+    h.delivery.deliver(completion('success'), SUMMARY)
+    h.delivery.deliver(completion('failure'), SUMMARY)
+    expect(h.sent.map((event) => event.desktopAllowed)).toEqual([
+      undefined,
+      undefined,
+      false,
+      false
+    ])
   })
 
   it('announces nothing for a completion with no verdict', () => {

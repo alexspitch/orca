@@ -5,11 +5,11 @@ import type { AppState } from '@/store/types'
 import { getSettingsFocusedExecutionHostId } from '../../../shared/execution-host'
 import type { Worktree } from '../../../shared/worktree/types'
 import { sameBucketRecords } from './bucket-record-equality'
-import { getUnreadBadgeCount } from './unread-badge-count'
+import { getUnreadBadgeCount, type UnreadBadgeCountSources } from './unread-badge-count'
 import { hasLiveTabMarker } from '@/store/slices/workspace-attention/workspace-live-markers'
 import { folderWorkspaceKey } from '../../../shared/workspace-scope'
 
-type UnreadBadgeCountState = Pick<
+export type UnreadBadgeCountState = Pick<
   AppState,
   | 'worktreesByRepo'
   | 'folderWorkspaces'
@@ -25,6 +25,27 @@ type UnreadBadgeCountState = Pick<
   | 'unifiedTabsByWorktree'
   | 'unreadTerminalTabs'
 >
+
+/** The sidebar membership the badge counts within, read from the store. */
+export function readUnreadBadgeCountSources(state: UnreadBadgeCountState): UnreadBadgeCountSources {
+  return {
+    worktreesByRepo: state.worktreesByRepo,
+    folderWorkspaces: state.folderWorkspaces,
+    tabsByWorktree: state.tabsByWorktree,
+    unifiedTabsByWorktree: state.unifiedTabsByWorktree,
+    unreadTerminalTabs: state.unreadTerminalTabs,
+    projectGroups: state.projectGroups,
+    repoMap: getRepoMapFromState(state),
+    visibleHostIds: getVisibleWorkspaceHostIdSet(state),
+    defaultHostId: getSettingsFocusedExecutionHostId(state.settings),
+    hiddenOtherDevicePairings: state.hideWorkspacesFromOtherDevices
+      ? getPairedDeviceIdsByEnvironment(
+          state.runtimeEnvironments,
+          state.runtimeStatusByEnvironmentId
+        )
+      : null
+  }
+}
 
 /** The worktree fields the count reads (`id` embeds `repoId`), so equality over them is a sound cache key. */
 function sameBadgeWorktree(previous: Worktree, next: Worktree): boolean {
@@ -99,23 +120,7 @@ export function createUnreadBadgeCountSelector(): (state: UnreadBadgeCountState)
 
   return (state) => {
     if (!previousState || !sameCountInputs(previousState, state)) {
-      unreadCount = getUnreadBadgeCount({
-        worktreesByRepo: state.worktreesByRepo,
-        folderWorkspaces: state.folderWorkspaces,
-        tabsByWorktree: state.tabsByWorktree,
-        unifiedTabsByWorktree: state.unifiedTabsByWorktree,
-        unreadTerminalTabs: state.unreadTerminalTabs,
-        projectGroups: state.projectGroups,
-        repoMap: getRepoMapFromState(state),
-        visibleHostIds: getVisibleWorkspaceHostIdSet(state),
-        defaultHostId: getSettingsFocusedExecutionHostId(state.settings),
-        hiddenOtherDevicePairings: state.hideWorkspacesFromOtherDevices
-          ? getPairedDeviceIdsByEnvironment(
-              state.runtimeEnvironments,
-              state.runtimeStatusByEnvironmentId
-            )
-          : null
-      })
+      unreadCount = getUnreadBadgeCount(readUnreadBadgeCountSources(state))
     }
     previousState = state
     return unreadCount

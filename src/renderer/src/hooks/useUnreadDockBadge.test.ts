@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as UnreadBadgeCountModule from '@/lib/unread-badge-count'
 import { makeFolderWorkspace, makeWorktree } from '@/store/slices/worktrees-slice-test-fixtures'
 import { makeTab } from '../store/slices/store-session-test-harness'
+import { AGENT_STATUS_STALE_AFTER_MS } from '../../../shared/agent-status-types'
 import { FLOATING_TERMINAL_WORKTREE_ID, getDefaultSettings } from '../../../shared/constants'
 
 const { getUnreadBadgeCount } = vi.hoisted(() => ({ getUnreadBadgeCount: vi.fn() }))
@@ -232,6 +233,50 @@ describe('useUnreadDockBadge', () => {
     act(() => useAppStore.setState({ unreadTerminalTabs: { orphan: 'terminal-bell' } }))
     expect(renders).toBe(initialRenders + 1)
     expect(setUnreadDockBadgeCount).toHaveBeenLastCalledWith(0)
+  })
+
+  it('counts agents waiting on the user instead of unread workspaces while needs-input only', () => {
+    vi.useFakeTimers({ now: new Date('2026-10-18T12:00:00.000Z') })
+    try {
+      const defaults = getDefaultSettings('/tmp')
+      const waiting = makeWorktree({ id: 'repo::waiting', repoId: 'repo' })
+      const tab = makeTab({ id: 'tab-waiting', worktreeId: waiting.id })
+      const paneKey = `${tab.id}:11111111-1111-4111-8111-111111111111`
+      useAppStore.setState({
+        settings: {
+          ...defaults,
+          notifications: { ...defaults.notifications, agentNeedsInputOnly: true }
+        },
+        worktreesByRepo: {
+          repo: [waiting, makeWorktree({ id: 'repo::finished', repoId: 'repo', isUnread: true })]
+        },
+        tabsByWorktree: { [waiting.id]: [tab] },
+        agentStatusByPaneKey: {
+          [paneKey]: {
+            state: 'waiting',
+            prompt: '',
+            updatedAt: Date.now(),
+            stateStartedAt: Date.now(),
+            agentType: 'claude',
+            paneKey,
+            worktreeId: waiting.id,
+            tabId: tab.id,
+            stateHistory: []
+          }
+        }
+      })
+      renderHook(() => useUnreadDockBadge(false))
+      expect(setUnreadDockBadgeCount).toHaveBeenLastCalledWith(1)
+
+      // Past the stale window the row reads "not reporting"; the minute recount drops it unprompted.
+      act(() => vi.advanceTimersByTime(AGENT_STATUS_STALE_AFTER_MS + 60_000))
+      expect(setUnreadDockBadgeCount).toHaveBeenLastCalledWith(0)
+
+      act(() => useAppStore.setState({ settings: defaults }))
+      expect(setUnreadDockBadgeCount).toHaveBeenLastCalledWith(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('adds the floating terminal only while its launcher shows the unread dot', () => {

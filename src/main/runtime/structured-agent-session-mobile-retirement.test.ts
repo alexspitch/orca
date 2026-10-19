@@ -87,6 +87,7 @@ describe('host prompt delivery and retirement', () => {
           readNotificationSettings: () => ({
             enabled: true,
             agentTaskComplete: true,
+            agentNeedsInputOnly: false,
             terminalBell: true,
             suppressWhenFocused: false,
             customSoundId: 'system',

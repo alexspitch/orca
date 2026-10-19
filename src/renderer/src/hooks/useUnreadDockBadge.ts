@@ -1,4 +1,8 @@
-import { useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from 'react'
+import {
+  createNeedsInputBadgeCountSelector,
+  NEEDS_INPUT_BADGE_RECOUNT_MS
+} from '@/lib/needs-input-badge-count-selector'
 import { createUnreadBadgeCountSelector } from '@/lib/unread-badge-count-selector'
 import { useAppStore } from '@/store'
 import { selectFloatingWorkspaceHasUnread } from '@/store/selectors'
@@ -17,6 +21,35 @@ export function clearUnreadDockBadgeCount(): void {
   setUnreadDockBadgeCountBestEffort(0)
 }
 
+/** Zero unless notifications are needs-input only; then the workspaces with an agent waiting on the user. */
+function useNeedsInputBadgeCount(enabled: boolean, floatingTerminalOpen: boolean): number {
+  const selectNeedsInputBadgeCount = useMemo(() => createNeedsInputBadgeCountSelector(), [])
+  const subscribe = useCallback(
+    (notify: () => void) => {
+      if (!enabled) {
+        return () => {}
+      }
+      const unsubscribe = useAppStore.subscribe(notify)
+      // Why: a waiting row ages into "not reporting" with no store write, so time alone must recount.
+      const timer = setInterval(notify, NEEDS_INPUT_BADGE_RECOUNT_MS)
+      return () => {
+        unsubscribe()
+        clearInterval(timer)
+      }
+    },
+    [enabled]
+  )
+  const readCount = useCallback(
+    () =>
+      enabled
+        ? selectNeedsInputBadgeCount(useAppStore.getState(), Date.now(), floatingTerminalOpen)
+        : 0,
+    [enabled, floatingTerminalOpen, selectNeedsInputBadgeCount]
+  )
+  // Why not useAppStore: the interval has to re-read without re-rendering the App root each minute.
+  return useSyncExternalStore(subscribe, readCount)
+}
+
 export function useUnreadDockBadge(
   floatingTerminalOpen: boolean
 ): typeof clearUnreadDockBadgeCount {
@@ -29,8 +62,11 @@ export function useUnreadDockBadge(
   const floatingTerminalHasUnread = useAppStore(
     (s) => s.settings?.floatingTerminalEnabled === true && selectFloatingWorkspaceHasUnread(s)
   )
-  const unreadCount =
-    unreadWorkspaceCount + (floatingTerminalHasUnread && !floatingTerminalOpen ? 1 : 0)
+  const needsInputOnly = useAppStore((s) => s.settings?.notifications?.agentNeedsInputOnly === true)
+  const needsInputCount = useNeedsInputBadgeCount(needsInputOnly, floatingTerminalOpen)
+  const unreadCount = needsInputOnly
+    ? needsInputCount
+    : unreadWorkspaceCount + (floatingTerminalHasUnread && !floatingTerminalOpen ? 1 : 0)
 
   // oxlint-disable-next-line react-doctor/no-derived-state-effect -- Why: this syncs an external OS dock badge, not React render state.
   useEffect(() => {

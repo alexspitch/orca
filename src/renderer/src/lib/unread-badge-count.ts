@@ -32,18 +32,20 @@ export type UnreadBadgeCountSources = {
   tabsByWorktree?: Readonly<Record<string, readonly Pick<TerminalTab, 'id'>[]>>
   unifiedTabsByWorktree?: Readonly<Record<string, readonly Pick<Tab, 'id' | 'contentType'>[]>>
   unreadTerminalTabs?: Readonly<Record<string, StoredAgentAttentionUnread>>
+  /** Set while notifications are needs-input only: these workspaces count instead of unread ones. */
+  needsInputWorkspaceIds?: ReadonlySet<string>
 }
 
 /** Folder rows also need a live tab marker; worktree rows count their flag alone. */
 export function getUnreadBadgeCount(sources: UnreadBadgeCountSources): number {
-  const { visibleHostIds, defaultHostId } = sources
+  const { visibleHostIds, defaultHostId, needsInputWorkspaceIds } = sources
   // Preserve the existing id-only count while narrowing it to visible hosts.
   const unreadWorktrees = new Set<string>()
   for (const worktrees of Object.values(sources.worktreesByRepo)) {
     for (const worktree of worktrees) {
       // Why: the sidebar never renders an archived worktree, nor one on a host it is not showing.
       if (
-        worktree.isUnread &&
+        (needsInputWorkspaceIds ? needsInputWorkspaceIds.has(worktree.id) : worktree.isUnread) &&
         !worktree.isArchived &&
         (!sources.hiddenOtherDevicePairings ||
           !isWorkspaceOwnedBySomeoneElse(worktree, sources.hiddenOtherDevicePairings)) &&
@@ -59,8 +61,11 @@ export function getUnreadBadgeCount(sources: UnreadBadgeCountSources): number {
 /** Folder workspaces through the same membership steps the sidebar runs before building rows. */
 function countUnreadFolderRows(sources: UnreadBadgeCountSources): number {
   const { projectGroups, visibleHostIds, defaultHostId, hiddenOtherDevicePairings } = sources
-  const unread = sources.folderWorkspaces.filter(
-    (folder) => folder.isUnread && hasLiveTabMarker(sources, folderWorkspaceKey(folder.id))
+  const { needsInputWorkspaceIds } = sources
+  const unread = sources.folderWorkspaces.filter((folder) =>
+    needsInputWorkspaceIds
+      ? needsInputWorkspaceIds.has(folderWorkspaceKey(folder.id))
+      : folder.isUnread && hasLiveTabMarker(sources, folderWorkspaceKey(folder.id))
   )
   if (unread.length === 0) {
     return 0

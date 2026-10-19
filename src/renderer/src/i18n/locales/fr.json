@@ -8044,7 +8044,9 @@
           "274af61bc0": "système",
           "6e6df3a09a": "Choisir un fichier personnalisé",
           "76e02467b8": "Changer de fichier personnalisé",
-          "d3756cf5bc": "désactivé"
+          "d3756cf5bc": "désactivé",
+          "6e1f4b9a2c": "Uniquement quand un agent attend votre réponse",
+          "b83d0c5e71": "Alertes sur l’ordinateur et le téléphone, et pastille sur l’icône de l’app, uniquement pour un agent qui attend votre réponse ou votre approbation, pas pour un agent qui vient de terminer."
         },
         "OpenAiTranscriptionKeyDialog": {
           "fa83512e48": "Enregistrer la clé",
@@ -10521,7 +10523,11 @@
             "host": "hôte",
             "remote": "distant",
             "ssh": "ssh",
-            "mute": "muet"
+            "mute": "muet",
+            "3a9c7e1d05": "Uniquement quand un agent attend votre réponse",
+            "f2b6d84a19": "Notifier et afficher une pastille sur l’icône de l’app uniquement quand un agent attend votre réponse ou votre approbation.",
+            "8d4e2a6c3f": "réponse",
+            "c5a1f97b0e": "pastille"
           }
         },
         "orchestration": {
