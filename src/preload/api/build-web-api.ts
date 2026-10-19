@@ -33,6 +33,7 @@ import type {
   BuildWebRun
 } from '../../shared/build-web-run-types'
 
+import type { BuildWebStandApi } from './build-web-stand-api'
 import type { BuildWebTaskApi } from './build-web-task-api'
 
 export type BuildWebSessionArgs = {
@@ -111,4 +112,5 @@ export type BuildWebApi = {
   issueCommits: (args: { id: string; fetch: boolean }) => Promise<BuildWebCommitList>
   commitDiff: (args: { id: string; sha: string }) => Promise<BuildWebCommitDiff>
   guideShot: (args: { runId: string; slug: string }) => Promise<BuildWebGuideShot>
-} & BuildWebTaskApi
+} & BuildWebTaskApi &
+  BuildWebStandApi

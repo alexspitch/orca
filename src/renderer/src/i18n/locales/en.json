@@ -20549,7 +20549,8 @@
     },
     "client": {
       "updateServer": "This Orca server does not support build-web yet. Update the server to use Issues.",
-      "restart": "This window was opened before Orca was updated. Restart Orca to use this."
+      "restart": "This window was opened before Orca was updated. Restart Orca to use this.",
+      "updateServerStands": "This Orca server does not support Stands yet. Update the server to use them."
     },
     "status": {
       "unknown": "Unknown",
@@ -20765,7 +20766,9 @@
       "showTestingInSidebar": "Show Testing in sidebar",
       "showTestingInSidebarHint": "Tasks in testing whose images are not published yet",
       "showRecapsInSidebar": "Show Recaps in sidebar",
-      "showRecapsInSidebarHint": "The reports of build-web automations, newest first"
+      "showRecapsInSidebarHint": "The reports of build-web automations, newest first",
+      "showStandsInSidebar": "Show Stands in sidebar",
+      "showStandsInSidebarHint": "The services, logs and UI logins of each build-web stand"
     },
     "sidebar": {
       "issues": "Issues",
@@ -20777,7 +20780,12 @@
       "testing": "Testing",
       "recaps": "Recaps",
       "imagesFailed": "{{label}}, {{count}} failed",
-      "imagesFailedHint": "Images whose last build failed, as the Images page counts them"
+      "imagesFailedHint": "Images whose last build failed, as the Images page counts them",
+      "hideStands": "Hide stands",
+      "showStands": "Show stands",
+      "stands": "Stands",
+      "standsLoading": "Loading…",
+      "noStands": "No stands"
     },
     "priority": {
       "highest": "Highest",
@@ -21199,6 +21207,85 @@
       "allAutomations": "All automations",
       "searchAutomation": "Search automations",
       "noSuchAutomation": "No such automation."
+    },
+    "logView": {
+      "noResults": "No results",
+      "previousMatch": "Previous match",
+      "nextMatch": "Next match",
+      "closeFind": "Close",
+      "find": "Find in log",
+      "latest": "Latest"
+    },
+    "stands": {
+      "disabled": "disabled",
+      "none": "No stands yet. They are added in build-web’s settings.",
+      "tabs": {
+        "services": "Services",
+        "users": "Users"
+      },
+      "loading": "Loading the stands…",
+      "back": "All stands",
+      "title": "Stands",
+      "reloadList": "Read the stands again",
+      "log": {
+        "ended": "The stream ended.",
+        "loaded": "The last lines, as of now.",
+        "following": "Following the log…",
+        "loading": "Reading the log…",
+        "tail": "Lines",
+        "lastLines": "Last {{lines}} lines",
+        "follow": "Follow (tail -f)",
+        "trimmed": "Earlier lines are not shown.",
+        "reconnect": "Read again",
+        "close": "Close the log",
+        "empty": "The service has written nothing.",
+        "updateConsole": "This build-web cannot read service logs yet. Update build-web."
+      },
+      "ops": {
+        "lockNote": "The stand is held by {{holder}}; the operation waits for it.",
+        "upTitle": "Bring {{stand}} up?",
+        "upDescription": "docker compose up -d in {{place}}: every service is created or recreated as its compose files say.",
+        "upConfirm": "Run up -d",
+        "restartTitle": "Restart {{service}}?",
+        "restartDescription": "docker compose restart {{service}} in {{place}}.",
+        "restartConfirm": "Restart",
+        "up": "docker compose up -d",
+        "disabled": "The stand is disabled in build-web.",
+        "upHint": "Every service of the stand",
+        "dismiss": "Hide"
+      },
+      "services": {
+        "count": "{{n}} services",
+        "noBuilds": "Build numbers could not be read.",
+        "loading": "Reading the stand…",
+        "notApplied": "not applied",
+        "log": "Log",
+        "restart": "Restart",
+        "service": "Service",
+        "state": "State",
+        "image": "Image",
+        "tag": "Tag",
+        "build": "Build",
+        "started": "Started"
+      },
+      "refresh": "Read again",
+      "users": {
+        "loading": "Loading the logins…",
+        "hint": "Log in opens the stand in Orca’s browser, in a profile of its own per login.",
+        "none": "No UI logins on this stand. They are added in build-web, on the stand’s card.",
+        "account": "Login",
+        "role": "Role",
+        "project": "Project",
+        "ui": "UI",
+        "logIn": "Log in",
+        "useDesktop": "Log in from the desktop app.",
+        "viaServer": "build-web is connected through an Orca server; log in from the app that holds the token.",
+        "noWorkspace": "Open a workspace to log in.",
+        "remoteBrowser": "This workspace’s browser runs on an Orca server; open a local workspace to log in.",
+        "noUi": "The stand has no UI address.",
+        "passwordBroken": "The password does not decrypt.",
+        "passwordMissing": "No password is set."
+      }
     }
   },
   "gitLog": {

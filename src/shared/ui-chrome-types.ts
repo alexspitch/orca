@@ -137,5 +137,7 @@ export type TopLevelView =
   | 'build-web-testing'
   /** build-web's automation reports, the finished ones only («Recaps»). */
   | 'build-web-recaps'
+  /** build-web's stands: the services each runs, their logs, and the UI logins on it. */
+  | 'build-web-stands'
   /** A project's git log across all branches, as WebStorm's Git › Log. */
   | 'git-log'

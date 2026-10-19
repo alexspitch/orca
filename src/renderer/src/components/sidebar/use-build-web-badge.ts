@@ -37,7 +37,8 @@ export function useBuildWebBadge<T = BuildWebBadge>(
       s.activeView === 'build-web-images' ||
       s.activeView === 'build-web-trains' ||
       s.activeView === 'build-web-testing' ||
-      s.activeView === 'build-web-recaps'
+      s.activeView === 'build-web-recaps' ||
+      s.activeView === 'build-web-stands'
   )
   const started = useImageBuildRuns((s) => s.runs.length)
   const kicks = useBadgeKicks((s) => s.kicks)

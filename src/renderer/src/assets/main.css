@@ -753,6 +753,17 @@ body:has(> [data-slot='dialog-overlay'], > [data-slot='sheet-overlay']) {
   }
 }
 
+/* Why: find matches in a build-web log, in the markdown preview's search colours (as the chat's find). */
+.log-viewer-match {
+  background-color: color-mix(in srgb, var(--markdown-search-match) 50%, transparent);
+  color: inherit;
+}
+
+.log-viewer-match-active {
+  background-color: color-mix(in srgb, var(--markdown-search-match-active) 60%, transparent);
+  color: inherit;
+}
+
 /* Why: no reserved `scrollbar-gutter` — paired with `overflow-y: auto`, a list
    that fits shows no scrollbar (and no Windows scrollbar arrow buttons), so its
    rows stay flush with the fixed header controls, matching macOS. The gutter is

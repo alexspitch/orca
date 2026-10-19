@@ -27,6 +27,7 @@ import {
   BuildWebVersionsParams
 } from '../../shared/rpc-contract/build-web-params'
 import { RuntimeBuildWebCommands } from '../runtime/runtime-build-web-commands'
+import { registerBuildWebStandHandlers } from './build-web-stands'
 import { registerBuildWebTaskHandlers } from './build-web-task'
 
 const commands = new RuntimeBuildWebCommands()
@@ -90,4 +91,5 @@ export function registerBuildWebHandlers(): void {
   handle('commitDiff', BuildWebCommitDiffParams, (args) => commands.buildWebCommitDiff(args))
   handle('guideShot', BuildWebGuideShotParams, (args) => commands.buildWebGuideShot(args))
   registerBuildWebTaskHandlers()
+  registerBuildWebStandHandlers()
 }

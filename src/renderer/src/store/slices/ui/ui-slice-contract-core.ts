@@ -128,6 +128,7 @@ export type UiViewHistory =
   | 'build-web-trains'
   | 'build-web-testing'
   | 'build-web-recaps'
+  | 'build-web-stands'
   | 'git-log'
 
 /** build-web's pages: moving between them keeps where the first one was opened from. */
@@ -137,6 +138,7 @@ export type BuildWebView =
   | 'build-web-trains'
   | 'build-web-testing'
   | 'build-web-recaps'
+  | 'build-web-stands'
 
 export type UISliceCore = {
   sidebarOpen: boolean
@@ -182,6 +184,7 @@ export type UISliceCore = {
   previousViewBeforeBuildWebTrains: Exclude<UiViewHistory, BuildWebView>
   previousViewBeforeBuildWebTesting: Exclude<UiViewHistory, BuildWebView>
   previousViewBeforeBuildWebRecaps: Exclude<UiViewHistory, BuildWebView>
+  previousViewBeforeBuildWebStands: Exclude<UiViewHistory, BuildWebView>
   setActiveView: (view: UISliceCore['activeView']) => void
   taskPageData: TaskPageData
   taskResumeState: TaskResumeState | undefined
@@ -233,6 +236,8 @@ export type UISliceCore = {
   closeBuildWebTestingPage: () => void
   openBuildWebRecapsPage: () => void
   closeBuildWebRecapsPage: () => void
+  openBuildWebStandsPage: () => void
+  closeBuildWebStandsPage: () => void
   openMobilePage: () => void
   closeMobilePage: () => void
   setNewWorkspaceDraft: (draft: NonNullable<UISliceCore['newWorkspaceDraft']>) => void

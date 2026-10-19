@@ -123,6 +123,7 @@ export const TopLevelViewSchema = z.enum([
   'build-web-trains',
   'build-web-testing',
   'build-web-recaps',
+  'build-web-stands',
   'git-log'
 ])
 

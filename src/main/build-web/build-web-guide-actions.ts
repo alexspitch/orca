@@ -33,7 +33,7 @@ function records(value: unknown): Record<string, unknown>[] {
     .filter((v): v is Record<string, unknown> => v !== null)
 }
 
-function jobOf(value: unknown): BuildWebJob | null {
+export function jobOf(value: unknown): BuildWebJob | null {
   const v = recordOf(value)
   if (!v || typeof v.id !== 'string') {
     return null

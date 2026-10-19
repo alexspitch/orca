@@ -34,6 +34,9 @@ export function gitLogOrigin(state: UISlice): GitLogOrigin {
   if (view === 'build-web-recaps') {
     return viaBuildWeb(state.previousViewBeforeBuildWebRecaps)
   }
+  if (view === 'build-web-stands') {
+    return viaBuildWeb(state.previousViewBeforeBuildWebStands)
+  }
   return view === 'build-web-trains' ? viaBuildWeb(state.previousViewBeforeBuildWebTrains) : view
 }
 

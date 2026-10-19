@@ -1,10 +1,26 @@
-import { webContents } from 'electron'
+import { webContents, type WebContents } from 'electron'
 import { browserDownloadDestinationReservations } from './browser-download-destination'
 import { isWorkspaceDocPageId } from './doc-preview-guest-policy'
 import type { BrowserGuestRegistration } from './browser-manager-types'
 import { BrowserManagerGuestPolicy } from './browser-manager-guest-policy'
 
+type GuestRegisteredListener = (browserPageId: string, guest: WebContents) => void
+
 export abstract class BrowserManagerRegistration extends BrowserManagerGuestPolicy {
+  private readonly guestRegisteredListeners = new Set<GuestRegisteredListener>()
+
+  /** Hear of every guest that becomes a page's, webview and offscreen alike. */
+  onGuestRegistered(listener: GuestRegisteredListener): () => void {
+    this.guestRegisteredListeners.add(listener)
+    return () => this.guestRegisteredListeners.delete(listener)
+  }
+
+  private notifyGuestRegistered(browserPageId: string, guest: WebContents): void {
+    for (const listener of this.guestRegisteredListeners) {
+      listener(browserPageId, guest)
+    }
+  }
+
   registerGuest({
     browserPageId,
     browserTabId: legacyBrowserTabId,
@@ -60,6 +76,7 @@ export abstract class BrowserManagerRegistration extends BrowserManagerGuestPoli
       this.worktreeIdByTabId.set(browserTabId, worktreeId)
     }
     this.certificateTrustController?.onGuestRegistered(webContentsId, browserTabId)
+    this.notifyGuestRegistered(browserTabId, guest)
 
     this.setupContextMenu(browserTabId, guest)
     this.setupGrabShortcut(browserTabId, guest)
@@ -180,6 +197,7 @@ export abstract class BrowserManagerRegistration extends BrowserManagerGuestPoli
       this.worktreeIdByTabId.set(browserPageId, worktreeId)
     }
     this.certificateTrustController?.onGuestRegistered(webContentsId, browserPageId)
+    this.notifyGuestRegistered(browserPageId, guest)
     return true
   }
 

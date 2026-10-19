@@ -29,6 +29,7 @@ const BuildWebTestingPage = lazy(
   () => import('../components/build-web/testing/BuildWebTestingPage')
 )
 const BuildWebRecapsPage = lazy(() => import('../components/build-web/recaps/BuildWebRecapsPage'))
+const BuildWebStandsPage = lazy(() => import('../components/build-web/stands/BuildWebStandsPage'))
 const GitLogPage = lazy(() => import('../components/git-log/GitLogPage'))
 const WorkspaceSpacePage = lazy(() => import('../components/workspace-space/WorkspaceSpacePage'))
 const MobilePage = lazy(() => import('../components/mobile/MobilePage'))
@@ -84,6 +85,7 @@ function ActivePage({ layout }: { layout: AppChromeLayout }): React.JSX.Element 
       {activeView === 'build-web-trains' ? <BuildWebTrainsPage /> : null}
       {activeView === 'build-web-testing' ? <BuildWebTestingPage /> : null}
       {activeView === 'build-web-recaps' ? <BuildWebRecapsPage /> : null}
+      {activeView === 'build-web-stands' ? <BuildWebStandsPage /> : null}
       {activeView === 'git-log' ? <GitLogPage /> : null}
       {activeView === 'tasks' ? <TaskPage /> : null}
       {activeView === 'automations' ? <AutomationsPage /> : null}
@@ -178,6 +180,7 @@ export function AppWorkspaceShell(props: {
               layout.activeView !== 'build-web-trains' &&
               layout.activeView !== 'build-web-testing' &&
               layout.activeView !== 'build-web-recaps' &&
+              layout.activeView !== 'build-web-stands' &&
               layout.activeView !== 'git-log' ? (
                 <div className="titlebar">{titlebarMainStrip}</div>
               ) : null}

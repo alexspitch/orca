@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useMemo } from 'react'
 import { ExternalLink, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,54 +10,43 @@ import {
 } from '@/components/ui/dialog'
 import { translate } from '@/i18n/i18n'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
+import { logLinesOf } from '../log-viewer/log-lines'
+import { LogViewer } from '../log-viewer/LogViewer'
 import { useBuildLogViewer } from './build-log-viewer'
 import { useBuildLog } from './use-build-log'
 
-const NEAR_BOTTOM_PX = 40
+// Why: useBuildLog already keeps the tail by characters; this only bounds the line count.
+const KEEP_LINES = 100_000
 
 function LogBody({ target, url }: { target: RuntimeClientTarget; url: string }): React.JSX.Element {
   const { text, done, trimmed, error } = useBuildLog(target, url)
-  const scroller = useRef<HTMLDivElement | null>(null)
-  // Why: the newest lines stay in view while the build writes, unless the reader scrolled up.
-  const following = useRef(true)
-  useLayoutEffect(() => {
-    const el = scroller.current
-    if (el && following.current) {
-      el.scrollTop = el.scrollHeight
-    }
-  }, [text])
+  const log = useMemo(() => logLinesOf(text, KEEP_LINES), [text])
   return (
-    <div className="flex min-h-0 flex-col gap-2">
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-        {done ? (
-          translate('buildWeb.log.finished', 'The build is over.')
-        ) : (
+    <div className="flex h-[65vh] min-h-0 flex-col gap-2">
+      <LogViewer
+        log={log}
+        toolbar={
           <>
-            <Loader2 className="size-3 animate-spin" />
-            {translate('buildWeb.log.following', 'Following the log…')}
+            {done ? (
+              translate('buildWeb.log.finished', 'The build is over.')
+            ) : (
+              <>
+                <Loader2 className="size-3 animate-spin" />
+                {translate('buildWeb.log.following', 'Following the log…')}
+              </>
+            )}
+            {trimmed ? (
+              <span>{translate('buildWeb.log.trimmed', 'Earlier lines are not shown.')}</span>
+            ) : null}
           </>
-        )}
-        {trimmed ? (
-          <span>{translate('buildWeb.log.trimmed', 'Earlier lines are not shown.')}</span>
-        ) : null}
-        <div className="flex-1" />
-        <Button variant="ghost" size="sm" onClick={() => void window.api.shell.openUrl(url)}>
-          {translate('buildWeb.log.openInBrowser', 'Open in browser')}
-          <ExternalLink />
-        </Button>
-      </div>
-      <div
-        ref={scroller}
-        onScroll={(event) => {
-          const el = event.currentTarget
-          following.current = el.scrollHeight - el.scrollTop - el.clientHeight < NEAR_BOTTOM_PX
-        }}
-        className="scrollbar-sleek h-[65vh] overflow-auto rounded-md border border-border bg-muted/40 p-3"
-      >
-        <pre className="font-mono text-xs leading-5 whitespace-pre-wrap [overflow-wrap:anywhere]">
-          {text}
-        </pre>
-      </div>
+        }
+        trailing={
+          <Button variant="ghost" size="sm" onClick={() => void window.api.shell.openUrl(url)}>
+            {translate('buildWeb.log.openInBrowser', 'Open in browser')}
+            <ExternalLink />
+          </Button>
+        }
+      />
       {error ? (
         <p role="alert" className="text-sm text-destructive">
           {error}

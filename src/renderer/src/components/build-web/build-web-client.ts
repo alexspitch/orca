@@ -1,4 +1,7 @@
-import { BUILD_WEB_RUNTIME_CAPABILITY } from '../../../../shared/build-web-capability'
+import {
+  BUILD_WEB_RUNTIME_CAPABILITY,
+  BUILD_WEB_STANDS_RUNTIME_CAPABILITY
+} from '../../../../shared/build-web-capability'
 import {
   BUILD_WEB_CLIENT_MARGIN_MS,
   buildWebHostWaitMs
@@ -11,6 +14,18 @@ import { translate } from '@/i18n/i18n'
 type Method = keyof BuildWebApi
 type ArgsOf<M extends Method> = Parameters<BuildWebApi[M]>
 type ResultOf<M extends Method> = Awaited<ReturnType<BuildWebApi[M]>>
+
+// Why: the Stands page came after `build-web.v1`; an older server announces only that.
+const STAND_METHODS: ReadonlySet<Method> = new Set<Method>([
+  'standGroups',
+  'standStatus',
+  'standAccounts',
+  'standJobs',
+  'standOp',
+  'startStandLogs',
+  'standLogs',
+  'stopStandLogs'
+])
 
 /**
  * One call to build-web through whichever host holds the token: this app's main process,
@@ -30,6 +45,16 @@ export async function callBuildWeb<M extends Method>(
         'This Orca server does not support build-web yet. Update the server to use Issues.'
       )
     )
+    if (STAND_METHODS.has(method)) {
+      await assertRuntimeEnvironmentCapability(
+        target.environmentId,
+        BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
+        translate(
+          'buildWeb.client.updateServerStands',
+          'This Orca server does not support Stands yet. Update the server to use them.'
+        )
+      )
+    }
     return callRuntimeRpc<ResultOf<M>>(target, `buildWeb.${method}`, args[0], {
       timeoutMs: buildWebHostWaitMs(method, args[0]) + BUILD_WEB_CLIENT_MARGIN_MS
     })

@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import type { BuildWebJob } from '../../../../../../shared/build-web-task-types'
-import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
-import { callBuildWeb } from '../../build-web-client'
-import { BuildWebToneChip } from '../../BuildWebToneChip'
-import type { ChipTone } from '../../build-web-tones'
+import type { BuildWebJob } from '../../../../shared/build-web-task-types'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
+import { callBuildWeb } from './build-web-client'
+import { BuildWebToneChip } from './BuildWebToneChip'
+import type { ChipTone } from './build-web-tones'
 
 const POLL_MS = 4000
 
@@ -27,14 +27,17 @@ export function jobTone(status: BuildWebJob['status']): ChipTone {
 }
 
 /** One job on the console and its log, after build-web's JobPanel: polled until it ends. */
-export function GuideJobPanel({
+export function BuildWebJobPanel({
   target,
   jobId,
+  label,
   onJob,
   onDone
 }: {
   target: RuntimeClientTarget
   jobId: string
+  /** What the job is, until its row names its kind. */
+  label: string
   /** The row, whenever its status changes. */
   onJob: (job: BuildWebJob) => void
   onDone: () => void
@@ -101,9 +104,7 @@ export function GuideJobPanel({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-2 text-xs">
-        <span className="font-medium">
-          {job?.kind ?? translate('buildWeb.guide.shotsJob', 'screenshots')}
-        </span>
+        <span className="font-medium">{job?.kind ?? label}</span>
         {job ? <BuildWebToneChip label={job.status} tone={jobTone(job.status)} /> : null}
         <div className="flex-1" />
         {job?.can_cancel ? (

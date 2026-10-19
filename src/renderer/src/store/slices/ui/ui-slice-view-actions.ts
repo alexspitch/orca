@@ -19,6 +19,9 @@ function buildWebOrigin(state: UISlice): UISlice['previousViewBeforeBuildWeb'] {
   if (state.activeView === 'build-web-recaps') {
     return state.previousViewBeforeBuildWebRecaps
   }
+  if (state.activeView === 'build-web-stands') {
+    return state.previousViewBeforeBuildWebStands
+  }
   return state.activeView === 'build-web-trains'
     ? state.previousViewBeforeBuildWebTrains
     : state.activeView
@@ -156,6 +159,13 @@ export function createUiViewActions(set: UISliceSet, get: UISliceGet): Partial<U
       })),
     closeBuildWebRecapsPage: () =>
       set((state) => ({ activeView: state.previousViewBeforeBuildWebRecaps })),
+    openBuildWebStandsPage: () =>
+      set((state) => ({
+        activeView: 'build-web-stands',
+        previousViewBeforeBuildWebStands: buildWebOrigin(state)
+      })),
+    closeBuildWebStandsPage: () =>
+      set((state) => ({ activeView: state.previousViewBeforeBuildWebStands })),
     openMobilePage: () =>
       set((state) => ({
         activeView: 'mobile',

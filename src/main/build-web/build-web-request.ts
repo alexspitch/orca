@@ -132,6 +132,39 @@ async function refusalOf(response: Response): Promise<BuildWebApiError> {
   return new BuildWebApiError(said, response.status, textsOf(data?.needsPermission), routeMissing)
 }
 
+/**
+ * A long-lived text answer (a guide being written, a followed log), returned open for the caller
+ * to read. A refusal throws like any other call.
+ */
+export async function buildWebStreamRequest(
+  request: Omit<BuildWebRequest, 'responseLimit' | 'timeoutMs'> & { signal: AbortSignal }
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    authorization: `Bearer ${request.token}`,
+    accept: 'text/plain, application/json'
+  }
+  if (request.body !== undefined) {
+    headers['content-type'] = 'application/json'
+  }
+  let response: Response
+  try {
+    response = await getMainHttpClient().fetch(`${request.baseUrl}${request.path}`, {
+      method: request.method ?? 'GET',
+      headers,
+      body: request.body === undefined ? undefined : JSON.stringify(request.body),
+      // Why: a redirect would carry the bearer token to wherever the console points.
+      redirect: 'error',
+      signal: request.signal
+    })
+  } catch (error) {
+    throw new BuildWebUnreachableError(request.baseUrl, error, request.token)
+  }
+  if (!response.ok) {
+    throw await refusalOf(response)
+  }
+  return response
+}
+
 /** A text answer (an automation's HTML report), capped so one document cannot fill memory. */
 export async function buildWebTextRequest(
   request: Omit<BuildWebRequest, 'method' | 'body' | 'responseLimit'> & { maxBytes: number }

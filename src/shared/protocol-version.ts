@@ -72,7 +72,10 @@ import { MOBILE_RELAY_RUNTIME_CAPABILITIES } from './mobile-desktop-relay-contra
 import { SKILL_RUNTIME_CAPABILITIES } from './skill-install-capability'
 import { ACCOUNT_RUNTIME_CAPABILITIES } from './account-runtime-capabilities'
 import * as agentLaunchCapabilities from './agent-launch-runtime-capability'
-import { BUILD_WEB_RUNTIME_CAPABILITY } from './build-web-capability'
+import {
+  BUILD_WEB_RUNTIME_CAPABILITY,
+  BUILD_WEB_STANDS_RUNTIME_CAPABILITY
+} from './build-web-capability'
 import {
   GIT_LOG_OPERATIONS_RUNTIME_CAPABILITY,
   GIT_LOG_PAGE_RUNTIME_CAPABILITY
@@ -183,6 +186,7 @@ export const NATIVE_REMOTE_RUNTIME_CLIENT_CAPABILITIES = [
 export const RUNTIME_CAPABILITIES = [
   AI_VAULT_CHAT_FORK_SOURCE_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY,
+  BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
   GIT_LOG_PAGE_RUNTIME_CAPABILITY,
   GIT_LOG_OPERATIONS_RUNTIME_CAPABILITY,
   jiraDetailCapabilities.JIRA_TRANSITION_FIELDS_RUNTIME_CAPABILITY,

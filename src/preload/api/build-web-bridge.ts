@@ -78,5 +78,14 @@ export const buildWebApi = {
   watch: () => ipcRenderer.invoke('buildWeb:watch'),
   watchCheck: () => ipcRenderer.invoke('buildWeb:watchCheck'),
   recaps: (args) => ipcRenderer.invoke('buildWeb:recaps', args),
-  recapReport: (args) => ipcRenderer.invoke('buildWeb:recapReport', args)
+  recapReport: (args) => ipcRenderer.invoke('buildWeb:recapReport', args),
+  standGroups: () => ipcRenderer.invoke('buildWeb:standGroups'),
+  standStatus: (args) => ipcRenderer.invoke('buildWeb:standStatus', args),
+  standAccounts: (args) => ipcRenderer.invoke('buildWeb:standAccounts', args),
+  standJobs: (args) => ipcRenderer.invoke('buildWeb:standJobs', args),
+  standOp: (args) => ipcRenderer.invoke('buildWeb:standOp', args),
+  startStandLogs: (args) => ipcRenderer.invoke('buildWeb:startStandLogs', args),
+  standLogs: (args) => ipcRenderer.invoke('buildWeb:standLogs', args),
+  stopStandLogs: (args) => ipcRenderer.invoke('buildWeb:stopStandLogs', args),
+  standLogin: (args) => ipcRenderer.invoke('buildWeb:standLogin', args)
 } satisfies PreloadApi['buildWeb']

@@ -167,6 +167,13 @@ import {
   BuildWebVersionsParams
 } from './build-web-params'
 import {
+  BuildWebStandIdsParams,
+  BuildWebStandLogsReadParams,
+  BuildWebStandLogsStartParams,
+  BuildWebStandLogsStopParams,
+  BuildWebStandOpParams
+} from './build-web-stand-params'
+import {
   BuildWebAdoptParams,
   BuildWebComboParams,
   BuildWebCombosParams,
@@ -956,11 +963,19 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.setGuideTarget': BuildWebGuideTargetParams,
   'buildWeb.setTestingStatus': BuildWebTestingParams,
   'buildWeb.shotsJob': BuildWebRunId,
+  'buildWeb.standAccounts': BuildWebStandIdsParams,
+  'buildWeb.standGroups': null,
+  'buildWeb.standJobs': BuildWebStandIdsParams,
+  'buildWeb.standLogs': BuildWebStandLogsReadParams,
+  'buildWeb.standOp': BuildWebStandOpParams,
+  'buildWeb.standStatus': BuildWebStandParams,
   'buildWeb.standVersion': BuildWebStandParams,
   'buildWeb.startGuide': BuildWebGuideStartParams,
   'buildWeb.startGuideShots': BuildWebRunId,
   'buildWeb.startImageBuild': BuildWebImageBuildParams,
+  'buildWeb.startStandLogs': BuildWebStandLogsStartParams,
   'buildWeb.status': null,
+  'buildWeb.stopStandLogs': BuildWebStandLogsStopParams,
   'buildWeb.testConnection': null,
   'buildWeb.tmsStands': BuildWebTmsStandsParams,
   'buildWeb.trainActions': BuildWebTrainActionsParams,

@@ -17,7 +17,7 @@ import type {
 } from '../../../../../../shared/build-web-task-types'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
-import { GuideJobPanel } from './GuideJobPanel'
+import { BuildWebJobPanel } from '../../BuildWebJobPanel'
 
 const NONE = '__none__'
 
@@ -271,7 +271,13 @@ export function GuideShotsCard({
         </Button>
       </div>
       {job && (showLog || running) ? (
-        <GuideJobPanel target={target} jobId={job.id} onJob={setJob} onDone={onShotsTaken} />
+        <BuildWebJobPanel
+          target={target}
+          jobId={job.id}
+          label={translate('buildWeb.guide.shotsJob', 'screenshots')}
+          onJob={setJob}
+          onDone={onShotsTaken}
+        />
       ) : null}
     </section>
   )
