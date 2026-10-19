@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { BuildWebImageBuild } from '../../shared/build-web-image-types'
 import { offersBuildTagOnly, offersMainTag, pushRequests } from '../../shared/build-web-image-push'
 import {
+  failedImageCount,
   imageHistory,
   imagePage,
   runningImageCount,
@@ -57,6 +58,24 @@ const catalog: ImageCatalog = {
 describe('image model', () => {
   it('counts images building now once per image and distribution', () => {
     expect(runningImageCount(catalog)).toBe(2)
+  })
+
+  it('counts the images whose newest build failed, as the Images «failed» chip does', () => {
+    const withFailures: ImageCatalog = {
+      ...catalog,
+      builds: [
+        // sa/api failed last; dc/asr failed once but built since; sa/ui failed on both dists.
+        build({ number: 3, status: 'failed', ref: null }),
+        build({ image: 'dc/asr', product: 'dc', number: 5 }),
+        build({ image: 'dc/asr', product: 'dc', number: 4, status: 'failed' }),
+        build({ image: 'sa/ui', dist: 'redos', status: 'failed' }),
+        build({ image: 'sa/ui', dist: 'rhel', status: 'failed' }),
+        ...catalog.builds
+      ]
+    }
+    expect(failedImageCount(withFailures)).toBe(2)
+    expect(imagePage(withFailures, { page: 0, pageSize: 50 }).counts.statuses?.failed).toBe(2)
+    expect(failedImageCount(catalog)).toBe(0)
   })
 
   it('shows the newest build of each image and counts the chips', () => {

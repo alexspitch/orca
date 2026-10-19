@@ -14,6 +14,7 @@ import { buildWebMutation, buildWebRequest, type BuildWebResponseLimit } from '.
 import { BUILD_WEB_CATALOG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { consoleUrlOf, numberOf, recordOf, textOf, textOrNull } from './build-web-response-fields'
 import {
+  failedImageCount,
   imageHistory,
   imagePage,
   runningImageCount,
@@ -132,9 +133,8 @@ async function catalog(
 }
 
 export async function buildWebImageSummary(): Promise<BuildWebImageSummary> {
-  return {
-    running: runningImageCount(await catalog({ maxAgeMs: SUMMARY_TTL_MS, background: true }))
-  }
+  const images = await catalog({ maxAgeMs: SUMMARY_TTL_MS, background: true })
+  return { running: runningImageCount(images), failed: failedImageCount(images) }
 }
 
 export async function listBuildWebImages(

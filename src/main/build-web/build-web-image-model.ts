@@ -47,6 +47,12 @@ export function runningImageCount(catalog: ImageCatalog): number {
   ).size
 }
 
+/** Images whose newest build failed — the Images page's «failed» chip with no filter set. */
+export function failedImageCount(catalog: ImageCatalog): number {
+  const last = newestMatching(catalog.builds, undefined, [])
+  return catalog.images.filter((i) => last.get(i.image)?.status === 'failed').length
+}
+
 /** Each image's newest build passing the version and dists; filters first, as build-web's `lastOf`. */
 function newestMatching(
   newest: BuildWebImageBuild[],

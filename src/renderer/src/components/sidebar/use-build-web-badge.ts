@@ -23,13 +23,13 @@ export function useBuildWebBadgeKick(): () => void {
   return useBadgeKicks((s) => s.kick)
 }
 
-/** A build-web number for a sidebar item, or null when unknown (not connected, no access). */
-export function useBuildWebBadge(
+/** build-web numbers for a sidebar item, or null when unknown (not connected, no access). */
+export function useBuildWebBadge<T = BuildWebBadge>(
   enabled: boolean,
-  read: (target: RuntimeClientTarget) => Promise<BuildWebBadge>
-): BuildWebBadge | null {
+  read: (target: RuntimeClientTarget) => Promise<T>
+): T | null {
   const { target } = useBuildWebTarget()
-  const [badge, setBadge] = useState<BuildWebBadge | null>(null)
+  const [badge, setBadge] = useState<T | null>(null)
   // Why: opening a build-web page (which unlocks the token) or starting a build reads at once.
   const onBuildWebPage = useAppStore(
     (s) =>

@@ -91,8 +91,12 @@ export type BuildWebImageHistory = {
   versions: string[]
 }
 
-/** What the sidebar badge shows: images building right now. */
-export type BuildWebImageSummary = { running: number }
+/** What the sidebar badges show: images building right now, and those whose newest build failed. */
+export type BuildWebImageSummary = {
+  running: number
+  /** Absent from a host older than the failed badge. */
+  failed?: number
+}
 
 /** A build of one image from the console's Images: the version is the branch it is built from. */
 export type BuildWebImageBuildArgs = {

@@ -20752,7 +20752,9 @@
       "blockersHint": "Open tasks at the highest priority (Jira Highest, Blocker, Critical)",
       "trains": "Trains",
       "testing": "Testing",
-      "recaps": "Recaps"
+      "recaps": "Recaps",
+      "imagesFailed": "{{label}}, {{count}} failed",
+      "imagesFailedHint": "Images whose last build failed, as the Images page counts them"
     },
     "priority": {
       "highest": "Highest",

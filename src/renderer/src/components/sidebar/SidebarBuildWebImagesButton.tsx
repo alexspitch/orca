@@ -6,26 +6,32 @@ import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { callBuildWeb } from '../build-web/build-web-client'
 import { HideSidebarMenu } from './sidebar-nav-controls'
-import { useBuildWebBadge, type BuildWebBadge } from './use-build-web-badge'
+import { useBuildWebBadge } from './use-build-web-badge'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
+import type { BuildWebImageSummary } from '../../../../shared/build-web-image-types'
 
-const readRunning = (target: RuntimeClientTarget): Promise<BuildWebBadge> =>
-  callBuildWeb(target, 'imageSummary').then((summary) => ({
-    count: summary.running,
-    capped: false
-  }))
+const readSummary = (target: RuntimeClientTarget): Promise<BuildWebImageSummary> =>
+  callBuildWeb(target, 'imageSummary')
 
-/** «Images»: build-web's images, with how many are building right now. */
+/** «Images»: build-web's images, with how many are building now and how many failed last. */
 export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
   const show = useAppStore((s) => s.settings?.showBuildWebImagesButton === true)
   const active = useAppStore((s) => s.activeView === 'build-web-images')
   const openPage = useAppStore((s) => s.openBuildWebImagesPage)
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const running = useBuildWebBadge(show, readRunning)?.count ?? null
+  const summary = useBuildWebBadge(show, readSummary)
   if (!show) {
     return null
   }
+  const running = summary?.running ?? 0
+  const failed = summary?.failed ?? 0
   const label = translate('buildWeb.sidebar.images', 'Images')
+  const building = running
+    ? translate('buildWeb.sidebar.imagesBuilding', '{{label}}, {{count}} building', {
+        label,
+        count: running
+      })
+    : label
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
@@ -34,12 +40,20 @@ export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
           onClick={openPage}
           aria-current={active ? 'page' : undefined}
           aria-label={
-            running
-              ? translate('buildWeb.sidebar.imagesBuilding', '{{label}}, {{count}} building', {
-                  label,
-                  count: running
+            failed
+              ? translate('buildWeb.sidebar.imagesFailed', '{{label}}, {{count}} failed', {
+                  label: building,
+                  count: failed
                 })
-              : label
+              : building
+          }
+          title={
+            failed
+              ? translate(
+                  'buildWeb.sidebar.imagesFailedHint',
+                  'Images whose last build failed, as the Images page counts them'
+                )
+              : undefined
           }
           className={cn(
             'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
@@ -59,6 +73,14 @@ export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
               className="min-w-5 rounded-full bg-worktree-sidebar-foreground/10 px-1.5 text-center text-2xs leading-5 tabular-nums"
             >
               {running}
+            </span>
+          ) : null}
+          {failed ? (
+            <span
+              aria-hidden="true"
+              className="min-w-5 rounded-full bg-chip-tone-red/15 px-1.5 text-center text-2xs leading-5 text-chip-tone-red tabular-nums"
+            >
+              {failed}
             </span>
           ) : null}
         </button>
