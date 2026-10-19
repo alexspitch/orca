@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { BUILD_WEB_PUSH_AFTER, BUILD_WEB_TESTING_STATUSES } from '../build-web-run-types'
+import { BUILD_WEB_PRODUCTS } from '../build-web-types'
 
 // The task card's Build, Guide and Properties calls. Same rules as build-web-params: one object
 // per call, and an id never becomes `.` or `..` inside a URL path.
@@ -79,4 +80,22 @@ export const BuildWebJiraCreateParams = z.object({
   summary: z.string().trim().min(1, 'Write a title').max(255),
   description: z.string().max(32_000),
   fixVersionIds: z.array(ShortText).max(10)
+})
+export const BuildWebRecapsParams = z.object({
+  product: z.union([z.enum(BUILD_WEB_PRODUCTS), z.null()]),
+  versionId: z.union([Id, z.null()]),
+  // Optional: a client from before the automation filter does not send it.
+  automationId: z.union([Id, z.null()]).optional(),
+  from: z.union([z.iso.datetime(), z.null()]),
+  to: z.union([z.iso.datetime(), z.null()]),
+  limit: z.number().int().min(1).max(200),
+  offset: z.number().int().min(0).max(100_000)
+})
+export const BuildWebRecapReportParams = z.object({
+  runId: Id,
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .max(64 * 1024 * 1024)
 })

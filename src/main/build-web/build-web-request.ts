@@ -1,6 +1,7 @@
 import { getMainHttpClient } from '../network/http-client'
 import {
   API_RESPONSE_JSON_LIMITS,
+  FetchResponseBodyTooLargeError,
   readFetchResponseBytesWithinLimit,
   readFetchResponseJsonWithinLimit
 } from '../../shared/fetch-response-body'
@@ -118,12 +119,44 @@ export async function buildWebRequest(request: BuildWebRequest): Promise<unknown
         })
       : readFetchResponseJsonWithinLimit<unknown>(response, RESPONSE_MAX_BYTES)
   }
+  throw await refusalOf(response)
+}
+
+/** The console's refusal, from its JSON `{ error, needsPermission }` when it sent one. */
+async function refusalOf(response: Response): Promise<BuildWebApiError> {
   const data = recordOf(
     await readFetchResponseJsonWithinLimit<unknown>(response, 64 * 1024).catch(() => null)
   )
   const said = textOf(data?.error) || response.statusText || `HTTP ${response.status}`
   const routeMissing = (response.status === 404 || response.status === 405) && !textOf(data?.error)
-  throw new BuildWebApiError(said, response.status, textsOf(data?.needsPermission), routeMissing)
+  return new BuildWebApiError(said, response.status, textsOf(data?.needsPermission), routeMissing)
+}
+
+/** A text answer (an automation's HTML report), capped so one document cannot fill memory. */
+export async function buildWebTextRequest(
+  request: Omit<BuildWebRequest, 'method' | 'body' | 'responseLimit'> & { maxBytes: number }
+): Promise<string> {
+  let response: Response
+  try {
+    response = await getMainHttpClient().fetch(`${request.baseUrl}${request.path}`, {
+      headers: { authorization: `Bearer ${request.token}`, accept: 'text/html' },
+      redirect: 'error',
+      signal: requestSignal(request)
+    })
+  } catch (error) {
+    throw new BuildWebUnreachableError(request.baseUrl, error, request.token)
+  }
+  if (!response.ok) {
+    throw await refusalOf(response)
+  }
+  const bytes = await readFetchResponseBytesWithinLimit(response, request.maxBytes).catch(
+    (error: unknown) => {
+      throw error instanceof FetchResponseBodyTooLargeError
+        ? new BuildWebApiError('the answer is too large', 413)
+        : new BuildWebUnreachableError(request.baseUrl, error, request.token)
+    }
+  )
+  return new TextDecoder().decode(bytes)
 }
 
 /** A binary answer (a guide screenshot), capped so one image cannot fill memory or an RPC frame. */

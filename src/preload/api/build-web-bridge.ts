@@ -76,5 +76,7 @@ export const buildWebApi = {
   trainPreview: (args) => ipcRenderer.invoke('buildWeb:trainPreview', args),
   runTrain: (args) => ipcRenderer.invoke('buildWeb:runTrain', args),
   watch: () => ipcRenderer.invoke('buildWeb:watch'),
-  watchCheck: () => ipcRenderer.invoke('buildWeb:watchCheck')
+  watchCheck: () => ipcRenderer.invoke('buildWeb:watchCheck'),
+  recaps: (args) => ipcRenderer.invoke('buildWeb:recaps', args),
+  recapReport: (args) => ipcRenderer.invoke('buildWeb:recapReport', args)
 } satisfies PreloadApi['buildWeb']

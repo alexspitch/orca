@@ -20510,7 +20510,8 @@
       "baseDefault": "Repository default",
       "newHint": "Orca creates the worktree, then the session works in it (-no-worktree).",
       "noRepoFound": "The repository is not available.",
-      "createFailed": "Could not create the worktree: {{error}}"
+      "createFailed": "Could not create the worktree: {{error}}",
+      "session": "Session"
     },
     "session": {
       "label": "Agent session",
@@ -20739,7 +20740,9 @@
       "showTrainsInSidebar": "Show Trains in sidebar",
       "showTrainsInSidebarHint": "Build trains: their windows, and a departure by hand",
       "showTestingInSidebar": "Show Testing in sidebar",
-      "showTestingInSidebarHint": "Tasks in testing whose images are not published yet"
+      "showTestingInSidebarHint": "Tasks in testing whose images are not published yet",
+      "showRecapsInSidebar": "Show Recaps in sidebar",
+      "showRecapsInSidebarHint": "The reports of build-web automations, newest first"
     },
     "sidebar": {
       "issues": "Issues",
@@ -20748,7 +20751,8 @@
       "issuesBlockers": "{{label}}, {{count}} blockers",
       "blockersHint": "Open tasks at the highest priority (Jira Highest, Blocker, Critical)",
       "trains": "Trains",
-      "testing": "Testing"
+      "testing": "Testing",
+      "recaps": "Recaps"
     },
     "priority": {
       "highest": "Highest",
@@ -21144,6 +21148,32 @@
       "buildStarted": "Build started on build-web.",
       "cardHint": "The task card, over the Testing list",
       "work": "Image work left"
+    },
+    "recaps": {
+      "loadingReport": "Loading the report…",
+      "loading": "Loading the reports…",
+      "noneFiltered": "No reports match these filters.",
+      "none": "No automation reports yet. They appear here when an automation in build-web finishes.",
+      "reset": "Reset",
+      "title": "Recaps",
+      "scheduled": "scheduled",
+      "byHand": "by hand",
+      "emptyPage": "Nothing on this page",
+      "range": "{{from}}–{{to}} of {{total}}",
+      "newer": "Newer reports",
+      "older": "Older reports",
+      "clearDate": "Clear {{label}}",
+      "product": "Product",
+      "allProducts": "All products",
+      "version": "Version",
+      "allVersions": "All versions",
+      "from": "From",
+      "to": "To",
+      "count": "Reports: {{n}}",
+      "automation": "Automation",
+      "allAutomations": "All automations",
+      "searchAutomation": "Search automations",
+      "noSuchAutomation": "No such automation."
     }
   },
   "gitLog": {

@@ -20,6 +20,8 @@ import {
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
   BuildWebPushProgressParams,
+  BuildWebRecapReportParams,
+  BuildWebRecapsParams,
   BuildWebTrainActionsParams,
   BuildWebTrainParams,
   BuildWebTrainRunsParams,
@@ -101,4 +103,6 @@ export function registerBuildWebTaskHandlers(): void {
   handle('runTrain', BuildWebTrainParams, (args) => commands.buildWebRunTrain(args))
   ipcMain.handle('buildWeb:watch', () => commands.buildWebWatch())
   ipcMain.handle('buildWeb:watchCheck', () => commands.buildWebWatchCheck())
+  handle('recaps', BuildWebRecapsParams, (args) => commands.buildWebRecaps(args))
+  handle('recapReport', BuildWebRecapReportParams, (args) => commands.buildWebRecapReport(args))
 }

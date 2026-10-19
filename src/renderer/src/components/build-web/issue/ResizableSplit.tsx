@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import type React from 'react'
 import { useSidebarResize } from '@/hooks/useSidebarResize'
 import { translate } from '@/i18n/i18n'
@@ -19,7 +20,9 @@ export function ResizableSplit({
   defaultWidth,
   minWidth,
   children,
-  aside
+  aside,
+  ruled = false,
+  className
 }: {
   panel: string
   side: 'left' | 'right'
@@ -29,13 +32,17 @@ export function ResizableSplit({
   children: React.ReactNode
   /** The sized column. */
   aside: React.ReactNode
+  /** The rule shows at rest, not only on hover — for columns with no gap of their own. */
+  ruled?: boolean
+  className?: string
 }): React.JSX.Element {
   const stored = useBuildWebStore((s) => s.panelWidths[panel])
   const setPanelWidth = useBuildWebStore((s) => s.setPanelWidth)
   const windowWidth = useWindowWidth()
   const maxWidth = Math.max(minWidth, (windowWidth ?? 1280) - RESERVED_WIDTH)
   const width = Math.min(Math.max(stored ?? defaultWidth, minWidth), maxWidth)
-  const setWidth = (next: number) => setPanelWidth(panel, next)
+  // Why stable: a new setter each render restarts the resize hook's listeners, ending a drag at once.
+  const setWidth = useCallback((next: number) => setPanelWidth(panel, next), [panel, setPanelWidth])
   const { containerRef, isResizing, onResizeStart } = useSidebarResize<HTMLDivElement>({
     isOpen: true,
     width,
@@ -73,13 +80,14 @@ export function ResizableSplit({
       <div
         className={cn(
           'w-px transition-colors',
-          isResizing ? 'bg-ring' : 'group-hover:bg-ring/50 group-focus-visible:bg-ring'
+          isResizing ? 'bg-ring' : 'group-hover:bg-ring/50 group-focus-visible:bg-ring',
+          ruled && !isResizing && 'bg-border'
         )}
       />
     </div>
   )
   return (
-    <div className="flex min-w-0 items-stretch">
+    <div className={cn('flex min-w-0 items-stretch', className)}>
       {side === 'left' ? sized : null}
       {side === 'left' ? rule : null}
       <div className="min-w-0 flex-1">{children}</div>

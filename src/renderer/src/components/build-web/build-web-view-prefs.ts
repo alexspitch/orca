@@ -22,7 +22,7 @@ type ViewPrefs = {
   statuses: BuildWebStatus[] | null
   sort: IssueSortState
   drawerWidth: number
-  /** The side panel of each full-screen card tab, by tab. */
+  /** The sized side of each split (a full-screen card tab, the Recaps list), by panel. */
   panelWidths: Record<string, number>
   /** How a task's build list is narrowed — its own, by run id, as build-web keeps it. */
   runFilters: Record<string, RunFilter>

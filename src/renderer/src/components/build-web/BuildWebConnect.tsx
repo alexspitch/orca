@@ -39,7 +39,8 @@ export function BuildWebConnectForm({
           showBuildWebButton: true,
           showBuildWebImagesButton: true,
           showBuildWebTrainsButton: true,
-          showBuildWebTestingButton: true
+          showBuildWebTestingButton: true,
+          showBuildWebRecapsButton: true
         })
         onConnected(result.status)
       } else {

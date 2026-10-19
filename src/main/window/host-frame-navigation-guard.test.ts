@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { PLUGIN_PANEL_FRAME_NAME_PREFIX } from '../../shared/plugins/plugin-panel-bridge'
 import { NATIVE_CHAT_VISUAL_FRAME_NAME_PREFIX } from '../../shared/native-chat-visual-shell'
+import { BUILD_WEB_REPORT_FRAME_NAME_PREFIX } from '../../shared/build-web-recap-types'
 import { HostFrameNavigationRegistry, hostFrameKindForName } from './host-frame-navigation-guard'
 
 function frame(input: { id: number; name?: string; url?: string }) {
@@ -54,5 +55,16 @@ describe('HostFrameNavigationRegistry', () => {
     expect(registry.shouldBlock(visual, null, 'https://example.com')).toBe(true)
     const child = frame({ id: 4 })
     expect(registry.shouldBlock(child, visual, 'https://example.com')).toBe(true)
+  })
+
+  it('lets a build-web report frame load its first document only', () => {
+    const registry = new HostFrameNavigationRegistry()
+    const report = frame({ id: 5, name: `${BUILD_WEB_REPORT_FRAME_NAME_PREFIX}run-1` })
+    registry.register(report)
+    expect(hostFrameKindForName(report.name)).toBe('build-web-report')
+    expect(registry.shouldBlock(report, null, 'about:srcdoc')).toBe(false)
+    // Why: a srcDoc swapped in place is a second load — the page remounts the frame instead.
+    expect(registry.shouldBlock(report, null, 'about:srcdoc')).toBe(true)
+    expect(registry.shouldBlock(report, report, 'https://example.com')).toBe(true)
   })
 })

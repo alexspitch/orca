@@ -1,6 +1,7 @@
 import type { WebContents, WebFrameMain } from 'electron'
 import { NATIVE_CHAT_VISUAL_FRAME_NAME_PREFIX } from '../../shared/native-chat-visual-shell'
 import { PLUGIN_PANEL_FRAME_NAME_PREFIX } from '../../shared/plugins/plugin-panel-bridge'
+import { BUILD_WEB_REPORT_FRAME_NAME_PREFIX } from '../../shared/build-web-recap-types'
 
 type NavigationFrame = Pick<WebFrameMain, 'frameTreeNodeId' | 'isDestroyed' | 'name'>
 
@@ -10,7 +11,8 @@ type NavigationFrame = Pick<WebFrameMain, 'frameTreeNodeId' | 'isDestroyed' | 'n
  */
 const HOST_FRAME_KINDS = [
   { kind: 'plugin-panel', namePrefix: PLUGIN_PANEL_FRAME_NAME_PREFIX },
-  { kind: 'chat-visual', namePrefix: NATIVE_CHAT_VISUAL_FRAME_NAME_PREFIX }
+  { kind: 'chat-visual', namePrefix: NATIVE_CHAT_VISUAL_FRAME_NAME_PREFIX },
+  { kind: 'build-web-report', namePrefix: BUILD_WEB_REPORT_FRAME_NAME_PREFIX }
 ] as const
 
 export type HostFrameKind = (typeof HOST_FRAME_KINDS)[number]['kind']

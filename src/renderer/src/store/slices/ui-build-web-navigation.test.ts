@@ -32,3 +32,18 @@ describe('the Testing page', () => {
     expect(store.getState().activeView).toBe('tasks')
   })
 })
+
+describe('the Recaps page', () => {
+  it('returns to where the user started, through the other build-web pages and Git', () => {
+    const store = createUIStore()
+    store.setState({ activeView: 'tasks' })
+    store.getState().openBuildWebTestingPage()
+    store.getState().openBuildWebRecapsPage()
+    store.getState().closeBuildWebRecapsPage()
+    expect(store.getState().activeView).toBe('tasks')
+    store.getState().openBuildWebRecapsPage()
+    store.getState().openGitLogPage()
+    store.getState().closeGitLogPage()
+    expect(store.getState().activeView).toBe('tasks')
+  })
+})

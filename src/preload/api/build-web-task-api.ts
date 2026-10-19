@@ -8,6 +8,11 @@ import type {
 } from '../../shared/build-web-train-types'
 import type { BuildWebWatchCheck, BuildWebWatchState } from '../../shared/build-web-watch-types'
 import type {
+  BuildWebRecapPage,
+  BuildWebRecapQuery,
+  BuildWebRecapReportPiece
+} from '../../shared/build-web-recap-types'
+import type {
   BuildWebAdoptResult,
   BuildWebBranch,
   BuildWebCombo,
@@ -120,4 +125,6 @@ export type BuildWebTaskApi = {
   runTrain: (args: { trainId: string }) => Promise<BuildWebMutationResult<true>>
   watch: () => Promise<BuildWebWatchState>
   watchCheck: () => Promise<BuildWebMutationResult<BuildWebWatchCheck>>
+  recaps: (args: BuildWebRecapQuery) => Promise<BuildWebMutationResult<BuildWebRecapPage>>
+  recapReport: (args: { runId: string; offset: number }) => Promise<BuildWebRecapReportPiece>
 }

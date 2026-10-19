@@ -10,6 +10,7 @@ import { BuildWebConnectForm } from '../build-web/BuildWebConnect'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
 import {
+  showsBuildWebRecaps,
   showsBuildWebTesting,
   showsBuildWebTrains
 } from '../../../../shared/sidebar-button-settings'
@@ -21,6 +22,7 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
   const showImagesButton = useAppStore((s) => s.settings?.showBuildWebImagesButton === true)
   const showTrainsButton = useAppStore((s) => showsBuildWebTrains(s.settings))
   const showTestingButton = useAppStore((s) => showsBuildWebTesting(s.settings))
+  const showRecapsButton = useAppStore((s) => showsBuildWebRecaps(s.settings))
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [status, setStatus] = useState<BuildWebConnectionStatus | null>(null)
   const [replacing, setReplacing] = useState(false)
@@ -188,6 +190,25 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
             checked={showTestingButton}
             onCheckedChange={(checked) =>
               void updateSettings({ showBuildWebTestingButton: checked })
+            }
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>
+            <span className="block">
+              {translate('buildWeb.settings.showRecapsInSidebar', 'Show Recaps in sidebar')}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {translate(
+                'buildWeb.settings.showRecapsInSidebarHint',
+                'The reports of build-web automations, newest first'
+              )}
+            </span>
+          </span>
+          <Switch
+            checked={showRecapsButton}
+            onCheckedChange={(checked) =>
+              void updateSettings({ showBuildWebRecapsButton: checked })
             }
           />
         </label>

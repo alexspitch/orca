@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { showsBuildWebTesting, showsBuildWebTrains } from './sidebar-button-settings'
+import {
+  showsBuildWebRecaps,
+  showsBuildWebTesting,
+  showsBuildWebTrains
+} from './sidebar-button-settings'
 
 describe('the Trains sidebar item', () => {
   it('follows Issues until it is set on its own', () => {
@@ -26,5 +30,19 @@ describe('the Testing sidebar item', () => {
     expect(
       showsBuildWebTesting({ showBuildWebButton: false, showBuildWebTestingButton: true })
     ).toBe(true)
+  })
+})
+
+describe('the Recaps sidebar item', () => {
+  it('follows Issues until it is set on its own', () => {
+    expect(showsBuildWebRecaps({ showBuildWebButton: true })).toBe(true)
+    expect(showsBuildWebRecaps({ showBuildWebButton: false })).toBe(false)
+    expect(showsBuildWebRecaps(undefined)).toBe(false)
+    expect(showsBuildWebRecaps({ showBuildWebButton: true, showBuildWebRecapsButton: false })).toBe(
+      false
+    )
+    expect(showsBuildWebRecaps({ showBuildWebButton: false, showBuildWebRecapsButton: true })).toBe(
+      true
+    )
   })
 })

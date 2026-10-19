@@ -20,6 +20,8 @@ import type {
   BuildWebJiraTransitionParams,
   BuildWebJobParams,
   BuildWebPushProgressParams,
+  BuildWebRecapReportParams,
+  BuildWebRecapsParams,
   BuildWebTrainActionsParams,
   BuildWebTrainParams,
   BuildWebTrainRunsParams,
@@ -58,6 +60,7 @@ import {
   runBuildWebTrainNow
 } from '../build-web/build-web-trains'
 import { checkBuildWebWatch, getBuildWebWatch } from '../build-web/build-web-watch'
+import { listBuildWebRecaps, readBuildWebRecapReport } from '../build-web/build-web-recaps'
 import {
   cancelBuildWebJob,
   findBuildWebShotsJob,
@@ -255,5 +258,13 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebWatchCheck() {
     return checkBuildWebWatch()
+  }
+
+  buildWebRecaps(args: In<typeof BuildWebRecapsParams>) {
+    return listBuildWebRecaps(args)
+  }
+
+  buildWebRecapReport(args: In<typeof BuildWebRecapReportParams>) {
+    return readBuildWebRecapReport(args.runId, args.offset)
   }
 }
