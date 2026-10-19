@@ -1,3 +1,54 @@
 {
-  "releases": []
+  "releases": [
+    {
+      "version": "1.4.231-custom.1792400716000",
+      "date": "2026-10-19",
+      "commit": "043a3b39f940",
+      "note": "Everything this custom build adds to Orca",
+      "features": [
+        "The main menu has a new «Changelog» item right after «About Orca», listing each release's new features, settings and fixes, with the installed one marked.",
+        "A new «Issues» sidebar page lists build-web tasks with Mine, For AI, Favorites, Jira and To work quick filters, status and product filters, search and stars.",
+        "Issues → task list shows coloured chips, sortable columns, pages of 50, an assignee column, and status, priority and assignee changeable straight from the row.",
+        "Issues → task list marks tasks handed to AI or held by an agent session, and shows subtasks folded under their task with a subtask count.",
+        "The Issues sidebar item counts open top-priority blockers among the tasks matching the page's current filters.",
+        "Clicking a task in Issues opens a resizable side card where the title, description, steps, status, priority, assignee, release and «handed to AI» are edited in place.",
+        "A task opens full screen with Overview, Build, Guide & Jira, Commits and Subtasks tabs, laid out like build-web's own task card.",
+        "Task card → Overview has comments with a composer that can also post to Jira, and your own comments can be corrected or deleted.",
+        "Task card → Build adopts or creates a run, shows image freshness and progress, and builds, rebuilds, cancels, removes and publishes images, with build logs in a dialog.",
+        "Task card → Guide generates and revises the guide live, takes screenshots from a chosen stand, and publishes it to the task's Jira issue.",
+        "Task card → Properties sets assignee, product, stand, release, type, priority and build destination, and subtasks inherit the rest from their parent.",
+        "Task card → Subtasks lists each subtask with an in-place status, and warns while open subtasks block moving the task onward.",
+        "Card panels and commit lists in the full-screen task card resize by dragging or arrow keys, and their widths are remembered per tab.",
+        "«Take to work» sends picked tasks to a new Claude session in an existing or new worktree, named after the task keys.",
+        "«Take to work» on a task whose session is still open switches to that session instead of starting a second one.",
+        "A new «Images» sidebar page shows each image's newest build with filters, sortable columns, build history and push to the registry.",
+        "The Images sidebar item counts images building now and, in a red chip, images whose newest build failed.",
+        "Images → build dialog starts a new image build, prefilled from the last build, with a «Run tests» option that is off by default.",
+        "Images shows each push's progress in a card with per-image results and its log, then refreshes the table when the push finishes.",
+        "Images has «in progress» and «failed» filters by last build status, and build logs open in a dialog that follows the newest lines.",
+        "A new «Trains» sidebar page lists build-web's build trains with their windows, a «What boards now» preview and a «Depart now» button.",
+        "Trains → a history row opens its window in a «Run» dialog with status, images, tasks, errors, publications and the journal on request.",
+        "A new «Testing» sidebar page lists tasks in testing whose images are not yet out, with «Check now» and chips showing the work left.",
+        "Testing → the work-left chips open the push or build menu directly, and a task opens in a dialog over the list.",
+        "A new «Recaps» sidebar page lists finished build-web automation reports, newest first, filterable by product, version, automation and date range.",
+        "Recaps → the selected report shows beside the list in a resizable panel, with its charts and diagrams, following Orca's theme.",
+        "A new «Git» page shows every branch's commit log with a graph, branch tree, changed files and diffs, plus branch and commit operations.",
+        "Custom builds now update from build-web's «Orca» feed instead of GitHub, and an offered update links to build-web's release page.",
+        "An app window that is older than its loaded code now asks you to restart instead of showing a cryptic error."
+      ],
+      "settings": [
+        "Settings → Notifications has a new «Only When an Agent Needs Input» switch, off by default, limiting alerts and the Dock badge to agents waiting on you.",
+        "Settings → Integrations has a Build Web card to connect, test, replace or disconnect build-web and to bring back hidden Issues, Images, Trains, Testing or Recaps items."
+      ],
+      "fixes": [
+        "A remote server no longer fails to start its Orca daemon after its third daemon update.",
+        "Custom builds can again deploy to servers over SSH and are no longer treated as older than the newest official release.",
+        "The Trains sidebar item now appears for people already connected to build-web, following the Issues item until set on its own.",
+        "The Issues sidebar item now opens the task list instead of the card left open, and the card's breadcrumb returns to the list.",
+        "The Images sidebar count now refreshes within a minute, and immediately on build-web pages or after starting a build.",
+        "Long lines in a commit diff now wrap inside their own column instead of running over the other side.",
+        "Resizable column splits in task card tabs no longer stop dragging immediately after you start."
+      ]
+    }
+  ]
 }
