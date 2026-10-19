@@ -1,6 +1,7 @@
 import { detectLanguage } from '@/lib/language-detect'
 import type { FileSearchResultOwner } from '@/lib/file-search-result-owner'
 import type { SearchFileResult, SearchMatch } from '../../../../shared/code-search-types'
+import { recordEditorJumpFromLastFocused } from '../editor/editor-location-navigation'
 
 export function cancelRevealFrame(frameRef: React.RefObject<number | null>): void {
   if (frameRef.current !== null) {
@@ -49,6 +50,14 @@ export function openMatchResult(params: {
     return
   }
 
+  recordEditorJumpFromLastFocused({
+    worktreeId: resultOwner.worktreeId,
+    filePath: fileResult.filePath,
+    relativePath: fileResult.relativePath,
+    runtimeEnvironmentId: resultOwner.runtimeEnvironmentId,
+    line: match.line,
+    column: match.column
+  })
   openFile(
     {
       filePath: fileResult.filePath,

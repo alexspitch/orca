@@ -21,6 +21,10 @@ import { installMonacoDiffEditorDisposalGuard } from './monaco-diff-editor-dispo
 import { installMonacoPeekReferencesPreviewOptions } from './monaco-peek-preview-options'
 import { installMonacoContextMenuPaste } from '@/components/editor/install-monaco-context-menu-paste'
 import { runMonacoSetupSteps } from './monaco-setup-steps'
+import {
+  installMonacoCodeNavigation,
+  uninstallMonacoCodeNavigation
+} from './code-navigation/monaco-code-navigation'
 
 globalThis.MonacoEnvironment = {
   getWorker(_workerId, label) {
@@ -94,7 +98,8 @@ runMonacoSetupSteps([
   // Why: Monaco's built-in context-menu Paste reads navigator.clipboard, which is blocked in
   // Orca's sandboxed renderer. Route it through the trusted IPC bridge so right-click Paste
   // works like Cmd+V (which already works via native events).
-  ['context-menu paste', () => installMonacoContextMenuPaste(monaco)]
+  ['context-menu paste', () => installMonacoContextMenuPaste(monaco)],
+  ['code navigation', () => void installMonacoCodeNavigation(monaco)]
 ])
 
 // Configure Monaco to use the locally bundled editor instead of CDN
@@ -102,7 +107,10 @@ loader.config({ monaco })
 
 const unregisterEditorModelRegistry = editorModelRegistry.register(monaco)
 if (import.meta.hot) {
-  import.meta.hot.dispose(unregisterEditorModelRegistry)
+  import.meta.hot.dispose(() => {
+    unregisterEditorModelRegistry()
+    uninstallMonacoCodeNavigation()
+  })
 }
 // Re-export for convenience
 export { monaco }

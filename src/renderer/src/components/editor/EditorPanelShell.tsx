@@ -129,6 +129,14 @@ export function EditorPanelShell({
           onToggleMarkdownFrontmatter={onToggleMarkdownFrontmatter}
           onExportMarkdownToPdf={onExportMarkdownToPdf}
           createArtifactRequest={createArtifactRequest}
+          codeNavigation={
+            model.canShowCodeNavigation
+              ? {
+                  viewStateId: activeViewStateId ?? activeFile.id,
+                  canShowOutline: model.canShowCodeOutline
+                }
+              : null
+          }
         />
       )}
       <Suspense fallback={<EditorLoadingFallback />}>

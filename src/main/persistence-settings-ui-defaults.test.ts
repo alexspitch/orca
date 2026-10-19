@@ -318,6 +318,32 @@ describe('Store', () => {
     expect(reloaded.getUI().trayMinimizeNoticeShown).toBe(true)
   })
 
+  it('defaults the code outline hidden and persists its toggle strictly with a clamped width', async () => {
+    const store = await createStore()
+    expect(store.getUI().codeOutlineVisible).toBe(false)
+    expect(store.getUI().codeOutlinePanelWidth).toBe(240)
+    store.updateUI({ codeOutlineVisible: true, codeOutlinePanelWidth: 5_000 })
+    expect(store.getUI().codeOutlineVisible).toBe(true)
+    expect(store.getUI().codeOutlinePanelWidth).toBe(600)
+    // Unrelated writes keep the stored values.
+    store.updateUI({ sidebarWidth: 300 })
+    expect(store.getUI().codeOutlineVisible).toBe(true)
+    store.flush()
+    const reloaded = await createStore()
+    expect(reloaded.getUI().codeOutlineVisible).toBe(true)
+    expect(reloaded.getUI().codeOutlinePanelWidth).toBe(600)
+  })
+
+  it('reads a malformed code outline toggle and width as the defaults', async () => {
+    writeDataFile({
+      schemaVersion: 1,
+      ui: { codeOutlineVisible: 'yes', codeOutlinePanelWidth: 'wide' }
+    })
+    const store = await createStore()
+    expect(store.getUI().codeOutlineVisible).toBe(false)
+    expect(store.getUI().codeOutlinePanelWidth).toBe(240)
+  })
+
   it('hides the setup guide sidebar entry for existing users backfilled as completed', async () => {
     writeDataFile({
       schemaVersion: 1,

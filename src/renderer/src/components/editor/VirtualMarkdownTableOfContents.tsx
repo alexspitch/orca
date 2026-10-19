@@ -1,21 +1,26 @@
-import { useMemo, useRef, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
-import type { MarkdownTocItem } from './markdown-table-of-contents'
+import { motionSafeScrollBehavior } from '@/hooks/usePrefersReducedMotion'
 import { isMarkdownTocItemExpanded } from './markdown-toc-collapse-state'
 
-export function VirtualMarkdownTableOfContents({
+type VirtualTreeItem<T> = { id: string; children: readonly T[] }
+
+export function VirtualMarkdownTableOfContents<T extends VirtualTreeItem<T>>({
   items,
   collapsedIds,
-  renderRow
+  renderRow,
+  revealId = null
 }: {
-  items: MarkdownTocItem[]
+  items: readonly T[]
   collapsedIds: ReadonlySet<string>
-  renderRow: (item: MarkdownTocItem, depth: number) => ReactNode
+  renderRow: (item: T, depth: number) => ReactNode
+  /** Scrolled into view whenever it changes (the outline's current symbol). */
+  revealId?: string | null
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const rows = useMemo(() => {
-    const result: { item: MarkdownTocItem; depth: number }[] = []
-    const visit = (entries: MarkdownTocItem[], depth: number): void => {
+    const result: { item: T; depth: number }[] = []
+    const visit = (entries: readonly T[], depth: number): void => {
       for (const item of entries) {
         result.push({ item, depth })
         if (isMarkdownTocItemExpanded(collapsedIds, item)) {
@@ -33,6 +38,21 @@ export function VirtualMarkdownTableOfContents({
     overscan: 5,
     getItemKey: (index) => rows[index].item.id
   })
+  // Why: reveal once per id, so collapsing or scrolling the list never yanks it back to the cursor.
+  const revealedIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (revealId === revealedIdRef.current) {
+      return
+    }
+    const index = revealId === null ? -1 : rows.findIndex((row) => row.item.id === revealId)
+    if (revealId !== null && index < 0) {
+      return
+    }
+    revealedIdRef.current = revealId
+    if (index >= 0) {
+      virtualizer.scrollToIndex(index, { align: 'auto', behavior: motionSafeScrollBehavior() })
+    }
+  }, [revealId, rows, virtualizer])
   return (
     <div ref={scrollRef} className="markdown-toc-list scrollbar-editor">
       <div className="relative w-full" style={{ height: virtualizer.getTotalSize() }}>

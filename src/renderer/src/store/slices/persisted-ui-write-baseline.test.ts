@@ -16,6 +16,8 @@ function makeBaseline(overrides: Partial<PersistedUIWriteBaseline> = {}): Persis
     rightSidebarExplorerView: 'files',
     rightSidebarWidth: 350,
     markdownTocPanelWidth: 240,
+    codeOutlineVisible: false,
+    codeOutlinePanelWidth: 240,
     combinedDiffFileTreeWidth: 256,
     groupBy: 'repo',
     sortBy: 'recent',
@@ -164,5 +166,18 @@ describe('sidebarOpen write round-trip', () => {
   it('sends a left sidebar close to main under its persisted key', () => {
     const changed = diffPersistedUIWriteFields(makeBaseline({ sidebarOpen: false }), makeBaseline())
     expect(persistedUIWriteFieldsToWireUpdate(changed)).toEqual({ sidebarOpen: false })
+  })
+})
+
+describe('code outline write round-trip', () => {
+  it('sends the outline toggle and width to main under their persisted keys', () => {
+    const changed = diffPersistedUIWriteFields(
+      makeBaseline({ codeOutlineVisible: true, codeOutlinePanelWidth: 320 }),
+      makeBaseline()
+    )
+    expect(persistedUIWriteFieldsToWireUpdate(changed)).toEqual({
+      codeOutlineVisible: true,
+      codeOutlinePanelWidth: 320
+    })
   })
 })

@@ -11,6 +11,8 @@ describe('pairing-local UI fields', () => {
       'manualRepoOrder',
       'workspaceHostOrder',
       'sidebarOpen',
+      'codeOutlineVisible',
+      'codeOutlinePanelWidth',
       'agentsVisibleHostIds',
       'agentsFilterRepoIds',
       'agentsHideWorkspacesFromOtherDevices',

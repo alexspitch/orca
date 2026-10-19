@@ -21,6 +21,7 @@ import { ShortcutKeyCombo } from '@/components/ShortcutKeyCombo'
 import type { ArtifactWriteRequest } from '../../../../shared/artifacts'
 import { ArtifactPublishButton } from '@/components/artifacts/ArtifactPublishButton'
 import { editorArtifactSourceKey } from './editor-artifact-upload'
+import { EditorCodeNavigationHeaderControls } from './EditorCodeNavigationHeaderControls'
 
 type EditorPanelHeaderProps = {
   activeFile: OpenFile
@@ -54,6 +55,8 @@ type EditorPanelHeaderProps = {
   onToggleMarkdownFrontmatter: () => void
   onExportMarkdownToPdf: () => void
   createArtifactRequest?: () => Promise<ArtifactWriteRequest>
+  /** Back/Forward (and the outline toggle when `canShowOutline`) for the pane's editor; null hides them. */
+  codeNavigation?: { viewStateId: string; canShowOutline: boolean } | null
 }
 
 export function EditorPanelHeader({
@@ -87,7 +90,8 @@ export function EditorPanelHeader({
   onToggleMarkdownTableOfContents,
   onToggleMarkdownFrontmatter,
   onExportMarkdownToPdf,
-  createArtifactRequest
+  createArtifactRequest,
+  codeNavigation = null
 }: EditorPanelHeaderProps): React.JSX.Element {
   const { comments: diffComments } = useVisibleWorktreeDiffComments(activeFile.worktreeId)
   const activeGroupId = useAppStore((s) => s.activeGroupIdByWorktree[activeFile.worktreeId])
@@ -277,6 +281,13 @@ export function EditorPanelHeader({
           }
         />
       )}
+      {codeNavigation ? (
+        <EditorCodeNavigationHeaderControls
+          viewStateId={codeNavigation.viewStateId}
+          worktreeId={activeFile.worktreeId}
+          canShowOutline={codeNavigation.canShowOutline}
+        />
+      ) : null}
       {canShowMarkdownTableOfContents && (
         <TooltipProvider delayDuration={300}>
           <Tooltip>

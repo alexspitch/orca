@@ -1,7 +1,9 @@
 import type * as Monaco from 'monaco-editor'
 import { ReferenceWidget as MonacoReferenceWidget } from 'monaco-editor/esm/vs/editor/contrib/gotoSymbol/browser/peek/referencesWidget.js'
 
-type PeekPreviewEditor = Pick<Monaco.editor.ICodeEditor, 'updateOptions'>
+type PeekPreviewEditor = Pick<Monaco.editor.ICodeEditor, 'updateOptions'> & {
+  getModel(): unknown
+}
 
 const PEEK_REFERENCES_PREVIEW_OPTIONS: Monaco.editor.IEditorOptions = {
   smoothScrolling: false,
@@ -10,6 +12,8 @@ const PEEK_REFERENCES_PREVIEW_OPTIONS: Monaco.editor.IEditorOptions = {
 }
 
 type ReferenceWidgetInstance = {
+  /** The editor the Peek is attached to. */
+  editor?: { getModel(): unknown }
   _preview?: PeekPreviewEditor
   _fillBody?: (containerElement: HTMLElement) => void
   _revealReference?: (...args: unknown[]) => Promise<unknown>
@@ -21,10 +25,18 @@ type ReferenceWidgetConstructor = {
   }
 }
 
-function applyPeekReferencesPreviewOptions(editor: PeekPreviewEditor | undefined): void {
+function applyPeekReferencesPreviewOptions(
+  editor: PeekPreviewEditor | undefined,
+  parentModel?: unknown
+): void {
   // Why: Monaco embedded editors inherit Orca's full-editor options first.
   // Peek previews are transient readers, so keep scroll/wrap widgets out of them.
-  editor?.updateOptions(PEEK_REFERENCES_PREVIEW_OPTIONS)
+  editor?.updateOptions(
+    parentModel === undefined
+      ? PEEK_REFERENCES_PREVIEW_OPTIONS
+      : // Why: another file's preview would take edits that bypass that tab's draft and save.
+        { ...PEEK_REFERENCES_PREVIEW_OPTIONS, readOnly: editor.getModel() !== parentModel }
+  )
 }
 
 export function installMonacoPeekReferencesPreviewOptions(
@@ -59,7 +71,7 @@ export function installMonacoPeekReferencesPreviewOptions(
     try {
       return await originalRevealReference.apply(this, args)
     } finally {
-      applyPeekReferencesPreviewOptions(this._preview)
+      applyPeekReferencesPreviewOptions(this._preview, this.editor?.getModel() ?? null)
     }
   }
 

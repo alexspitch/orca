@@ -15,6 +15,7 @@ import { canUseChangesModeForFile } from './editor-panel-file-mode'
 import { getMarkdownRenderMode, type MarkdownRenderState } from './markdown-render-mode'
 import { getCachedMarkdownRichModeEligibility } from './markdown-rich-mode-eligibility-cache'
 import { exceedsMarkdownRichModeSizeLimit } from './markdown-rich-size-limit'
+import { isCodeNavigationLanguage } from '@/lib/code-navigation/code-navigation-languages'
 
 type StoreState = ReturnType<typeof useAppStore.getState>
 
@@ -211,6 +212,13 @@ export function getEditorPanelRenderModel({
     canShowMarkdownTableOfContents:
       viewerLanguage === 'markdown' &&
       (hasViewModeToggle || activeFile.mode === 'markdown-preview'),
+    // Why every edit tab: history steps land in any file type (search results), so Back/Forward must not come and go.
+    canShowCodeNavigation: activeFile.mode === 'edit' && !isChangesMode,
+    canShowCodeOutline:
+      activeFile.mode === 'edit' &&
+      !isChangesMode &&
+      !isBinaryEditSurface &&
+      isCodeNavigationLanguage(resolvedLanguage),
     canShowMarkdownPreview: canOpenMarkdownPreview({
       language: viewerLanguage,
       mode: activeFile.mode,

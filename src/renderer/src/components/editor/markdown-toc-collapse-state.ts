@@ -1,9 +1,12 @@
 import type { MarkdownTocItem, MarkdownTocLevel } from './markdown-table-of-contents'
 
-export function collectMarkdownTocParentIds(items: MarkdownTocItem[]): Set<string> {
+/** Any collapsible tree the TOC panel can render: markdown headings, code outline symbols. */
+export type CollapsibleTreeNode = { id: string; children: readonly CollapsibleTreeNode[] }
+
+export function collectMarkdownTocParentIds(items: readonly CollapsibleTreeNode[]): Set<string> {
   const parentIds = new Set<string>()
 
-  function visit(nodes: MarkdownTocItem[]): void {
+  function visit(nodes: readonly CollapsibleTreeNode[]): void {
     for (const item of nodes) {
       if (item.children.length > 0) {
         parentIds.add(item.id)
@@ -37,7 +40,7 @@ export function collapseMarkdownTocToLevel(
 
 export function pruneMarkdownTocCollapsedIds(
   collapsedIds: ReadonlySet<string>,
-  items: MarkdownTocItem[]
+  items: readonly CollapsibleTreeNode[]
 ): Set<string> {
   const parentIds = collectMarkdownTocParentIds(items)
   const next = new Set<string>()
@@ -64,7 +67,7 @@ export function toggleMarkdownTocCollapsedId(
 
 export function isMarkdownTocItemExpanded(
   collapsedIds: ReadonlySet<string>,
-  item: MarkdownTocItem
+  item: CollapsibleTreeNode
 ): boolean {
   return item.children.length === 0 || !collapsedIds.has(item.id)
 }

@@ -271,3 +271,49 @@ describe('virtual Markdown preview PDF export', () => {
     }
   })
 })
+
+describe('getEditorPanelRenderModel code navigation controls', () => {
+  function codeFile(path: string, overrides: Partial<OpenFile> = {}): OpenFile {
+    return {
+      id: path,
+      filePath: path,
+      relativePath: path.slice('/repo/'.length),
+      worktreeId: 'wt-1',
+      language: 'plaintext',
+      mode: 'edit',
+      isDirty: false,
+      ...overrides
+    }
+  }
+
+  it.each(['/repo/a.ts', '/repo/a.tsx', '/repo/a.js', '/repo/a.py'])(
+    'offers the outline for the %s edit tab',
+    (path) => {
+      const model = renderModel({ activeFile: codeFile(path), fileContents: {} })
+      expect(model.canShowCodeOutline).toBe(true)
+      expect(model.canShowCodeNavigation).toBe(true)
+    }
+  )
+
+  it.each(['/repo/README.md', '/repo/data.json', '/repo/main.go'])(
+    'keeps Back/Forward but no outline for %s',
+    (path) => {
+      const model = renderModel({ activeFile: codeFile(path), fileContents: {} })
+      expect(model.canShowCodeOutline).toBe(false)
+      expect(model.canShowCodeNavigation).toBe(true)
+    }
+  )
+
+  it('hides both in changes mode and on non-edit tabs', () => {
+    const changes = renderModel({ activeFile: codeFile('/repo/a.ts'), isChangesMode: true })
+    expect(changes.canShowCodeOutline).toBe(false)
+    expect(changes.canShowCodeNavigation).toBe(false)
+
+    const diff = renderModel({
+      activeFile: codeFile('/repo/a.ts', { mode: 'diff', diffSource: 'unstaged' }),
+      fileContents: {}
+    })
+    expect(diff.canShowCodeOutline).toBe(false)
+    expect(diff.canShowCodeNavigation).toBe(false)
+  })
+})

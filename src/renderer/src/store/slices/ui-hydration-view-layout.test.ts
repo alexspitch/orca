@@ -676,6 +676,22 @@ describe('createUISlice hydratePersistedUI', () => {
     expect(store.getState().markdownTocPanelWidth).toBe(200)
   })
 
+  it('hydrates the code outline toggle strictly and clamps its width', () => {
+    const store = createUIStore()
+
+    store
+      .getState()
+      .hydratePersistedUI(
+        makePersistedUI({ codeOutlineVisible: true, codeOutlinePanelWidth: 5_000 })
+      )
+    expect(store.getState().codeOutlineVisible).toBe(true)
+    expect(store.getState().codeOutlinePanelWidth).toBe(600)
+
+    store.getState().hydratePersistedUI(makePersistedUI({ codeOutlineVisible: undefined }))
+    expect(store.getState().codeOutlineVisible).toBe(false)
+    expect(store.getState().persistedUIWriteBaseline?.codeOutlineVisible).toBe(false)
+  })
+
   it('clamps persisted combined diff file tree widths into the supported range', () => {
     const store = createUIStore()
 

@@ -15941,6 +15941,29 @@
           "97ad46f11f": "Collapse {{value0}}",
           "8f4d2c1a9b": "Resize table of contents"
         },
+        "CodeOutlinePanel": {
+          "9357afa93d": "Expand all",
+          "0a782f197b": "Collapse all",
+          "cf96bbe118": "Close outline",
+          "1aa9644204": "This file is too large for an outline",
+          "b3986da273": "The outline could not be built",
+          "164f3cd39b": "Loading outline…",
+          "a4ceadbc59": "No matching symbols",
+          "8bcf1ae0c8": "No symbols",
+          "346ba6048c": "Outline",
+          "77869c3218": "Filter symbols",
+          "14533cdc0e": "Filter outline symbols",
+          "01ae296e56": "Resize outline"
+        },
+        "CodeOutlineRow": {
+          "52f4bf821e": "Collapse {{value0}}",
+          "91755cb4bd": "Expand {{value0}}"
+        },
+        "EditorCodeNavigationHeaderControls": {
+          "fb39186be3": "Previous location",
+          "5520d5a1a7": "Next location",
+          "36e2361ea7": "Outline"
+        },
         "MarkdownTemplatePicker": {
           "22cd94426f": "untitled.md",
           "6e2e6c04ad": "Blank Markdown",

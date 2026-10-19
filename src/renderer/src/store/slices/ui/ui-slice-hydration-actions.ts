@@ -105,6 +105,12 @@ export function createUiHydrationActions(set: UISliceSet, _get: UISliceGet): Par
             undefined,
             s.markdownTocPanelWidth
           ),
+          codeOutlineVisible: ui.codeOutlineVisible === true,
+          codeOutlinePanelWidth: clampMarkdownTocPanelWidth(
+            ui.codeOutlinePanelWidth,
+            undefined,
+            s.codeOutlinePanelWidth
+          ),
           combinedDiffFileTreeWidth: clampCombinedDiffFileTreeWidth(
             ui.combinedDiffFileTreeWidth,
             undefined,

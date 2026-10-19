@@ -25,6 +25,7 @@ import { useMonacoEditorMount } from './use-monaco-editor-mount'
 import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
+import { useCodeNavigationEditorBinding } from './use-code-navigation-editor-binding'
 
 type MonacoEditorProps = {
   fileId: string
@@ -47,6 +48,8 @@ type MonacoEditorProps = {
   readOnly?: boolean
   liveTail?: boolean
   autoHeight?: boolean
+  /** TS/JS/Python edit tabs: a definition source/target with Back/Forward input. */
+  codeNavigationEnabled?: boolean
 }
 
 export default function MonacoEditor({
@@ -68,7 +71,8 @@ export default function MonacoEditor({
   conflictDecorationsEnabled = false,
   readOnly = false,
   liveTail = false,
-  autoHeight = false
+  autoHeight = false,
+  codeNavigationEnabled = false
 }: MonacoEditorProps): React.JSX.Element {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null)
   const editorContainerRef = useRef<HTMLDivElement | null>(null)
@@ -180,6 +184,14 @@ export default function MonacoEditor({
       readOnly
     })
   }, [editorFontFamily, editorFontSize, editorWordWrap, readOnly])
+
+  useCodeNavigationEditorBinding({
+    mountedEditor,
+    fileId,
+    viewStateId,
+    worktreeId,
+    codeNavigationEnabled
+  })
 
   const decorations = useMonacoEditorDecorations({
     editorRef,

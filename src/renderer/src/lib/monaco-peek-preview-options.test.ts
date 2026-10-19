@@ -4,9 +4,12 @@ import { describe, expect, it, vi } from 'vitest'
 import type * as Monaco from 'monaco-editor'
 import { installMonacoPeekReferencesPreviewOptions } from './monaco-peek-preview-options'
 
-type FakePreviewEditor = Pick<Monaco.editor.ICodeEditor, 'updateOptions'>
+type FakePreviewEditor = Pick<Monaco.editor.ICodeEditor, 'updateOptions'> & {
+  getModel(): unknown
+}
 
 type FakeReferenceWidgetInstance = {
+  editor?: { getModel(): unknown }
   _preview?: FakePreviewEditor
   _fillBody?: (containerElement: HTMLElement) => void
   _revealReference?: (...args: unknown[]) => Promise<unknown>
@@ -32,7 +35,7 @@ function createReferenceWidgetConstructor(hooks: {
 }
 
 function createPreviewEditor(): FakePreviewEditor {
-  return { updateOptions: vi.fn() }
+  return { updateOptions: vi.fn(), getModel: () => null }
 }
 
 const peekPreviewOptions = {
@@ -59,7 +62,8 @@ describe('installMonacoPeekReferencesPreviewOptions', () => {
   it('updates the embedded preview before revealing a reference', async () => {
     const calls: string[] = []
     const preview: FakePreviewEditor = {
-      updateOptions: vi.fn(() => calls.push('updateOptions'))
+      updateOptions: vi.fn(() => calls.push('updateOptions')),
+      getModel: () => null
     }
     const referenceWidget = createReferenceWidgetConstructor({
       revealReference: async () => {
@@ -94,5 +98,27 @@ describe('installMonacoPeekReferencesPreviewOptions', () => {
     await referenceWidget.prototype._revealReference('reference')
 
     expect(preview.updateOptions).toHaveBeenCalledTimes(2)
+  })
+
+  it('makes the preview read-only only when it shows another model', async () => {
+    const parentModel = { id: 'parent' }
+    const otherModel = { id: 'other' }
+    for (const [previewModel, readOnly] of [
+      [parentModel, false],
+      [otherModel, true]
+    ] as const) {
+      const preview: FakePreviewEditor = {
+        updateOptions: vi.fn(),
+        getModel: () => previewModel
+      }
+      const referenceWidget = createReferenceWidgetConstructor({})
+      referenceWidget.prototype._preview = preview
+      referenceWidget.prototype.editor = { getModel: () => parentModel }
+
+      installMonacoPeekReferencesPreviewOptions(referenceWidget)
+      await referenceWidget.prototype._revealReference('reference')
+
+      expect(preview.updateOptions).toHaveBeenLastCalledWith({ ...peekPreviewOptions, readOnly })
+    }
   })
 })

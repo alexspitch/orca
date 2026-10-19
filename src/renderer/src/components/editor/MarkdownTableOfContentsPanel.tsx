@@ -10,14 +10,9 @@ import {
   toggleMarkdownTocCollapsedId
 } from './markdown-toc-collapse-state'
 import { translate } from '@/i18n/i18n'
-import { useSidebarResize } from '@/hooks/useSidebarResize'
 import { useAppStore } from '@/store'
-import {
-  MARKDOWN_TOC_PANEL_MIN_WIDTH,
-  MARKDOWN_TOC_RESIZE_HANDLE_CLASS_NAME,
-  clampMarkdownTocPanelWidth,
-  computeMaxMarkdownTocPanelWidth
-} from './markdown-toc-panel-width'
+import { MARKDOWN_TOC_RESIZE_HANDLE_CLASS_NAME } from './markdown-toc-panel-width'
+import { useTocPanelResize } from './use-toc-panel-resize'
 
 type MarkdownTableOfContentsPanelProps = {
   virtualized?: boolean
@@ -38,41 +33,15 @@ export function MarkdownTableOfContentsPanel({
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())
   const markdownTocPanelWidth = useAppStore((s) => s.markdownTocPanelWidth)
   const setMarkdownTocPanelWidth = useAppStore((s) => s.setMarkdownTocPanelWidth)
-  const [layoutWidth, setLayoutWidth] = useState<number | null>(null)
-  const maxPanelWidth = computeMaxMarkdownTocPanelWidth(layoutWidth ?? 0)
-  const renderedPanelWidth = clampMarkdownTocPanelWidth(
-    markdownTocPanelWidth,
-    layoutWidth ?? undefined
-  )
-  const { containerRef, onResizeStart } = useSidebarResize<HTMLElement>({
-    isOpen: true,
-    width: renderedPanelWidth,
-    minWidth: MARKDOWN_TOC_PANEL_MIN_WIDTH,
-    maxWidth: maxPanelWidth,
-    deltaSign: 1,
-    setWidth: setMarkdownTocPanelWidth
+  const { containerRef, onResizeStart } = useTocPanelResize({
+    width: markdownTocPanelWidth,
+    setWidth: setMarkdownTocPanelWidth,
+    deltaSign: 1
   })
 
   useEffect(() => {
     setCollapsedIds((current) => pruneMarkdownTocCollapsedIds(current, items))
   }, [items])
-
-  useEffect(() => {
-    const container = containerRef.current
-    const layout = container?.parentElement
-    if (!layout) {
-      return
-    }
-
-    const updateMaxWidth = (): void => {
-      setLayoutWidth(layout.clientWidth)
-    }
-
-    updateMaxWidth()
-    const observer = new ResizeObserver(updateMaxWidth)
-    observer.observe(layout)
-    return () => observer.disconnect()
-  }, [containerRef])
 
   const collapseToLevel = (level: MarkdownTocLevel): void => {
     setCollapsedIds(collapseMarkdownTocToLevel(items, level))

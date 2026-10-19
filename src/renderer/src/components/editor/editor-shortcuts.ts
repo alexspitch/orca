@@ -137,3 +137,40 @@ export function installMonacoEditorFindShortcut(editor: MonacoFindShortcutEditor
     void editor.getAction('actions.find')?.run()
   })
 }
+
+/** Back/Forward through editor locations: the bound chords plus the mouse's side buttons. */
+export function installEditorNavigationHistoryShortcuts(
+  target: HTMLElement,
+  onNavigate: (direction: 'back' | 'forward') => void
+): () => void {
+  const handleKeyDown = (event: KeyboardEvent): void => {
+    const direction = editorShortcutMatches('editor.navigateBack', event)
+      ? 'back'
+      : editorShortcutMatches('editor.navigateForward', event)
+        ? 'forward'
+        : null
+    if (!direction) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    onNavigate(direction)
+  }
+  // Why mouseup: Chromium has no default action for side buttons, and auxclick skips some drivers.
+  const handleMouseUp = (event: MouseEvent): void => {
+    const direction = event.button === 3 ? 'back' : event.button === 4 ? 'forward' : null
+    if (!direction) {
+      return
+    }
+    event.preventDefault()
+    event.stopPropagation()
+    onNavigate(direction)
+  }
+
+  target.addEventListener('keydown', handleKeyDown, true)
+  target.addEventListener('mouseup', handleMouseUp, true)
+  return () => {
+    target.removeEventListener('keydown', handleKeyDown, true)
+    target.removeEventListener('mouseup', handleMouseUp, true)
+  }
+}

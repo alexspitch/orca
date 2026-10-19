@@ -82,6 +82,8 @@ export const UI_STATE_GLOBAL_FIELDS = [
   'rightSidebarExplorerView',
   'rightSidebarWidth',
   'markdownTocPanelWidth',
+  'codeOutlineVisible',
+  'codeOutlinePanelWidth',
   'combinedDiffFileTreeWidth',
   'groupBy',
   'sortBy',

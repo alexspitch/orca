@@ -26,6 +26,11 @@ export type EditorDraftState = {
   setMarkdownTableOfContentsVisible: (fileId: string, visible: boolean) => void
   markdownTocPanelWidth: number
   setMarkdownTocPanelWidth: (width: number) => void
+  // Why global, not per file: go-to-definition opens other files, and a per-file flag would hide the outline on every jump.
+  codeOutlineVisible: boolean
+  setCodeOutlineVisible: (visible: boolean) => void
+  codeOutlinePanelWidth: number
+  setCodeOutlinePanelWidth: (width: number) => void
   combinedDiffFileTreeWidth: number
   setCombinedDiffFileTreeWidth: (width: number) => void
 }
@@ -166,6 +171,16 @@ export function createEditorDraftState(set: EditorSet, _get: EditorGet): EditorD
     setMarkdownTocPanelWidth: (width) =>
       set((s) => ({
         markdownTocPanelWidth: clampMarkdownTocPanelWidth(width, undefined, s.markdownTocPanelWidth)
+      })),
+
+    // Code outline panel: same width bounds as the markdown TOC it is built from
+    codeOutlineVisible: false,
+    setCodeOutlineVisible: (visible) =>
+      set((s) => (s.codeOutlineVisible === visible ? s : { codeOutlineVisible: visible })),
+    codeOutlinePanelWidth: 240,
+    setCodeOutlinePanelWidth: (width) =>
+      set((s) => ({
+        codeOutlinePanelWidth: clampMarkdownTocPanelWidth(width, undefined, s.codeOutlinePanelWidth)
       })),
 
     // Combined diff file tree sizing

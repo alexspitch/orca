@@ -22,6 +22,8 @@ import { ExternalFileChangeBanner } from './ExternalFileChangeBanner'
 import type { useMarkdownDocuments } from './useMarkdownDocuments'
 import { EditorMarkdownFileSurface } from './EditorMarkdownFileSurface'
 import type { MarkdownRenderState } from './markdown-render-mode'
+import { isCodeNavigationLanguage } from '@/lib/code-navigation/code-navigation-languages'
+import { CodeOutlineLayout } from './CodeOutlineLayout'
 
 const noopEditorContentChange = (_content: string): void => {}
 const noopEditorSave = async (_content: string): Promise<boolean> => false
@@ -218,6 +220,7 @@ export function EditorEditFileSurface({
         // Why: read-only tabs no-op the change/save callbacks so no draft, dirty state, or write can occur.
         readOnly={activeFile.readOnly === true}
         liveTail={activeFile.liveTail === true}
+        codeNavigationEnabled={isCodeNavigationLanguage(monacoLanguage)}
         onContentChange={
           activeFile.readOnly === true ? noopEditorContentChange : handleContentChange
         }
@@ -311,7 +314,12 @@ export function EditorEditFileSurface({
           conflictNavigation={getConflictNavigation(activeFile, currentContent)}
         />
       )}
-      <div className="min-h-0 flex-1 relative">{editorSurface}</div>
+      <CodeOutlineLayout
+        viewStateId={viewStateScopeId}
+        applicable={editorSurface === monacoEditor && isCodeNavigationLanguage(monacoLanguage)}
+      >
+        {editorSurface}
+      </CodeOutlineLayout>
     </div>
   )
 }

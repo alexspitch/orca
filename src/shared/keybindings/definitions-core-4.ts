@@ -2,6 +2,40 @@ import type { KeybindingDefinition } from './types'
 import { platformBindings } from './definitions-support'
 
 export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
+  // Why VS Code's chords: Mod+Minus is zoom, Mod+Alt+Arrow is worktree history, Cmd+[ / ] are
+  // Monaco indent, and Alt+Arrow is word movement on macOS only.
+  {
+    id: 'editor.navigateBack',
+    title: 'Go Back',
+    group: 'Editors',
+    scope: 'editor',
+    searchKeywords: ['shortcut', 'editor', 'navigate', 'back', 'history', 'definition', 'previous'],
+    defaultBindings: {
+      darwin: ['Ctrl+Minus'],
+      linux: ['Alt+ArrowLeft'],
+      win32: ['Alt+ArrowLeft']
+    }
+  },
+  {
+    id: 'editor.navigateForward',
+    title: 'Go Forward',
+    group: 'Editors',
+    scope: 'editor',
+    searchKeywords: ['shortcut', 'editor', 'navigate', 'forward', 'history', 'definition', 'next'],
+    defaultBindings: {
+      darwin: ['Ctrl+Shift+Underscore'],
+      linux: ['Alt+ArrowRight'],
+      win32: ['Alt+ArrowRight']
+    }
+  },
+  {
+    id: 'editor.toggleOutline',
+    title: 'Toggle Outline',
+    group: 'Editors',
+    scope: 'editor',
+    searchKeywords: ['shortcut', 'editor', 'outline', 'symbols', 'structure', 'functions'],
+    defaultBindings: platformBindings([])
+  },
   {
     id: 'chat.find',
     title: 'Find in chat',

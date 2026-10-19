@@ -157,6 +157,13 @@ export function updatePersistedUI(
     markdownTocPanelWidth: clampMarkdownTocPanelWidth(
       sanitizedUpdates.markdownTocPanelWidth ?? operations.state.ui?.markdownTocPanelWidth
     ),
+    codeOutlineVisible:
+      sanitizedUpdates.codeOutlineVisible !== undefined
+        ? sanitizedUpdates.codeOutlineVisible === true
+        : operations.state.ui?.codeOutlineVisible === true,
+    codeOutlinePanelWidth: clampMarkdownTocPanelWidth(
+      sanitizedUpdates.codeOutlinePanelWidth ?? operations.state.ui?.codeOutlinePanelWidth
+    ),
     combinedDiffFileTreeWidth: clampCombinedDiffFileTreeWidth(
       sanitizedUpdates.combinedDiffFileTreeWidth ?? operations.state.ui?.combinedDiffFileTreeWidth
     ),

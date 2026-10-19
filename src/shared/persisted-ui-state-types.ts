@@ -42,6 +42,9 @@ export type PersistedUIState = {
   rightSidebarExplorerView: RightSidebarExplorerView
   rightSidebarWidth: number
   markdownTocPanelWidth?: number
+  /** One flag for every code editor, not per file: go-to-definition opens other files. Absent means hidden. */
+  codeOutlineVisible?: boolean
+  codeOutlinePanelWidth?: number
   combinedDiffFileTreeWidth?: number
   groupBy: 'none' | 'workspace-status' | 'repo' | 'pr-status'
   sortBy: 'name' | 'smart' | 'recent' | 'repo' | 'manual'

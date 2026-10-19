@@ -51,6 +51,16 @@ vi.mock('@/components/artifacts/ArtifactPublishButton', () => ({
   ArtifactPublishButton: () => <button data-artifact-publish />
 }))
 
+vi.mock('./EditorCodeNavigationHeaderControls', () => ({
+  EditorCodeNavigationHeaderControls: ({
+    viewStateId,
+    canShowOutline
+  }: {
+    viewStateId: string
+    canShowOutline: boolean
+  }) => <span data-code-navigation={viewStateId} data-can-show-outline={String(canShowOutline)} />
+}))
+
 vi.mock('./diff-navigation-context', () => ({
   useDiffNavigation: () => ({
     changeCount: 2,
@@ -164,5 +174,16 @@ describe('EditorPanelHeader', () => {
         isMarkdown: true
       })
     ).not.toContain('data-artifact-publish')
+  })
+
+  it('renders code navigation controls only when the pane offers them', () => {
+    expect(renderHeader()).not.toContain('data-code-navigation')
+    const html = renderHeader({
+      activeFile: { ...activeFile, mode: 'edit' },
+      isDiffSurface: false,
+      codeNavigation: { viewStateId: 'tab-1', canShowOutline: true }
+    })
+    expect(html).toContain('data-code-navigation="tab-1"')
+    expect(html).toContain('data-can-show-outline="true"')
   })
 })
