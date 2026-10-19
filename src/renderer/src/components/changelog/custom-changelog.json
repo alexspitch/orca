@@ -1,6 +1,41 @@
 {
   "releases": [
     {
+      "version": "1.4.231-custom.1792437715000",
+      "date": "2026-10-19",
+      "commit": "90b88a055cb6",
+      "features": [
+        "Testing now opens on two tabs: «In testing» shows the current watch, and «Test history» lists past runs by day, filterable by All, Nightly or Manual.",
+        "Testing → Test history opens a run with its changes since the previous run, a workspace map, a per-test breakdown, each test's last 14 runs, job logs and junit.xml.",
+        "The sidebar's Testing item shows, in red, how many tests failed in the newest finished nightly run.",
+        "The sidebar's Trains item shows how many images are in windows that are building or deploying right now.",
+        "A task opened from Testing now gets a wider dialog, up to 1536 pixels across.",
+        "Recaps now opens as a month calendar showing each report on the day it finished; click one to open it, then Escape returns to the calendar.",
+        "Recaps has a «Calendar | List» switch, remembers the view you picked, and applies the product, version and automation filters to the calendar too.",
+        "A new sidebar item, «Stands», lists the AP, DC and SA stands, with each stand's services, their state, image, tag, build number and build date.",
+        "Stands lets you restart one service or bring the whole stand up again, after confirming, and follows the job and its log on the page.",
+        "Stands shows a service's log with a choice of how many recent lines to load, live following, and Cmd/Ctrl+F search with highlights.",
+        "Stands → Users lists a stand's UI logins, filterable by application; «Log in» opens the stand in Orca's browser and fills in the login form.",
+        "Application chips on Stands use the same colours as on Issues: SA purple, DC blue and AP green.",
+        "The build log dialog on Images uses the new log viewer, so you can search it with Cmd/Ctrl+F.",
+        "In a train window, each image now shows whether it is «pushed», «built, not pushed» or «held», with the reason it was held.",
+        "The source editor supports go to definition across files for TypeScript, JavaScript and Python, with Cmd/Ctrl+click, F12 and Peek.",
+        "The source editor has Back and Forward buttons and shortcuts for moving between the places you jumped to, including mouse side buttons.",
+        "The source editor has an Outline panel beside the code, toggled from the editor header, with a filter, the current symbol highlighted, and click-to-jump.",
+        "«Take to work» names the session after its tasks' keys and titles, and taking the same tasks again reopens that session."
+      ],
+      "settings": [
+        "The «Work in this worktree» option in the «Take to work» dialog is removed, along with its remembered choice."
+      ],
+      "fixes": [
+        "The images in a train window now update as each build finishes, instead of keeping their old state while another image is still building.",
+        "Pushing an image now updates the train window, and its tags column no longer lists tags of images that were not pushed.",
+        "Images → «Push to registry» now sends every picked build even if one is refused; refused images are named and stay selected.",
+        "«Take to work» no longer lets the task skill create its own worktree; Orca creates one only when you choose «Create a new worktree».",
+        "When «Take to work» creates a new worktree, its base branch is always chosen from the repository's branches, and the session starts only once one is picked."
+      ]
+    },
+    {
       "version": "1.4.231-custom.1792400716000",
       "date": "2026-10-19",
       "commit": "043a3b39f940",
