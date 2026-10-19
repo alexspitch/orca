@@ -12,6 +12,7 @@ import { useBuildWebStore, type BuildWebCardTab } from '../build-web-store'
 import { useBuildWebTarget } from '../use-build-web-data'
 import { useBuildWebIssueDetail } from '../use-build-web-issue-detail'
 import { BuildWebListState } from '../BuildWebListState'
+import { BuildWebIssueSubtasks } from '../BuildWebIssueSubtasks'
 import { IssueHeader } from './IssueHeader'
 import { IssueOverviewTab } from './IssueOverviewTab'
 import { IssueBuildTab } from './IssueBuildTab'
@@ -21,10 +22,10 @@ import { imageTally, readsRuns, writesRuns } from './issue-card-facts'
 import { useIssueRun } from './use-issue-run'
 
 type CardTab = BuildWebCardTab
-const TABS: readonly CardTab[] = ['overview', 'build', 'guide', 'commits']
+const TABS: readonly CardTab[] = ['overview', 'build', 'guide', 'commits', 'subtasks']
 const NO_PERMS: string[] = []
 
-/** The task on the whole page, with build-web's tabs: Overview, Build, Guide & Jira, Commits. */
+/** The task on the whole page, with build-web's tabs: Overview, Build, Guide & Jira, Commits, Subtasks. */
 export function BuildWebIssueFullScreen({
   onTakeToWork
 }: {
@@ -89,9 +90,16 @@ export function BuildWebIssueFullScreen({
         return translate('buildWeb.card.guide', 'Guide & Jira')
       case 'commits':
         return translate('buildWeb.card.commits', 'Commits')
+      case 'subtasks':
+        return translate('buildWeb.card.subtasks', 'Subtasks {{count}}', {
+          count: detail.children
+        })
     }
   }
-  const tabs = TABS.filter((t) => showRuns || (t !== 'build' && t !== 'guide'))
+  // Why: a subtask has no subtasks of its own — the tree is two levels deep.
+  const tabs = TABS.filter(
+    (t) => (showRuns || (t !== 'build' && t !== 'guide')) && (t !== 'subtasks' || !detail.parent_id)
+  )
   // Why: opened on Build for a task without one (a subtask, no rights), it shows Overview.
   const current = tabs.includes(tab) ? tab : 'overview'
   return (
@@ -103,6 +111,7 @@ export function BuildWebIssueFullScreen({
         onTakeToWork={() => onTakeToWork([detail])}
         onCollapse={collapseFullScreen}
         onBackToList={() => openIssue(null)}
+        onOpenIssue={(id) => openIssue(id, true)}
       />
       <Tabs
         value={current}
@@ -159,6 +168,16 @@ export function BuildWebIssueFullScreen({
           {visited.has('commits') ? (
             <TabsContent value="commits" forceMount hidden={current !== 'commits'}>
               <IssueCommitsTab target={target} issueId={detail.id} />
+            </TabsContent>
+          ) : null}
+          {!detail.parent_id && visited.has('subtasks') ? (
+            <TabsContent value="subtasks" forceMount hidden={current !== 'subtasks'}>
+              <BuildWebIssueSubtasks
+                target={target}
+                detail={detail}
+                onOpen={(id) => openIssue(id, true)}
+                onChanged={state.reload}
+              />
             </TabsContent>
           ) : null}
         </div>

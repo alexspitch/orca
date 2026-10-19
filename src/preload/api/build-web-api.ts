@@ -6,6 +6,7 @@ import type {
   BuildWebIssuePage,
   BuildWebIssuePatch,
   BuildWebIssueQuery,
+  BuildWebIssueRow,
   BuildWebCommentOutcome,
   BuildWebIssueSummary,
   BuildWebIssueSummaryQuery,
@@ -52,6 +53,8 @@ export type BuildWebApi = {
   testConnection: () => Promise<BuildWebConnectResult>
   listIssues: (args: BuildWebIssueQuery) => Promise<BuildWebIssuePage>
   getIssue: (args: { id: string }) => Promise<BuildWebIssueDetail>
+  /** A task's subtasks; a host predating it answers with an unknown method. */
+  listIssueChildren: (args: { id: string }) => Promise<BuildWebIssueRow[]>
   listAssignees: () => Promise<BuildWebUser[]>
   listVersions: (args: { product: BuildWebProduct }) => Promise<BuildWebVersion[]>
   updateIssue: (args: {

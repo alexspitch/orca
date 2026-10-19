@@ -9,6 +9,7 @@ import { useBuildWebStore } from './build-web-store'
 import { useBuildWebIssueDetail } from './use-build-web-issue-detail'
 import { BuildWebIssueProperties } from './BuildWebIssueProperties'
 import { BuildWebIssueComments } from './BuildWebIssueComments'
+import { BuildWebIssueSubtasks } from './BuildWebIssueSubtasks'
 import { EditableDescription, EditableSteps, EditableTitle } from './BuildWebIssueEditors'
 import { SectionTitle } from './BuildWebIssueBody'
 import { useBuildWebTarget } from './use-build-web-data'
@@ -142,6 +143,21 @@ export function BuildWebIssueDrawer({
                 saving={saving}
                 onSave={(patch) => void save(patch)}
               />
+              {!detail.parent_id && detail.children > 0 ? (
+                <section className="flex flex-col gap-2">
+                  <SectionTitle>
+                    {translate('buildWeb.card.subtasks', 'Subtasks {{count}}', {
+                      count: detail.children
+                    })}
+                  </SectionTitle>
+                  <BuildWebIssueSubtasks
+                    target={target}
+                    detail={detail}
+                    onOpen={(id) => openIssue(id)}
+                    onChanged={reload}
+                  />
+                </section>
+              ) : null}
               <section className="flex flex-col gap-2">
                 <SectionTitle>{translate('buildWeb.detail.comments', 'Comments')}</SectionTitle>
                 <BuildWebIssueComments target={target} detail={detail} onChanged={reload} />

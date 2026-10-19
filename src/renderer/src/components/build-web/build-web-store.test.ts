@@ -19,6 +19,7 @@ const row = (id: string): BuildWebIssueRow => ({
   priority: 3,
   parent_id: null,
   parent_key: null,
+  children: 0,
   children_open: 0,
   favorite: false,
   for_ai: false,
@@ -117,7 +118,8 @@ describe('build-web store', () => {
       offset: 0,
       q: undefined,
       status: [...OPEN_STATUSES],
-      product: undefined
+      product: undefined,
+      tree: true
     })
     expect(
       issueQueryOf({

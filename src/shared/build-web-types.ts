@@ -75,6 +75,8 @@ export type BuildWebIssueRow = {
   priority: number
   parent_id: string | null
   parent_key: string | null
+  /** Its subtasks, and how many of them are still open; a subtask has none. */
+  children: number
   children_open: number
   favorite: boolean
   for_ai: boolean
@@ -146,6 +148,11 @@ export type BuildWebIssueQuery = {
   product?: BuildWebProduct[]
   limit?: number
   offset?: number
+  /**
+   * Families, as build-web's list reads: each task followed by its subtasks that match, `limit` and
+   * `offset` counting the tasks. A host predating it drops it and lists the top-level tasks.
+   */
+  tree?: boolean
 }
 
 /** The statuses a task is still being worked in. */

@@ -65,6 +65,7 @@ export function registerBuildWebHandlers(): void {
   handle('connect', BuildWebConnect, (args) => commands.buildWebConnect(args))
   handle('listIssues', BuildWebIssueQueryParams, (args) => commands.buildWebListIssues(args))
   handle('getIssue', BuildWebIssueId, (args) => commands.buildWebGetIssue(args))
+  handle('listIssueChildren', BuildWebIssueId, (args) => commands.buildWebListIssueChildren(args))
   handle('listVersions', BuildWebVersionsParams, (args) => commands.buildWebListVersions(args))
   handle('updateIssue', BuildWebIssueUpdateParams, (args) => commands.buildWebUpdateIssue(args))
   handle('setFavorite', BuildWebFavoriteParams, (args) => commands.buildWebSetFavorite(args))

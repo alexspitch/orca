@@ -8,6 +8,7 @@ export const buildWebApi = {
   testConnection: () => ipcRenderer.invoke('buildWeb:testConnection'),
   listIssues: (args) => ipcRenderer.invoke('buildWeb:listIssues', args),
   getIssue: (args) => ipcRenderer.invoke('buildWeb:getIssue', args),
+  listIssueChildren: (args) => ipcRenderer.invoke('buildWeb:listIssueChildren', args),
   listAssignees: () => ipcRenderer.invoke('buildWeb:listAssignees'),
   listVersions: (args) => ipcRenderer.invoke('buildWeb:listVersions', args),
   updateIssue: (args) => ipcRenderer.invoke('buildWeb:updateIssue', args),

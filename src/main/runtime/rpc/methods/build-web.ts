@@ -65,6 +65,13 @@ export const BUILD_WEB_METHODS = [
     handler: async (params, { runtime, signal }) => runtime.buildWebGetIssue(params, signal)
   }),
   defineMethod({
+    name: 'buildWeb.listIssueChildren',
+    permission: 'workspace',
+    params: BuildWebIssueId,
+    handler: async (params, { runtime, signal }) =>
+      runtime.buildWebListIssueChildren(params, signal)
+  }),
+  defineMethod({
     name: 'buildWeb.listAssignees',
     permission: 'workspace',
     params: null,

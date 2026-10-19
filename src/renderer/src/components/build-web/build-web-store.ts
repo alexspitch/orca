@@ -19,7 +19,7 @@ import {
 } from './build-web-view-prefs'
 
 /** The full-screen card's tabs, as build-web's task card has them. */
-export type BuildWebCardTab = 'overview' | 'build' | 'guide' | 'commits'
+export type BuildWebCardTab = 'overview' | 'build' | 'guide' | 'commits' | 'subtasks'
 
 /** The statuses a task is still being worked in — the list's default. */
 export const OPEN_STATUSES = BUILD_WEB_OPEN_STATUSES
@@ -223,7 +223,9 @@ export function issueQueryOf(
     status: state.statuses.size
       ? BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s))
       : undefined,
-    product: state.product === 'all' ? undefined : [state.product]
+    product: state.product === 'all' ? undefined : [state.product],
+    // As build-web's list: each task with its subtasks right under it.
+    tree: true
   }
 }
 

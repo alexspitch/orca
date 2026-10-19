@@ -36,7 +36,8 @@ export const BuildWebIssueQueryParams = z.object({
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
   product: z.array(Product).max(5).optional(),
   limit: z.number().int().min(1).max(100).optional(),
-  offset: z.number().int().min(0).max(100_000).optional()
+  offset: z.number().int().min(0).max(100_000).optional(),
+  tree: z.boolean().optional()
 })
 
 export const BuildWebIssueId = z.object({ id: Id })

@@ -34,6 +34,7 @@ import {
 import {
   getBuildWebIssue,
   listBuildWebAssignees,
+  listBuildWebIssueChildren,
   listBuildWebIssues,
   listBuildWebVersions
 } from '../build-web/build-web-issue-read'
@@ -96,6 +97,10 @@ export class RuntimeBuildWebCommands {
 
   buildWebGetIssue(args: In<typeof BuildWebIssueId>, signal?: AbortSignal) {
     return getBuildWebIssue(args.id, signal)
+  }
+
+  buildWebListIssueChildren(args: In<typeof BuildWebIssueId>, signal?: AbortSignal) {
+    return listBuildWebIssueChildren(args.id, signal)
   }
 
   buildWebListAssignees() {

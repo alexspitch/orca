@@ -1,4 +1,4 @@
-import { Bot, Maximize2, SquareTerminal, Star } from 'lucide-react'
+import { Bot, ChevronDown, ChevronRight, Maximize2, SquareTerminal, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -16,9 +16,87 @@ import { BuildWebSortHeader } from './BuildWebSortHeader'
 import { AssigneePicker, PriorityPicker, StatusPicker } from './BuildWebRowPickers'
 import { useBuildWebAssignees } from './use-build-web-data'
 import { useIssueRowPatch } from './use-build-web-issue-write'
+import {
+  familiesOf,
+  foldedOf,
+  headCount,
+  isUnder,
+  useIssueFolds,
+  visibleIssues
+} from './build-web-families'
+
+/** Where a row stands in its family: a task with subtasks on the page, or a subtask under one. */
+type Family = { count: number; under: boolean; open: boolean; onToggle: () => void }
+
+/** Before the key, as in build-web: the arrow of a task with subtasks on the page, else a dot in its place. */
+function FamilyToggle({ issue, family }: { issue: BuildWebIssueRow; family: Family }) {
+  if (family.count === 0) {
+    return (
+      <span className="flex w-4 shrink-0 justify-center" aria-hidden>
+        <span className="size-1 rounded-full bg-muted-foreground/40" />
+      </span>
+    )
+  }
+  const label = family.open
+    ? translate('buildWeb.list.foldFamily', 'Hide the subtasks of {{key}}', { key: issue.key })
+    : translate('buildWeb.list.unfoldFamily', 'Show {{count}} subtask(s) of {{key}}', {
+        key: issue.key,
+        count: family.count
+      })
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          onClick={family.onToggle}
+          aria-expanded={family.open}
+          aria-label={label}
+          className="flex w-4 shrink-0 justify-center rounded text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
+          {family.open ? (
+            <ChevronDown className="size-3.5" />
+          ) : (
+            <ChevronRight className="size-3.5" />
+          )}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+/** How many subtasks the task has, in a circle: amber while one is open, green once all are closed. */
+function SubtaskCount({ issue }: { issue: BuildWebIssueRow }) {
+  if (issue.children === 0) {
+    return null
+  }
+  const label = translate('buildWeb.list.subtaskCount', 'Subtasks: {{count}}, open: {{open}}', {
+    count: issue.children,
+    open: issue.children_open
+  })
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          aria-label={label}
+          className={cn(
+            'inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full border px-1 text-2xs font-medium tabular-nums',
+            issue.children_open > 0
+              ? 'border-chip-tone-amber/40 bg-chip-tone-amber/15 text-chip-tone-amber'
+              : 'border-chip-tone-green/40 bg-chip-tone-green/15 text-chip-tone-green'
+          )}
+        >
+          {issue.children}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  )
+}
 
 function IssueRow({
   issue,
+  family,
   selected,
   open,
   busy,
@@ -30,6 +108,7 @@ function IssueRow({
   onPatch
 }: {
   issue: BuildWebIssueRow
+  family: Family
   selected: boolean
   open: boolean
   busy: boolean
@@ -53,16 +132,12 @@ function IssueRow({
           aria-label={translate('buildWeb.list.select', 'Select {{key}}', { key: issue.key })}
         />
       </td>
-      <td className="w-28 py-2 font-mono text-xs text-muted-foreground">{issue.key}</td>
-      <td className="w-20 py-2">
-        <ProductChip product={issue.product} />
-      </td>
-      <td className="w-28 py-2">
-        <TypeChip type={issue.type} />
-      </td>
-      <td className="max-w-0 py-2 pr-3">
-        <div className="flex min-w-0 items-center gap-1.5">
-          {/* As in build-web: the model's queue is marked beside the task. */}
+      <td className="w-36 py-2">
+        {/* A subtask's key starts past its task's arrow and key, so it reads as nested under it. */}
+        <div className={cn('flex items-center gap-1.5', family.under && 'pl-10')}>
+          {family.under ? null : <FamilyToggle issue={issue} family={family} />}
+          <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
+          {/* As in build-web: the model's queue is marked beside the key, so titles stay aligned. */}
           {issue.for_ai ? (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -76,13 +151,28 @@ function IssueRow({
               <TooltipContent>{translate('buildWeb.detail.forAi', 'Handed to AI')}</TooltipContent>
             </Tooltip>
           ) : null}
+        </div>
+      </td>
+      <td className="w-20 py-2">
+        <ProductChip product={issue.product} />
+      </td>
+      <td className="w-28 py-2">
+        <TypeChip type={issue.type} />
+      </td>
+      <td className="max-w-0 py-2 pr-3">
+        <div className={cn('flex min-w-0 items-center gap-1.5', family.under && 'pl-4')}>
           <button
             type="button"
             onClick={onOpen}
-            className="block min-w-0 truncate text-left text-sm hover:underline focus-visible:underline focus-visible:outline-none"
+            className={cn(
+              // pe-0.5: room for an italic subtask title's last letter, which truncate would clip.
+              'block min-w-0 truncate pe-0.5 text-left text-sm hover:underline focus-visible:underline focus-visible:outline-none',
+              family.under && 'italic'
+            )}
           >
             {issue.title}
           </button>
+          <SubtaskCount issue={issue} />
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -174,6 +264,17 @@ export function BuildWebIssueList({
   const { busy, patch } = useIssueRowPatch()
   const users = useBuildWebAssignees(issues.length > 0)
   const header = { sort: sort.sort, dir: sort.dir, onSort: sortBy }
+  const foldAll = useIssueFolds((s) => s.foldAll)
+  const toggled = useIssueFolds((s) => s.toggled)
+  const toggleFamily = useIssueFolds((s) => s.toggle)
+  const kids = familiesOf(issues)
+  const folded = foldedOf(foldAll, toggled, kids)
+  const familyOf = (issue: BuildWebIssueRow): Family => ({
+    count: kids.get(issue.id) ?? 0,
+    under: isUnder(issue, kids),
+    open: !folded.has(issue.id),
+    onToggle: () => toggleFamily(issue.id)
+  })
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -188,7 +289,7 @@ export function BuildWebIssueList({
                 {...header}
                 sortKey="key"
                 label={translate('buildWeb.list.key', 'Key')}
-                className="w-28"
+                className="w-36"
               />
               <th className="w-20 py-2">{translate('buildWeb.list.product', 'Product')}</th>
               <BuildWebSortHeader
@@ -228,10 +329,11 @@ export function BuildWebIssueList({
             </tr>
           </thead>
           <tbody>
-            {issues.map((issue) => (
+            {visibleIssues(issues, kids, folded).map((issue) => (
               <IssueRow
                 key={issue.id}
                 issue={issue}
+                family={familyOf(issue)}
                 selected={selected.has(issue.id)}
                 open={openIssueId === issue.id}
                 busy={busy.has(issue.id)}
@@ -251,7 +353,7 @@ export function BuildWebIssueList({
           <span className="text-xs whitespace-nowrap text-muted-foreground">
             {translate('buildWeb.list.range', '{{from}}–{{to}} of {{total}}', {
               from: page * ISSUE_PAGE_SIZE + 1,
-              to: page * ISSUE_PAGE_SIZE + issues.length,
+              to: page * ISSUE_PAGE_SIZE + headCount(issues, kids),
               total
             })}
           </span>

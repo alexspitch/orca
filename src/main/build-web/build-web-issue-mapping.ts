@@ -64,6 +64,7 @@ export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | 
     priority: numberOf(v.priority, 3),
     parent_id: textOrNull(v.parent_id),
     parent_key: textOrNull(v.parent_key),
+    children: numberOf(v.children),
     children_open: numberOf(v.children_open),
     favorite: v.favorite === true,
     for_ai: v.for_ai === true,

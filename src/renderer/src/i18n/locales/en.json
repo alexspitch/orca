@@ -20398,7 +20398,13 @@
       "search": "Search by key or title",
       "quick": "Quick filters",
       "toWork": "To work",
-      "statusCount": "{{count}} statuses"
+      "statusCount": "{{count}} statuses",
+      "foldAll": "Hide subtasks",
+      "unfoldAll": "Show subtasks"
+    },
+    "subtasks": {
+      "blocked": "Open subtasks: {{count}} — the task will not close or go out to deploy.",
+      "none": "No subtasks. A problem found while checking the task is filed under it in build-web."
     },
     "detail": {
       "noDescription": "No description.",
@@ -20448,7 +20454,10 @@
       "changePriority": "Change the priority of {{key}}",
       "assignee": "Assignee",
       "changeAssignee": "Change the assignee of {{key}}",
-      "openFull": "Open {{key}} full screen"
+      "openFull": "Open {{key}} full screen",
+      "foldFamily": "Hide the subtasks of {{key}}",
+      "unfoldFamily": "Show {{count}} subtask(s) of {{key}}",
+      "subtaskCount": "Subtasks: {{count}}, open: {{open}}"
     },
     "state": {
       "loading": "Loading tasks…",
@@ -20593,6 +20602,7 @@
       "moveTo": "Move to “{{status}}”",
       "collapse": "Collapse",
       "commentJiraTitle": "Post this comment to Jira {{key}} too?",
+      "subtasks": "Subtasks {{count}}",
       "send": "Send",
       "commentNotInJira": "Saved, but not posted to Jira: {{error}}",
       "commentPlaceholder": "Comment…",

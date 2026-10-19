@@ -21,6 +21,7 @@ const issue = (key: string, over: Partial<BuildWebIssueRow> = {}): BuildWebIssue
   priority: 3,
   parent_id: null,
   parent_key: null,
+  children: 0,
   children_open: 0,
   favorite: false,
   for_ai: true,

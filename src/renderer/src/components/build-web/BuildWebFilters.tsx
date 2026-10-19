@@ -1,4 +1,5 @@
-import { Bot, Star, Ticket, User } from 'lucide-react'
+import { Bot, FoldVertical, Star, Ticket, UnfoldVertical, User } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import {
@@ -15,6 +16,7 @@ import { BuildWebStatusFilter, BuildWebToWorkToggle } from './BuildWebStatusFilt
 import { quickFilterLabel } from './build-web-labels'
 import { ProductChip } from './BuildWebToneChip'
 import { QUICK_FILTERS, type QuickFilter } from './build-web-view-prefs'
+import { familiesOf, foldedOf, useIssueFolds } from './build-web-families'
 
 const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
   mine: <User />,
@@ -23,6 +25,30 @@ const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
   jira: <Ticket />
 }
 const PRODUCTS: readonly BuildWebProduct[] = ['sa', 'dc', 'ap', 'storage', 'tools']
+
+/** Fold or unfold every family on the page at once, as build-web's toolbar does. */
+function FoldAllButton(): React.JSX.Element {
+  const issues = useBuildWebStore((s) => s.issues)
+  const foldAll = useIssueFolds((s) => s.foldAll)
+  const toggled = useIssueFolds((s) => s.toggled)
+  const setFoldAll = useIssueFolds((s) => s.setFoldAll)
+  const kids = familiesOf(issues)
+  const folded = foldedOf(foldAll, toggled, kids)
+  const allFolded = kids.size > 0 && [...kids.keys()].every((id) => folded.has(id))
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      disabled={kids.size === 0}
+      onClick={() => setFoldAll(!allFolded)}
+    >
+      {allFolded ? <UnfoldVertical /> : <FoldVertical />}
+      {allFolded
+        ? translate('buildWeb.filters.unfoldAll', 'Show subtasks')
+        : translate('buildWeb.filters.foldAll', 'Hide subtasks')}
+    </Button>
+  )
+}
 
 export function BuildWebFilters(): React.JSX.Element {
   const quick = useBuildWebStore((s) => s.quick)
@@ -83,6 +109,7 @@ export function BuildWebFilters(): React.JSX.Element {
         className="h-8 min-w-48 flex-1"
         data-escape-clears-value="true"
       />
+      <FoldAllButton />
     </div>
   )
 }

@@ -28,6 +28,10 @@ type ViewPrefs = {
   runFilters: Record<string, RunFilter>
   /** Hide the images not built yet, in every build list. */
   hidePending: boolean
+  /** Every family folded in the list; `folded` then holds the ones opened by hand. */
+  foldAll: boolean
+  /** The tasks whose subtasks were toggled by hand against `foldAll`. */
+  folded: string[]
 }
 
 export const RUN_DISTS = ['all', 'rhel', 'redos'] as const
@@ -38,6 +42,7 @@ export type RunFilter = {
 }
 // Why a cap: one entry per build ever opened would grow without end.
 const RUN_FILTERS_KEPT = 30
+const FOLDED_KEPT = 200
 
 const STORAGE_KEY = 'orca.buildWeb.viewPrefs'
 const DEFAULTS: ViewPrefs = {
@@ -47,7 +52,9 @@ const DEFAULTS: ViewPrefs = {
   drawerWidth: DRAWER_DEFAULT_WIDTH,
   panelWidths: {},
   runFilters: {},
-  hidePending: false
+  hidePending: false,
+  foldAll: false,
+  folded: []
 }
 
 function runFiltersOf(raw: unknown): Record<string, RunFilter> {
@@ -95,6 +102,10 @@ function prefsOf(raw: unknown): ViewPrefs {
     panelWidths,
     runFilters: runFiltersOf(v.runFilters),
     hidePending: v.hidePending === true,
+    foldAll: v.foldAll === true,
+    folded: Array.isArray(v.folded)
+      ? v.folded.filter((id): id is string => typeof id === 'string').slice(-FOLDED_KEPT)
+      : [],
     sort: sort ? { sort, dir: sortRaw.dir === 'asc' ? 'asc' : 'desc' } : DEFAULTS.sort,
     drawerWidth:
       width === null ? DEFAULTS.drawerWidth : Math.max(DRAWER_MIN_WIDTH, Math.round(width))

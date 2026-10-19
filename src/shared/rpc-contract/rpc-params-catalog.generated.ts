@@ -929,6 +929,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.listAssignees': null,
   'buildWeb.listImageBuilds': BuildWebImageHistoryParams,
   'buildWeb.listImages': BuildWebImagePageParams,
+  'buildWeb.listIssueChildren': BuildWebIssueId,
   'buildWeb.listIssues': BuildWebIssueQueryParams,
   'buildWeb.listStands': null,
   'buildWeb.listTrains': null,

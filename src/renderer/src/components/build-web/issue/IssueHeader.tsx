@@ -14,6 +14,7 @@ import {
 import { BuildWebSessionBadge } from '../BuildWebSessionBadge'
 import { EditableTitle } from '../BuildWebIssueEditors'
 import { nextStatus } from './issue-card-facts'
+import { blockedBySubtasks } from '../BuildWebIssueSubtasks'
 
 /** The full-screen card's head: where it is, what it is, and the moves out of it. */
 export function IssueHeader({
@@ -22,7 +23,8 @@ export function IssueHeader({
   onSave,
   onTakeToWork,
   onCollapse,
-  onBackToList
+  onBackToList,
+  onOpenIssue
 }: {
   detail: BuildWebIssueDetail
   saving: boolean
@@ -31,8 +33,12 @@ export function IssueHeader({
   onCollapse: () => void
   /** The «Issues» crumb: the list, with no card open. */
   onBackToList: () => void
+  /** The parent crumb of a subtask. */
+  onOpenIssue: (id: string) => void
 }): React.JSX.Element {
   const next = nextStatus(detail.status, Boolean(detail.parent_id))
+  // The move the open subtasks forbid: build-web answers 409, so the button says so first.
+  const blocked = next && next !== 'inprogress' ? blockedBySubtasks(detail) : ''
   return (
     <header className="flex flex-col gap-3 border-b border-border px-3 pb-3 md:px-5">
       <nav
@@ -50,9 +56,15 @@ export function IssueHeader({
         <span>/</span>
         <span>{productLabel(detail.product)}</span>
         <span>/</span>
-        {detail.parent_key ? (
+        {detail.parent_id && detail.parent_key ? (
           <>
-            <span className="font-mono">{detail.parent_key}</span>
+            <button
+              type="button"
+              onClick={() => detail.parent_id && onOpenIssue(detail.parent_id)}
+              className="font-mono hover:text-foreground hover:underline"
+            >
+              {detail.parent_key}
+            </button>
             <span>/</span>
           </>
         ) : null}
@@ -101,7 +113,21 @@ export function IssueHeader({
           <Button variant="outline" size="sm" onClick={onTakeToWork}>
             {translate('buildWeb.detail.takeToWork', 'Take to work')}
           </Button>
-          {next ? (
+          {next && blocked ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* Why the span: a disabled button gets no pointer events, so no tooltip. */}
+                <span tabIndex={0}>
+                  <Button size="sm" disabled>
+                    {translate('buildWeb.card.moveTo', 'Move to “{{status}}”', {
+                      status: statusLabel(next)
+                    })}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>{blocked}</TooltipContent>
+            </Tooltip>
+          ) : next ? (
             <Button size="sm" disabled={saving} onClick={() => onSave({ status: next })}>
               {translate('buildWeb.card.moveTo', 'Move to “{{status}}”', {
                 status: statusLabel(next)

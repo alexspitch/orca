@@ -47,6 +47,13 @@ describe('issue list query', () => {
     ).toBeNull()
   })
 
+  it('asks for families without leaving the subtasks out', () => {
+    const params = new URLSearchParams(issueListQuery({ view: 'all', tree: true }))
+    expect(params.get('tree')).toBe('1')
+    expect(params.get('parent')).toBeNull()
+    expect(params.get('sort')).toBe('updated_at')
+  })
+
   it('caps the page at 100 rows', () => {
     expect(new URLSearchParams(issueListQuery({ view: 'all', limit: 5000 })).get('limit')).toBe(
       '100'
@@ -79,6 +86,13 @@ describe('issue rows', () => {
     expect(buildWebIssueUrl('https://bw.test', 'a/b', 's&a')).toBe(
       'https://bw.test/issues/a%2Fb?product=s%26a'
     )
+  })
+
+  it('reads where a row stands in its family', () => {
+    const task = issueRowOf('https://bw.test', { ...raw, children: 3, children_open: 1 })
+    expect(task).toMatchObject({ parent_id: null, children: 3, children_open: 1 })
+    const sub = issueRowOf('https://bw.test', { ...raw, parent_id: 'p1', parent_key: 'IS-90' })
+    expect(sub).toMatchObject({ parent_id: 'p1', parent_key: 'IS-90', children: 0 })
   })
 
   it('narrows unknown values instead of trusting them', () => {

@@ -15,11 +15,10 @@ const LIST_LIMIT_MAX = 100
 
 /** The query string for a list request: the console's own filter names. */
 export function issueListQuery(query: BuildWebIssueQuery): string {
-  const params = new URLSearchParams({
-    parent: 'root',
-    sort: query.sort ?? 'updated_at',
-    dir: query.dir ?? 'desc'
-  })
+  // Why no `parent=root` with the tree: the console would leave the subtasks out of the families.
+  const params = new URLSearchParams(query.tree ? { tree: '1' } : { parent: 'root' })
+  params.set('sort', query.sort ?? 'updated_at')
+  params.set('dir', query.dir ?? 'desc')
   // Why the flags win: an older client sends only `view`, a newer one both (for older hosts).
   const flagged = query.mine !== undefined || query.ai !== undefined || query.favorite !== undefined
   const quick = flagged
@@ -62,11 +61,33 @@ export async function listBuildWebIssues(
       signal
     })
   )
-  const rows = Array.isArray(page?.issues) ? page.issues : []
-  const issues = rows
-    .map((row) => issueRowOf(credential.baseUrl, row))
+  const issues = issueRowsOf(credential.baseUrl, page?.issues)
+  const total = numberOf(page?.total, issues.length)
+  // Why `groups`: with the tree a page counts tasks, and so does the pager.
+  return { issues, total: query.tree ? numberOf(page?.groups, total) : total }
+}
+
+function issueRowsOf(baseUrl: string, rows: unknown): BuildWebIssueRow[] {
+  return (Array.isArray(rows) ? rows : [])
+    .map((row) => issueRowOf(baseUrl, row))
     .filter((row): row is BuildWebIssueRow => row !== null)
-  return { issues, total: numberOf(page?.total, issues.length) }
+}
+
+/** The path that lists one task's subtasks, in number order, as build-web's card asks. */
+export function issueChildrenPath(id: string): string {
+  return `/api/tms/issues?parent=${encodeURIComponent(id)}&limit=200&sort=key&dir=asc`
+}
+
+/** The subtasks of one task — what its card lists under «Subtasks». */
+export async function listBuildWebIssueChildren(
+  id: string,
+  signal?: AbortSignal
+): Promise<BuildWebIssueRow[]> {
+  const credential = requireBuildWebCredential()
+  const page = recordOf(
+    await buildWebRequest({ ...credential, path: issueChildrenPath(id), signal })
+  )
+  return issueRowsOf(credential.baseUrl, page?.issues)
 }
 
 export async function getBuildWebIssue(
