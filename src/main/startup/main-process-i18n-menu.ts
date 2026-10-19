@@ -13,6 +13,7 @@ import {
   openSettingsFromSystemMenu,
   quitFromUserCommand,
   runUserInitiatedUpdateCheck,
+  sendOpenChangelog,
   sendOpenCrashReport,
   sendOpenFeatureTour,
   sendOpenSetupGuide
@@ -49,6 +50,9 @@ export async function initializeMainProcessI18nAndMenu(): Promise<void> {
     onOpenCrashReport: (targetWindow) => {
       recordCrashBreadcrumb('crash_report_opened')
       sendOpenCrashReport(targetWindow instanceof BrowserWindow ? targetWindow : null)
+    },
+    onOpenChangelog: (targetWindow) => {
+      sendOpenChangelog(targetWindow instanceof BrowserWindow ? targetWindow : null)
     },
     onOpenFeatureTour: (targetWindow) => {
       recordCrashBreadcrumb('feature_tour_opened')

@@ -17,14 +17,18 @@ export function createLocalBuildVersion(baseVersion, timestamp, commit, label = 
   return baseVersion.includes('-') ? `${baseVersion}.${suffix}` : `${baseVersion}-${suffix}`
 }
 
-export function getLocalBuildIdentity(label = 'local', baseVersion = undefined) {
+export function getLocalBuildIdentity(
+  label = 'local',
+  baseVersion = undefined,
+  timestamp = Date.now()
+) {
   const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'))
   const commit = execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], {
     encoding: 'utf8'
   }).trim()
   return {
     commit,
-    version: createLocalBuildVersion(baseVersion ?? packageJson.version, Date.now(), commit, label)
+    version: createLocalBuildVersion(baseVersion ?? packageJson.version, timestamp, commit, label)
   }
 }
 

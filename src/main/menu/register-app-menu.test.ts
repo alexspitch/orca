@@ -43,6 +43,7 @@ function buildMenuOptions() {
     onOpenSetupGuide: vi.fn(),
     onOpenFeatureTour: vi.fn(),
     onOpenCrashReport: vi.fn(),
+    onOpenChangelog: vi.fn(),
     onBeforeReload: vi.fn(),
     onZoomIn: vi.fn(),
     onZoomOut: vi.fn(),
@@ -467,6 +468,11 @@ describe('registerAppMenu', () => {
         'Check for Updates...'
       ])
     )
+    // Changelog follows About, ahead of Check for Updates.
+    const help = getSubmenu(template, 'Help')
+    const about = help.findIndex((item) => item.role === 'about')
+    expect(help[about + 1]?.label).toBe('Changelog')
+    expect(help[about + 2]?.label).toBe('Check for Updates...')
   })
 
   it.runIf(isMac)('keeps the macOS app-named menu with Settings and quit roles', () => {
@@ -476,6 +482,8 @@ describe('registerAppMenu', () => {
     const appSubmenu = getSubmenu(template, 'Orca')
     const appLabels = appSubmenu.map((item) => item.label)
     expect(appLabels).toEqual(expect.arrayContaining(['Check for Updates...', 'Settings']))
+    expect(appSubmenu[0]?.role).toBe('about')
+    expect(appSubmenu[1]?.label).toBe('Changelog')
     // Why: on macOS File should NOT duplicate Settings/Exit — those live in
     // the system app menu. Without global Export, there is no File item left.
     expect(template.find((item) => item.label === 'File')).toBeUndefined()
@@ -518,6 +526,22 @@ describe('registerAppMenu', () => {
 
     expect(options.onOpenFeatureTour).toHaveBeenCalledTimes(1)
     expect(options.onOpenFeatureTour).toHaveBeenCalledWith(targetWindow)
+  })
+
+  it('routes Changelog through its callback, right after About', () => {
+    const options = buildMenuOptions()
+    registerAppMenu(options)
+
+    const template = getTemplate()
+    const items = isMac ? getSubmenu(template, 'Orca') : getSubmenu(template, 'Help')
+    const changelogItem = items.find((entry) => entry.label === 'Changelog')
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler only forwards the window it is given.
+    const targetWindow = {} as Electron.BaseWindow
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler reads neither the menu item nor the event.
+    changelogItem?.click?.({} as never, targetWindow, {} as Electron.KeyboardEvent)
+
+    expect(options.onOpenChangelog).toHaveBeenCalledTimes(1)
+    expect(options.onOpenChangelog).toHaveBeenCalledWith(targetWindow)
   })
 
   it('routes Report Crash through its callback', () => {

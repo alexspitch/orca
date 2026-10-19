@@ -88,6 +88,7 @@ export type UiCommandEventApi = {
   onOpenSetupGuide: (callback: () => void) => () => void
   onOpenFeatureTour: (callback: () => void) => () => void
   onOpenCrashReport: (callback: () => void) => () => void
+  onOpenChangelog: (callback: () => void) => () => void
   onToggleLeftSidebar: (callback: () => void) => () => void
   onToggleRightSidebar: (callback: () => void) => () => void
   onToggleWorktreePalette: (callback: () => void) => () => void

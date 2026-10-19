@@ -93,6 +93,12 @@ export function registerSettingsAndSidebarIpcBridge(unsubs: (() => void)[]): voi
     })
   )
 
+  unsubs.push(
+    window.api.ui.onOpenChangelog(() => {
+      useAppStore.getState().openModal('changelog')
+    })
+  )
+
   // Why: View > Appearance toggles settings in main and broadcasts; merge into the store for an immediate re-render.
   unsubs.push(
     window.api.settings.onChanged((updates) => {

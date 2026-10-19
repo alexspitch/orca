@@ -428,7 +428,8 @@
     "help": "Help",
     "paste": "Paste",
     "copy": "Copy",
-    "selectAll": "Select All"
+    "selectAll": "Select All",
+    "changelog": "Changelog"
   },
   "tray": {
     "openOrca": "Open Orca",
@@ -21443,5 +21444,16 @@
       "description": "Rename {{value0}}.",
       "confirm": "Rename"
     }
+  },
+  "changelog": {
+    "features": "New",
+    "settings": "Settings",
+    "fixes": "Fixes",
+    "installed": "Installed",
+    "noChanges": "No user-visible changes.",
+    "title": "Changelog",
+    "installedVersion": "Installed: {{version}}",
+    "description": "What changed in each release, newest first.",
+    "empty": "No releases recorded yet. The next orca-release writes the first entry."
   }
 }

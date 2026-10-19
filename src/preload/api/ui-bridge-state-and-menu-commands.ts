@@ -59,6 +59,11 @@ export const uiStateAndMenuCommandsApi = {
     ipcRenderer.on('ui:openCrashReport', listener)
     return () => ipcRenderer.removeListener('ui:openCrashReport', listener)
   },
+  onOpenChangelog: (callback: () => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent) => callback()
+    ipcRenderer.on('ui:openChangelog', listener)
+    return () => ipcRenderer.removeListener('ui:openChangelog', listener)
+  },
   onToggleLeftSidebar: (callback: () => void): (() => void) => {
     const listener = (_event: Electron.IpcRendererEvent) => callback()
     ipcRenderer.on('ui:toggleLeftSidebar', listener)

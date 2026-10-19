@@ -169,6 +169,10 @@ export function sendOpenCrashReport(targetWindow?: BrowserWindow | null): void {
   resolveMenuTargetRenderer(targetWindow)?.send('ui:openCrashReport')
 }
 
+export function sendOpenChangelog(targetWindow?: BrowserWindow | null): void {
+  resolveMenuTargetRenderer(targetWindow)?.send('ui:openChangelog')
+}
+
 // Why: once auto-recovery gives up the window stays blank, so a main-process dialog is the only retry/quit surface.
 export async function showRendererRecoveryPrompt(
   recentRecoveryCount: number,

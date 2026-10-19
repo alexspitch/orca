@@ -10,6 +10,7 @@ import { translateMain } from '../i18n/main-i18n'
 import { isNativeBrowserPopupWindow } from '../browser/native-browser-popup-windows'
 import { createAppMenuSelectionItem } from './app-menu-selection-item'
 import { createAppMenuQuitItem } from './app-menu-quit-item'
+import { createAppMenuHelpItems } from './app-menu-help-items'
 import { createAppWindowMenu } from './app-menu-window'
 
 export type AppearanceMenuState = {
@@ -31,6 +32,7 @@ type RegisterAppMenuOptions = {
   onOpenSetupGuide: (window?: Electron.BaseWindow | null) => void
   onOpenFeatureTour: (window?: Electron.BaseWindow | null) => void
   onOpenCrashReport: (window?: Electron.BaseWindow | null) => void
+  onOpenChangelog: (window?: Electron.BaseWindow | null) => void
   onCheckForUpdates: (options: UpdateCheckOptions) => void
   onBeforeReload?: (options: { ignoreCache: boolean; webContentsId: number }) => void
   onZoomIn: () => void
@@ -53,6 +55,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     onOpenSetupGuide,
     onOpenFeatureTour,
     onOpenCrashReport,
+    onOpenChangelog,
     onCheckForUpdates,
     onBeforeReload,
     onZoomIn,
@@ -130,20 +133,12 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     click: () => onOpenSettings()
   }
 
-  const featureTourItem: Electron.MenuItemConstructorOptions = {
-    label: translateMain('menu.exploreOrca', 'Explore Orca'),
-    click: (_menuItem, window) => onOpenFeatureTour(window)
-  }
-
-  const setupGuideItem: Electron.MenuItemConstructorOptions = {
-    label: translateMain('menu.gettingStarted', 'Getting Started with Orca'),
-    click: (_menuItem, window) => onOpenSetupGuide(window)
-  }
-
-  const crashReportItem: Electron.MenuItemConstructorOptions = {
-    label: translateMain('menu.reportCrash', 'Report Crash...'),
-    click: (_menuItem, window) => onOpenCrashReport(window)
-  }
+  const help = createAppMenuHelpItems({
+    featureTour: onOpenFeatureTour,
+    setupGuide: onOpenSetupGuide,
+    crashReport: onOpenCrashReport,
+    changelog: onOpenChangelog
+  })
 
   // Why: the macOS app-menu (named after the app) is mandatory on darwin and
   // owns hide/hideOthers/unhide/services/quit roles that only make sense in
@@ -154,6 +149,7 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
     label: options.appMenuLabel ?? app.name,
     submenu: [
       { role: 'about' },
+      help.changelog,
       checkForUpdatesItem,
       settingsItem,
       { type: 'separator' },
@@ -326,15 +322,16 @@ function buildAndApplyMenu(options: RegisterAppMenuOptions): void {
   const helpMenu: Electron.MenuItemConstructorOptions = {
     label: translateMain('menu.help', 'Help'),
     submenu: [
-      crashReportItem,
+      help.crashReport,
       { type: 'separator' },
-      featureTourItem,
-      setupGuideItem,
+      help.featureTour,
+      help.setupGuide,
       ...(isMac
         ? []
         : ([
             { type: 'separator' },
             { role: 'about' },
+            help.changelog,
             checkForUpdatesItem
           ] satisfies Electron.MenuItemConstructorOptions[]))
     ]

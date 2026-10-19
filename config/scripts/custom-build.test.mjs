@@ -3,7 +3,12 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
-import { customBaseVersion, customBuildEnvironment, orcadTemplateTargets } from './build-custom.mjs'
+import {
+  customBaseVersion,
+  customBuildEnvironment,
+  customBuildStamp,
+  orcadTemplateTargets
+} from './build-custom.mjs'
 import { fileNamesOf, readNewestManifests } from './publish-custom-build.mjs'
 
 const require = createRequire(import.meta.url)
@@ -26,6 +31,13 @@ describe('custom build environment', () => {
     )
     expect(customBaseVersion('1.5.0', ['v1.4.224'])).toBe('1.5.0')
     expect(customBaseVersion('1.4.214', [])).toBe('1.4.214')
+  })
+
+  it('takes the release stamp orca-release fixed, so both platforms share a version', () => {
+    expect(customBuildStamp({ ORCA_CUSTOM_BUILD_STAMP: '1792399999999' })).toBe(1792399999999)
+    expect(() => customBuildStamp({ ORCA_CUSTOM_BUILD_STAMP: '17923' })).toThrow(/13-digit/)
+    const now = Date.now()
+    expect(customBuildStamp({})).toBeGreaterThanOrEqual(now)
   })
 
   it('requires the orcad slot the build deploys and ships every slot it has', () => {

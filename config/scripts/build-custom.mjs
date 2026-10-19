@@ -49,6 +49,21 @@ function readBaseVersion(environment) {
   return customBaseVersion(packageVersion, tags)
 }
 
+/**
+ * The release's stamp when orca-release fixed one, so the macOS and Linux builds share a version
+ * and its changelog entry names it; otherwise now.
+ */
+export function customBuildStamp(environment) {
+  const raw = environment.ORCA_CUSTOM_BUILD_STAMP
+  if (!raw) {
+    return Date.now()
+  }
+  if (!/^\d{13}$/.test(raw)) {
+    throw new Error(`ORCA_CUSTOM_BUILD_STAMP is not a 13-digit millisecond time: ${raw}`)
+  }
+  return Number(raw)
+}
+
 export function customBuildEnvironment({ environment = process.env, identity, platform }) {
   const buildWebUrl = (environment.BW_URL || DEFAULT_BUILD_WEB_URL).replace(/\/+$/, '')
   const env = {
@@ -89,7 +104,11 @@ export function runCustomBuild(
   if (platform !== 'mac' && platform !== 'linux') {
     throw new Error(`Unsupported custom build platform: ${platform}. Use --mac or --linux.`)
   }
-  const identity = getLocalBuildIdentity('custom', readBaseVersion(environment))
+  const identity = getLocalBuildIdentity(
+    'custom',
+    readBaseVersion(environment),
+    customBuildStamp(environment)
+  )
   const env = customBuildEnvironment({ environment, identity, platform })
   console.log(`[build:custom] ${platform} ${identity.version} → ${env.ORCA_UPDATE_FEED_URL}`)
   // The desktop deploys orcad to Linux servers; a server runs its own slot.
