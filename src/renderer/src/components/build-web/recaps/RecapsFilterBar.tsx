@@ -1,4 +1,4 @@
-import { CalendarDays, RefreshCw, X } from 'lucide-react'
+import { CalendarDays, List, RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -7,9 +7,11 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebRecapPage } from '../../../../../shared/build-web-recap-types'
 import { ProductChip } from '../BuildWebToneChip'
+import { RECAP_VIEWS, type RecapView } from '../build-web-view-prefs'
 import { RecapAutomationPicker } from './RecapAutomationPicker'
 import {
   NO_RECAP_FILTERS,
@@ -66,6 +68,8 @@ function DateBound({
 }
 
 export function RecapsFilterBar({
+  view,
+  onView,
   filters,
   facets,
   total,
@@ -73,6 +77,8 @@ export function RecapsFilterBar({
   onChange,
   onRefresh
 }: {
+  view: RecapView
+  onView: (view: RecapView) => void
   filters: RecapFilters
   facets: BuildWebRecapPage['facets']
   total: number
@@ -83,6 +89,29 @@ export function RecapsFilterBar({
   const versions = recapVersionOptions(facets.versions, filters.product)
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        size="sm"
+        value={view}
+        // Why the guard: a single toggle group lets the pressed item be clicked off.
+        onValueChange={(next) => {
+          const picked = RECAP_VIEWS.find((v) => v === next)
+          if (picked) {
+            onView(picked)
+          }
+        }}
+        aria-label={translate('buildWeb.recaps.view', 'View')}
+      >
+        <ToggleGroupItem value="calendar">
+          <CalendarDays />
+          {translate('buildWeb.recaps.calendarView', 'Calendar')}
+        </ToggleGroupItem>
+        <ToggleGroupItem value="list">
+          <List />
+          {translate('buildWeb.recaps.listView', 'List')}
+        </ToggleGroupItem>
+      </ToggleGroup>
       <Select
         value={filters.product}
         onValueChange={(next) =>
@@ -130,18 +159,23 @@ export function RecapsFilterBar({
           onChange={(automationId) => onChange({ ...filters, automationId })}
         />
       ) : null}
-      <DateBound
-        label={translate('buildWeb.recaps.from', 'From')}
-        value={filters.from}
-        max={filters.to || undefined}
-        onChange={(from) => onChange({ ...filters, from })}
-      />
-      <DateBound
-        label={translate('buildWeb.recaps.to', 'To')}
-        value={filters.to}
-        min={filters.from || undefined}
-        onChange={(to) => onChange({ ...filters, to })}
-      />
+      {/* Why only in the list: the calendar's month is its date range. */}
+      {view === 'list' ? (
+        <>
+          <DateBound
+            label={translate('buildWeb.recaps.from', 'From')}
+            value={filters.from}
+            max={filters.to || undefined}
+            onChange={(from) => onChange({ ...filters, from })}
+          />
+          <DateBound
+            label={translate('buildWeb.recaps.to', 'To')}
+            value={filters.to}
+            min={filters.from || undefined}
+            onChange={(to) => onChange({ ...filters, to })}
+          />
+        </>
+      ) : null}
       {hasRecapFilters(filters) ? (
         <Button variant="ghost" size="sm" onClick={() => onChange(NO_RECAP_FILTERS)}>
           {translate('buildWeb.recaps.reset', 'Reset')}

@@ -21202,7 +21202,15 @@
       "automation": "Automation",
       "allAutomations": "All automations",
       "searchAutomation": "Search automations",
-      "noSuchAutomation": "No such automation."
+      "noSuchAutomation": "No such automation.",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "thisMonth": "This month",
+      "backToCalendar": "Calendar",
+      "capped": "Not every report of this month is shown; narrow the filters.",
+      "view": "View",
+      "calendarView": "Calendar",
+      "listView": "List"
     },
     "logView": {
       "noResults": "No results",

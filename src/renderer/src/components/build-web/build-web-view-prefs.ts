@@ -13,6 +13,9 @@ export type QuickFilter = (typeof QUICK_FILTERS)[number]
 
 export type IssueSortState = { sort: BuildWebIssueSort; dir: 'asc' | 'desc' }
 
+export const RECAP_VIEWS = ['calendar', 'list'] as const
+export type RecapView = (typeof RECAP_VIEWS)[number]
+
 export const DRAWER_MIN_WIDTH = 420
 export const DRAWER_DEFAULT_WIDTH = 560
 
@@ -32,6 +35,8 @@ type ViewPrefs = {
   foldAll: boolean
   /** The tasks whose subtasks were toggled by hand against `foldAll`. */
   folded: string[]
+  /** Recaps as a month's calendar or as the list of reports. */
+  recapView: RecapView
 }
 
 export const RUN_DISTS = ['all', 'rhel', 'redos'] as const
@@ -54,7 +59,8 @@ const DEFAULTS: ViewPrefs = {
   runFilters: {},
   hidePending: false,
   foldAll: false,
-  folded: []
+  folded: [],
+  recapView: 'calendar'
 }
 
 function runFiltersOf(raw: unknown): Record<string, RunFilter> {
@@ -106,6 +112,7 @@ function prefsOf(raw: unknown): ViewPrefs {
     folded: Array.isArray(v.folded)
       ? v.folded.filter((id): id is string => typeof id === 'string').slice(-FOLDED_KEPT)
       : [],
+    recapView: RECAP_VIEWS.find((view) => view === v.recapView) ?? DEFAULTS.recapView,
     sort: sort ? { sort, dir: sortRaw.dir === 'asc' ? 'asc' : 'desc' } : DEFAULTS.sort,
     drawerWidth:
       width === null ? DEFAULTS.drawerWidth : Math.max(DRAWER_MIN_WIDTH, Math.round(width))

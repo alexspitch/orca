@@ -6,53 +6,41 @@ import type { BuildWebRecap, BuildWebRecapPage } from '../../../../../shared/bui
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { useBuildWebStore } from '../build-web-store'
+import { readViewPrefs, writeViewPrefs, type RecapView } from '../build-web-view-prefs'
 import { useBuildWebStatus, useBuildWebTarget } from '../use-build-web-data'
 import { useBuildWebPageEscape } from '../use-build-web-page-escape'
 import { BuildWebConnect } from '../BuildWebConnect'
 import { BuildWebListState } from '../BuildWebListState'
 import { ResizableSplit } from '../issue/ResizableSplit'
+import { monthOf, type RecapMonth } from './recap-calendar'
 import { NO_RECAP_FILTERS, hasRecapFilters, recapQuery, type RecapFilters } from './recap-filters'
+import { RecapCalendar, RecapCalendarReport, RecapMonthNav } from './RecapCalendar'
 import { RecapList } from './RecapList'
-import { RecapReportFrame } from './RecapReportFrame'
+import { RecapReportPane } from './RecapReportPane'
 import { RecapsFilterBar } from './RecapsFilterBar'
-import { useRecapReport } from './use-recap-report'
+import { useRecapMonth } from './use-recap-month'
 
 const PAGE = 50
 const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
 
-function RecapReportPane({
-  target,
-  contextKey,
-  recap
-}: {
+type ViewProps = {
   target: RuntimeClientTarget
   contextKey: string
-  recap: BuildWebRecap
-}): React.JSX.Element | null {
-  const { html, error, retry } = useRecapReport(target, contextKey, recap.id)
-  if (error) {
-    return <BuildWebListState kind="error" error={error} onRetry={retry} />
-  }
-  // Why mounted only whole: the host lets a report frame load one document, never a second.
-  return html === null ? (
-    <BuildWebListState
-      kind="loading"
-      loadingLabel={translate('buildWeb.recaps.loadingReport', 'Loading the report…')}
-    />
-  ) : (
-    <RecapReportFrame runId={recap.id} title={recap.name} html={html} />
-  )
+  filters: RecapFilters
+  onFilters: (next: RecapFilters) => void
+  view: RecapView
+  onView: (view: RecapView) => void
 }
 
 /** The finished reports, filtered and paged on the console; the one picked is shown beside them. */
-function RecapsView({
+function RecapListView({
   target,
-  contextKey
-}: {
-  target: RuntimeClientTarget
-  contextKey: string
-}): React.JSX.Element {
-  const [filters, setFilters] = useState<RecapFilters>(NO_RECAP_FILTERS)
+  contextKey,
+  filters,
+  onFilters,
+  view,
+  onView
+}: ViewProps): React.JSX.Element {
   const [page, setPage] = useState(0)
   const [data, setData] = useState<BuildWebRecapPage | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -99,7 +87,7 @@ function RecapsView({
   }, [load])
 
   const changeFilters = (next: RecapFilters) => {
-    setFilters(next)
+    onFilters(next)
     setPage(0)
   }
 
@@ -117,6 +105,8 @@ function RecapsView({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4 md:px-5">
       <RecapsFilterBar
+        view={view}
+        onView={onView}
         filters={filters}
         facets={data.facets}
         total={data.total}
@@ -177,6 +167,98 @@ function RecapsView({
       )}
     </div>
   )
+}
+
+/** A month of reports as a calendar; a report opens over it, and Back returns to that month. */
+function RecapCalendarView({
+  target,
+  contextKey,
+  filters,
+  onFilters,
+  view,
+  onView
+}: ViewProps): React.JSX.Element {
+  const [today] = useState(() => new Date())
+  const [month, setMonth] = useState<RecapMonth>(() => monthOf(today))
+  const [open, setOpen] = useState<BuildWebRecap | null>(null)
+  const { data, capped, error, loading, reload } = useRecapMonth(target, filters, month)
+
+  if (data === null) {
+    return error ? (
+      <BuildWebListState kind="error" error={error} onRetry={reload} />
+    ) : (
+      <BuildWebListState
+        kind="loading"
+        loadingLabel={translate('buildWeb.recaps.loading', 'Loading the reports…')}
+      />
+    )
+  }
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4 md:px-5">
+      <RecapsFilterBar
+        view={view}
+        onView={onView}
+        filters={filters}
+        facets={data.facets}
+        total={data.total}
+        loading={loading}
+        onChange={onFilters}
+        onRefresh={reload}
+      />
+      {error ? (
+        <p role="alert" className="text-xs text-destructive">
+          {error}
+        </p>
+      ) : null}
+      {open ? (
+        <RecapCalendarReport
+          target={target}
+          contextKey={contextKey}
+          recap={open}
+          onBack={() => setOpen(null)}
+        />
+      ) : (
+        <>
+          <div className="flex flex-wrap items-center gap-2">
+            <RecapMonthNav month={month} today={today} loading={loading} onMonth={setMonth} />
+            {capped ? (
+              <span className="text-xs text-muted-foreground">
+                {translate(
+                  'buildWeb.recaps.capped',
+                  'Not every report of this month is shown; narrow the filters.'
+                )}
+              </span>
+            ) : null}
+          </div>
+          <RecapCalendar month={month} today={today} recaps={data.results} onOpen={setOpen} />
+        </>
+      )}
+    </div>
+  )
+}
+
+/** The filters and the view, shared by the calendar and the list. */
+function RecapsView({
+  target,
+  contextKey
+}: {
+  target: RuntimeClientTarget
+  contextKey: string
+}): React.JSX.Element {
+  const [filters, setFilters] = useState<RecapFilters>(NO_RECAP_FILTERS)
+  const [view, setView] = useState<RecapView>(() => readViewPrefs().recapView)
+  const props: ViewProps = {
+    target,
+    contextKey,
+    filters,
+    onFilters: setFilters,
+    view,
+    onView: (next) => {
+      writeViewPrefs({ recapView: next })
+      setView(next)
+    }
+  }
+  return view === 'calendar' ? <RecapCalendarView {...props} /> : <RecapListView {...props} />
 }
 
 /** build-web's automation reports — the finished ones only, newest first. */
