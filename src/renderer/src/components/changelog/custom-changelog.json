@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.234-custom.1792524628000",
+      "date": "2026-10-20",
+      "commit": "4a1a5c3bb097",
+      "features": [
+        "Images: clicking «failed» on an image row offers to settle it with the newest successful build of the same image, without rebuilding anything."
+      ],
+      "settings": [],
+      "fixes": [
+        "Issues and Testing: Back now reopens the task card you opened an attachment or agent session from, on the same tab and layout."
+      ]
+    },
+    {
       "version": "1.4.233-custom.1792500732000",
       "date": "2026-10-20",
       "commit": "17f43a11d54e",
