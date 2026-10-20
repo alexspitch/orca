@@ -16420,6 +16420,17 @@
         },
         "useMarkdownDocuments": {
           "listFailed": "Failed to list Markdown documents."
+        },
+        "gitBlame": {
+          "hide": "Hide Git Blame",
+          "show": "Git Blame",
+          "loading": "Loading blame…",
+          "uncommitted": "Not committed",
+          "openCommit": "Open Commit Changes",
+          "copyHash": "Copy Commit Hash",
+          "serverTooOld": "Update Orca on this server to use Git Blame.",
+          "notTracked": "This file is not in git.",
+          "failed": "Git blame failed: {{error}}"
         }
       },
       "diff": {

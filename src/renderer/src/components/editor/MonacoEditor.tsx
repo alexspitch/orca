@@ -26,6 +26,7 @@ import { useDocumentDarkTheme } from '@/hooks/use-document-dark-theme'
 import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
 import { useCodeNavigationEditorBinding } from './use-code-navigation-editor-binding'
+import { GitBlameColumn } from './git-blame/GitBlameColumn'
 
 type MonacoEditorProps = {
   fileId: string
@@ -279,52 +280,58 @@ export default function MonacoEditor({
         setSelectionAnnotationTarget={annotations.setSelectionAnnotationTarget}
         onSubmitMarkdownComment={annotations.handleSubmitMarkdownComment}
       />
-      <Editor
-        key={modelUri}
-        height={renderedEditorHeight === null ? '100%' : `${renderedEditorHeight}px`}
-        language={language}
-        // Why: defaultValue, not controlled value — Orca owns post-mount content sync; a controlled path would double setValue.
-        defaultValue={content}
-        theme={isDark ? 'vs-dark' : 'vs'}
-        onChange={contentSync.handleChange}
-        onMount={handleMount}
-        options={{
-          dropIntoEditor: { enabled: false },
-          // `IGlobalEditorOptions`, not per-editor: setting it here pins it for every
-          // Monaco surface (diff, Peek) too, so this is the only site that needs it.
-          // Defense-in-depth only — it does NOT guard the Monarch embed recursion,
-          // which overflowed at ~17_000 chars, under this cap. See the budget module.
-          maxTokenizationLineLength: MAX_TOKENIZATION_LINE_LENGTH,
-          // Why: only the file editor honors this; Monaco 0.55 DiffEditor hard-overrides minimap.enabled=false on sub-editors (see diffEditorEditors._adjustOptionsForSubEditor).
-          minimap: { enabled: settings?.editorMinimapEnabled ?? false },
-          scrollBeyondLastLine: false,
-          ...buildFileEditorWordWrapOptions(editorWordWrap),
-          fontSize: editorFontSize,
-          fontFamily: editorFontFamily,
-          lineNumbers: 'on',
-          renderLineHighlight: 'line',
-          automaticLayout: true,
-          tabSize: 2,
-          readOnly,
-          scrollbar: autoHeight
-            ? {
-                vertical: autoHeightUsesInternalScroll ? 'auto' : 'hidden',
-                handleMouseWheel: autoHeightUsesInternalScroll
-              }
-            : undefined,
-          smoothScrolling: true,
-          cursorSmoothCaretAnimation: 'off',
-          padding: { top: 0 },
-          find: monacoFindOptions,
-          // Why: Monaco owns its rendered line surface, so align its selection-clipboard with the app opt-out (the global DOM hook can't).
-          selectionClipboard: settings?.primarySelectionMiddleClickPaste ?? isLinuxUserAgent()
-        }}
-        // Why the helper: `@monaco-editor/react` calls `Uri.parse` on this, which mis-reads a Windows drive path as its own scheme.
-        path={modelUri}
-        // Why: Orca owns cursor/scroll restoration, so disable @monaco-editor/react's competing view-state Map.
-        saveViewState={false}
-        keepCurrentModel
-      />
+      {/* Why always this wrapper: toggling blame must not remount Monaco. */}
+      <div className="flex h-full">
+        <GitBlameColumn mountedEditor={mountedEditor} fileId={fileId} filePath={filePath} />
+        <div className="h-full min-w-0 flex-1">
+          <Editor
+            key={modelUri}
+            height={renderedEditorHeight === null ? '100%' : `${renderedEditorHeight}px`}
+            language={language}
+            // Why: defaultValue, not controlled value — Orca owns post-mount content sync; a controlled path would double setValue.
+            defaultValue={content}
+            theme={isDark ? 'vs-dark' : 'vs'}
+            onChange={contentSync.handleChange}
+            onMount={handleMount}
+            options={{
+              dropIntoEditor: { enabled: false },
+              // `IGlobalEditorOptions`, not per-editor: setting it here pins it for every
+              // Monaco surface (diff, Peek) too, so this is the only site that needs it.
+              // Defense-in-depth only — it does NOT guard the Monarch embed recursion,
+              // which overflowed at ~17_000 chars, under this cap. See the budget module.
+              maxTokenizationLineLength: MAX_TOKENIZATION_LINE_LENGTH,
+              // Why: only the file editor honors this; Monaco 0.55 DiffEditor hard-overrides minimap.enabled=false on sub-editors (see diffEditorEditors._adjustOptionsForSubEditor).
+              minimap: { enabled: settings?.editorMinimapEnabled ?? false },
+              scrollBeyondLastLine: false,
+              ...buildFileEditorWordWrapOptions(editorWordWrap),
+              fontSize: editorFontSize,
+              fontFamily: editorFontFamily,
+              lineNumbers: 'on',
+              renderLineHighlight: 'line',
+              automaticLayout: true,
+              tabSize: 2,
+              readOnly,
+              scrollbar: autoHeight
+                ? {
+                    vertical: autoHeightUsesInternalScroll ? 'auto' : 'hidden',
+                    handleMouseWheel: autoHeightUsesInternalScroll
+                  }
+                : undefined,
+              smoothScrolling: true,
+              cursorSmoothCaretAnimation: 'off',
+              padding: { top: 0 },
+              find: monacoFindOptions,
+              // Why: Monaco owns its rendered line surface, so align its selection-clipboard with the app opt-out (the global DOM hook can't).
+              selectionClipboard: settings?.primarySelectionMiddleClickPaste ?? isLinuxUserAgent()
+            }}
+            // Why the helper: `@monaco-editor/react` calls `Uri.parse` on this, which mis-reads a Windows drive path as its own scheme.
+            path={modelUri}
+            // Why: Orca owns cursor/scroll restoration, so disable @monaco-editor/react's competing view-state Map.
+            saveViewState={false}
+            keepCurrentModel
+          />
+        </div>
+      </div>
 
       {toastNode}
       <MonacoGutterContextMenu
@@ -332,8 +339,10 @@ export default function MonacoEditor({
         onOpenChange={setGutterMenuOpen}
         point={gutterMenuPoint}
         line={gutterMenuLine}
+        fileId={fileId}
         filePath={filePath}
         relativePath={relativePath}
+        getContents={() => editorRef.current?.getValue() ?? contentRef.current}
       />
     </div>
   )

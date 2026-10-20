@@ -16,6 +16,7 @@ import {
   GitRebaseFromBase,
   GitRemoteCommitUrl,
   GitRemoteFileUrl,
+  GitFileBlameParams,
   GitStatusParams,
   GitSubmoduleStatus,
   GitTargetedRemote,
@@ -247,6 +248,13 @@ export const GIT_METHODS = [
     params: GitRemoteFileUrl,
     handler: async (params, { runtime }) =>
       runtime.getRuntimeGitRemoteFileUrl(params.worktree, params.relativePath, params.line)
+  }),
+  defineMethod({
+    name: 'git.fileBlame',
+    permission: 'workspace',
+    params: GitFileBlameParams,
+    handler: async (params, { runtime }) =>
+      runtime.getRuntimeGitFileBlame(params.worktree, params.relativePath, params.contents)
   }),
   defineMethod({
     name: 'git.remoteCommitUrl',

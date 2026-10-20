@@ -1,26 +1,28 @@
 import React from 'react'
-import { getRuntimeTargetForFileOwner } from '@/lib/file-owner-runtime-target'
-import { Copy, ExternalLink } from 'lucide-react'
+import { Copy, ExternalLink, History } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { useAppStore } from '@/store'
-import { getConnectionId } from '@/lib/connection-context'
-import { findWorktreeById } from '@/store/slices/worktree-helpers'
 import { getRuntimeGitRemoteFileUrl } from '@/runtime/runtime-git-working-tree-client'
 import { formatPathLineReference } from './line-copy-path'
 import { translate } from '@/i18n/i18n'
+import { resolveOpenFileGitContext } from './open-file-git-context'
+import { hideEditorGitBlame, showEditorGitBlame } from './git-blame/editor-git-blame-actions'
+import { useEditorGitBlame } from './git-blame/editor-git-blame-store'
 
 type MonacoGutterContextMenuProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   point: { x: number; y: number }
   line: number
+  fileId: string
   filePath: string
   relativePath: string
+  /** The editor's text now: blame reads it, not the file, so lines match before a save. */
+  getContents: () => string
 }
 
 export function MonacoGutterContextMenu({
@@ -28,9 +30,12 @@ export function MonacoGutterContextMenu({
   onOpenChange,
   point,
   line,
+  fileId,
   filePath,
-  relativePath
+  relativePath,
+  getContents
 }: MonacoGutterContextMenuProps): React.JSX.Element {
+  const blameShown = useEditorGitBlame((s) => s.byFile[fileId] !== undefined)
   return (
     <DropdownMenu open={open} onOpenChange={onOpenChange} modal={false}>
       <DropdownMenuTrigger asChild>
@@ -64,33 +69,11 @@ export function MonacoGutterContextMenu({
         </DropdownMenuItem>
         <DropdownMenuItem
           onSelect={async () => {
-            const state = useAppStore.getState()
-            const activeFile = state.openFiles.find((f) => f.filePath === filePath)
-            if (!activeFile) {
+            const context = resolveOpenFileGitContext(filePath)
+            if (!context) {
               return
             }
-            const worktree = findWorktreeById(state.worktreesByRepo, activeFile.worktreeId)
-            if (!worktree) {
-              return
-            }
-            const connectionId = getConnectionId(activeFile?.worktreeId ?? null) ?? undefined
-            const target = getRuntimeTargetForFileOwner(
-              state,
-              activeFile.worktreeId,
-              activeFile.runtimeEnvironmentId
-            )
-            if (!target) {
-              return
-            }
-            const url = await getRuntimeGitRemoteFileUrl(
-              {
-                target,
-                worktreeId: activeFile.worktreeId,
-                worktreePath: worktree.path,
-                connectionId
-              },
-              { relativePath, line }
-            )
+            const url = await getRuntimeGitRemoteFileUrl(context, { relativePath, line })
             if (url) {
               window.api.ui.writeClipboardText(url)
             }
@@ -101,6 +84,18 @@ export function MonacoGutterContextMenu({
             'auto.components.editor.MonacoGutterContextMenu.7b57b1b468',
             'Copy Remote URL'
           )}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onSelect={() =>
+            blameShown
+              ? hideEditorGitBlame(fileId)
+              : void showEditorGitBlame({ fileId, filePath, relativePath, contents: getContents() })
+          }
+        >
+          <History className="w-3.5 h-3.5 mr-1.5" />
+          {blameShown
+            ? translate('auto.components.editor.gitBlame.hide', 'Hide Git Blame')
+            : translate('auto.components.editor.gitBlame.show', 'Git Blame')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

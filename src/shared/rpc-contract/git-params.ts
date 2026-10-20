@@ -270,6 +270,17 @@ export const GitRemoteFileUrl = WorktreeSelector.extend({
   line: z.number().int().min(1)
 })
 
+export const GitFileBlameParams = WorktreeSelector.extend({
+  relativePath: z
+    .unknown()
+    .transform((v) => (typeof v === 'string' ? v : ''))
+    .pipe(z.string().min(1, 'Missing relative path')),
+  // Why the editor's text, not the file's: lines then match before a save.
+  contents: z
+    .unknown()
+    .refine((v): v is string => typeof v === 'string', { message: 'Missing file contents' })
+})
+
 export const GitRemoteCommitUrl = WorktreeSelector.extend({
   sha: z
     .unknown()
