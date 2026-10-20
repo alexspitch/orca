@@ -3,6 +3,7 @@ import { ArrowLeft, ExternalLink, Hammer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { translate } from '@/i18n/i18n'
+import { cn } from '@/lib/utils'
 import { isPushable } from '../../../../../shared/build-web-image-push'
 import type { BuildWebImageBuild } from '../../../../../shared/build-web-image-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
@@ -15,6 +16,8 @@ import {
 } from './image-build-cells'
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
+import { ImageCopyLinks } from './ImageCopyLinks'
+import { imageRefOf } from './image-links'
 import { useImagePicks } from './use-image-picks'
 import { ImageBuildDialog } from './ImageBuildDialog'
 import { ImageBuildProgress } from './ImageBuildProgress'
@@ -124,11 +127,13 @@ export function ImageHistoryView({
           onChange={(next) => (setVersion(next), setPage(0))}
         />
         <div className="flex-1" />
+        <ImageCopyLinks builds={picks.builds} />
         <ImagePushMenu
           target={target}
-          builds={picks.builds}
+          builds={picks.pushable}
           onPushed={(refused) => {
-            picks.keepOnly((b) => refused.has(b.run_id))
+            // Why `!isPushable`: a pick the push could not take stays for its link.
+            picks.keepOnly((b) => !isPushable(b) || refused.has(b.run_id))
             reload(true)
           }}
         />
@@ -238,10 +243,16 @@ export function ImageHistoryView({
             </thead>
             <tbody>
               {builds.map((b) => (
-                <tr key={keyOf(b)} className="border-b border-border hover:bg-accent">
+                <tr
+                  key={keyOf(b)}
+                  className={cn(
+                    'border-b border-border hover:bg-accent',
+                    picks.has(keyOf(b)) && 'bg-accent'
+                  )}
+                >
                   <td className="py-2 pl-3 md:pl-5">
                     {/* Why no disabled box: a faded one reads the same as an empty one. */}
-                    {isPushable(b) ? (
+                    {imageRefOf(b) ? (
                       <Checkbox
                         emphasis="strong"
                         checked={picks.has(keyOf(b))}

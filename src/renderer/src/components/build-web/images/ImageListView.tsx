@@ -15,6 +15,8 @@ import {
 } from './image-build-cells'
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
+import { ImageCopyLinks } from './ImageCopyLinks'
+import { imageRefOf } from './image-links'
 import { useImagePicks } from './use-image-picks'
 import { ImageBuildDialog } from './ImageBuildDialog'
 import { ImageBuildProgress } from './ImageBuildProgress'
@@ -114,10 +116,15 @@ export function ImageListView({
           onChange={(next) => (setVersion(next), setPage(0))}
         />
         <div className="flex-1" />
+        <ImageCopyLinks builds={picks.builds} />
         <ImagePushMenu
           target={target}
-          builds={picks.builds}
-          onPushed={(refused) => (picks.keepOnly((b) => refused.has(b.run_id)), reload(true))}
+          builds={picks.pushable}
+          // Why `!isPushable`: a pick the push could not take stays for its link.
+          onPushed={(refused) => (
+            picks.keepOnly((b) => !isPushable(b) || refused.has(b.run_id)),
+            reload(true)
+          )}
         />
         {narrowed ? (
           <Button variant="ghost" size="sm" onClick={reset}>
@@ -235,7 +242,7 @@ export function ImageListView({
             </thead>
             <tbody>
               {rows.map((row) => {
-                const pushable = Boolean(row.last && isPushable(row.last))
+                const linkable = Boolean(row.last && imageRefOf(row.last))
                 return (
                   <tr
                     key={row.image}
@@ -246,7 +253,7 @@ export function ImageListView({
                   >
                     <td className="py-2 pl-3 md:pl-5">
                       {/* Why no disabled box: a faded one reads the same as an empty one. */}
-                      {pushable ? (
+                      {linkable ? (
                         <Checkbox
                           emphasis="strong"
                           checked={picks.has(row.image)}

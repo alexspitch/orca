@@ -20623,7 +20623,11 @@
       "buildingNow": "building now",
       "inProgress": "in progress",
       "pushStartedCount": "Push of {{count}} image(s) started — build-web publishes the tags.",
-      "pushRefused": "Not pushed: {{why}}"
+      "pushRefused": "Not pushed: {{why}}",
+      "linksNotPushed": "{{count}} of the copied images are not in the registry yet.",
+      "copied": "Copied",
+      "copyLinksCount": "Copy links ({{count}})",
+      "copyLinks": "Copy links"
     },
     "card": {
       "overview": "Overview",

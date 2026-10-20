@@ -1,5 +1,5 @@
 import http from 'node:http'
-import { serveTestHistory } from './build-web-test-history-mock'
+import { serveSectionRoutes } from './build-web-section-routes'
 
 // A build-web console on loopback with the stand routes the Stands page reads, plus a stand UI (on
 // `localhost`) whose auth portal (on `127.0.0.1`, another host, as on the real stands) records what
@@ -289,7 +289,7 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
         path === '/login' ? LOGIN_PAGE : '<p>Signed in</p><a href="/logout">Log out</a>'
       )
     }
-    if (!serveTestHistory(res, path, url, json)) {
+    if (!serveSectionRoutes(res, path, url, json)) {
       json(res, 404, { error: 'not here' })
     }
   })

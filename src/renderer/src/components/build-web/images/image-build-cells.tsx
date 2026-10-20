@@ -5,6 +5,7 @@ import { BuildWebToneChip } from '../BuildWebToneChip'
 import { useBuildLogViewer } from './build-log-viewer'
 import { pushStateOf, useImagePushes } from './image-push-runs'
 import { imageBuildTone } from '../build-web-tones'
+import { imageRefOf } from './image-links'
 
 // Cells the image list and an image's history share, so both read as one table.
 
@@ -37,7 +38,7 @@ export function BuildStatusCell({ build }: { build: BuildWebImageBuild }): React
 export function RegistryCell({ build }: { build: BuildWebImageBuild }): React.JSX.Element | null {
   // A push started from this window says so until the table reads its outcome.
   const push = useImagePushes((s) => pushStateOf(s, build))
-  if (build.status !== 'success' || !build.ref) {
+  if (!imageRefOf(build)) {
     return null
   }
   if (push === 'pushing') {
