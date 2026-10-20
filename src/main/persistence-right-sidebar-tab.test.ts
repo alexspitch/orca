@@ -14,6 +14,7 @@ vi.mock('electron', () => ({
 }))
 
 import { normalizeRightSidebarTab } from './persistence'
+import { STATIC_RIGHT_SIDEBAR_TABS } from '../shared/rpc-contract/client-ui-params'
 
 describe('normalizeRightSidebarTab', () => {
   it.each(['explorer', 'search', 'vault', 'workspaces', 'source-control', 'checks', 'ports'])(
@@ -27,6 +28,11 @@ describe('normalizeRightSidebarTab', () => {
   // PR Checks tab silently reset to Explorer on every app restart.
   it('preserves the folder-only pr-checks tab across restarts', () => {
     expect(normalizeRightSidebarTab('pr-checks')).toBe('pr-checks')
+  })
+
+  // Regression: services was missing too, so any UI-state save (resizing the panel) left its tab.
+  it.each([...STATIC_RIGHT_SIDEBAR_TABS])('preserves every static tab: %s', (tab) => {
+    expect(normalizeRightSidebarTab(tab)).toBe(tab)
   })
 
   it('preserves well-formed plugin panel tabs', () => {

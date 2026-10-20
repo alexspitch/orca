@@ -1,6 +1,10 @@
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import { getDefaultUIState } from '../../../shared/constants'
 import { isPluginPanelTabKey } from '../../../shared/plugins/plugin-manifest'
+import {
+  STATIC_RIGHT_SIDEBAR_TABS,
+  type StaticRightSidebarTab
+} from '../../../shared/rpc-contract/client-ui-params'
 
 export function normalizeGroupBy(groupBy: unknown): PersistedState['ui']['groupBy'] {
   if (
@@ -59,17 +63,13 @@ export function normalizeProjectOrderBy(
   return getDefaultUIState().projectOrderBy
 }
 
+function isStaticRightSidebarTab(tab: unknown): tab is StaticRightSidebarTab {
+  return STATIC_RIGHT_SIDEBAR_TABS.some((known) => known === tab)
+}
+
 export function normalizeRightSidebarTab(tab: unknown): PersistedState['ui']['rightSidebarTab'] {
-  if (
-    tab === 'explorer' ||
-    tab === 'search' ||
-    tab === 'vault' ||
-    tab === 'workspaces' ||
-    tab === 'pr-checks' ||
-    tab === 'source-control' ||
-    tab === 'checks' ||
-    tab === 'ports'
-  ) {
+  // Why the shared list: a tab missing from a copy here reset to Explorer on every UI-state save.
+  if (isStaticRightSidebarTab(tab)) {
     return tab
   }
   // Why: plugin tabs are open-ended `plugin:<publisher>.<id>/<panel>` keys; validate the
