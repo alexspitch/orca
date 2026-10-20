@@ -6,6 +6,7 @@ import {
   fetchRuntimeGit,
   getRuntimeGitUpstreamStatus,
   pullRuntimeGit,
+  mergeRuntimeGitFromBase,
   pushRuntimeGit,
   rebaseRuntimeGitFromBase
 } from '@/runtime/runtime-git-sync-client'
@@ -18,7 +19,36 @@ import { shouldForcePushWithLeaseForUpstream } from '../../../../../../shared/gi
 export function createGitRemoteSync(
   _set: EditorSet,
   get: EditorGet
-): Pick<EditorSlice, 'syncBranch' | 'rebaseFromBase' | 'fetchBranch'> {
+): Pick<EditorSlice, 'syncBranch' | 'rebaseFromBase' | 'mergeFromBase' | 'fetchBranch'> {
+  // Rebase onto the base, or pull it in (`update`: fast-forward, else a merge commit).
+  const fromBase = async (
+    kind: 'rebase' | 'update',
+    ...[worktreeId, worktreePath, baseRef, connectionId, pushTarget, options]: Parameters<
+      EditorSlice['rebaseFromBase']
+    >
+  ): Promise<void> => {
+    const runtimeTarget = resolveGitOperationTarget(get(), worktreeId, options)
+    get().beginRemoteOperation(kind)
+    try {
+      const context = { target: runtimeTarget, worktreeId, worktreePath, connectionId }
+      await (kind === 'rebase' ? rebaseRuntimeGitFromBase : mergeRuntimeGitFromBase)(
+        context,
+        baseRef
+      )
+    } catch (error) {
+      toast.error(resolveRemoteOperationErrorMessage(error, { isRebase: kind === 'rebase' }))
+      throw error
+    } finally {
+      get().endRemoteOperation()
+    }
+    void get().fetchUpstreamStatus(worktreeId, worktreePath, connectionId, pushTarget, {
+      runtimeTarget
+    })
+    const refreshGitHubForWorktree = get().refreshGitHubForWorktree
+    if (typeof refreshGitHubForWorktree === 'function') {
+      refreshGitHubForWorktree(worktreeId)
+    }
+  }
   return {
     syncBranch: async (worktreeId, worktreePath, connectionId, pushTarget, options) => {
       const runtimeTarget = resolveGitOperationTarget(get(), worktreeId, options)
@@ -85,35 +115,10 @@ export function createGitRemoteSync(
         }
       }
     },
-    rebaseFromBase: async (
-      worktreeId,
-      worktreePath,
-      baseRef,
-      connectionId,
-      pushTarget,
-      options
-    ) => {
-      const runtimeTarget = resolveGitOperationTarget(get(), worktreeId, options)
-      get().beginRemoteOperation('rebase')
-      try {
-        await rebaseRuntimeGitFromBase(
-          { target: runtimeTarget, worktreeId, worktreePath, connectionId },
-          baseRef
-        )
-      } catch (error) {
-        toast.error(resolveRemoteOperationErrorMessage(error, { isRebase: true }))
-        throw error
-      } finally {
-        get().endRemoteOperation()
-      }
-      void get().fetchUpstreamStatus(worktreeId, worktreePath, connectionId, pushTarget, {
-        runtimeTarget
-      })
-      const refreshGitHubForWorktree = get().refreshGitHubForWorktree
-      if (typeof refreshGitHubForWorktree === 'function') {
-        refreshGitHubForWorktree(worktreeId)
-      }
-    },
+    rebaseFromBase: (worktreeId, worktreePath, baseRef, connectionId, pushTarget, options) =>
+      fromBase('rebase', worktreeId, worktreePath, baseRef, connectionId, pushTarget, options),
+    mergeFromBase: (worktreeId, worktreePath, baseRef, connectionId, pushTarget, options) =>
+      fromBase('update', worktreeId, worktreePath, baseRef, connectionId, pushTarget, options),
     fetchBranch: async (worktreeId, worktreePath, connectionId, pushTarget, options) => {
       const runtimeTarget = resolveGitOperationTarget(get(), worktreeId, options)
       // Why: like pushBranch — fire-and-forget the upstream refresh after the busy flag clears so new ahead/behind counts surface.

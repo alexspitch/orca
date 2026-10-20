@@ -4,7 +4,14 @@ import { checkIgnoredPaths } from '../git/check-ignored-paths'
 import { checkoutBranch, listLocalBranches } from '../git/checkout'
 import { getHistory } from '../git/history'
 import { getFileBlame } from '../git/blame'
-import { gitFastForward, gitFetch, gitPull, gitPullRebaseFromBase, gitPush } from '../git/remote'
+import {
+  gitFastForward,
+  gitFetch,
+  gitMergeFromBase,
+  gitPull,
+  gitPullRebaseFromBase,
+  gitPush
+} from '../git/remote'
 import { getRemoteCommitUrl, getRemoteFileUrl, isGitRepo } from '../git/repo'
 import { awaitWindowsHostGitEnvironmentReady, gitExecFileAsync } from '../git/runner'
 import {
@@ -121,6 +128,7 @@ export function createLocalGitProvider(options: LocalGitProviderOptions = {}): L
       gitFastForward(worktreePath, pushTarget, interactive),
     rebaseFromBase: (worktreePath, baseRef) =>
       gitPullRebaseFromBase(worktreePath, baseRef, interactive),
+    mergeFromBase: (worktreePath, baseRef) => gitMergeFromBase(worktreePath, baseRef, interactive),
     fetchRemote: (worktreePath, pushTarget) => gitFetch(worktreePath, pushTarget, interactive),
     syncForkDefaultBranch: (worktreePath, expectedUpstream) =>
       gitSyncForkDefaultBranch(worktreePath, expectedUpstream, interactive),

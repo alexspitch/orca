@@ -108,6 +108,12 @@ export class RuntimeGitSyncCommands {
     return { ok: true }
   }
 
+  async mergeRuntimeGitFromBase(worktreeSelector: string, baseRef: string): Promise<{ ok: true }> {
+    const target = await this.host.resolveRuntimeGitTarget(worktreeSelector)
+    await requireRuntimeGitProvider(target).mergeFromBase(target.worktree.path, baseRef)
+    return { ok: true }
+  }
+
   async pushRuntimeGit(
     worktreeSelector: string,
     publish?: boolean,

@@ -21,6 +21,7 @@ export type SourceControlRemoteOpKind =
   | 'fast_forward'
   | 'publish'
   | 'rebase'
+  | 'update'
 
 export type SourceControlPrimaryActionTitleIntent =
   | 'commit_in_progress'

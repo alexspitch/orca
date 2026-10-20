@@ -17,7 +17,7 @@ import { fetchForkRemoteWithStaleRefspecRepair } from './fork-remote-stale-branc
 import { runWithGitReadCacheInvalidation } from './status'
 import { runWithGitWorktreeOperationLock } from '../../shared/git-worktree-operation-lock'
 
-export { gitPullRebaseFromBase } from './remote-rebase'
+export { gitMergeFromBase, gitPullRebaseFromBase } from './remote-rebase'
 
 function explicitPushTarget(target: GitPushTarget): { remote: string; refspec: string } {
   return { remote: target.remoteName, refspec: `HEAD:${target.branchName}` }

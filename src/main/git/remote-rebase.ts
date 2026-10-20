@@ -18,13 +18,28 @@ export async function gitPullRebaseFromBase(
   options: GitRuntimeOptions = {}
 ): Promise<void> {
   await runWithGitWorktreeOperationLock(worktreePath, options.signal, () =>
-    gitPullRebaseFromBaseUnlocked(worktreePath, baseRef, options)
+    gitUpdateFromBaseUnlocked(worktreePath, baseRef, 'rebase', options)
   )
 }
 
-async function gitPullRebaseFromBaseUnlocked(
+/**
+ * Pull the base branch into the current one: a branch with no commits of its own just moves to
+ * the base's tip (fast-forward, nothing in history); one with commits gets a merge commit.
+ */
+export async function gitMergeFromBase(
   worktreePath: string,
   baseRef: string,
+  options: GitRuntimeOptions = {}
+): Promise<void> {
+  await runWithGitWorktreeOperationLock(worktreePath, options.signal, () =>
+    gitUpdateFromBaseUnlocked(worktreePath, baseRef, 'merge', options)
+  )
+}
+
+async function gitUpdateFromBaseUnlocked(
+  worktreePath: string,
+  baseRef: string,
+  how: 'rebase' | 'merge',
   options: GitRuntimeOptions
 ): Promise<void> {
   await runWithGitReadCacheInvalidation(async () => {
@@ -39,20 +54,26 @@ async function gitPullRebaseFromBaseUnlocked(
         (args) => gitExecFileAsync(args, operationOptions),
         baseRef
       )
+      const headExists = () =>
+        gitExecFileAsync(['rev-parse', '--verify', 'HEAD'], operationOptions).then(
+          () => true,
+          () => false
+        )
       let forkPoint: string | null = null
       let hasHead = true
-      try {
-        const { stdout } = await gitExecFileAsync(
-          ['merge-base', '--fork-point', `refs/remotes/${source.displayName}`, 'HEAD'],
-          operationOptions
-        )
-        forkPoint = stdout.trim() || null
-      } catch {
-        // A first fetch or an unhelpful reflog falls back to Git's merge-base behavior.
+      if (how === 'merge') {
+        hasHead = await headExists()
+      } else {
+        // Why before the fetch: the fork point is where the base was, not where it moves to.
         try {
-          await gitExecFileAsync(['rev-parse', '--verify', 'HEAD'], operationOptions)
+          const { stdout } = await gitExecFileAsync(
+            ['merge-base', '--fork-point', `refs/remotes/${source.displayName}`, 'HEAD'],
+            operationOptions
+          )
+          forkPoint = stdout.trim() || null
         } catch {
-          hasHead = false
+          // A first fetch or an unhelpful reflog falls back to Git's merge-base behavior.
+          hasHead = await headExists()
         }
       }
       // Why: concurrent fetches can replace FETCH_HEAD and remote-tracking refs between fetch and rebase.
@@ -81,11 +102,21 @@ async function gitPullRebaseFromBaseUnlocked(
           )
       )
       await gitExecFileAsync(
-        hasHead
-          ? forkPoint
-            ? ['rebase', '--onto', rebaseRef, forkPoint]
-            : ['rebase', rebaseRef]
-          : ['merge', '--ff-only', rebaseRef],
+        !hasHead
+          ? ['merge', '--ff-only', rebaseRef]
+          : how === 'merge'
+            ? // Why `--ff`: it overrides a `merge.ff=false` config that would record a no-op merge.
+              [
+                'merge',
+                '--ff',
+                '--no-edit',
+                '-m',
+                `Merge remote-tracking branch '${source.displayName}'`,
+                rebaseRef
+              ]
+            : forkPoint
+              ? ['rebase', '--onto', rebaseRef, forkPoint]
+              : ['rebase', rebaseRef],
         operationOptions
       )
     } catch (error) {

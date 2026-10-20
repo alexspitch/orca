@@ -1,6 +1,12 @@
 import { ipcMain } from 'electron'
 import type { GitPushTarget } from '../../../../shared/worktree/types'
-import { gitFastForward, gitPull, gitPullRebaseFromBase, gitPush } from '../../../git/remote'
+import {
+  gitFastForward,
+  gitMergeFromBase,
+  gitPull,
+  gitPullRebaseFromBase,
+  gitPush
+} from '../../../git/remote'
 import { validateGitPushTarget } from '../../../git/push-target-validation'
 import { resolveRegisteredWorktreePath } from '../../registered-worktree-roots-cache'
 import { getLocalGitOptionsForRegisteredWorktree } from '../../local-worktree-runtime-options'
@@ -140,23 +146,26 @@ export function registerGitRemoteBranchMutationHandlers(context: FilesystemHandl
     }
   )
 
-  ipcMain.handle(
-    'git:rebaseFromBase',
-    async (
-      _event,
-      args: { worktreePath: string; baseRef: string; connectionId?: string }
-    ): Promise<void> => {
-      requireReachableGitRoute(getConnectionExecutionHostId(args.connectionId))
-      const worktreePath = await resolveRegisteredWorktreePath(args.worktreePath, store)
-      const gitOptions = getLocalGitOptionsForRegisteredWorktree(
-        store,
-        args.worktreePath,
-        worktreePath
-      )
-      await gitPullRebaseFromBase(worktreePath, args.baseRef, {
-        ...gitOptions,
-        admissionTier: 'interactive'
-      })
-    }
-  )
+  // Rebase from the base, or pull it in (fast-forward, else a merge commit): same route either way.
+  for (const [channel, run] of [
+    ['git:rebaseFromBase', gitPullRebaseFromBase],
+    ['git:mergeFromBase', gitMergeFromBase]
+  ] as const) {
+    ipcMain.handle(
+      channel,
+      async (
+        _event,
+        args: { worktreePath: string; baseRef: string; connectionId?: string }
+      ): Promise<void> => {
+        requireReachableGitRoute(getConnectionExecutionHostId(args.connectionId))
+        const worktreePath = await resolveRegisteredWorktreePath(args.worktreePath, store)
+        const gitOptions = getLocalGitOptionsForRegisteredWorktree(
+          store,
+          args.worktreePath,
+          worktreePath
+        )
+        await run(worktreePath, args.baseRef, { ...gitOptions, admissionTier: 'interactive' })
+      }
+    )
+  }
 }

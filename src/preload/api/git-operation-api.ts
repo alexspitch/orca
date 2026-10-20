@@ -42,6 +42,12 @@ export type GitOperationApi = {
     baseRef: string
     connectionId?: string
   }) => Promise<void>
+  /** Pull the base in: a fast-forward when the branch has no commits of its own, else a merge. */
+  mergeFromBase: (args: {
+    worktreePath: string
+    baseRef: string
+    connectionId?: string
+  }) => Promise<void>
   commit: (args: {
     worktreePath: string
     message: string

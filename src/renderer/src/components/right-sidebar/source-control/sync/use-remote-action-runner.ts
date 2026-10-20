@@ -25,6 +25,7 @@ export type SourceControlRemoteActionKind =
   | 'fetch'
   | 'publish'
   | 'rebase'
+  | 'update'
 
 // Why: statuses distinguish real failures from supersession and no-ops; collapsing to { ok: false } made Create PR treat supersession as a destructive failure.
 export type RunRemoteActionResult =
@@ -50,6 +51,7 @@ export function useSourceControlRemoteActionRunner({
   pullBranch,
   pushBranch,
   rebaseFromBase,
+  mergeFromBase,
   refreshActiveGitStatusAfterMutation,
   refreshBranchCompareRef,
   refreshGitHistoryRef,
@@ -72,6 +74,7 @@ export function useSourceControlRemoteActionRunner({
   pullBranch: SourceControlStoreActions['pullBranch']
   pushBranch: SourceControlStoreActions['pushBranch']
   rebaseFromBase: SourceControlStoreActions['rebaseFromBase']
+  mergeFromBase: SourceControlStoreActions['mergeFromBase']
   refreshActiveGitStatusAfterMutation: SourceControlStatusRefresh['refreshActiveGitStatusAfterMutation']
   refreshBranchCompareRef: React.RefObject<() => Promise<void>>
   refreshGitHistoryRef: React.RefObject<() => Promise<void>>
@@ -187,12 +190,12 @@ export function useSourceControlRemoteActionRunner({
           )
           return { status: 'ok' }
         }
-        if (kind === 'rebase') {
+        if (kind === 'rebase' || kind === 'update') {
           const baseRef = options?.baseRef ?? effectiveBaseRef
           if (!baseRef) {
             return { status: 'skipped' }
           }
-          await rebaseFromBase(
+          await (kind === 'rebase' ? rebaseFromBase : mergeFromBase)(
             target.worktreeId,
             target.worktreePath,
             baseRef,
@@ -257,6 +260,7 @@ export function useSourceControlRemoteActionRunner({
       pullBranch,
       pushBranch,
       rebaseFromBase,
+      mergeFromBase,
       refreshActiveGitStatusAfterMutation,
       refreshBranchCompareRef,
       refreshGitHistoryRef,

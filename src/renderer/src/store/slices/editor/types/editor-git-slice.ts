@@ -90,6 +90,15 @@ export type EditorGitSlice = {
     pushTarget?: GitPushTarget,
     options?: GitRuntimeOperationOptions
   ) => Promise<void>
+  /** Pull the base in: a fast-forward when the branch has no commits of its own, else a merge. */
+  mergeFromBase: (
+    worktreeId: string,
+    worktreePath: string,
+    baseRef: string,
+    connectionId?: string,
+    pushTarget?: GitPushTarget,
+    options?: GitRuntimeOperationOptions
+  ) => Promise<void>
   fetchBranch: (
     worktreeId: string,
     worktreePath: string,

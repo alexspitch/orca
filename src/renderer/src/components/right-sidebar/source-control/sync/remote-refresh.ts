@@ -44,7 +44,7 @@ function remoteActionErrorMatchesSettledConflictOperation(
   if (kind === 'abort_merge') {
     return operation === 'merge'
   }
-  if (kind === 'pull' || kind === 'sync') {
+  if (kind === 'pull' || kind === 'sync' || kind === 'update') {
     return operation === 'merge' || operation === 'rebase'
   }
   return false

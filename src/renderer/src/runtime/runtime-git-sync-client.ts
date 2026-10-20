@@ -158,13 +158,22 @@ export async function fastForwardRuntimeGit(
   )
 }
 
-export async function rebaseRuntimeGitFromBase(
+export const rebaseRuntimeGitFromBase = (context: RuntimeGitContext, baseRef: string) =>
+  runtimeGitFromBase(context, baseRef, 'rebase')
+
+/** Pull the base in: a fast-forward when the branch has no commits of its own, else a merge. */
+export const mergeRuntimeGitFromBase = (context: RuntimeGitContext, baseRef: string) =>
+  runtimeGitFromBase(context, baseRef, 'merge')
+
+async function runtimeGitFromBase(
   context: RuntimeGitContext,
-  baseRef: string
+  baseRef: string,
+  how: 'rebase' | 'merge'
 ): Promise<void> {
   const target = context.target
   if (target.kind === 'local' || !context.worktreeId) {
-    await window.api.git.rebaseFromBase({
+    const run = how === 'rebase' ? window.api.git.rebaseFromBase : window.api.git.mergeFromBase
+    await run({
       worktreePath: resolveLocalWorktreePath(context),
       baseRef,
       connectionId: context.connectionId
@@ -173,7 +182,7 @@ export async function rebaseRuntimeGitFromBase(
   }
   await callRuntimeRpc(
     target,
-    'git.rebaseFromBase',
+    how === 'rebase' ? 'git.rebaseFromBase' : 'git.mergeFromBase',
     { worktree: toRuntimeWorktreeSelector(context.worktreeId), baseRef },
     { timeoutMs: REBASE_FROM_BASE_RPC_TIMEOUT_MS }
   )

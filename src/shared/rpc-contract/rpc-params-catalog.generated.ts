@@ -1105,6 +1105,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'git.localBranches': WorktreeSelectorOfGitParams,
   'git.logOperation': GitLogOperationParams,
   'git.logPage': GitLogPageParams,
+  'git.mergeFromBase': GitRebaseFromBase,
   'git.pull': GitTargetedRemote,
   'git.push': GitPush,
   'git.rebaseFromBase': GitRebaseFromBase,

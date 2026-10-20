@@ -4,6 +4,7 @@ import { toRuntimeWorktreeSelector } from '../../runtime/runtime-worktree-select
 import { translate } from '@/i18n/i18n'
 import { callRuntimeResult } from './web-runtime-calls'
 import { fileBlame } from './web-git-blame-api'
+import { mergeFromBase, rebaseFromBase } from './web-git-from-base-api'
 import { requireGitStageWorktreeScopeReceipt } from '../../../../shared/git-stage-worktree-scope'
 import { requireActiveEnvironment, updateEnvironmentFromResponse } from './web-runtime-session'
 import {
@@ -186,13 +187,8 @@ export function createGitApi(): NonNullable<Partial<PreloadApi>['git']> {
         pushTarget
       })
     },
-    rebaseFromBase: async ({ worktreePath, baseRef }) => {
-      const worktree = await resolveRuntimeWorktreeByPath(worktreePath)
-      await callRuntimeResult('git.rebaseFromBase', {
-        worktree: toRuntimeWorktreeSelector(worktree.id),
-        baseRef
-      })
-    },
+    rebaseFromBase,
+    mergeFromBase,
     branchDiff: async ({ worktreePath, filePath, compare, oldPath }) => {
       const file = await resolveRuntimeFilePath(filePath, worktreePath)
       return callRuntimeResult('git.branchDiff', {

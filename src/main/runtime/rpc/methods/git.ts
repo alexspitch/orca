@@ -181,6 +181,13 @@ export const GIT_METHODS = [
       runtime.rebaseRuntimeGitFromBase(params.worktree, params.baseRef)
   }),
   defineMethod({
+    name: 'git.mergeFromBase',
+    permission: 'workspace',
+    params: GitRebaseFromBase,
+    handler: async (params, { runtime }) =>
+      runtime.mergeRuntimeGitFromBase(params.worktree, params.baseRef)
+  }),
+  defineMethod({
     name: 'git.push',
     permission: 'workspace',
     params: GitPush,

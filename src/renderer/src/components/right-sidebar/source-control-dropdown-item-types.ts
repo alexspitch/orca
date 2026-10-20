@@ -23,6 +23,7 @@ export type DropdownActionKind =
   | 'pull'
   | 'fast_forward'
   | 'sync'
+  | 'update_base'
   | 'rebase_base'
   | 'fetch'
   | 'publish'

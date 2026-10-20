@@ -30,6 +30,7 @@ export class RuntimeGitCommands {
   readonly pullRuntimeGit: RuntimeGitSyncCommands['pullRuntimeGit']
   readonly fastForwardRuntimeGit: RuntimeGitSyncCommands['fastForwardRuntimeGit']
   readonly rebaseRuntimeGitFromBase: RuntimeGitSyncCommands['rebaseRuntimeGitFromBase']
+  readonly mergeRuntimeGitFromBase: RuntimeGitSyncCommands['mergeRuntimeGitFromBase']
   readonly pushRuntimeGit: RuntimeGitSyncCommands['pushRuntimeGit']
   readonly commitRuntimeGit: RuntimeGitSyncCommands['commitRuntimeGit']
   readonly generateRuntimeCommitMessage: RuntimeGitGenerationCommands['generateRuntimeCommitMessage']
@@ -76,6 +77,7 @@ export class RuntimeGitCommands {
     this.pullRuntimeGit = sync.pullRuntimeGit.bind(sync)
     this.fastForwardRuntimeGit = sync.fastForwardRuntimeGit.bind(sync)
     this.rebaseRuntimeGitFromBase = sync.rebaseRuntimeGitFromBase.bind(sync)
+    this.mergeRuntimeGitFromBase = sync.mergeRuntimeGitFromBase.bind(sync)
     this.pushRuntimeGit = sync.pushRuntimeGit.bind(sync)
     this.commitRuntimeGit = sync.commitRuntimeGit.bind(sync)
     this.generateRuntimeCommitMessage = generation.generateRuntimeCommitMessage.bind(generation)

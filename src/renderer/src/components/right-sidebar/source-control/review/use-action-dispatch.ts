@@ -84,7 +84,10 @@ export function useSourceControlActionDispatch({
         case 'fetch':
         case 'publish':
         case 'rebase_base':
-          void runRemoteAction(kind === 'rebase_base' ? 'rebase' : kind)
+        case 'update_base':
+          void runRemoteAction(
+            kind === 'rebase_base' ? 'rebase' : kind === 'update_base' ? 'update' : kind
+          )
       }
     },
     [

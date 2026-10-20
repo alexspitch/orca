@@ -22,6 +22,7 @@ export type RemoteDropdownItems = {
   pull: DropdownItem
   fastForward: DropdownItem
   sync: DropdownItem
+  update: DropdownItem
   rebase: DropdownItem
   fetch: DropdownItem
   publish: DropdownItem
@@ -166,6 +167,22 @@ export function buildRemoteDropdownItems(ctx: DropdownActionContext): RemoteDrop
 
   const rebaseBaseLabel = rebaseBaseRef ? formatRebaseBaseRef(rebaseBaseRef) : null
   const hasRemoteBaseRef = rebaseBaseLabel?.includes('/') === true
+  // Why beside Rebase: a pull of the base keeps the branch's own commits as they are.
+  const update: DropdownItem = {
+    kind: 'update_base',
+    label: rebaseBaseLabel ? `Update from ${rebaseBaseLabel}` : 'Update from Base',
+    title: ((): string => {
+      if (!rebaseBaseLabel || !hasRemoteBaseRef) {
+        return 'Choose a remote base branch to update from'
+      }
+      if (hasDirtyLocalChanges) {
+        return 'Try updating; git may require committing or stashing local changes first'
+      }
+      return `Pull ${rebaseBaseLabel}: a branch with no commits of its own moves to it, otherwise it is merged in`
+    })(),
+    disabled: globalBusy || !rebaseBaseRef || !hasRemoteBaseRef
+  }
+
   const rebase: DropdownItem = {
     kind: 'rebase_base',
     label: rebaseBaseLabel ? `Rebase from ${rebaseBaseLabel}` : 'Rebase from Base',
@@ -229,5 +246,5 @@ export function buildRemoteDropdownItems(ctx: DropdownActionContext): RemoteDrop
       publishBlockedByDetachedHead
   }
 
-  return { push, forcePush, pull, fastForward, sync, rebase, fetch, publish }
+  return { push, forcePush, pull, fastForward, sync, update, rebase, fetch, publish }
 }

@@ -10,7 +10,14 @@ vi.mock('./runner', () => ({
 
 import { REBASE_SOURCE_FETCH_TIMEOUT_MS } from '../../shared/git-rebase-source'
 import { clearGitCapabilityStateForTests } from './git-capability-state'
-import { gitFastForward, gitFetch, gitPull, gitPullRebaseFromBase, gitPush } from './remote'
+import {
+  gitFastForward,
+  gitFetch,
+  gitMergeFromBase,
+  gitPull,
+  gitPullRebaseFromBase,
+  gitPush
+} from './remote'
 
 const REBASE_OPERATION_OPTIONS = {
   cwd: '/repo',
@@ -603,6 +610,25 @@ describe('git remote operations', () => {
       '+refs/heads/main:refs/remotes/upstream/main'
     )
     expect(deletedRef).toBe(rebasedRef)
+  })
+
+  it('pulls the base in with a fast-forward-first merge, after checking for a commit', async () => {
+    gitExecFileAsyncMock.mockResolvedValue({ stdout: '', stderr: '' })
+    gitExecFileAsyncMock.mockResolvedValueOnce({ stdout: 'origin\n', stderr: '' })
+
+    await gitMergeFromBase('/repo', 'origin/master')
+
+    const calls = gitExecFileAsyncMock.mock.calls.map(([args]) => args)
+    expect(calls.some((args) => args[0] === 'merge-base')).toBe(false)
+    expect(calls).toContainEqual(['rev-parse', '--verify', 'HEAD'])
+    expect(calls).toContainEqual([
+      'merge',
+      '--ff',
+      '--no-edit',
+      '-m',
+      "Merge remote-tracking branch 'origin/master'",
+      expect.stringMatching(/^refs\/orca\/rebase\//)
+    ])
   })
 
   it('uses the longest configured remote name when rebasing from a base ref', async () => {

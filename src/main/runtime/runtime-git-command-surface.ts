@@ -19,6 +19,7 @@ type RuntimeGitCommandName =
   | 'pullRuntimeGit'
   | 'fastForwardRuntimeGit'
   | 'rebaseRuntimeGitFromBase'
+  | 'mergeRuntimeGitFromBase'
   | 'pushRuntimeGit'
   | 'getRuntimeGitBranchDiff'
   | 'getRuntimeGitCommitDiff'
@@ -64,6 +65,7 @@ export function installRuntimeGitCommandSurface(
     pullRuntimeGit: commands.pullRuntimeGit.bind(commands),
     fastForwardRuntimeGit: commands.fastForwardRuntimeGit.bind(commands),
     rebaseRuntimeGitFromBase: commands.rebaseRuntimeGitFromBase.bind(commands),
+    mergeRuntimeGitFromBase: commands.mergeRuntimeGitFromBase.bind(commands),
     pushRuntimeGit: commands.pushRuntimeGit.bind(commands),
     getRuntimeGitBranchDiff: commands.getRuntimeGitBranchDiff.bind(commands),
     getRuntimeGitCommitDiff: commands.getRuntimeGitCommitDiff.bind(commands),

@@ -38,6 +38,7 @@ const RPC_TO_RUNTIME_COMMAND = {
   'git.discard': 'discardRuntimeGitPath',
   'git.bulkDiscard': 'bulkDiscardRuntimeGitPaths',
   'git.remoteFileUrl': 'getRuntimeGitRemoteFileUrl',
+  'git.mergeFromBase': 'mergeRuntimeGitFromBase',
   'git.fileBlame': 'getRuntimeGitFileBlame',
   'git.remoteCommitUrl': 'getRuntimeGitRemoteCommitUrl'
 } as const satisfies Record<string, keyof RuntimeGitCommands>

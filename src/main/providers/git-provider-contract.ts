@@ -69,6 +69,7 @@ export type IGitProvider = {
   pullBranch(worktreePath: string, pushTarget?: GitPushTarget): Promise<void>
   fastForwardBranch(worktreePath: string, pushTarget?: GitPushTarget): Promise<void>
   rebaseFromBase(worktreePath: string, baseRef: string): Promise<void>
+  mergeFromBase(worktreePath: string, baseRef: string): Promise<void>
   fetchRemote(worktreePath: string, pushTarget?: GitPushTarget): Promise<void>
   syncForkDefaultBranch(
     worktreePath: string,
