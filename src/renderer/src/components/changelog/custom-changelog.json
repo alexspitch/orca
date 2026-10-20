@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.233-custom.1792477515000",
+      "date": "2026-10-20",
+      "commit": "16d29ba2937e",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "The Services tab in the right sidebar now stays selected after resizing the panel instead of switching back to Explorer."
+      ]
+    },
+    {
       "version": "1.4.232-custom.1792474242000",
       "date": "2026-10-20",
       "commit": "a97a1e6baeb8",
