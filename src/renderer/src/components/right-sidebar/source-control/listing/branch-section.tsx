@@ -11,7 +11,10 @@ import type { SourceControlRowOpenEvent } from './split-open'
 import { BranchEntryRow } from './branch-entry-row'
 import { SectionHeader } from './section-header'
 import { formatSourceControlRefLabel } from '../panel/branch-context-stats'
-import { SourceControlBranchTreeDirectoryRow } from './tree-directory-rows'
+import {
+  SectionFoldersToggleButton,
+  SourceControlBranchTreeDirectoryRow
+} from './tree-directory-rows'
 import { VirtualizedList } from '../../../virtualized-list'
 
 export function SourceControlBranchSection({
@@ -25,6 +28,7 @@ export function SourceControlBranchSection({
   fileListScrollElement,
   collapsedTreeDirs,
   toggleTreeDir,
+  setTreeDirsCollapsed,
   currentWorktreeId,
   worktreePath,
   revealInExplorer,
@@ -43,6 +47,7 @@ export function SourceControlBranchSection({
   fileListScrollElement: HTMLDivElement | null
   collapsedTreeDirs: Set<string>
   toggleTreeDir: (key: string) => void
+  setTreeDirsCollapsed: (keys: readonly string[], collapsed: boolean) => void
   currentWorktreeId: string
   worktreePath: string
   revealInExplorer: (worktreeId: string, absolutePath: string) => void
@@ -55,6 +60,7 @@ export function SourceControlBranchSection({
   ) => void
   diffCommentCountByPath: Map<string, number>
 }): React.JSX.Element {
+  const folders = { collapsedTreeDirs, setTreeDirsCollapsed }
   const baseRef = branchSummary.baseRef?.trim()
   const fileCount = filteredBranchEntries.length
   // Why: the heading counts files that differ from the compare base, not every
@@ -88,20 +94,25 @@ export function SourceControlBranchSection({
         isCollapsed={collapsedSections.has('branch')}
         onToggle={() => toggleSection('branch')}
         actions={
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            className="px-1.5 text-muted-foreground hover:text-foreground"
-            onClick={(e) => {
-              e.stopPropagation()
-              if (currentWorktreeId && worktreePath && branchSummary) {
-                openBranchAllDiffs(currentWorktreeId, worktreePath, branchSummary)
-              }
-            }}
-          >
-            {translate('auto.components.right.sidebar.SourceControl.48db37cca9', 'View all')}
-          </Button>
+          <div className="flex items-center">
+            {sourceControlViewMode === 'tree' && !collapsedSections.has('branch') ? (
+              <SectionFoldersToggleButton rows={visibleBranchTreeRows} folders={folders} />
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              className="px-1.5 text-muted-foreground hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (currentWorktreeId && worktreePath && branchSummary) {
+                  openBranchAllDiffs(currentWorktreeId, worktreePath, branchSummary)
+                }
+              }}
+            >
+              {translate('auto.components.right.sidebar.SourceControl.48db37cca9', 'View all')}
+            </Button>
+          </div>
         }
       />
       {!collapsedSections.has('branch') &&
@@ -118,6 +129,7 @@ export function SourceControlBranchSection({
                     node={node}
                     isCollapsed={collapsedTreeDirs.has(node.key)}
                     onToggle={() => toggleTreeDir(node.key)}
+                    folders={folders}
                   />
                 )
               }

@@ -63,6 +63,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
     revealInExplorer,
     selectedKeySet,
     setBaseRefDialogOpen,
+    setTreeDirsCollapsed,
     sourceControlAiActionsVisible,
     sourceControlViewMode,
     toggleSection,
@@ -159,6 +160,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
           fileListScrollElement={fileListScrollElement}
           collapsedTreeDirs={collapsedTreeDirs}
           toggleTreeDir={toggleTreeDir}
+          setTreeDirsCollapsed={setTreeDirsCollapsed}
           requestDiscardPaths={requestDiscardPaths}
           expandedSubmoduleKeys={expandedSubmoduleKeys}
           toggleSubmodule={toggleSubmodule}
@@ -203,6 +205,7 @@ export function SourceControlPanelContent(props: SourceControlPanelReadyProps) {
           fileListScrollElement={fileListScrollElement}
           collapsedTreeDirs={collapsedTreeDirs}
           toggleTreeDir={toggleTreeDir}
+          setTreeDirsCollapsed={setTreeDirsCollapsed}
           currentWorktreeId={currentWorktreeId}
           worktreePath={worktreePath}
           revealInExplorer={revealInExplorer}

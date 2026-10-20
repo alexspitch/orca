@@ -13,6 +13,7 @@ import {
 import { ActionButton } from './action-button'
 import { SectionHeader } from './section-header'
 import { SourceControlSectionFileList } from './section-file-list'
+import { SectionFoldersToggleButton } from './tree-directory-rows'
 import {
   getSourceControlSectionViewAction,
   type SourceControlDisplaySection,
@@ -75,6 +76,7 @@ export function SourceControlUncommittedSections(props: {
   fileListScrollElement: HTMLDivElement | null
   collapsedTreeDirs: Set<string>
   toggleTreeDir: (key: string) => void
+  setTreeDirsCollapsed: (keys: readonly string[], collapsed: boolean) => void
   requestDiscardPaths: (area: DiscardAllArea, paths: readonly string[]) => void
   expandedSubmoduleKeys: Set<string>
   toggleSubmodule: (entry: Pick<GitStatusEntry, 'area' | 'path'>) => void
@@ -123,6 +125,15 @@ export function SourceControlUncommittedSections(props: {
               onToggle={() => props.toggleSection(id)}
               actions={
                 <div className="flex items-center">
+                  {props.sourceControlViewMode === 'tree' && !isCollapsed ? (
+                    <SectionFoldersToggleButton
+                      rows={props.visibleTreeRowsBySection[id] ?? []}
+                      folders={{
+                        collapsedTreeDirs: props.collapsedTreeDirs,
+                        setTreeDirsCollapsed: props.setTreeDirsCollapsed
+                      }}
+                    />
+                  ) : null}
                   {canRevertAll && (
                     <ActionButton
                       icon={area === 'untracked' ? Trash : Undo2}
@@ -202,6 +213,7 @@ export function SourceControlUncommittedSections(props: {
                 isExecutingBulk={props.isExecutingBulk}
                 collapsedTreeDirs={props.collapsedTreeDirs}
                 toggleTreeDir={props.toggleTreeDir}
+                setTreeDirsCollapsed={props.setTreeDirsCollapsed}
                 requestDiscardPaths={props.requestDiscardPaths}
                 handleStageAllPaths={props.handleStageAllPaths}
                 handleUnstagePaths={props.handleUnstagePaths}

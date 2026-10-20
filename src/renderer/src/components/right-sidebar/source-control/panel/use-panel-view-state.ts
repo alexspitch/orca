@@ -89,6 +89,21 @@ export function useSourceControlPanelViewState({
     })
   }, [])
 
+  /** Closes or opens many folders at once: a folder's subfolders, or a whole section's. */
+  const setTreeDirsCollapsed = useCallback((keys: readonly string[], collapsed: boolean) => {
+    setCollapsedTreeDirs((prev) => {
+      const next = new Set(prev)
+      for (const key of keys) {
+        if (collapsed) {
+          next.add(key)
+        } else {
+          next.delete(key)
+        }
+      }
+      return next
+    })
+  }, [])
+
   return {
     baseRefDialogOpen,
     collapsedSections,
@@ -103,6 +118,7 @@ export function useSourceControlPanelViewState({
     setFileListScrollElement,
     setFilterExpanded,
     setFilterQuery,
+    setTreeDirsCollapsed,
     sourceControlGroupOrder,
     sourceControlRef,
     sourceControlViewMode,

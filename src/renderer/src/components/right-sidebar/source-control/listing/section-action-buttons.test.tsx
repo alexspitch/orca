@@ -54,6 +54,7 @@ function renderUncommittedSections({
         fileListScrollElement={null}
         collapsedTreeDirs={new Set()}
         toggleTreeDir={vi.fn()}
+        setTreeDirsCollapsed={vi.fn()}
         requestDiscardPaths={vi.fn()}
         expandedSubmoduleKeys={new Set()}
         toggleSubmodule={vi.fn()}

@@ -1,5 +1,15 @@
 import React from 'react'
-import { ChevronDown, Folder, FolderOpen, Minus, Plus, Trash, Undo2 } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronsDownUp,
+  ChevronsUpDown,
+  Folder,
+  FolderOpen,
+  Minus,
+  Plus,
+  Trash,
+  Undo2
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import type { DiscardAllArea } from '../commit/discard-all-sequence'
@@ -10,23 +20,119 @@ import type {
 } from './directory-action-paths'
 import { ActionButton } from './action-button'
 import {
+  collectSourceControlTreeDirectoryKeys,
+  sectionTreeDirectoryKeys
+} from '../../source-control-tree-directory-keys'
+import {
   SOURCE_CONTROL_ROW_ACTION_OVERLAY_CLASS,
   SOURCE_CONTROL_TREE_DIRECTORY_PADDING_PX,
   SOURCE_CONTROL_TREE_INDENT_PX
 } from './row-layout'
+
+export type SourceControlFolderCollapse = {
+  collapsedTreeDirs: ReadonlySet<string>
+  setTreeDirsCollapsed: (keys: readonly string[], collapsed: boolean) => void
+}
+
+type FolderNode = Pick<SourceControlTreeDirectoryNode, 'key' | 'depth' | 'name' | 'fileCount'> & {
+  children: readonly { type: string; key: string; depth: number }[]
+}
+
+/** Collapses a folder's subfolders; once any is closed, opens the folder and everything below. */
+function SubfoldersToggleButton({
+  node,
+  below,
+  folders
+}: {
+  node: FolderNode
+  /** Keys of the folders under `node`. */
+  below: readonly string[]
+  folders: SourceControlFolderCollapse
+}): React.JSX.Element | null {
+  if (below.length === 0) {
+    return null
+  }
+  const anyClosed = [node.key, ...below].some((key) => folders.collapsedTreeDirs.has(key))
+  return (
+    <ActionButton
+      icon={anyClosed ? ChevronsUpDown : ChevronsDownUp}
+      title={
+        anyClosed
+          ? translate(
+              'auto.components.right.sidebar.SourceControl.expandSubfolders',
+              'Expand subfolders'
+            )
+          : translate(
+              'auto.components.right.sidebar.SourceControl.collapseSubfolders',
+              'Collapse subfolders'
+            )
+      }
+      onClick={(event) => {
+        event.stopPropagation()
+        if (anyClosed) {
+          folders.setTreeDirsCollapsed([node.key, ...below], false)
+        } else {
+          folders.setTreeDirsCollapsed(below, true)
+        }
+      }}
+    />
+  )
+}
+
+/** A section header's «collapse/expand all folders»; null outside tree view or without folders. */
+export function SectionFoldersToggleButton({
+  rows,
+  folders
+}: {
+  rows: readonly { type: string; key: string; depth: number }[]
+  folders: SourceControlFolderCollapse
+}): React.JSX.Element | null {
+  const keys = sectionTreeDirectoryKeys(rows)
+  if (keys.length === 0) {
+    return null
+  }
+  const anyClosed = keys.some((key) => folders.collapsedTreeDirs.has(key))
+  return (
+    <ActionButton
+      icon={anyClosed ? ChevronsUpDown : ChevronsDownUp}
+      title={
+        anyClosed
+          ? translate(
+              'auto.components.right.sidebar.SourceControl.expandAllFolders',
+              'Expand all folders'
+            )
+          : translate(
+              'auto.components.right.sidebar.SourceControl.collapseAllFolders',
+              'Collapse all folders'
+            )
+      }
+      onClick={(event) => {
+        event.stopPropagation()
+        folders.setTreeDirsCollapsed(keys, !anyClosed)
+      }}
+    />
+  )
+}
 
 /** Shared chrome for both directory rows: indentation, collapse toggle, folder icon, name, file count. */
 function SourceControlTreeDirectoryHeader({
   node,
   isCollapsed,
   onToggle,
+  folders,
+  hasActions = false,
   children
 }: {
-  node: Pick<SourceControlTreeDirectoryNode, 'depth' | 'name' | 'fileCount'>
+  node: FolderNode
   isCollapsed: boolean
   onToggle: () => void
+  folders: SourceControlFolderCollapse
+  hasActions?: boolean
   children?: React.ReactNode
 }): React.JSX.Element {
+  const below = collectSourceControlTreeDirectoryKeys(node.children)
+  // Why Alt: the tree convention (VS Code, JetBrains) for opening or closing a folder with all below it.
+  const toggleSubtree = () => folders.setTreeDirsCollapsed([node.key, ...below], !isCollapsed)
   return (
     <div
       className="group relative flex w-full items-center gap-1 pr-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
@@ -37,7 +143,7 @@ function SourceControlTreeDirectoryHeader({
       <button
         type="button"
         className="flex min-w-0 flex-1 items-center gap-1 text-left"
-        onClick={onToggle}
+        onClick={(event) => (event.altKey ? toggleSubtree() : onToggle())}
         aria-expanded={!isCollapsed}
       >
         <ChevronDown
@@ -53,7 +159,12 @@ function SourceControlTreeDirectoryHeader({
       <span className="w-4 shrink-0 text-center text-[10px] font-bold tabular-nums text-muted-foreground/80">
         {node.fileCount}
       </span>
-      {children}
+      {below.length > 0 || hasActions ? (
+        <div className={SOURCE_CONTROL_ROW_ACTION_OVERLAY_CLASS}>
+          <SubfoldersToggleButton node={node} below={below} folders={folders} />
+          {children}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -69,6 +180,7 @@ export function SourceControlTreeDirectoryRow({
   isExecutingBulk,
   isCollapsed,
   onToggle,
+  folders,
   onRequestDiscardPaths,
   onStagePaths,
   onUnstagePaths
@@ -79,6 +191,7 @@ export function SourceControlTreeDirectoryRow({
   isExecutingBulk: boolean
   isCollapsed: boolean
   onToggle: () => void
+  folders: SourceControlFolderCollapse
   onRequestDiscardPaths: (area: DiscardAllArea, paths: readonly string[]) => void
   onStagePaths: (paths: readonly string[]) => Promise<void>
   onUnstagePaths: (paths: readonly string[]) => Promise<void>
@@ -89,59 +202,61 @@ export function SourceControlTreeDirectoryRow({
   const canDiscard = !hideBulkActions && actionPaths.discardPaths.length > 0
 
   return (
-    <SourceControlTreeDirectoryHeader node={node} isCollapsed={isCollapsed} onToggle={onToggle}>
-      {(canDiscard || canStage || canUnstage) && (
-        <div className={SOURCE_CONTROL_ROW_ACTION_OVERLAY_CLASS}>
-          {canDiscard && (
-            <ActionButton
-              icon={node.area === 'untracked' ? Trash : Undo2}
-              title={
-                node.area === 'untracked'
-                  ? translate(
-                      'auto.components.right.sidebar.SourceControl.9b367363b6',
-                      'Delete untracked in folder'
-                    )
-                  : translate(
-                      'auto.components.right.sidebar.SourceControl.6d7f2a47e5',
-                      'Discard folder'
-                    )
-              }
-              onClick={(event) => {
-                event.stopPropagation()
-                onRequestDiscardPaths(node.area, actionPaths.discardPaths)
-              }}
-              disabled={isExecutingBulk}
-            />
+    <SourceControlTreeDirectoryHeader
+      node={node}
+      isCollapsed={isCollapsed}
+      onToggle={onToggle}
+      folders={folders}
+      hasActions={canDiscard || canStage || canUnstage}
+    >
+      {canDiscard && (
+        <ActionButton
+          icon={node.area === 'untracked' ? Trash : Undo2}
+          title={
+            node.area === 'untracked'
+              ? translate(
+                  'auto.components.right.sidebar.SourceControl.9b367363b6',
+                  'Delete untracked in folder'
+                )
+              : translate(
+                  'auto.components.right.sidebar.SourceControl.6d7f2a47e5',
+                  'Discard folder'
+                )
+          }
+          onClick={(event) => {
+            event.stopPropagation()
+            onRequestDiscardPaths(node.area, actionPaths.discardPaths)
+          }}
+          disabled={isExecutingBulk}
+        />
+      )}
+      {canStage && (
+        <ActionButton
+          icon={Plus}
+          title={translate(
+            'auto.components.right.sidebar.SourceControl.bfe9011a0e',
+            'Stage folder'
           )}
-          {canStage && (
-            <ActionButton
-              icon={Plus}
-              title={translate(
-                'auto.components.right.sidebar.SourceControl.bfe9011a0e',
-                'Stage folder'
-              )}
-              onClick={(event) => {
-                event.stopPropagation()
-                void onStagePaths(actionPaths.stagePaths)
-              }}
-              disabled={isExecutingBulk}
-            />
+          onClick={(event) => {
+            event.stopPropagation()
+            void onStagePaths(actionPaths.stagePaths)
+          }}
+          disabled={isExecutingBulk}
+        />
+      )}
+      {canUnstage && (
+        <ActionButton
+          icon={Minus}
+          title={translate(
+            'auto.components.right.sidebar.SourceControl.ab31221779',
+            'Unstage folder'
           )}
-          {canUnstage && (
-            <ActionButton
-              icon={Minus}
-              title={translate(
-                'auto.components.right.sidebar.SourceControl.ab31221779',
-                'Unstage folder'
-              )}
-              onClick={(event) => {
-                event.stopPropagation()
-                void onUnstagePaths(actionPaths.unstagePaths)
-              }}
-              disabled={isExecutingBulk}
-            />
-          )}
-        </div>
+          onClick={(event) => {
+            event.stopPropagation()
+            void onUnstagePaths(actionPaths.unstagePaths)
+          }}
+          disabled={isExecutingBulk}
+        />
       )}
     </SourceControlTreeDirectoryHeader>
   )
@@ -151,13 +266,20 @@ export function SourceControlTreeDirectoryRow({
 export function SourceControlBranchTreeDirectoryRow({
   node,
   isCollapsed,
-  onToggle
+  onToggle,
+  folders
 }: {
   node: BranchSourceControlTreeDirectoryNode
   isCollapsed: boolean
   onToggle: () => void
+  folders: SourceControlFolderCollapse
 }): React.JSX.Element {
   return (
-    <SourceControlTreeDirectoryHeader node={node} isCollapsed={isCollapsed} onToggle={onToggle} />
+    <SourceControlTreeDirectoryHeader
+      node={node}
+      isCollapsed={isCollapsed}
+      onToggle={onToggle}
+      folders={folders}
+    />
   )
 }

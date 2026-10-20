@@ -37,6 +37,7 @@ function render(
       fileListScrollElement={null}
       collapsedTreeDirs={new Set()}
       toggleTreeDir={vi.fn()}
+      setTreeDirsCollapsed={vi.fn()}
       currentWorktreeId="wt-1"
       worktreePath={join(tmpdir(), 'wt-1')}
       revealInExplorer={vi.fn()}
