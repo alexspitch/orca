@@ -66,7 +66,12 @@ export async function createBatchWorktree(args: {
         undefined,
         { executionHostId: owner.executionHostId }
       )
-    return result.worktree
+    // Why the store's record: a paired server reports its own host as `local`, and revealing the new
+    // worktree by that host finds nothing — the session never started.
+    return (
+      useAppStore.getState().getKnownWorktreeById(result.worktree.id, owner.executionHostId) ??
+      result.worktree
+    )
   } catch (failure) {
     toast.error(
       translate('buildWeb.take.createFailed', 'Could not create the worktree: {{error}}', {
