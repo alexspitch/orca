@@ -10,6 +10,7 @@ import {
   type TaskSourceContext
 } from '../../../../shared/task-source-context'
 import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
+import type { BuildWebCardTab } from '@/components/build-web/build-web-store'
 
 // Why: bound per-session history growth; 50 keeps goBack/goForward's linear scans cheap yet is never hit in normal use.
 const MAX_HISTORY = 50
@@ -48,9 +49,19 @@ export type WorktreeNavHistoryTaskDetailEntry =
       issue: JiraIssue
       sourceContext?: TaskSourceContext | null
     }
+/** A build-web task card left for a worktree; the page drops the card on leaving, so the entry restores it. */
+export type WorktreeNavHistoryBuildWebCardEntry = {
+  kind: 'build-web-card'
+  view: 'build-web' | 'build-web-testing'
+  issueId: string
+  fullScreen: boolean
+  fullScreenFromDrawer: boolean
+  tab: BuildWebCardTab
+}
 export type WorktreeNavHistoryViewEntry =
   | WorktreeNavHistorySimpleViewEntry
   | WorktreeNavHistoryTaskDetailEntry
+  | WorktreeNavHistoryBuildWebCardEntry
 export type WorktreeNavHistoryEntry = (string & {}) | WorktreeNavHistoryViewEntry
 
 export type WorktreeNavHistorySlice = {
@@ -104,6 +115,9 @@ function isTaskStackEntry(entry: WorktreeNavHistoryEntry): boolean {
 function getHistoryEntryKey(entry: WorktreeNavHistoryEntry): string {
   if (typeof entry === 'string') {
     return isSimpleViewEntry(entry) ? `view:${entry}` : `worktree:${entry}`
+  }
+  if (entry.kind === 'build-web-card') {
+    return `view:build-web-card:${entry.view}:${entry.issueId}:${entry.fullScreen}:${entry.tab}`
   }
   if (entry.source === 'github') {
     const sourceScope =

@@ -61,6 +61,7 @@ export function BuildWebIssueFullScreen({
   const showRuns = runsVisible && !detail.parent_id
   const open = (next: CardTab) => {
     setTab(next)
+    useBuildWebStore.setState({ openTab: next })
     setVisited((seen) => (seen.has(next) ? seen : new Set([...seen, next])))
   }
   const testing = {

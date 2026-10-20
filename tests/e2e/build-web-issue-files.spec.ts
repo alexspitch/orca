@@ -65,7 +65,10 @@ test('task attachments: listed on the card and its comments, opened in worktree 
     await expect(orcaPage.getByText('Notes from the attachment')).toBeVisible({ timeout: 20_000 })
     await shot('markdown-attachment-tab')
 
-    await openTaskCard(orcaPage)
+    // Back returns from the file's tab to the card it was opened from.
+    await orcaPage.getByRole('button', { name: 'Go back', exact: true }).click()
+    await expect(orcaPage.getByText('Attachments 4')).toBeVisible({ timeout: 15_000 })
+    await shot('back-to-task-card')
     await fileButton(orcaPage, 'run.log').click()
     await expect(
       orcaPage.locator('.monaco-editor .view-line').filter({ hasText: 'engine timeout' })

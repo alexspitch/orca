@@ -77,7 +77,7 @@ type BuildWebState = {
   patchIssue: (id: string, patch: Partial<BuildWebIssueRow>) => void
   toggleSelected: (id: string) => void
   clearSelection: () => void
-  /** The tab the full-screen card opens on. */
+  /** The full-screen card's tab: the one it opens on, then the one shown, so Back restores it. */
   openTab: BuildWebCardTab
   openIssue: (id: string | null, fullScreen?: boolean, tab?: BuildWebCardTab) => void
   expandToFullScreen: () => void
@@ -192,7 +192,9 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
   openIssue: (openIssueId, fullScreen = false, openTab = 'overview') =>
     set({ openIssueId, fullScreen, fullScreenFromDrawer: false, openTab }),
   expandToFullScreen: () =>
-    set((state) => (state.openIssueId ? { fullScreen: true, fullScreenFromDrawer: true } : {})),
+    set((state) =>
+      state.openIssueId ? { fullScreen: true, fullScreenFromDrawer: true, openTab: 'overview' } : {}
+    ),
   collapseFullScreen: () =>
     set((state) =>
       state.fullScreenFromDrawer

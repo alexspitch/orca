@@ -7,6 +7,7 @@ import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebAgentSession } from '../../../../shared/build-web-types'
 import { BuildWebToneChip } from './BuildWebToneChip'
+import { recordBuildWebCardVisit } from './build-web-card-history'
 import { parseExecutionHostId } from '../../../../shared/execution-host'
 import {
   findBuildWebSessionWorktree,
@@ -16,6 +17,7 @@ import {
 function openSession(session: BuildWebAgentSession, found: BuildWebSessionWorktree): void {
   const host = parseExecutionHostId(session.execution_host_id)
   const opts = host ? { executionHostId: host.id } : undefined
+  recordBuildWebCardVisit()
   if (activateAndRevealWorktree(found.worktreeId, opts) === false) {
     return
   }

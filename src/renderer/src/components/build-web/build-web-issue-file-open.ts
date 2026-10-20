@@ -13,6 +13,7 @@ import {
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { callBuildWeb } from './build-web-client'
+import { recordBuildWebCardVisit } from './build-web-card-history'
 import { findBuildWebSessionWorktree } from './build-web-session-worktree'
 
 /** Where a task's file opens: Markdown preview, a browser tab, a read-only tab, or the browser. */
@@ -107,6 +108,7 @@ export async function openBuildWebIssueFile(args: {
     await window.api.shell.openFilePath(filePath, LOCAL_EXECUTION_HOST_ID)
     return
   }
+  recordBuildWebCardVisit()
   if (kind === 'html') {
     openHtmlFileInBrowser(filePath, worktreeId, true)
     return
