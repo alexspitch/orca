@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "1.4.233-custom.1792500732000",
+      "date": "2026-10-20",
+      "commit": "17f43a11d54e",
+      "features": [
+        "Source Control → branch menu offers «Update from <base>», which fetches the base branch and merges it in, fast-forwarding when the branch has no commits of its own.",
+        "Issues → a task's card lists its attached files and each comment's files, opening Markdown, HTML, pictures, PDFs and text in tabs of the task's worktree.",
+        "Editor → the line-number menu offers «Git Blame», showing who last changed each line beside the editor, with commit details on hover and the change on click.",
+        "Source Control → in the tree view, folders can collapse or expand all their subfolders, section headers fold all folders, and Alt+click toggles a whole subtree.",
+        "Images → any successful build can be picked, and «Copy links» copies each image's registry reference with its build number, warning about ones not pushed yet."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.233-custom.1792482483000",
       "date": "2026-10-20",
       "commit": "a69203680a4f",
