@@ -78,4 +78,21 @@ describe('getVisibleRightSidebarActivityItems', () => {
       }).map((item) => item.id)
     ).toEqual(['explorer', 'ports', 'plugin:orca-samples.my-plugin/dashboard'])
   })
+
+  it('shows Services only when the workspace has a services command', () => {
+    const withServices: ActivityBarItem[] = [
+      ...items,
+      { id: 'services', icon: Files, title: 'Services', shortcut: '', servicesOnly: true }
+    ]
+    const visible = (hasDevServices: boolean): string[] =>
+      getVisibleRightSidebarActivityItems(withServices, {
+        isFolder: false,
+        isFolderWorkspace: false,
+        hasSshHost: false,
+        hasDevServices
+      }).map((item) => item.id)
+
+    expect(visible(false)).not.toContain('services')
+    expect(visible(true)).toContain('services')
+  })
 })

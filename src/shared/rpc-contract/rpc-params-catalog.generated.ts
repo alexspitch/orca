@@ -231,6 +231,7 @@ import {
   SetValue,
   TypeText
 } from './computer-schemas-params'
+import { DevServicesRunParams, DevServicesStatusParams } from './dev-services-params'
 import {
   AttachParams as AttachParamsOfEmulatorParams,
   AxParams,
@@ -1015,6 +1016,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'computer.typeText': TypeText,
   'desktopBrowserBridge.attach': DesktopBrowserBridgeAttachParams,
   'desktopBrowserBridge.result': DesktopBrowserBridgeResultParams,
+  'devServices.run': DevServicesRunParams,
+  'devServices.status': DevServicesStatusParams,
   'diagnostics.memory': null,
   'emulator.attach': AttachParamsOfEmulatorParams,
   'emulator.availability': EmulatorAvailabilityParams,

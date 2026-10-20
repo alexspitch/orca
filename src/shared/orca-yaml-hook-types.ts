@@ -14,6 +14,12 @@ export type OrcaHooks = {
   environmentRecipes?: OrcaVmRecipe[] // Project-scoped per-workspace environment recipes
   environmentRecipeDiagnostics?: OrcaVmRecipeDiagnostic[] // Non-fatal validation issues from environmentRecipes
   worktree?: OrcaWorktreeDefaults // Project-scoped defaults applied when a worktree is created
+  services?: OrcaServicesConfig // Dev-services command behind the Services panel
+}
+
+export type OrcaServicesConfig = {
+  // Run on the worktree's host with ORCA_SERVICES_VERB/ARGS; prints one JSON object.
+  command: string
 }
 
 export type OrcaWorktreeDefaults = {
@@ -74,6 +80,7 @@ export type PersistedTrustedOrcaHookRepo = {
   archive?: PersistedTrustedOrcaHookEntry
   issueCommand?: PersistedTrustedOrcaHookEntry
   vmRecipe?: PersistedTrustedOrcaHookEntry
+  services?: PersistedTrustedOrcaHookEntry
 }
 
 export type PersistedTrustedOrcaHooks = Record<string, PersistedTrustedOrcaHookRepo>

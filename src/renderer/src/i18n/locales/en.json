@@ -21717,5 +21717,64 @@
     "installedVersion": "Installed: {{version}}",
     "description": "What changed in each release, newest first.",
     "empty": "No releases recorded yet. The next orca-release writes the first entry."
+  },
+  "devServices": {
+    "actions": {
+      "openFailed": "Failed to open the address",
+      "unverifiable": "Couldn't confirm: {{value0}}"
+    },
+    "detail": {
+      "crashedAgo": "Crashed {{value0}} ago",
+      "restart": "restart #{{value0}}",
+      "starting": "Starting…",
+      "startingFor": "Starting… {{value0}}",
+      "stopping": "Stopping…"
+    },
+    "disabled": "This project runs only local commands, so orca.yaml's services command is off.",
+    "empty": "Services haven't run in this worktree yet. Starting a profile reserves its ports.",
+    "loading": "Checking services…",
+    "more": "More Services Actions",
+    "none": "This workspace's project has no services command in orca.yaml.",
+    "notice": {
+      "unverifiable": "Couldn't check the services — showing their last known state. {{value0}}"
+    },
+    "otherServices": "Other Services",
+    "otherWorktrees": "Other Worktrees",
+    "otherWorktreeSummary": "slot {{value0}} · {{value1}} running",
+    "profile": {
+      "restart": "Restart running {{value0}}",
+      "start": "Start {{value0}}",
+      "startWithIncludes": "Start {{value0}} with {{value1}}; running services are skipped",
+      "stop": "Stop {{value0}}"
+    },
+    "refresh": "Refresh Services",
+    "release": "Release Slot",
+    "releaseConfirm": {
+      "title": "Release slot {{value0}}?",
+      "description": "Stops every service of this worktree and frees its slot; the repository's command decides what else it cleans up."
+    },
+    "row": {
+      "console": "Open Console",
+      "copy": "Copy Address",
+      "open": "Open in Browser",
+      "restart": "Restart",
+      "start": "Start",
+      "stop": "Stop"
+    },
+    "state": {
+      "absent": "Not in this branch",
+      "crashed": "Crashed",
+      "ready": "Running",
+      "shared": "Shared with main",
+      "starting": "Starting",
+      "stopped": "Stopped",
+      "stopping": "Stopping",
+      "unknown": "Unknown state"
+    },
+    "stopAll": "Stop All Services",
+    "title": "Services",
+    "trust": "Review and Trust",
+    "trustPrompt": "This project lists its services with a command from orca.yaml. Orca runs it on the workspace host:",
+    "unsupported": "Services are not supported on this host."
   }
 }

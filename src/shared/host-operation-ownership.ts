@@ -24,6 +24,7 @@ export const HOST_OPERATION_OWNERSHIP = {
   clipboard: 'host',
   computer: 'host',
   desktopBrowserBridge: 'host',
+  devServices: 'host',
   diagnostics: 'host',
   emulator: 'host',
   files: 'host',

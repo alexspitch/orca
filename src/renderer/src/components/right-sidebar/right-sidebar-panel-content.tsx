@@ -7,6 +7,7 @@ const FileExplorer = lazy(() => import('./FileExplorer'))
 const SourceControl = lazy(() => import('./SourceControl'))
 const ChecksPanel = lazy(() => import('./ChecksPanel'))
 const PortsPanel = lazy(() => import('./PortsPanel'))
+const ServicesPanel = lazy(() => import('./ServicesPanel'))
 const AiVaultPanel = lazy(() => import('./AiVaultPanel'))
 const FolderWorkspaceWorktreesPanel = lazy(() => import('./FolderWorkspaceWorktreesPanel'))
 const FolderWorkspacePrChecksPanel = lazy(() => import('./FolderWorkspacePrChecksPanel'))
@@ -32,6 +33,9 @@ export function RightSidebarPanelContent({
             expose. Keep this panel reachable only for SSH worktrees. */}
         {effectiveTab === 'ports' && (
           <PortsPanel isVisible={rightSidebarOpen && effectiveTab === 'ports'} />
+        )}
+        {effectiveTab === 'services' && (
+          <ServicesPanel isVisible={rightSidebarOpen && effectiveTab === 'services'} />
         )}
         {effectiveTab === 'vault' && <AiVaultPanel />}
         {effectiveTab === 'workspaces' && <FolderWorkspaceWorktreesPanel />}

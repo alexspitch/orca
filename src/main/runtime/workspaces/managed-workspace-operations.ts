@@ -29,6 +29,18 @@ import {
 } from '../../ports/workspace-port-execution-host'
 import { resolveWorktreeHostRouting } from '../worktree-launch-host-repo'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../shared/execution-host'
+import { isFolderRepo } from '../../../shared/repo-kind'
+import { isFloatingWorkspaceSelector } from '../../../shared/floating-workspace-worktree'
+import type {
+  DevServicesRunResponse,
+  DevServicesStatusResponse
+} from '../../../shared/dev-services-contract'
+import {
+  devServicesUnavailable,
+  readDevServicesStatus,
+  runDevServicesVerb,
+  type DevServicesTarget
+} from '../../dev-services/dev-services-host'
 
 export abstract class OrcaRuntimeWithListManagedWorktrees extends OrcaRuntimeWithRestoreStructuredAgentSessionTabsOnce {
   protected abstract resolveTerminalWorkspaceLaunchTarget(
@@ -179,6 +191,50 @@ export abstract class OrcaRuntimeWithListManagedWorktrees extends OrcaRuntimeWit
   ): Promise<WorkspacePortKillResult> {
     const { executionHostId } = await this.resolveRuntimeFileTarget(args.worktree)
     return killWorkspacePortOnExecutionHost(executionHostId, args, this.getWorkspacePortHostDeps())
+  }
+
+  async devServicesStatus(
+    args: { worktree: string; commandHash: string },
+    signal?: AbortSignal
+  ): Promise<DevServicesStatusResponse> {
+    const target = await this.resolveDevServicesTarget(args.worktree)
+    return 'kind' in target ? target : readDevServicesStatus(target, args.commandHash, signal)
+  }
+
+  async devServicesRun(args: {
+    worktree: string
+    commandHash: string
+    verb: string
+    args: string[]
+  }): Promise<DevServicesRunResponse> {
+    const target = await this.resolveDevServicesTarget(args.worktree)
+    return 'kind' in target
+      ? target
+      : runDevServicesVerb(target, args.commandHash, args.verb, args.args)
+  }
+
+  // Why only a git worktree this host runs: the command acts on processes here, so an SSH repo this
+  // server merely relays, a folder workspace or the floating one has no services of its own.
+  protected async resolveDevServicesTarget(
+    worktreeSelector: string
+  ): Promise<DevServicesTarget | ReturnType<typeof devServicesUnavailable>> {
+    const unsupported = devServicesUnavailable(
+      'unsupported-workspace',
+      'Services run only for git worktrees on the host that serves them.'
+    )
+    if (isFloatingWorkspaceSelector(worktreeSelector)) {
+      return unsupported
+    }
+    try {
+      const { worktree, repo, executionHostId, localGitOptions } =
+        await this.resolveRuntimeGitTarget(worktreeSelector)
+      if (executionHostId !== LOCAL_EXECUTION_HOST_ID || !repo || isFolderRepo(repo)) {
+        return unsupported
+      }
+      return { repo, worktreePath: worktree.path, wslDistro: localGitOptions?.wslDistro ?? null }
+    } catch {
+      return unsupported
+    }
   }
 
   protected getWorkspacePortHostDeps(): WorkspacePortExecutionHostDeps {

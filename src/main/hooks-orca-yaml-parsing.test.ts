@@ -374,9 +374,31 @@ describe('parseOrcaYaml', () => {
     expect(result?.scripts.setup).toBe('pnpm install')
     expect(result?.worktree?.sharedDirectories).toEqual(['.cache'])
   })
+
+  it('parses a services command on its own', () => {
+    expect(
+      parseOrcaYaml('services:\n  command: node "$ORCA_ROOT_PATH/utils/orca-run.mjs" orca\n')
+    ).toEqual({
+      scripts: {},
+      services: { command: 'node "$ORCA_ROOT_PATH/utils/orca-run.mjs" orca' }
+    })
+  })
+
+  it('drops a services entry without a command', () => {
+    expect(parseOrcaYaml('services:\n  command: "   "\n')).toBeNull()
+    expect(parseOrcaYaml('services: node run.mjs\n')).toBeNull()
+  })
 })
 
 describe('hasUnrecognizedOrcaYamlKeys', () => {
+  it('recognises the services key', async () => {
+    const fs = await import('node:fs')
+    vi.mocked(fs.readFileSync).mockReturnValue('services:\n  command: node run.mjs\n')
+
+    const { hasUnrecognizedOrcaYamlKeys } = await import('./hooks')
+    expect(hasUnrecognizedOrcaYamlKeys('/test/repo')).toBe(false)
+  })
+
   it('returns true when the file contains only keys this version does not handle', async () => {
     const fs = await import('node:fs')
     vi.mocked(fs.readFileSync).mockReturnValue('futureFeature: |\n  some config\n')

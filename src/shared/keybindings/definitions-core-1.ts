@@ -239,6 +239,14 @@ export const KEYBINDING_DEFINITION_CORE_1: readonly KeybindingDefinition[] = [
     }
   },
   {
+    id: 'sidebar.services.toggle',
+    title: 'Show Services',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'sidebar', 'services', 'dev servers'],
+    defaultBindings: platformBindings([])
+  },
+  {
     id: 'sidebar.sleepingWorkspaces.toggle',
     title: 'Toggle Sleeping Workspaces',
     group: 'Global',

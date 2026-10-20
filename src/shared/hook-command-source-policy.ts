@@ -14,3 +14,8 @@ export function resolveHookCommandSourcePolicy(
 
   return 'shared-only'
 }
+
+/** The services command has no local variant: under `local-only` the committed one is simply off. */
+export function isServicesCommandDisabledByPolicy(policy: unknown): boolean {
+  return resolveHookCommandSourcePolicy(policy, { hasLocalScript: false }) === 'local-only'
+}

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Plug, Files, GitBranch, ListChecks, Workflow } from 'lucide-react'
+import { Plug, Files, GitBranch, Layers, ListChecks, Workflow } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { useRepoById } from '@/store/selectors'
 import { isFolderRepo } from '../../../../shared/repo-kind'
@@ -20,6 +20,7 @@ import {
 import { useShortcutLabel } from '@/hooks/useShortcutLabel'
 import { translate } from '@/i18n/i18n'
 import { AgentSessionHistoryIcon } from './agent-session-history-icon'
+import { useDevServicesAvailability } from '../dev-services/use-dev-services-availability'
 import type { ActivityBarItem } from './activity-bar-buttons'
 
 export type RightSidebarActivityItems = {
@@ -39,6 +40,7 @@ export function useRightSidebarActivityItems({
   const sourceControlShortcut = useShortcutLabel('sidebar.sourceControl.toggle')
   const checksShortcut = useShortcutLabel('sidebar.checks.toggle')
   const portsShortcut = useShortcutLabel('sidebar.ports.toggle')
+  const servicesShortcut = useShortcutLabel('sidebar.services.toggle')
   const activeWorktreeId = useAppStore((s) => (rightSidebarOpen ? s.activeWorktreeId : null))
   // Why: source control and checks are meaningless for non-git folders.
   // Hide those tabs so the activity bar only shows relevant actions.
@@ -56,6 +58,7 @@ export function useRightSidebarActivityItems({
       s.runtimeEnvironments
     )
   )
+  const hasDevServices = useDevServicesAvailability(activeWorktreeId, rightSidebarOpen) !== null
   const pluginSystemEnabled = useAppStore((s) => s.settings?.pluginSystemEnabled === true)
   const pluginPanels = usePluginPanels()
   const visiblePluginPanels = useMemo(
@@ -122,6 +125,13 @@ export function useRightSidebarActivityItems({
         shortcut: portsShortcut === 'Unassigned' ? '' : portsShortcut,
         sshOnly: true
       },
+      {
+        id: 'services',
+        icon: Layers,
+        title: translate('devServices.title', 'Services'),
+        shortcut: servicesShortcut === 'Unassigned' ? '' : servicesShortcut,
+        servicesOnly: true
+      },
       // Why: plugin panels append after the built-in tabs so core navigation
       // keeps stable positions regardless of which plugins are installed.
       ...getPluginPanelActivityItems(visiblePluginPanels, pluginPanelErrors)
@@ -132,6 +142,7 @@ export function useRightSidebarActivityItems({
       pluginPanelErrors,
       visiblePluginPanels,
       portsShortcut,
+      servicesShortcut,
       sourceControlShortcut
     ]
   )
@@ -141,9 +152,10 @@ export function useRightSidebarActivityItems({
       getVisibleRightSidebarActivityItems(activityItems, {
         isFolder,
         isFolderWorkspace,
-        hasSshHost
+        hasSshHost,
+        hasDevServices
       }),
-    [activityItems, isFolder, isFolderWorkspace, hasSshHost]
+    [activityItems, isFolder, isFolderWorkspace, hasSshHost, hasDevServices]
   )
 
   const activeFolderWorkspaceKey = isFolderWorkspace ? (activeWorktreeId ?? null) : null

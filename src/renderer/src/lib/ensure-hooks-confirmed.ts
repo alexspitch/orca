@@ -1,6 +1,9 @@
 import type { AppState } from '@/store/types'
 import type { OrcaHooks } from '../../../shared/orca-yaml-hook-types'
-import { resolveHookCommandSourcePolicy } from '../../../shared/hook-command-source-policy'
+import {
+  isServicesCommandDisabledByPolicy,
+  resolveHookCommandSourcePolicy
+} from '../../../shared/hook-command-source-policy'
 import { hashOrcaHookScript, type OrcaHookScriptKind } from './orca-hook-trust'
 import {
   checkRuntimeHooks,
@@ -100,7 +103,16 @@ function hookRepoOwnerHostId(
   return ownerHostId
 }
 
-function canUseRepoWideTrust(state: AppState, repoId: string): boolean {
+export function getServicesTrustContent(hooks: OrcaHooks | null): string {
+  return hooks?.services?.command?.trim() ?? ''
+}
+
+/** A `local-only` repo opted out of committed orca.yaml commands; services has no local override. */
+export function isServicesCommandDisabled(repo: AppState['repos'][number] | undefined): boolean {
+  return isServicesCommandDisabledByPolicy(repo?.hookSettings?.commandSourcePolicy)
+}
+
+export function canUseRepoWideTrust(state: AppState, repoId: string): boolean {
   const hasDuplicateRepoId = state.repos.filter((repo) => repo.id === repoId).length > 1
   return Boolean(state.trustedOrcaHooks[repoId]?.all) && !hasDuplicateRepoId
 }
@@ -272,6 +284,22 @@ export async function ensureHooksConfirmed(
           return 'run'
         }
         scriptContent = (result.sharedContent ?? '').trim()
+      } else if (scriptKind === 'services') {
+        // Why skip, not run: unlike a hook there is no local script to fall back to.
+        if (isServicesCommandDisabled(findHookRepo(state, repoId, hostId))) {
+          return 'skip'
+        }
+        const result = await checkRuntimeHooks(
+          hookRepoOwnerHostId(state, repoId, hostId, runtimeOwnerEnvironmentId),
+          repoId
+        )
+        if (result.status === 'error') {
+          return 'skip'
+        }
+        scriptContent = getServicesTrustContent(result.hooks)
+        if (!scriptContent) {
+          return 'skip'
+        }
       } else {
         const repo = findHookRepo(state, repoId, hostId)
         const localScript = repo?.hookSettings?.scripts?.[scriptKind]?.trim()
