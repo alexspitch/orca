@@ -104,6 +104,23 @@ export type BuildWebComment = {
   jira_sync: boolean
 }
 
+/** A file of the task, or of one of its comments: a screenshot, a recording, a document. */
+export type BuildWebIssueFile = {
+  id: string
+  name: string
+  size: number
+  mime: string
+  /** The comment it was attached with; null for a file of the task itself. */
+  comment_id: string | null
+  created_by: string
+  created_at: string
+}
+
+/** Files Orca opens in its own tabs; a larger one opens in the browser instead. */
+export const BUILD_WEB_ISSUE_FILE_OPEN_MAX_BYTES = 3 * 1024 * 1024
+
+export type BuildWebIssueFileContent = { mime: string; base64: string }
+
 export type BuildWebIssueDetail = BuildWebIssueRow & {
   description: string
   steps: BuildWebStep[]
@@ -120,6 +137,8 @@ export type BuildWebIssueDetail = BuildWebIssueRow & {
   /** The release branch and every newer one, down to master: what the task is built from. */
   branches: string[]
   comments: BuildWebComment[]
+  /** Absent from consoles before attachments; empty then. */
+  files: BuildWebIssueFile[]
 }
 
 /** The console's own sort keys for the task list. */

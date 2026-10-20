@@ -20,6 +20,7 @@ import {
   BuildWebCommitsParams,
   BuildWebGuideParams,
   BuildWebGuideShotParams,
+  BuildWebIssueFileParams,
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
   BuildWebProviderSessionParams,
@@ -220,5 +221,11 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebGuideShotParams,
     handler: async (params, { runtime }) => runtime.buildWebGuideShot(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.issueFile',
+    permission: 'workspace',
+    params: BuildWebIssueFileParams,
+    handler: async (params, { runtime }) => runtime.buildWebIssueFile(params)
   })
 ]

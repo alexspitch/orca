@@ -2,6 +2,7 @@ import {
   BUILD_WEB_STATUSES,
   type BuildWebAgentSession,
   type BuildWebComment,
+  type BuildWebIssueFile,
   type BuildWebIssueDetail,
   type BuildWebIssueRow,
   type BuildWebIssueProduct,
@@ -92,6 +93,21 @@ function commentOf(value: unknown): BuildWebComment | null {
     : null
 }
 
+function fileOf(value: unknown): BuildWebIssueFile | null {
+  const v = recordOf(value)
+  return v && typeof v.id === 'string' && typeof v.name === 'string'
+    ? {
+        id: v.id,
+        name: v.name,
+        size: numberOf(v.size),
+        mime: textOf(v.mime),
+        comment_id: textOrNull(v.comment_id),
+        created_by: textOf(v.created_by),
+        created_at: textOf(v.created_at)
+      }
+    : null
+}
+
 function stepOf(value: unknown): { text?: string; action?: string; expected?: string } {
   const v = recordOf(value) ?? {}
   return {
@@ -125,6 +141,9 @@ export function issueDetailOf(baseUrl: string, value: unknown): BuildWebIssueDet
     branches: textsOf(card.branches),
     comments: Array.isArray(card.comments)
       ? card.comments.map(commentOf).filter((c): c is BuildWebComment => c !== null)
+      : [],
+    files: Array.isArray(card.files)
+      ? card.files.map(fileOf).filter((f): f is BuildWebIssueFile => f !== null)
       : []
   }
 }

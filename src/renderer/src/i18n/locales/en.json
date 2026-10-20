@@ -20567,7 +20567,8 @@
       "restart": "This window was opened before Orca was updated. Restart Orca to use this.",
       "updateServerStands": "This Orca server does not support Stands yet. Update the server to use them.",
       "updateServerTestHistory": "This Orca server does not support Test history yet. Update the server to use it.",
-      "updateServerTrainsRolling": "This Orca server does not count the images trains roll out yet. Update the server."
+      "updateServerTrainsRolling": "This Orca server does not count the images trains roll out yet. Update the server.",
+      "updateServerIssueFiles": "This Orca server does not open task attachments yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -21458,6 +21459,11 @@
       "outcomes": "passed {{passed}}, failed {{failed}}, skipped {{skipped}}",
       "junit": "junit.xml",
       "shard": "shard {{index}}/{{total}}"
+    },
+    "files": {
+      "title": "Attachments {{count}}",
+      "label": "Attachments",
+      "openFailed": "Could not open {{name}}: {{error}}"
     }
   },
   "gitLog": {

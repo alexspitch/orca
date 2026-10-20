@@ -1,4 +1,5 @@
 import {
+  BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY,
   BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
   BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY,
@@ -54,6 +55,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         translate(
           'buildWeb.client.updateServerTestHistory',
           'This Orca server does not support Test history yet. Update the server to use it.'
+        )
+    },
+    {
+      methods: new Set<Method>(['issueFile']),
+      capability: BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerIssueFiles',
+          'This Orca server does not open task attachments yet. Update the server.'
         )
     },
     {

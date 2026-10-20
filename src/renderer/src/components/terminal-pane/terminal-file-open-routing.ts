@@ -60,7 +60,11 @@ export function isHtmlFilePath(filePath: string): boolean {
   return /\.html?$/i.test(filePath)
 }
 
-function openHtmlFileInBrowser(filePath: string, worktreeId: string, clientLocal: boolean): void {
+export function openHtmlFileInBrowser(
+  filePath: string,
+  worktreeId: string,
+  clientLocal: boolean
+): void {
   const store = useAppStore.getState()
   if (worktreeId) {
     // Why: following an HTML file link changes which worktree is foregrounded,

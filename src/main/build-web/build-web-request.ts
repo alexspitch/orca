@@ -192,9 +192,12 @@ export async function buildWebTextRequest(
   return new TextDecoder().decode(bytes)
 }
 
-/** A binary answer (a guide screenshot), capped so one image cannot fill memory or an RPC frame. */
+/**
+ * A binary answer (a guide screenshot, a task's file), capped so one cannot fill memory or an RPC
+ * frame. Only an image unless `anyType`: a screenshot that turns out to be a page is an error.
+ */
 export async function buildWebBinaryRequest(
-  request: Omit<BuildWebRequest, 'method' | 'body'> & { maxBytes: number }
+  request: Omit<BuildWebRequest, 'method' | 'body'> & { maxBytes: number; anyType?: boolean }
 ): Promise<{ mime: string; bytes: Uint8Array }> {
   let response: Response
   try {
@@ -211,12 +214,12 @@ export async function buildWebBinaryRequest(
     throw new BuildWebApiError(response.statusText || `HTTP ${response.status}`, response.status)
   }
   const mime = response.headers.get('content-type') ?? 'application/octet-stream'
-  if (!mime.startsWith('image/')) {
+  if (!request.anyType && !mime.startsWith('image/')) {
     await response.body?.cancel().catch(() => {})
     throw new BuildWebApiError('not an image', 415)
   }
   const bytes = await readFetchResponseBytesWithinLimit(response, request.maxBytes).catch(() => {
-    throw new BuildWebApiError('image too large', 413)
+    throw new BuildWebApiError(request.anyType ? 'file too large' : 'image too large', 413)
   })
   return { mime, bytes }
 }

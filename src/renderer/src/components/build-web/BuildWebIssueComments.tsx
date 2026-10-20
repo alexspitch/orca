@@ -11,6 +11,7 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { loginOf } from './build-web-labels'
+import { BuildWebIssueFiles } from './BuildWebIssueFiles'
 
 const messageOf = (failure: unknown) =>
   failure instanceof Error ? failure.message : String(failure)
@@ -28,17 +29,18 @@ function jiraNote(jira: { ok: true; status: string } | { ok: false; error: strin
 /** One comment; its author may correct it or take it back, as build-web allows. */
 function CommentItem({
   target,
-  issueId,
+  detail,
   comment: c,
   mine,
   onChanged
 }: {
   target: RuntimeClientTarget
-  issueId: string
+  detail: BuildWebIssueDetail
   comment: BuildWebComment
   mine: boolean
   onChanged: () => void
 }): React.JSX.Element {
+  const issueId = detail.id
   const confirm = useConfirmationDialog()
   const [draft, setDraft] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -158,6 +160,11 @@ function CommentItem({
           </div>
         </div>
       )}
+      <BuildWebIssueFiles
+        target={target}
+        detail={detail}
+        files={detail.files.filter((file) => file.comment_id === c.id)}
+      />
     </li>
   )
 }
@@ -186,7 +193,7 @@ export function BuildWebIssueComments({
         <CommentItem
           key={c.id}
           target={target}
-          issueId={detail.id}
+          detail={detail}
           comment={c}
           mine={me !== null && c.author.toLowerCase() === me}
           onChanged={onChanged}

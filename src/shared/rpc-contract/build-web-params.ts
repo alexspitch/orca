@@ -189,6 +189,15 @@ export const BuildWebCommitDiffParams = z.object({
   id: Id,
   sha: z.string().regex(/^[0-9a-f]{7,40}$/i)
 })
+const FileId = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/)
+export const BuildWebIssueFileParams = z.object({ id: Id, fileId: FileId })
+// Why the cap: a file larger than Orca opens never comes back from `issueFile`.
+export const BuildWebStageIssueFileParams = z.object({
+  issueKey: z.string().regex(/^[A-Za-z0-9_-]{1,64}$/),
+  fileId: FileId,
+  name: z.string().min(1).max(255),
+  base64: z.string().max(Math.ceil((3 * 1024 * 1024) / 3) * 4)
+})
 export const BuildWebGuideShotParams = z.object({
   runId: Id,
   slug: z

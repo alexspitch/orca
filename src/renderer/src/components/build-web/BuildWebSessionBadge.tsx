@@ -1,46 +1,19 @@
 import { Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { activateTabAndFocusPane } from '@/lib/activate-tab-and-focus-pane'
-import {
-  activateStructuredAgentSessionById,
-  findStructuredAgentSessionTab
-} from '@/lib/structured-agent-session-tab-activation'
+import { activateStructuredAgentSessionById } from '@/lib/structured-agent-session-tab-activation'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebAgentSession } from '../../../../shared/build-web-types'
 import { BuildWebToneChip } from './BuildWebToneChip'
 import { parseExecutionHostId } from '../../../../shared/execution-host'
+import {
+  findBuildWebSessionWorktree,
+  type BuildWebSessionWorktree
+} from './build-web-session-worktree'
 
-type Found = { worktreeId: string } | null
-
-/** The worktree this client shows the session in, or null when it is not here. */
-function findSession(session: BuildWebAgentSession): Found {
-  const state = useAppStore.getState()
-  if (!session.surface_id) {
-    return null
-  }
-  if (session.surface_kind === 'terminal') {
-    for (const [worktreeId, tabs] of Object.entries(state.tabsByWorktree)) {
-      if ((tabs ?? []).some((tab) => tab.id === session.surface_id)) {
-        return { worktreeId }
-      }
-    }
-    return null
-  }
-  for (const worktreeId of Object.keys(state.unifiedTabsByWorktree)) {
-    const tab = findStructuredAgentSessionTab(state.unifiedTabsByWorktree, {
-      workspaceId: worktreeId,
-      sessionId: session.surface_id
-    })
-    if (tab) {
-      return { worktreeId }
-    }
-  }
-  return null
-}
-
-function openSession(session: BuildWebAgentSession, found: NonNullable<Found>): void {
+function openSession(session: BuildWebAgentSession, found: BuildWebSessionWorktree): void {
   const host = parseExecutionHostId(session.execution_host_id)
   const opts = host ? { executionHostId: host.id } : undefined
   if (activateAndRevealWorktree(found.worktreeId, opts) === false) {
@@ -68,7 +41,7 @@ export function BuildWebSessionBadge({
   // Why subscribe: a tab opening or closing elsewhere changes what the badge can say.
   useAppStore((s) => s.tabsByWorktree)
   useAppStore((s) => s.unifiedTabsByWorktree)
-  const found = findSession(session)
+  const found = findBuildWebSessionWorktree(session)
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2 text-xs">
       <Bot className="size-3.5 text-chip-tone-purple" />

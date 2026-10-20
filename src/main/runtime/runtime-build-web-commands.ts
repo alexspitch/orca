@@ -20,6 +20,7 @@ import type {
   BuildWebCommitsParams,
   BuildWebGuideParams,
   BuildWebGuideShotParams,
+  BuildWebIssueFileParams,
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
   BuildWebProviderSessionParams,
@@ -52,6 +53,7 @@ import {
   listBuildWebImages,
   pushBuildWebImages
 } from '../build-web/build-web-images'
+import { getBuildWebIssueFile } from '../build-web/build-web-issue-files'
 import {
   getBuildWebCommitDiff,
   getBuildWebGuideShot,
@@ -205,5 +207,9 @@ export class RuntimeBuildWebCommands {
 
   buildWebGuideShot(args: In<typeof BuildWebGuideShotParams>) {
     return getBuildWebGuideShot(args.runId, args.slug)
+  }
+
+  buildWebIssueFile(args: In<typeof BuildWebIssueFileParams>) {
+    return getBuildWebIssueFile(args.id, args.fileId)
   }
 }

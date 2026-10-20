@@ -120,5 +120,27 @@ describe('issue rows', () => {
     expect(detail?.branches).toEqual(['sa-release-3.1', 'master'])
     expect(detail?.steps).toEqual([{ text: 'one' }, {}])
     expect(detail?.comments).toHaveLength(1)
+    expect(detail?.files).toEqual([])
+  })
+
+  it('reads the files of the task and of its comments', () => {
+    const detail = issueDetailOf('https://bw.test', {
+      issue: raw,
+      files: [
+        {
+          id: 'a1b2c3d4e5f6',
+          name: 'notes.md',
+          size: 120,
+          mime: 'text/markdown',
+          comment_id: null
+        },
+        { id: 'b1b2c3d4e5f6', name: 'shot.png', size: 9, mime: 'image/png', comment_id: 'c1' },
+        { name: 'no id' }
+      ]
+    })
+    expect(detail?.files.map((f) => [f.name, f.comment_id])).toEqual([
+      ['notes.md', null],
+      ['shot.png', 'c1']
+    ])
   })
 })

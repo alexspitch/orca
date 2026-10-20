@@ -9,6 +9,8 @@ import { useBuildWebStore } from './build-web-store'
 import { useBuildWebIssueDetail } from './use-build-web-issue-detail'
 import { BuildWebIssueProperties } from './BuildWebIssueProperties'
 import { BuildWebIssueComments } from './BuildWebIssueComments'
+import { BuildWebIssueFiles } from './BuildWebIssueFiles'
+import { taskFilesOf } from './build-web-issue-file-open'
 import { BuildWebIssueSubtasks } from './BuildWebIssueSubtasks'
 import { EditableDescription, EditableSteps, EditableTitle } from './BuildWebIssueEditors'
 import { SectionTitle } from './BuildWebIssueBody'
@@ -143,6 +145,16 @@ export function BuildWebIssueDrawer({
                 saving={saving}
                 onSave={(patch) => void save(patch)}
               />
+              {taskFilesOf(detail).length > 0 ? (
+                <section className="flex flex-col gap-2">
+                  <SectionTitle>
+                    {translate('buildWeb.files.title', 'Attachments {{count}}', {
+                      count: taskFilesOf(detail).length
+                    })}
+                  </SectionTitle>
+                  <BuildWebIssueFiles target={target} detail={detail} files={taskFilesOf(detail)} />
+                </section>
+              ) : null}
               {!detail.parent_id && detail.children > 0 ? (
                 <section className="flex flex-col gap-2">
                   <SectionTitle>

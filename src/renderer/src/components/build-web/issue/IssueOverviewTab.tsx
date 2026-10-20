@@ -13,6 +13,8 @@ import type { BuildWebRun, BuildWebTestingStatus } from '../../../../../shared/b
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebIssueProperties } from '../BuildWebIssueProperties'
 import { BuildWebIssueComments } from '../BuildWebIssueComments'
+import { BuildWebIssueFiles } from '../BuildWebIssueFiles'
+import { taskFilesOf } from '../build-web-issue-file-open'
 import { EditableDescription, EditableSteps } from '../BuildWebIssueEditors'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { BuildSummaryCard, JiraCard, OverviewPanel } from './IssueOverviewCards'
@@ -180,6 +182,15 @@ export function IssueOverviewTab({
           <EditableDescription detail={detail} canEdit saving={state.saving} onSave={save} />
           <EditableSteps detail={detail} canEdit saving={state.saving} onSave={save} />
         </section>
+        {taskFilesOf(detail).length > 0 ? (
+          <OverviewPanel
+            title={translate('buildWeb.files.title', 'Attachments {{count}}', {
+              count: taskFilesOf(detail).length
+            })}
+          >
+            <BuildWebIssueFiles target={target} detail={detail} files={taskFilesOf(detail)} />
+          </OverviewPanel>
+        ) : null}
         <OverviewPanel title={translate('buildWeb.detail.comments', 'Comments')}>
           <BuildWebIssueComments target={target} detail={detail} onChanged={state.reload} />
           <CommentComposer target={target} state={state} />

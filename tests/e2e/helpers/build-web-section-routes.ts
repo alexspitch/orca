@@ -1,5 +1,6 @@
 import type http from 'node:http'
 import { serveImageBuilds } from './build-web-images-mock'
+import { serveIssues } from './build-web-issues-mock'
 import { serveTestHistory } from './build-web-test-history-mock'
 
 /** The console routes of sections whose data lives in their own mock module; false when none. */
@@ -9,5 +10,9 @@ export function serveSectionRoutes(
   url: URL,
   json: (res: http.ServerResponse, status: number, body: unknown) => void
 ): boolean {
-  return serveTestHistory(res, path, url, json) || serveImageBuilds(res, path, json)
+  return (
+    serveTestHistory(res, path, url, json) ||
+    serveImageBuilds(res, path, json) ||
+    serveIssues(res, path, json)
+  )
 }

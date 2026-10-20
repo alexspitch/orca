@@ -21,12 +21,15 @@ import {
   BuildWebCommitsParams,
   BuildWebGuideParams,
   BuildWebGuideShotParams,
+  BuildWebIssueFileParams,
+  BuildWebStageIssueFileParams,
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
   BuildWebProviderSessionParams,
   BuildWebVersionsParams
 } from '../../shared/rpc-contract/build-web-params'
 import { RuntimeBuildWebCommands } from '../runtime/runtime-build-web-commands'
+import { stageBuildWebIssueFile } from '../build-web/build-web-issue-files'
 import { registerBuildWebStandHandlers } from './build-web-stands'
 import { registerBuildWebTaskHandlers } from './build-web-task'
 
@@ -90,6 +93,9 @@ export function registerBuildWebHandlers(): void {
   handle('issueCommits', BuildWebCommitsParams, (args) => commands.buildWebIssueCommits(args))
   handle('commitDiff', BuildWebCommitDiffParams, (args) => commands.buildWebCommitDiff(args))
   handle('guideShot', BuildWebGuideShotParams, (args) => commands.buildWebGuideShot(args))
+  handle('issueFile', BuildWebIssueFileParams, (args) => commands.buildWebIssueFile(args))
+  // Why local only: the file is staged on this computer for its tabs, whichever host read it.
+  handle('stageIssueFile', BuildWebStageIssueFileParams, (args) => stageBuildWebIssueFile(args))
   registerBuildWebTaskHandlers()
   registerBuildWebStandHandlers()
 }
