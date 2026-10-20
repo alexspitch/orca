@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "1.4.232-custom.1792474242000",
+      "date": "2026-10-20",
+      "commit": "a97a1e6baeb8",
+      "features": [
+        "A new Services tab in the right panel runs a repository's dev services, letting you start profiles, restart, stop, view consoles, open services, and release slots.",
+        "Dev services commands configured in a repository's orca.yaml must be trusted like setup scripts, and are re-checked on every run, including on remote hosts."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.231-custom.1792437715000",
       "date": "2026-10-19",
       "commit": "90b88a055cb6",
