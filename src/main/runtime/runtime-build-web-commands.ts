@@ -11,6 +11,7 @@ import type {
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
   BuildWebImageBuildParams,
+  BuildWebImageAdoptParams,
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
   BuildWebRunParams,
@@ -51,7 +52,8 @@ import {
   buildWebImageSummary,
   listBuildWebImageBuilds,
   listBuildWebImages,
-  pushBuildWebImages
+  pushBuildWebImages,
+  adoptBuildWebImageSuccess
 } from '../build-web/build-web-images'
 import { getBuildWebIssueFile } from '../build-web/build-web-issue-files'
 import {
@@ -159,6 +161,10 @@ export class RuntimeBuildWebCommands {
       followBuildWebPush(args.runId)
     }
     return result
+  }
+
+  buildWebAdoptImageSuccess(args: In<typeof BuildWebImageAdoptParams>) {
+    return adoptBuildWebImageSuccess(args)
   }
 
   buildWebVersionBranches(args: In<typeof BuildWebVersionBranchesParams>) {

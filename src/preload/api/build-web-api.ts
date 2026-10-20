@@ -18,6 +18,8 @@ import type {
   BuildWebVersion
 } from '../../shared/build-web-types'
 import type {
+  BuildWebImageAdoptArgs,
+  BuildWebImageAdoptResult,
   BuildWebImageHistory,
   BuildWebImageHistoryArgs,
   BuildWebImagePage,
@@ -89,6 +91,9 @@ export type BuildWebApi = {
     args: BuildWebImageHistoryArgs & { refresh?: boolean }
   ) => Promise<BuildWebImageHistory>
   pushImages: (args: BuildWebImagePushArgs) => Promise<BuildWebMutationResult<true>>
+  adoptImageSuccess: (
+    args: BuildWebImageAdoptArgs
+  ) => Promise<BuildWebMutationResult<BuildWebImageAdoptResult>>
   versionBranches: (args: { product: string }) => Promise<string[]>
   startImageBuild: (
     args: BuildWebImageBuildArgs

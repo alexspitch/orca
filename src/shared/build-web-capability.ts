@@ -12,3 +12,6 @@ export const BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY = 'build-web-trains-rol
 
 /** A runtime that serves a task's attachments: `buildWeb.issueFile`. */
 export const BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY = 'build-web-issue-files.v1'
+
+/** A runtime that settles a failed image with its last successful build: `buildWeb.adoptImageSuccess`. */
+export const BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY = 'build-web-image-adopt.v1'

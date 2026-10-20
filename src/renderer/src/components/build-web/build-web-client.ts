@@ -1,4 +1,5 @@
 import {
+  BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY,
   BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
@@ -64,6 +65,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         translate(
           'buildWeb.client.updateServerIssueFiles',
           'This Orca server does not open task attachments yet. Update the server.'
+        )
+    },
+    {
+      methods: new Set<Method>(['adoptImageSuccess']),
+      capability: BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerImageAdopt',
+          'This Orca server cannot settle a failed image with an earlier build yet. Update the server.'
         )
     },
     {

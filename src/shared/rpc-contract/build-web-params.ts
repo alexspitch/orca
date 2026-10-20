@@ -160,6 +160,14 @@ export const BuildWebImagePushParams = z.object({
   moveMainTag: z.boolean()
 })
 
+const BuildNumber = z.number().int().min(0).max(100_000_000)
+export const BuildWebImageAdoptParams = z.object({
+  image: required('Missing image', 300),
+  dist: ShortText,
+  number: BuildNumber,
+  to: BuildNumber
+})
+
 export const BuildWebRunParams = z.object({ runId: Id })
 export const BuildWebBuildLogParams = z.object({
   url: required('Missing log', 2048),

@@ -24,7 +24,13 @@ export type BuildWebImageBuild = {
   url: string | null
 }
 
-export type BuildWebImageRow = { image: string; product: string; last: BuildWebImageBuild | null }
+export type BuildWebImageRow = {
+  image: string
+  product: string
+  last: BuildWebImageBuild | null
+  /** When `last` failed: the newest success of its image, dist and release line. Absent from older hosts. */
+  lastSuccess?: BuildWebImageBuild | null
+}
 
 /** Columns the image tables sort by; main sorts the whole catalog before it cuts a page. */
 export const BUILD_WEB_IMAGE_SORTS = [
@@ -108,6 +114,11 @@ export type BuildWebImageBuildArgs = {
   /** Build without the offline suites; only a build from the tree may, Jenkins always runs them. */
   skipTests?: boolean
 }
+
+/** Settle failed build `number` with successful build `to`: the console rewrites the runs, nothing is built. */
+export type BuildWebImageAdoptArgs = { image: string; dist: string; number: number; to: number }
+
+export type BuildWebImageAdoptResult = { runs: number; skipped: number }
 
 export type BuildWebImagePushArgs = {
   runId: string

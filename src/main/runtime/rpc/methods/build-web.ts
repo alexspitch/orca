@@ -11,6 +11,7 @@ import {
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
   BuildWebImageBuildParams,
+  BuildWebImageAdoptParams,
   BuildWebImagePushParams,
   BuildWebRunParams,
   BuildWebBuildLogParams,
@@ -149,6 +150,12 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebImagePushParams,
     handler: async (params, { runtime }) => runtime.buildWebPushImages(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.adoptImageSuccess',
+    permission: 'workspace',
+    params: BuildWebImageAdoptParams,
+    handler: async (params, { runtime }) => runtime.buildWebAdoptImageSuccess(params)
   }),
   defineMethod({
     name: 'buildWeb.versionBranches',

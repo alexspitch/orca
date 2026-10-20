@@ -21,6 +21,7 @@ import { useImagePicks } from './use-image-picks'
 import { ImageBuildDialog } from './ImageBuildDialog'
 import { ImageBuildProgress } from './ImageBuildProgress'
 import { ImagePushProgress } from './ImagePushProgress'
+import { SettleFailedStatus } from './SettleFailedStatus'
 import { useBuildWebStore } from '../build-web-store'
 import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip } from '../BuildWebToneChip'
@@ -314,7 +315,16 @@ export function ImageListView({
                       </span>
                     </td>
                     <td className="py-2">
-                      {row.last ? <BuildStatusCell build={row.last} /> : null}
+                      {row.last && row.lastSuccess && canBuild ? (
+                        <SettleFailedStatus
+                          target={target}
+                          failed={row.last}
+                          success={row.lastSuccess}
+                          onSettled={() => reload(true)}
+                        />
+                      ) : row.last ? (
+                        <BuildStatusCell build={row.last} />
+                      ) : null}
                     </td>
                     <td className="py-2">{row.last ? <LogCell build={row.last} /> : null}</td>
                     <td className="py-2 pr-3 md:pr-5">

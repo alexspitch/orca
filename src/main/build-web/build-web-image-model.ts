@@ -74,6 +74,25 @@ function newestMatching(
   return last
 }
 
+/** A build's release line, as the console's adopt-success reads it: its product version, else its branch. */
+const lineOf = (b: BuildWebImageBuild) => b.product_version ?? `branch:${b.branch}`
+
+/** The newest success a failed build can be settled with: same image, dist and release line. */
+export function lastSuccessFor(
+  newest: BuildWebImageBuild[],
+  failed: BuildWebImageBuild
+): BuildWebImageBuild | null {
+  return (
+    newest.find(
+      (b) =>
+        b.status === 'success' &&
+        b.image === failed.image &&
+        b.dist === failed.dist &&
+        lineOf(b) === lineOf(failed)
+    ) ?? null
+  )
+}
+
 export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): BuildWebImagePage {
   const newest = catalog.builds
   const dists = args.dists ?? []
@@ -117,8 +136,12 @@ export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): B
   const versionLists = args.products?.length
     ? args.products.map((p) => catalog.versions[p] ?? [])
     : Object.values(catalog.versions)
+  // Why per page: the scan is over the whole catalog, so only the rows that cross RPC pay for it.
+  const pageRows = pageOf(rows, args.page, args.pageSize).map((row) =>
+    row.last?.status === 'failed' ? { ...row, lastSuccess: lastSuccessFor(newest, row.last) } : row
+  )
   return {
-    rows: pageOf(rows, args.page, args.pageSize),
+    rows: pageRows,
     total: rows.length,
     of: catalog.images.length,
     counts: {

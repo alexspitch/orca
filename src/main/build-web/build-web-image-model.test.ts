@@ -5,6 +5,7 @@ import {
   failedImageCount,
   imageHistory,
   imagePage,
+  lastSuccessFor,
   runningImageCount,
   type ImageCatalog
 } from './build-web-image-model'
@@ -199,5 +200,42 @@ describe('pushing to the registry', () => {
       }
     ])
     expect(pushRequests([fresh, tagged], true).map((r) => r.runId)).toEqual(['r1', 'r2'])
+  })
+})
+
+describe('a failed image settled with its last success', () => {
+  const failed = build({ number: 9, status: 'failed', raw_status: 'FAILURE', ref: null, tag: null })
+  const settling: ImageCatalog = {
+    images: [{ image: 'sa/api', product: 'sa' }],
+    builds: [
+      failed,
+      build({ number: 8, product_version: '3.2', tag: '3.2b8' }),
+      build({ number: 7, dist: 'redos', tag: '3.1b7' }),
+      build({ number: 6, status: 'failed' }),
+      build({ number: 5, tag: '3.1b5' }),
+      build({ number: 4, tag: '3.1b4' })
+    ],
+    versions: { sa: ['3.2', '3.1'] }
+  }
+
+  it('offers the newest success of the same image, dist and release line', () => {
+    expect(lastSuccessFor(settling.builds, failed)?.number).toBe(5)
+    const row = imagePage(settling, { page: 0, pageSize: 50 }).rows[0]
+    expect(row.last?.number).toBe(9)
+    expect(row.lastSuccess?.tag).toBe('3.1b5')
+  })
+
+  it('looks on the same branch when the failed build names no release line', () => {
+    const onTask = build({ number: 3, status: 'failed', branch: 'IS-1', product_version: null })
+    const builds = [
+      onTask,
+      build({ number: 2, product_version: null }),
+      build({ number: 1, branch: 'IS-1', product_version: null })
+    ]
+    expect(lastSuccessFor(builds, onTask)?.number).toBe(1)
+  })
+
+  it('offers nothing on a row whose last build did not fail', () => {
+    expect(imagePage(catalog, { page: 0, pageSize: 50 }).rows[0].lastSuccess).toBeUndefined()
   })
 })

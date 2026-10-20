@@ -1,7 +1,8 @@
 import type http from 'node:http'
 
 // build-web's /api/image-builds for the Images page: an image in the registry with an older
-// build, one built and never pushed, and one whose build failed (no image to link).
+// build, one built and never pushed, and one whose build failed (no image to link) over an
+// earlier success of the same version, which a settle puts in its place.
 
 const REGISTRY = 'registry.box.test'
 
@@ -62,6 +63,15 @@ const IMAGE_BUILDS = {
       run_id: 'run-3'
     }),
     build({
+      image: 'sa/sa-backend',
+      product: 'sa',
+      number: 54,
+      ref: `${REGISTRY}/sa/sa-backend:3.6b54`,
+      tag: '3.6b54',
+      at: '2026-10-18T09:00:00Z',
+      run_id: 'run-4'
+    }),
+    build({
       image: 'dc/dc-backend',
       product: 'dc',
       number: 411,
@@ -76,14 +86,21 @@ const IMAGE_BUILDS = {
   versions: { dc: ['3.6'], sa: ['3.6'] }
 }
 
+/** A settle the console was asked for: its runs name build `to` where they named failed `number`. */
+export type ImageAdoption = { image: string; dist: string; number: number; to: number }
+
 export function serveImageBuilds(
   res: http.ServerResponse,
   path: string,
-  json: (res: http.ServerResponse, status: number, body: unknown) => void
+  json: (res: http.ServerResponse, status: number, body: unknown) => void,
+  adoptions: readonly ImageAdoption[]
 ): boolean {
   if (path !== '/api/image-builds') {
     return false
   }
-  json(res, 200, IMAGE_BUILDS)
+  // A settled failure is held by no run any more, so the success under it is the newest.
+  const settled = (b: Record<string, unknown>) =>
+    adoptions.some((a) => a.image === b.image && a.dist === b.dist && a.number === b.number)
+  json(res, 200, { ...IMAGE_BUILDS, builds: IMAGE_BUILDS.builds.filter((b) => !settled(b)) })
   return true
 }

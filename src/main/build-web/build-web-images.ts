@@ -1,4 +1,6 @@
 import type {
+  BuildWebImageAdoptArgs,
+  BuildWebImageAdoptResult,
   BuildWebImageBuild,
   BuildWebImageHistory,
   BuildWebImageHistoryArgs,
@@ -163,6 +165,25 @@ export async function pushBuildWebImages(
     })
     invalidateBuildWebImageCatalog()
     return true as const
+  })
+}
+
+/** Settle a failed build with the last successful one of its line; the console builds nothing. */
+export async function adoptBuildWebImageSuccess(
+  args: BuildWebImageAdoptArgs
+): Promise<BuildWebMutationResult<BuildWebImageAdoptResult>> {
+  return buildWebMutation(async () => {
+    const credential = requireBuildWebCredential()
+    const answer = recordOf(
+      await buildWebRequest({
+        ...credential,
+        method: 'POST',
+        path: '/api/image-builds/adopt-success',
+        body: args
+      })
+    )
+    invalidateBuildWebImageCatalog()
+    return { runs: numberOf(answer?.runs), skipped: numberOf(answer?.skipped) }
   })
 }
 

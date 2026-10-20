@@ -20568,7 +20568,8 @@
       "updateServerStands": "This Orca server does not support Stands yet. Update the server to use them.",
       "updateServerTestHistory": "This Orca server does not support Test history yet. Update the server to use it.",
       "updateServerTrainsRolling": "This Orca server does not count the images trains roll out yet. Update the server.",
-      "updateServerIssueFiles": "This Orca server does not open task attachments yet. Update the server."
+      "updateServerIssueFiles": "This Orca server does not open task attachments yet. Update the server.",
+      "updateServerImageAdopt": "This Orca server cannot settle a failed image with an earlier build yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -20643,7 +20644,13 @@
       "linksNotPushed": "{{count}} of the copied images are not in the registry yet.",
       "copied": "Copied",
       "copyLinksCount": "Copy links ({{count}})",
-      "copyLinks": "Copy links"
+      "copyLinks": "Copy links",
+      "settleTitle": "Use build #{{to}} of {{image}}?",
+      "settleBody": "Failed build #{{number}} on {{dist}} is replaced, in this table and in the runs that hold it, by the newest successful build of the same version: {{build}}. Nothing is built.",
+      "settle": "Use #{{to}}",
+      "settleUnsupported": "This build-web console cannot do that yet. Update the console.",
+      "settled": "{{image}} on {{dist}} now names build #{{to}}.",
+      "settleHint": "{{status}} — use the last successful build #{{to}} instead, without building"
     },
     "card": {
       "overview": "Overview",

@@ -1,5 +1,6 @@
 import http from 'node:http'
 import { serveSectionRoutes } from './build-web-section-routes'
+import type { ImageAdoption } from './build-web-images-mock'
 
 // A build-web console on loopback with the stand routes the Stands page reads, plus a stand UI (on
 // `localhost`) whose auth portal (on `127.0.0.1`, another host, as on the real stands) records what
@@ -12,6 +13,7 @@ export type BuildWebConsoleMock = {
   password: string
   logins: { username: string; password: string }[]
   ops: { standId: string; kind: string; services: string[] }[]
+  adoptions: ImageAdoption[]
   openLogStreams: () => number
   close: () => Promise<void>
 }
@@ -39,33 +41,12 @@ const LOGIN_PAGE = `<!doctype html><html><body>
   <button id="submit" type="submit">Sign in</button>
 </form></body></html>`
 
-/** Reports on the 3rd and 10th of this month, and one in the month before, at local times. */
-function recaps(): Record<string, unknown>[] {
-  const now = new Date()
-  const at = (monthDelta: number, day: number, hour: number) =>
-    new Date(now.getFullYear(), now.getMonth() + monthDelta, day, hour).toISOString()
-  const recap = (id: string, name: string, product: string, finishedAt: string) => ({
-    id,
-    automation_id: `auto-${name}`,
-    name,
-    product,
-    version: { id: 'v1', name: '3.1', branch: 'release/3.1' },
-    commit: 'abcdef1234',
-    trigger: 'scheduled',
-    started_by: null,
-    finished_at: finishedAt
-  })
-  return [
-    recap('r-night-3', 'Nightly review', 'dc', at(0, 3, 6)),
-    recap('r-weekly-3', 'Weekly SA', 'sa', at(0, 3, 7)),
-    recap('r-night-10', 'Nightly review', 'dc', at(0, 10, 6)),
-    recap('r-old', 'Old report', 'dc', at(-1, 15, 6))
-  ]
-}
-
-export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
+export async function startBuildWebConsoleMock(
+  options: { perms?: string[] } = {}
+): Promise<BuildWebConsoleMock> {
   const logins: BuildWebConsoleMock['logins'] = []
   const ops: BuildWebConsoleMock['ops'] = []
+  const adoptions: ImageAdoption[] = []
   let openStreams = 0
   let jobReads = 0
   let base = ''
@@ -88,7 +69,11 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
       return json(res, 401, { error: 'no token' })
     }
     if (path === '/api/me') {
-      return json(res, 200, { authed: true, user: 'qa@box.test', perms: ['stands', 'tests'] })
+      return json(res, 200, {
+        authed: true,
+        user: 'qa@box.test',
+        perms: options.perms ?? ['stands', 'tests']
+      })
     }
     if (path === '/api/stands') {
       return json(res, 200, {
@@ -231,17 +216,14 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
       jobReads = 0
       return json(res, 201, { op: { id: 'job-1', kind: body.kind, status: 'queued', error: null } })
     }
-    if (path === '/api/automations/results') {
-      const from = Date.parse(url.searchParams.get('from') ?? '') || -Infinity
-      const to = Date.parse(url.searchParams.get('to') ?? '') || Infinity
-      const results = recaps().filter((r) => {
-        const at = Date.parse(r.finished_at)
-        return at >= from && at < to
-      })
+    if (path === '/api/image-builds/adopt-success' && req.method === 'POST') {
+      const body = JSON.parse((await readBody(req)) || '{}')
+      adoptions.push({ image: body.image, dist: body.dist, number: body.number, to: body.to })
       return json(res, 200, {
-        results,
-        total: results.length,
-        facets: { products: ['dc', 'sa'], versions: [], automations: [] }
+        ok: true,
+        runs: 1,
+        skipped: 0,
+        build: { number: body.to, tag: null }
       })
     }
     const report = /^\/api\/automations\/runs\/([^/]+)\/report$/.exec(path)
@@ -289,7 +271,7 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
         path === '/login' ? LOGIN_PAGE : '<p>Signed in</p><a href="/logout">Log out</a>'
       )
     }
-    if (!serveSectionRoutes(res, path, url, json)) {
+    if (!serveSectionRoutes(res, path, url, json, adoptions)) {
       json(res, 404, { error: 'not here' })
     }
   })
@@ -306,6 +288,7 @@ export async function startBuildWebConsoleMock(): Promise<BuildWebConsoleMock> {
     password: PASSWORD,
     logins,
     ops,
+    adoptions,
     openLogStreams: () => openStreams,
     close: () =>
       new Promise<void>((resolve) => {

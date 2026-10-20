@@ -12,6 +12,7 @@ import {
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
   BuildWebImageBuildParams,
+  BuildWebImageAdoptParams,
   BuildWebImagePushParams,
   BuildWebRunParams,
   BuildWebBuildLogParams,
@@ -58,6 +59,9 @@ export function registerBuildWebHandlers(): void {
     commands.buildWebListImageBuilds(args)
   )
   handle('pushImages', BuildWebImagePushParams, (args) => commands.buildWebPushImages(args))
+  handle('adoptImageSuccess', BuildWebImageAdoptParams, (args) =>
+    commands.buildWebAdoptImageSuccess(args)
+  )
   handle('versionBranches', BuildWebVersionBranchesParams, (args) =>
     commands.buildWebVersionBranches(args)
   )
