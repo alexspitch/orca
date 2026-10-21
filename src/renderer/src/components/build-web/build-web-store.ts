@@ -19,14 +19,16 @@ import {
 } from './build-web-view-prefs'
 
 /** The full-screen card's tabs, as build-web's task card has them. */
-export type BuildWebCardTab =
-  | 'overview'
-  | 'plan'
-  | 'mockups'
-  | 'build'
-  | 'guide'
-  | 'commits'
-  | 'subtasks'
+export const BUILD_WEB_CARD_TABS = [
+  'overview',
+  'plan',
+  'mockups',
+  'build',
+  'guide',
+  'commits',
+  'subtasks'
+] as const
+export type BuildWebCardTab = (typeof BUILD_WEB_CARD_TABS)[number]
 
 /** The statuses a task is still being worked in — the list's default. */
 export const OPEN_STATUSES = BUILD_WEB_OPEN_STATUSES

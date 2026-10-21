@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import type { BuildWebIssueRow } from '../../../../../shared/build-web-types'
 import {
@@ -8,8 +8,9 @@ import {
 import { callBuildWeb } from '../build-web-client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { translate } from '@/i18n/i18n'
-import { useBuildWebStore, type BuildWebCardTab } from '../build-web-store'
+import { BUILD_WEB_CARD_TABS, useBuildWebStore, type BuildWebCardTab } from '../build-web-store'
 import { useBuildWebTarget } from '../use-build-web-data'
+import { labelTaskTab } from '../build-web-task-tabs'
 import { useBuildWebIssueDetail } from '../use-build-web-issue-detail'
 import { BuildWebListState } from '../BuildWebListState'
 import { BuildWebIssueSubtasks } from '../BuildWebIssueSubtasks'
@@ -26,15 +27,7 @@ import { IssueMockupsTab } from './plan/IssueMockupsTab'
 import { filesWithRole, planProgress } from './plan/issue-file-roles'
 
 type CardTab = BuildWebCardTab
-const TABS: readonly CardTab[] = [
-  'overview',
-  'plan',
-  'mockups',
-  'build',
-  'guide',
-  'commits',
-  'subtasks'
-]
+const TABS: readonly CardTab[] = BUILD_WEB_CARD_TABS
 const NO_PERMS: string[] = []
 
 /** The task on the whole page, with build-web's tabs: Overview, Build, Guide & Jira, Commits, Subtasks. */
@@ -62,6 +55,11 @@ export function BuildWebIssueFullScreen({
     reload: reloadRun
   } = useIssueRun(target, issueId ?? '', Boolean(issueId) && runsVisible)
   const detail = state.detail
+  useEffect(() => {
+    if (detail) {
+      labelTaskTab(detail.id, detail.key, detail.title)
+    }
+  }, [detail])
   const plan = useIssuePlan(target, detail)
   if (!issueId || state.error) {
     return <BuildWebListState kind="error" error={state.error} />

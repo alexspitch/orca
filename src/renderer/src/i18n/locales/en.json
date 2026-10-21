@@ -20515,7 +20515,8 @@
       "foldFamily": "Hide the subtasks of {{key}}",
       "unfoldFamily": "Show {{count}} subtask(s) of {{key}}",
       "subtaskCount": "Subtasks: {{count}}, open: {{open}}",
-      "sortFavorites": "Favorites first"
+      "sortFavorites": "Favorites first",
+      "openSide": "Open in the side panel"
     },
     "state": {
       "loading": "Loading tasks…",
@@ -21516,6 +21517,11 @@
       "backTo": "Back to {{page}}",
       "forward": "Forward",
       "forwardTo": "Forward to {{page}}",
+      "task": "Task"
+    },
+    "tabs": {
+      "label": "Open tasks",
+      "list": "List",
       "task": "Task"
     }
   },

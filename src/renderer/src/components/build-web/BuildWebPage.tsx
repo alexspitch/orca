@@ -24,6 +24,8 @@ import { BuildWebListState } from './BuildWebListState'
 import { BuildWebIssueDrawer } from './BuildWebIssueDrawer'
 import { BuildWebSelectionBar } from './BuildWebSelectionBar'
 import { BuildWebTakeToWorkDialog } from './BuildWebTakeToWorkDialog'
+import { BuildWebTaskTabs } from './BuildWebTaskTabs'
+import { keepTaskTab } from './build-web-task-tabs'
 import { useTakeToWork } from './use-take-to-work'
 import { BuildWebIssueFullScreen } from './issue/BuildWebIssueFullScreen'
 import { BuildLogDialog } from './images/BuildLogDialog'
@@ -72,6 +74,16 @@ export default function BuildWebPage(): React.JSX.Element {
     []
   )
 
+  // Why here, not in openIssue: every way a card fills this page (a row, a link, Back) makes a tab,
+  // while the Testing page's dialog shows the same card without one.
+  // Why connected: tabs are kept per build-web host, which the store knows once it has answered.
+  const connected = status?.connected === true
+  useEffect(() => {
+    if (connected && fullScreen && openIssueId) {
+      keepTaskTab(openIssueId)
+    }
+  }, [connected, fullScreen, openIssueId])
+
   useBuildWebPageEscape(() => {
     const current = useBuildWebStore.getState()
     if (current.fullScreen) {
@@ -106,7 +118,6 @@ export default function BuildWebPage(): React.JSX.Element {
     }
   }
 
-  const connected = status?.connected === true
   return (
     <main className="relative flex h-full min-h-0 flex-1 flex-col bg-background pt-5 text-foreground md:pt-6">
       <header
@@ -168,9 +179,13 @@ export default function BuildWebPage(): React.JSX.Element {
       ) : !connected ? (
         <BuildWebConnect target={target} onConnected={(next) => setStatus(contextKey, next)} />
       ) : fullScreen && openIssueId ? (
-        <BuildWebIssueFullScreen key={openIssueId} onTakeToWork={takeToWork} />
+        <>
+          <BuildWebTaskTabs />
+          <BuildWebIssueFullScreen key={openIssueId} onTakeToWork={takeToWork} />
+        </>
       ) : (
         <>
+          <BuildWebTaskTabs />
           <BuildWebFilters />
           {error ? (
             <BuildWebListState kind="error" error={error} onRetry={reload} />

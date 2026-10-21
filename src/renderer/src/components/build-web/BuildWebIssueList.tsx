@@ -1,5 +1,4 @@
-import { Bot, ChevronDown, ChevronRight, Maximize2, SquareTerminal, Star } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Bot, ChevronDown, ChevronRight, SquareTerminal, Star } from 'lucide-react'
 import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -136,7 +135,20 @@ function IssueRow({
         {/* A subtask's key starts past its task's arrow and key, so it reads as nested under it. */}
         <div className={cn('flex items-center gap-1.5', family.under && 'pl-10')}>
           {family.under ? null : <FamilyToggle issue={issue} family={family} />}
-          <span className="font-mono text-xs text-muted-foreground">{issue.key}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={onOpen}
+                className="font-mono text-xs text-muted-foreground hover:text-foreground hover:underline focus-visible:underline focus-visible:outline-none"
+              >
+                {issue.key}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {translate('buildWeb.list.openSide', 'Open in the side panel')}
+            </TooltipContent>
+          </Tooltip>
           {/* As in build-web: the model's queue is marked beside the key, so titles stay aligned. */}
           {issue.for_ai ? (
             <Tooltip>
@@ -163,7 +175,7 @@ function IssueRow({
         <div className={cn('flex min-w-0 items-center gap-1.5', family.under && 'pl-4')}>
           <button
             type="button"
-            onClick={onOpen}
+            onClick={onOpenFull}
             className={cn(
               // pe-0.5: room for an italic subtask title's last letter, which truncate would clip.
               'block min-w-0 truncate pe-0.5 text-left text-sm hover:underline focus-visible:underline focus-visible:outline-none',
@@ -173,23 +185,6 @@ function IssueRow({
             {issue.title}
           </button>
           <SubtaskCount issue={issue} />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={onOpenFull}
-                aria-label={translate('buildWeb.list.openFull', 'Open {{key}} full screen', {
-                  key: issue.key
-                })}
-              >
-                <Maximize2 />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {translate('buildWeb.detail.fullScreen', 'Open full screen')}
-            </TooltipContent>
-          </Tooltip>
         </div>
       </td>
       <td className="w-40 py-2">
