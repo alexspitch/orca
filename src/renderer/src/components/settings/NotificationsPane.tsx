@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import { Button } from '../ui/button'
 import { Separator } from '../ui/separator'
-import { BellRing, Bot, EyeOff, MessageCircleQuestionMark, Siren } from 'lucide-react'
+import {
+  BellRing,
+  Bot,
+  EyeOff,
+  Hammer,
+  MessageCircleQuestionMark,
+  PanelTopOpen,
+  Siren
+} from 'lucide-react'
 import { useAppStore } from '@/store'
 import {
   MacNotificationPermissionCard,
@@ -179,6 +187,36 @@ export function NotificationsPane({
         onToggle={() =>
           void updateNotificationSettings({
             terminalBell: !notificationSettings.terminalBell
+          })
+        }
+      />
+
+      <NotificationSettingToggle
+        icon={<Hammer className="size-4" />}
+        label={translate('buildWeb.notifications.label', 'build-web')}
+        description={translate(
+          'buildWeb.notifications.description',
+          "A new row under build-web's bell — a failed build, a console error, a move or comment on your task — while Orca is in the background."
+        )}
+        checked={notificationSettings.buildWeb}
+        disabled={!notificationSettings.enabled}
+        onToggle={() =>
+          void updateNotificationSettings({ buildWeb: !notificationSettings.buildWeb })
+        }
+      />
+
+      <NotificationSettingToggle
+        icon={<PanelTopOpen className="size-4" />}
+        label={translate('buildWeb.notifications.toastLabel', 'build-web Inside Orca')}
+        description={translate(
+          'buildWeb.notifications.toastDescription',
+          'The same row as a message inside Orca while it is in front, with a button that opens the task.'
+        )}
+        checked={notificationSettings.buildWebToastWhenFocused}
+        disabled={!notificationSettings.enabled || !notificationSettings.buildWeb}
+        onToggle={() =>
+          void updateNotificationSettings({
+            buildWebToastWhenFocused: !notificationSettings.buildWebToastWhenFocused
           })
         }
       />

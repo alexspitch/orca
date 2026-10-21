@@ -40,6 +40,13 @@ export function buildNotificationOptions(
     }
   }
 
+  if (args.source === 'build-web') {
+    return {
+      title: normalizeNotificationText(args.buildWeb?.title, NOTIFICATION_TITLE_CONTEXT_MAX_LENGTH),
+      body: normalizeNotificationText(args.buildWeb?.body, NOTIFICATION_BODY_PREVIEW_MAX_LENGTH)
+    }
+  }
+
   if (args.source === 'test') {
     return {
       title: 'Orca notifications are on',

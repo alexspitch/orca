@@ -20,38 +20,10 @@ import type {
 import { callBuildWeb } from '../build-web-client'
 import { notificationTarget } from './activity-targets'
 import { ActivityCountBadge } from './ActivityCountBadge'
+import { notificationBody, notificationKindLabel } from './notification-text'
 import { openActivityTarget, type ActivityHost } from './open-activity-target'
 
 type Notes = NonNullable<BuildWebActivity['notifications']>
-
-// Why dropped from the body: a build's log link, which the card's Build tab opens properly.
-const BUILD_LOG_LINE =
-  /^(https?:\/\/\S+\/job\/\S+\/\d+\/?|\/api\/(?:local-builds|agent-jobs)\/[\w-]+\/log)$/
-
-function kindLabel(kind: string): string {
-  switch (kind) {
-    case 'build':
-      return translate('buildWeb.activity.kindBuild', 'image build')
-    case 'push':
-      return translate('buildWeb.activity.kindPush', 'publish')
-    case 'job':
-      return translate('buildWeb.activity.kindJob', 'stand job')
-    case 'train':
-      return translate('buildWeb.activity.kindTrain', 'train')
-    case 'runtime':
-      return translate('buildWeb.activity.kindRuntime', 'console')
-    case 'tests':
-      return translate('buildWeb.activity.kindTests', 'nightly tests')
-    case 'status':
-      return translate('buildWeb.activity.kindStatus', 'status change')
-    case 'assigned':
-      return translate('buildWeb.activity.kindAssigned', 'assignment')
-    case 'comment':
-      return translate('buildWeb.activity.kindComment', 'comment')
-    default:
-      return kind
-  }
-}
 
 function SeverityIcon({ severity }: { severity: BuildWebNotification['severity'] }) {
   if (severity === 'warning') {
@@ -70,13 +42,9 @@ function NotificationRow({
   note: BuildWebNotification
   unread: boolean
 }): React.JSX.Element {
-  const body = note.body
-    .split('\n')
-    .filter((line) => !BUILD_LOG_LINE.test(line.trim()))
-    .join('\n')
-    .trim()
+  const body = notificationBody(note.body)
   const meta = [
-    kindLabel(note.kind),
+    notificationKindLabel(note.kind),
     note.issue_key,
     note.last_at ? formatUiRelativeTimeFromDate(note.last_at, '') : '',
     note.count > 1 ? `×${note.count}` : ''

@@ -1,6 +1,6 @@
 import type {
   BuildWebConsoleTask,
-  BuildWebNotification
+  BuildWebNotificationRef
 } from '../../../../../shared/build-web-activity-types'
 import type { BuildWebCardTab } from '../build-web-store'
 import type { ChipTone } from '../build-web-tones'
@@ -21,7 +21,7 @@ export type ActivityTarget =
 export type PageTarget = Exclude<ActivityTarget, { kind: 'job' }>
 
 /** A build or a push is about the task's build, so the card opens on that tab. */
-export function notificationTarget(n: BuildWebNotification): PageTarget | null {
+export function notificationTarget(n: BuildWebNotificationRef): PageTarget | null {
   const tab: BuildWebCardTab = n.kind === 'build' || n.kind === 'push' ? 'build' : 'overview'
   if (n.issue_id) {
     return { kind: 'issue', issueId: n.issue_id, tab }

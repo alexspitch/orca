@@ -105,6 +105,21 @@ export const getNotificationsPaneSearchEntries = createLocalizedCatalog(() => [
     ]
   },
   {
+    title: translate('buildWeb.notifications.label', 'build-web'),
+    description: translate(
+      'buildWeb.notifications.searchDescription',
+      "Notify about new rows under build-web's bell, as a banner or a message inside Orca."
+    ),
+    keywords: [
+      ...translateSearchKeyword(
+        'auto.components.settings.notifications.search.ca8faa40d7',
+        'notifications'
+      ),
+      ...translateSearchKeyword('buildWeb.notifications.keywordBuild', 'build'),
+      ...translateSearchKeyword('buildWeb.notifications.keywordToast', 'toast')
+    ]
+  },
+  {
     title: translate('auto.components.settings.notifications.search.machines', 'Machines'),
     description: translate(
       'auto.components.settings.notifications.search.machinesDescription',

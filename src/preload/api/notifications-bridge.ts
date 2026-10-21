@@ -11,6 +11,7 @@ import type {
 } from '../../shared/notification-settings-types'
 import type { AgentSessionExecutionLocation } from '../../shared/agent-session-record'
 import type { PreloadApi } from '../api-types'
+import type { BuildWebNotificationRef } from '../../shared/build-web-activity-types'
 
 // Why: cache one shared Audio + blob URL per sound path so notifications do not re-read large files.
 let cachedNotificationSound: {
@@ -103,5 +104,11 @@ export const notificationsApi = {
     } catch {
       return { played: false, reason: 'playback-failed' }
     }
+  },
+  onBuildWebClick: (callback: (target: BuildWebNotificationRef | null) => void): (() => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, target: BuildWebNotificationRef | null) =>
+      callback(target)
+    ipcRenderer.on('notifications:buildWebClick', listener)
+    return () => ipcRenderer.removeListener('notifications:buildWebClick', listener)
   }
 } satisfies PreloadApi['notifications']

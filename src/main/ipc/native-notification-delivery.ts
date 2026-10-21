@@ -76,6 +76,23 @@ export function deliverNativeNotification(
   }
   notification.on('failed', failedHandler)
 
+  if (args.source === 'build-web') {
+    clickHandler = () => {
+      release()
+      const win = getTrustedUIRendererWindow()
+      if (!win || win.isDestroyed()) {
+        return
+      }
+      if (process.platform === 'darwin' && !isBackgroundLaunch()) {
+        app.focus({ steal: true })
+      }
+      safelyRevealWindow(win)
+      // Why the renderer: it knows which host holds the build-web token and opens the card there.
+      win.webContents.send('notifications:buildWebClick', args.buildWeb?.target ?? null)
+    }
+    notification.on('click', clickHandler)
+  }
+
   const worktreeId = args.worktreeId
   const paneTarget = args.paneKey ? parsePaneKey(args.paneKey) : null
   // Why: a structured chat has no PTY pane. Its pane key's leaf is a synthetic id minted from

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { EyeOff } from 'lucide-react'
 import {
   ContextMenu,
@@ -8,29 +7,20 @@ import {
 } from '@/components/ui/context-menu'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import type { BuildWebActivity } from '../../../../../shared/build-web-activity-types'
-import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { showsBuildWebActivity } from '../../../../../shared/sidebar-button-settings'
-import { useBuildWebBadge } from '../../sidebar/use-build-web-badge'
-import { callBuildWeb } from '../build-web-client'
 import { useBuildWebTarget } from '../use-build-web-data'
+import { useBuildWebActivity } from './build-web-activity-store'
 import { BuildWebNotificationMenu } from './BuildWebNotificationMenu'
 import { BuildWebTaskMenu } from './BuildWebTaskMenu'
 
-const POLL_MS = 20_000
-// Why faster only for tasks: a status changing is watched; the bell's open list is not re-read under the reader.
-const TASKS_OPEN_POLL_MS = 4_000
-
-const readActivity = (target: RuntimeClientTarget): Promise<BuildWebActivity> =>
-  callBuildWeb(target, 'activity')
+const setWatching = (watching: boolean): void => useBuildWebActivity.setState({ watching })
 
 /** build-web's bell and task counter, each an icon with its number, as the console's toolbar has. */
 export function TitlebarBuildWebActivity(): React.JSX.Element | null {
   const show = useAppStore((s) => showsBuildWebActivity(s.settings))
   const updateSettings = useAppStore((s) => s.updateSettings)
   const { target, contextKey } = useBuildWebTarget()
-  const [tasksOpen, setTasksOpen] = useState(false)
-  const activity = useBuildWebBadge(show, readActivity, tasksOpen ? TASKS_OPEN_POLL_MS : POLL_MS)
+  const activity = useBuildWebActivity((s) => s.activity)
   // Why hidden until read: not connected, locked, or no rights is the usual state — not an error.
   if (!show || !activity || (!activity.notifications && !activity.tasks)) {
     return null
@@ -48,7 +38,7 @@ export function TitlebarBuildWebActivity(): React.JSX.Element | null {
             <BuildWebNotificationMenu notes={activity.notifications} host={host} />
           ) : null}
           {activity.tasks ? (
-            <BuildWebTaskMenu tasks={activity.tasks} host={host} onOpenChange={setTasksOpen} />
+            <BuildWebTaskMenu tasks={activity.tasks} host={host} onOpenChange={setWatching} />
           ) : null}
         </div>
       </ContextMenuTrigger>

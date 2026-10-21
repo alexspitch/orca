@@ -94,7 +94,9 @@ describe('host prompt delivery and retirement', () => {
             customSoundPath: null,
             customSoundVolume: 1,
             mutedNotificationSourceIds: [],
-            notifyHiddenWorkspaces: true
+            notifyHiddenWorkspaces: true,
+            buildWeb: true,
+            buildWebToastWhenFocused: true
           }),
           readWorkspaceLabels: () => ({}),
           isWorkspaceHidden: () => false,

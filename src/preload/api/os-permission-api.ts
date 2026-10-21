@@ -20,6 +20,7 @@ import type {
   StructuredNotificationRead
 } from '../../shared/notification-settings-types'
 import type { AgentSessionExecutionLocation } from '../../shared/agent-session-record'
+import type { BuildWebNotificationRef } from '../../shared/build-web-activity-types'
 
 export type NotificationsApi = {
   getDesktopAwayState: () => Promise<boolean | undefined>
@@ -39,6 +40,8 @@ export type NotificationsApi = {
   getPermissionStatus: () => Promise<NotificationPermissionStatusResult>
   probeDelivery: (args?: { force?: boolean }) => Promise<NotificationDeliveryProbeResult>
   playSound: (options?: { force?: boolean; volume?: number }) => Promise<NotificationSoundResult>
+  /** A build-web banner was clicked; null when it named no row (a summary of several). */
+  onBuildWebClick: (callback: (target: BuildWebNotificationRef | null) => void) => () => void
 }
 
 export type MacosTccPromptsApi = {

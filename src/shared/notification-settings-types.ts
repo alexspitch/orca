@@ -2,6 +2,7 @@ import type { StructuredAttentionRead, StructuredAttentionOrigin } from './agent
 import type { AgentStatusState, AgentType } from './agent-status-types'
 import type { AgentTurnOutcome } from './agent-turn-outcome'
 import type { NotificationSourceId } from './notification-source'
+import type { BuildWebNotificationRef } from './build-web-activity-types'
 
 export type NotificationSettings = {
   enabled: boolean
@@ -28,9 +29,13 @@ export type NotificationSettings = {
   mutedNotificationSourceIds: NotificationSourceId[]
   /** Off silences every notification from a workspace the sidebar's Filters switches hide. Local only. */
   notifyHiddenWorkspaces: boolean
+  /** A new row under build-web's bell: a desktop banner while Orca is in the background. */
+  buildWeb: boolean
+  /** The same row as a toast inside Orca while it is in front, instead of nothing. */
+  buildWebToastWhenFocused: boolean
 }
 
-export type NotificationEventSource = 'agent-task-complete' | 'terminal-bell' | 'test'
+export type NotificationEventSource = 'agent-task-complete' | 'terminal-bell' | 'build-web' | 'test'
 
 export type StructuredNotificationRead = StructuredAttentionRead & {
   paneKey: string
@@ -73,6 +78,8 @@ export type NotificationDispatchRequest = {
   structuredOrigin?: StructuredAttentionOrigin
   /** The execution host already pushed this to its paired phones, so main must not fan it out again. */
   mobileDeliveredByHost?: boolean
+  /** A `build-web` banner's words, and the row a click opens (null: just show Orca). */
+  buildWeb?: { title: string; body: string; target: BuildWebNotificationRef | null }
 }
 
 export type NotificationDispatchResult = {

@@ -19,6 +19,9 @@ export type BuildWebNotification = {
   unread: boolean
 }
 
+/** What a click on a row needs to open it: its task, else its run. */
+export type BuildWebNotificationRef = Pick<BuildWebNotification, 'kind' | 'issue_id' | 'run_id'>
+
 export type BuildWebConsoleTaskStatus =
   | 'queued'
   | 'running'

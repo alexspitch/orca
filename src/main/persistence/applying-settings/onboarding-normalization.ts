@@ -65,6 +65,11 @@ export function normalizeNotificationSettings(value: unknown): NotificationSetti
     notifyHiddenWorkspaces: booleanOr(
       candidate.notifyHiddenWorkspaces,
       defaults.notifyHiddenWorkspaces
+    ),
+    buildWeb: booleanOr(candidate.buildWeb, defaults.buildWeb),
+    buildWebToastWhenFocused: booleanOr(
+      candidate.buildWebToastWhenFocused,
+      defaults.buildWebToastWhenFocused
     )
   }
 }

@@ -21549,7 +21549,18 @@
       "tasksTitle": "Tasks",
       "noTasks": "Nothing is running",
       "moreRunning": "{{count}} more running",
-      "moreDone": "{{count}} more finished"
+      "moreDone": "{{count}} more finished",
+      "alertMany": "build-web: {{count}} new notifications",
+      "alertOpen": "Open"
+    },
+    "notifications": {
+      "label": "build-web",
+      "description": "A new row under build-web's bell — a failed build, a console error, a move or comment on your task — while Orca is in the background.",
+      "toastLabel": "build-web Inside Orca",
+      "toastDescription": "The same row as a message inside Orca while it is in front, with a button that opens the task.",
+      "searchDescription": "Notify about new rows under build-web's bell, as a banner or a message inside Orca.",
+      "keywordBuild": "build",
+      "keywordToast": "toast"
     }
   },
   "gitLog": {

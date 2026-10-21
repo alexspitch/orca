@@ -11,7 +11,11 @@ import {
   startBuildWebConsoleMock,
   type BuildWebConsoleMock
 } from './helpers/build-web-console-mock'
-import { activityCalls, resetActivityMock } from './helpers/build-web-activity-mock'
+import {
+  activityCalls,
+  arriveNotification,
+  resetActivityMock
+} from './helpers/build-web-activity-mock'
 import { startHiddenRendererFrameCapture } from './helpers/hidden-renderer-frame-capture'
 import { waitForSessionReady } from './helpers/store'
 
@@ -103,6 +107,47 @@ test('titlebar: build-web notifications and tasks, each an icon with its number'
     await group.click({ button: 'right', position: { x: 2, y: 2 } })
     await orcaPage.getByRole('menuitem', { name: 'Hide from titlebar' }).click()
     await expect(group).toBeHidden()
+  } finally {
+    await stopCapture()
+  }
+})
+
+test('a new build-web notification shows as a toast while Orca is in front', async ({
+  orcaPage
+}, testInfo) => {
+  test.setTimeout(120_000)
+  await waitForSessionReady(orcaPage)
+  const stopCapture = await startHiddenRendererFrameCapture(orcaPage)
+  try {
+    await orcaPage.evaluate(async (baseUrl) => {
+      await window.api.buildWeb.connect({ baseUrl, token: 'bwt_e2e' })
+      await window.__store?.getState().updateSettings({ showBuildWebButton: true })
+    }, mock.baseUrl)
+    // What was there at the first reading is the bell's to show, not news.
+    await expect(
+      orcaPage.getByRole('button', { name: 'build-web notifications, 2 new' })
+    ).toBeVisible({ timeout: 15_000 })
+    await expect(orcaPage.getByText('Image build failed: dc/ib-script-engine (rhel)')).toHaveCount(
+      0
+    )
+
+    arriveNotification('n-new', 'qa@box.test moved IS-900 to Testing')
+    // Why: the test window is never in front; a build-web page opening reads the bell at once.
+    await orcaPage.evaluate(() => {
+      document.hasFocus = () => true
+      window.__store?.getState().openBuildWebStandsPage()
+    })
+    const toast = orcaPage.locator('[data-sonner-toast]').filter({
+      hasText: 'qa@box.test moved IS-900 to Testing'
+    })
+    await expect(toast).toBeVisible({ timeout: 15_000 })
+    await expect(toast).toContainText('IS-900 · Please retest on the stand.')
+    await testInfo.attach('toast', {
+      body: await orcaPage.screenshot({ path: path.join(testInfo.outputDir, 'toast.png') }),
+      contentType: 'image/png'
+    })
+    await toast.getByRole('button', { name: 'Open' }).click()
+    await expect(orcaPage.getByText('The stand drops calls.')).toBeVisible({ timeout: 15_000 })
   } finally {
     await stopCapture()
   }

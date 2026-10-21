@@ -12,6 +12,8 @@ export function createNotificationsApi(): NonNullable<Partial<PreloadApi>['notif
     getPermissionStatus: () =>
       Promise.resolve({ supported: false, platform: getBrowserPlatform(), requested: false }),
     probeDelivery: () => Promise.resolve({ state: 'unsupported' as const, authoritative: false }),
-    playSound: () => Promise.resolve({ played: false, reason: 'missing-path' })
+    playSound: () => Promise.resolve({ played: false, reason: 'missing-path' }),
+    // The browser client shows no desktop banners, so none is ever clicked.
+    onBuildWebClick: () => () => {}
   }
 }

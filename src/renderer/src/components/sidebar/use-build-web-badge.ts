@@ -26,8 +26,7 @@ export function useBuildWebBadgeKick(): () => void {
 /** build-web numbers for a sidebar item, or null when unknown (not connected, no access). */
 export function useBuildWebBadge<T = BuildWebBadge>(
   enabled: boolean,
-  read: (target: RuntimeClientTarget) => Promise<T>,
-  pollMs = POLL_MS
+  read: (target: RuntimeClientTarget) => Promise<T>
 ): T | null {
   const { target } = useBuildWebTarget()
   const [badge, setBadge] = useState<T | null>(null)
@@ -51,7 +50,7 @@ export function useBuildWebBadge<T = BuildWebBadge>(
     let alive = true
     let timer = 0
     const poll = async (): Promise<void> => {
-      let delay = pollMs
+      let delay = POLL_MS
       // Why: a hidden window has nobody to show the number to; skip the console round-trip.
       if (document.visibilityState !== 'hidden') {
         try {
@@ -75,6 +74,6 @@ export function useBuildWebBadge<T = BuildWebBadge>(
       alive = false
       window.clearTimeout(timer)
     }
-  }, [enabled, kicks, onBuildWebPage, pollMs, read, started, target])
+  }, [enabled, kicks, onBuildWebPage, read, started, target])
   return badge
 }

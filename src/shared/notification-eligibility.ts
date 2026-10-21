@@ -27,6 +27,7 @@ export function isNotificationSourceAllowed(
     settings.enabled &&
     (request.source !== 'agent-task-complete' || settings.agentTaskComplete) &&
     (request.source !== 'terminal-bell' || settings.terminalBell) &&
+    (request.source !== 'build-web' || settings.buildWeb) &&
     passesAgentNeedsInputOnly(settings, request)
   )
 }

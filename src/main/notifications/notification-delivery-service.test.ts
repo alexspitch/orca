@@ -24,6 +24,8 @@ function makeSettings(overrides: Partial<NotificationSettings> = {}): Notificati
     customSoundVolume: 1,
     mutedNotificationSourceIds: [],
     notifyHiddenWorkspaces: true,
+    buildWeb: true,
+    buildWebToastWhenFocused: true,
     ...overrides
   }
 }
@@ -89,6 +91,29 @@ beforeEach(() => {
 })
 
 describe('createNotificationDeliveryService', () => {
+  it('shows a build-web row on the desktop only, each row apart, behind its own switch', () => {
+    const harness = makeHarness(makeSettings())
+    const service = createNotificationDeliveryService(harness.deps)
+    const row = (id: string) =>
+      ({
+        source: 'build-web',
+        notificationId: `build-web:${id}`,
+        attentionKey: `build-web:${id}`,
+        buildWeb: { title: 'Image build failed', body: 'IS-10', target: null }
+      }) as const
+    expect(service.dispatch(row('n1'))).toEqual({ delivered: true })
+    // A second row at once is other news, not a repeat of the first.
+    expect(service.dispatch(row('n2'))).toEqual({ delivered: true })
+    expect(harness.dispatchMobileNotification).not.toHaveBeenCalled()
+    expect(harness.setTrayAttention).not.toHaveBeenCalled()
+
+    const off = makeHarness(makeSettings({ buildWeb: false }))
+    expect(createNotificationDeliveryService(off.deps).dispatch(row('n3'))).toEqual({
+      delivered: false,
+      reason: 'source-disabled'
+    })
+  })
+
   it('lights the tray dot before the enabled/cooldown gates can reject the event', () => {
     const harness = makeHarness(makeSettings({ enabled: false }))
     const result = createNotificationDeliveryService(harness.deps).dispatch(makeRequest())

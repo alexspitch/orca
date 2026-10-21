@@ -64,6 +64,8 @@ function settings(overrides: Partial<NotificationSettings> = {}): NotificationSe
     customSoundVolume: 1,
     mutedNotificationSourceIds: [],
     notifyHiddenWorkspaces: true,
+    buildWeb: true,
+    buildWebToastWhenFocused: true,
     ...overrides
   }
 }

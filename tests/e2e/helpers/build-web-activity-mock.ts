@@ -7,11 +7,35 @@ export const activityCalls: string[] = []
 
 let seen = false
 let cleared = false
+// Rows that arrive after Orca first read the bell.
+const arrived: Record<string, unknown>[] = []
 
 export function resetActivityMock(): void {
   activityCalls.length = 0
   seen = false
   cleared = false
+  arrived.length = 0
+}
+
+/** A new row under the bell: a comment on IS-900, unread. */
+export function arriveNotification(id: string, title: string): void {
+  arrived.unshift({
+    id,
+    kind: 'comment',
+    severity: 'info',
+    title,
+    body: 'Please retest on the stand.',
+    issue_id: 'iss-files',
+    issue_key: 'IS-900',
+    issue_product: 'dc',
+    run_id: null,
+    job_id: null,
+    recipient: 'qa@box.test',
+    count: 1,
+    created_at: '2026-10-21T10:00:00Z',
+    last_at: '2026-10-21T10:00:00Z',
+    unread: true
+  })
 }
 
 const NOTIFICATIONS = [
@@ -132,9 +156,12 @@ export function serveActivity(
 ): boolean {
   if (path === '/api/notifications') {
     activityCalls.push('notifications')
-    const rows = cleared
-      ? []
-      : NOTIFICATIONS.map((n) => ({ ...n, unread: !seen && n.id !== 'n-runtime' }))
+    const rows = [
+      ...arrived,
+      ...(cleared
+        ? []
+        : NOTIFICATIONS.map((n) => ({ ...n, unread: !seen && n.id !== 'n-runtime' })))
+    ]
     json(res, 200, { notifications: rows, unread: rows.filter((n) => n.unread).length })
   } else if (path === '/api/notifications/seen') {
     activityCalls.push('seen')
