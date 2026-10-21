@@ -21910,5 +21910,12 @@
       "update": "Update Orca on {{value0}} to see its load.",
       "summary": "{{value0}}: CPU {{value1}}, memory {{value2}}"
     }
+  },
+  "tabBar": {
+    "claudeAccount": {
+      "label": "Claude — {{account}}",
+      "title": "Launch Claude as {{account}} in a new terminal",
+      "launchFailed": "Could not start Claude as {{account}}."
+    }
   }
 }

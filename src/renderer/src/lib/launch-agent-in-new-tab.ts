@@ -25,6 +25,7 @@ import type { StructuredAgentLaunchSettlement } from '@/lib/structured-agent-lau
 import type { StructuredLaunchTerminal } from '@/lib/structured-agent-session-launch-admission'
 import { workspaceKindForWorktreeId } from '@/lib/agent-launch-route-input'
 import type { AgentSessionLaunchPlan } from '@/lib/agent-session-launch-plan'
+import { CLAUDE_LAUNCH_ACCOUNT_ENV } from '../../../shared/claude-launch-account'
 import {
   launchOnceHostAnswered,
   routeNewTabLaunch
@@ -82,6 +83,9 @@ export type LaunchAgentInNewTabArgs = LaunchAgentInNewTabRequest & {
   ) => boolean | void
   /** Opens instead of this agent's terminal when the host declines its structured chat. */
   onStructuredHostDeclined?: () => StructuredLaunchTerminal
+  /** Claude only: this account's folder on the workspace's host, not its selection. Needs a
+   *  terminal route; the host resolves the folder at spawn. */
+  claudeAccountId?: string
 }
 
 /** `host-published`: the surface opens once its host answers, a structured chat's included. */
@@ -144,7 +148,11 @@ function launchAgentInNewTabInternal(args: LaunchAgentInNewTabArgs): LaunchAgent
     agentArgs !== undefined
       ? agentArgs
       : resolveTuiAgentLaunchArgs(agent, store.settings?.agentDefaultArgs)
-  const agentEnv = resolveTuiAgentLaunchEnv(agent, store.settings?.agentDefaultEnv)
+  const defaultAgentEnv = resolveTuiAgentLaunchEnv(agent, store.settings?.agentDefaultEnv)
+  const agentEnv =
+    agent === 'claude' && args.claudeAccountId
+      ? { ...defaultAgentEnv, [CLAUDE_LAUNCH_ACCOUNT_ENV]: args.claudeAccountId }
+      : defaultAgentEnv
   const trimmedPrompt = prompt?.trim() ?? ''
   const hasPrompt = trimmedPrompt.length > 0
   const isFollowupPath = TUI_AGENT_CONFIG[agent].promptInjectionMode === 'stdin-after-start'

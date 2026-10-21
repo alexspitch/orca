@@ -1,4 +1,5 @@
 import { withClaudeProfileTerminalEnv } from '../../../claude-accounts/claude-profile-installed-router'
+import { applyClaudeLaunchAccount } from '../../../claude-accounts/claude-launch-account'
 import type { PtySpawnResult } from '../../../providers/pty-provider-contract'
 import { LocalPtyProvider } from '../../../providers/local-pty-provider'
 import { isValidTerminalTabId } from '../../../../shared/terminal-tab-id'
@@ -77,8 +78,18 @@ export async function prepareRuntimePtySpawn(
   ctx.expectedWslDistro = target.expectedWslDistro
   ctx.codexSelectionTarget = target.codexSelectionTarget
   args.env = withClaudeProfileTerminalEnv(args.env, ctx.codexSelectionTarget)
+  // Why after the routing: a pane started for one account replaces it, and skips the selected one's.
+  const launchAccount = await applyClaudeLaunchAccount(
+    args.env,
+    ctx.codexSelectionTarget,
+    ctx.deps.getSettings
+  )
+  if (launchAccount) {
+    args.env = launchAccount.env
+    args.envToDelete = [...(args.envToDelete ?? []), ...launchAccount.envToDelete]
+  }
   ctx.claudeAuth =
-    ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
+    !launchAccount && ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
       ? await ctx.deps.prepareClaudeAuth(ctx.codexSelectionTarget)
       : null
 

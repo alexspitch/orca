@@ -8,8 +8,10 @@ const {
   storeState,
   openSettingsPageMock,
   openSettingsTargetMock,
-  useDetectedAgentsMock
+  useDetectedAgentsMock,
+  claudeAccountsMock
 } = vi.hoisted(() => ({
+  claudeAccountsMock: vi.fn((): { id: string; label: string }[] => []),
   shortcutLabelMock: vi.fn<() => string | null>(),
   storeState: {
     settings: {
@@ -30,6 +32,10 @@ const {
 
 vi.mock('@/hooks/useDetectedAgents', () => ({
   useDetectedAgents: useDetectedAgentsMock
+}))
+
+vi.mock('./use-claude-launch-accounts', () => ({
+  useClaudeLaunchAccounts: claudeAccountsMock
 }))
 
 vi.mock('@/hooks/useShortcutLabel', () => ({
@@ -96,12 +102,13 @@ vi.mock('@/lib/launch-agent-in-new-tab', () => ({
   launchAgentInNewTab: vi.fn()
 }))
 
-function renderAgentMenuItems(): string {
+function renderAgentMenuItems(prompt?: string): string {
   return renderToStaticMarkup(
     React.createElement(QuickLaunchAgentMenuItems, {
       worktreeId: 'worktree-1',
       groupId: 'group-1',
-      onFocusTerminal: vi.fn()
+      onFocusTerminal: vi.fn(),
+      ...(prompt !== undefined ? { prompt } : {})
     })
   )
 }
@@ -116,6 +123,7 @@ function rowMarkup(html: string, label: string): string {
 }
 
 beforeEach(() => {
+  claudeAccountsMock.mockReset().mockReturnValue([])
   shortcutLabelMock.mockReset()
   shortcutLabelMock.mockReturnValue(null)
   useDetectedAgentsMock.mockClear()
@@ -130,6 +138,20 @@ beforeEach(() => {
 })
 
 describe('QuickLaunchAgentMenuItems', () => {
+  it('lists the host’s other Claude accounts right after Claude, only without a prompt', () => {
+    claudeAccountsMock.mockReturnValue([{ id: 'acc-2', label: 'work@box.test' }])
+
+    const html = renderAgentMenuItems()
+    const claude = html.indexOf('title="Launch Claude in a new terminal"')
+    const account = html.indexOf('title="Launch Claude as work@box.test in a new terminal"')
+    const codex = html.indexOf('title="Launch Codex in a new terminal"')
+    expect(account).toBeGreaterThan(claude)
+    expect(codex === -1 || codex > account || codex < claude).toBe(true)
+    expect(html).toContain('Claude — work@box.test')
+
+    expect(renderAgentMenuItems('fix the bug')).not.toContain('Claude — work@box.test')
+  })
+
   it('renders the new-agent shortcut next to the configured default agent only', () => {
     shortcutLabelMock.mockReturnValue('⌘⌥T')
 

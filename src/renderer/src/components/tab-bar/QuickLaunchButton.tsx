@@ -19,6 +19,7 @@ import {
 import { translate } from '@/i18n/i18n'
 import { newAgentPromptOutcome } from '@/lib/new-agent-prompt-outcome'
 import { activeAgentNotesSendFailureMessage } from '@/lib/active-agent-note-send-result'
+import { ClaudeAccountLaunchItems } from './ClaudeAccountLaunchItems'
 
 export type QuickLaunchAgentMenuItemsProps = {
   worktreeId: string
@@ -200,23 +201,34 @@ function QuickLaunchAgentMenuItemsInner({
         const showsDefaultAgentShortcut =
           newAgentShortcut !== null && defaultAgent !== 'blank' && agent === defaultAgent
         return (
-          <DropdownMenuItem
-            key={agent}
-            disabled={disabled}
-            onSelect={() => runLaunch(agent)}
-            className="gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
-            title={translate(
-              'auto.components.tab.bar.QuickLaunchButton.ec2adf093e',
-              'Launch {{value0}} in a new terminal',
-              { value0: label }
-            )}
-          >
-            <AgentIcon agent={agent} size={14} />
-            <span className="flex-1">{label}</span>
-            {showsDefaultAgentShortcut ? (
-              <DropdownMenuShortcut>{newAgentShortcut}</DropdownMenuShortcut>
+          <React.Fragment key={agent}>
+            <DropdownMenuItem
+              disabled={disabled}
+              onSelect={() => runLaunch(agent)}
+              className="gap-2 rounded-[7px] px-2 py-1.5 text-[12px] leading-5 font-medium"
+              title={translate(
+                'auto.components.tab.bar.QuickLaunchButton.ec2adf093e',
+                'Launch {{value0}} in a new terminal',
+                { value0: label }
+              )}
+            >
+              <AgentIcon agent={agent} size={14} />
+              <span className="flex-1">{label}</span>
+              {showsDefaultAgentShortcut ? (
+                <DropdownMenuShortcut>{newAgentShortcut}</DropdownMenuShortcut>
+              ) : null}
+            </DropdownMenuItem>
+            {/* Why only without a prompt: a prompt may launch through the host, which drops the account. */}
+            {agent === 'claude' && prompt === undefined ? (
+              <ClaudeAccountLaunchItems
+                worktreeId={worktreeId}
+                groupId={groupId}
+                disabled={disabled}
+                onFocusTerminal={onFocusTerminal}
+                {...(launchSource !== undefined ? { launchSource } : {})}
+              />
             ) : null}
-          </DropdownMenuItem>
+          </React.Fragment>
         )
       })}
       <DropdownMenuItem

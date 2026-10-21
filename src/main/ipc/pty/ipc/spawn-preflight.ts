@@ -1,4 +1,5 @@
 import { withClaudeProfileTerminalEnv } from '../../../claude-accounts/claude-profile-installed-router'
+import { applyClaudeLaunchAccount } from '../../../claude-accounts/claude-launch-account'
 import { mintPtySessionId } from '../../../daemon/pty-session-id'
 import { LocalPtyProvider } from '../../../providers/local-pty-provider'
 import {
@@ -109,8 +110,18 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
   ctx.codexSelectionTarget = target.codexSelectionTarget
   ctx.spawnTiming.mark('preflight')
   args.env = withClaudeProfileTerminalEnv(args.env, ctx.codexSelectionTarget)
+  // Why after the routing: a pane started for one account replaces it, and skips the selected one's.
+  const launchAccount = await applyClaudeLaunchAccount(
+    args.env,
+    ctx.codexSelectionTarget,
+    ctx.deps.getSettings
+  )
+  if (launchAccount) {
+    args.env = launchAccount.env
+    args.envToDelete = [...(args.envToDelete ?? []), ...launchAccount.envToDelete]
+  }
   ctx.claudeAuth =
-    ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
+    !launchAccount && ctx.isClaudeLaunch && ctx.deps.prepareClaudeAuth
       ? await ctx.deps.prepareClaudeAuth(ctx.codexSelectionTarget)
       : null
   ctx.spawnTiming.mark('auth')
