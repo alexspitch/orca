@@ -318,6 +318,15 @@
         "sharper": "Sharper",
         "terminalControlledHint": "Set by terminal interface.",
         "terminalControlledTooltip": "Matching your terminal interface. Turn off Match terminal interface to change this."
+      },
+      "fileIcons": {
+        "title": "File Icons",
+        "description": "Draw files and folders in the Explorer with Orca’s icons or the Material Icon Theme.",
+        "orca": "Orca",
+        "material": "Material",
+        "keywordMaterial": "material",
+        "keywordExplorer": "explorer",
+        "keywordIcon": "icon theme"
       }
     },
     "browser": {

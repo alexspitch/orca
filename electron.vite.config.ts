@@ -315,6 +315,9 @@ export const electronViteConfig: UserConfig = {
     build: {
       manifest: true,
       reportCompressedSize: false,
+      // Why: the Material Icon Theme's 1,251 icons stay files, not a 2 MB chunk of data URLs.
+      assetsInlineLimit: (filePath) =>
+        filePath.includes('material-icon-theme') ? false : undefined,
       modulePreload: { polyfill: true },
       minify: 'oxc',
       target: 'es2020',

@@ -11,6 +11,7 @@ import {
 import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { cn } from '@/lib/utils'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { useMaterialFileIcon } from '@/lib/material-icons/use-material-file-icons'
 import {
   encodeWorkspaceFilePaths,
   WORKSPACE_FILE_PATH_MIME,
@@ -80,6 +81,11 @@ export type FileExplorerRowProps = {
   onNativeDragExpandDir: (dirPath: string) => void
 }
 
+/** A Material Icon Theme icon, its own colours; 14px so it reads in a 12px row's icon slot. */
+function MaterialRowIcon({ url }: { url: string }): React.JSX.Element {
+  return <img src={url} alt="" aria-hidden draggable={false} className="size-3.5 shrink-0" />
+}
+
 /** Offsets visual indentation for a scoped tree without changing the node paths passed to file actions. */
 export function FileExplorerRow({
   node,
@@ -126,6 +132,10 @@ export function FileExplorerRow({
   onNativeDragExpandDir
 }: FileExplorerRowProps): React.JSX.Element {
   const FileIcon = getFileTypeIcon(node.relativePath || node.name)
+  const materialIcon = useMaterialFileIcon(
+    node.name,
+    node.isDirectory ? (isExpanded ? 'folder-open' : 'folder') : 'file'
+  )
   const showLoadError = node.isDirectory && isExpanded && !isLoading && loadError !== null
   const rowDropDir = node.isDirectory ? node.path : targetDir
   const { setRowDragNode, handleDragOver, handleDragEnter, handleDragLeave, handleDrop } =
@@ -218,6 +228,8 @@ export function FileExplorerRow({
                 <Loader2 className="size-3 shrink-0 animate-spin text-muted-foreground" />
               ) : showLoadError ? (
                 <CircleAlert className="size-3 shrink-0 text-destructive" />
+              ) : materialIcon ? (
+                <MaterialRowIcon url={materialIcon} />
               ) : isExpanded ? (
                 <FolderOpen className="size-3 shrink-0 text-muted-foreground" />
               ) : (
@@ -229,6 +241,8 @@ export function FileExplorerRow({
               <span className="size-3 shrink-0" />
               {node.isSymlink ? (
                 <Link className="size-3 shrink-0 text-muted-foreground" />
+              ) : materialIcon ? (
+                <MaterialRowIcon url={materialIcon} />
               ) : (
                 React.createElement(FileIcon, {
                   className: 'size-3 shrink-0 text-muted-foreground'

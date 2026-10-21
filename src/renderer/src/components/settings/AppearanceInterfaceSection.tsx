@@ -16,6 +16,7 @@ import {
 } from './SettingsFormControls'
 import { DEFAULT_APP_FONT_FAMILY } from '../../../../shared/constants'
 import {
+  getFileIconEntries,
   getLanguageEntries,
   getMenuBarIconEntries,
   getSystemTrayEntries,
@@ -64,6 +65,8 @@ export function AppearanceInterfaceSection({
   const menuBarIconEntry = getMenuBarIconEntries({ showMenuBarIcon: true })[0]
   const systemTrayEntry = getSystemTrayEntries({ showSystemTray: true })[0]
   const themeEntry = getThemeEntries()[0]
+  const fileIconEntry = getFileIconEntries()[0]
+  const fileIconLabel = translate('settings.appearance.fileIcons.title', 'File Icons')
   const themeLabel = translate('auto.components.settings.AppearancePane.932ff1fbff', 'Theme')
   const titlebarEntry = getTitlebarEntries()[0]
   const typographyEntry = getTypographyEntries()[0]
@@ -106,6 +109,35 @@ export function AppearanceInterfaceSection({
                 {
                   value: 'light',
                   label: translate('auto.components.settings.AppearancePane.fd89b5487c', 'Light')
+                }
+              ]}
+            />
+          }
+        />
+      </SearchableSetting>
+
+      <SearchableSetting
+        title={fileIconLabel}
+        description={fileIconEntry?.description}
+        keywords={fileIconEntry?.keywords ?? ['material', 'explorer', 'icon theme']}
+        forceVisible={forceVisiblePrimary}
+      >
+        <SettingsRow
+          label={fileIconLabel}
+          description={fileIconEntry?.description}
+          control={
+            <SettingsSegmentedControl
+              ariaLabel={fileIconLabel}
+              value={settings.fileIconTheme ?? 'orca'}
+              onChange={(option) => updateSettings({ fileIconTheme: option })}
+              options={[
+                {
+                  value: 'orca',
+                  label: translate('settings.appearance.fileIcons.orca', 'Orca')
+                },
+                {
+                  value: 'material',
+                  label: translate('settings.appearance.fileIcons.material', 'Material')
                 }
               ]}
             />

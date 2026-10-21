@@ -31,6 +31,21 @@ export const getThemeEntries = createLocalizedCatalog((): SettingsSearchEntry[] 
   }
 ])
 
+export const getFileIconEntries = createLocalizedCatalog((): SettingsSearchEntry[] => [
+  {
+    title: translate('settings.appearance.fileIcons.title', 'File Icons'),
+    description: translate(
+      'settings.appearance.fileIcons.description',
+      'Draw files and folders in the Explorer with Orca’s icons or the Material Icon Theme.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('settings.appearance.fileIcons.keywordMaterial', 'material'),
+      ...translateSearchKeyword('settings.appearance.fileIcons.keywordExplorer', 'explorer'),
+      ...translateSearchKeyword('settings.appearance.fileIcons.keywordIcon', 'icon theme')
+    ]
+  }
+])
+
 export const getLanguageEntries = createLocalizedCatalog((): SettingsSearchEntry[] => [
   {
     title: translate('settings.appearance.language.title', 'Language'),
@@ -258,6 +273,7 @@ export function getAppearancePaneSearchEntries(
   return [
     ...getAppearanceSectionEntries(),
     ...getThemeEntries(),
+    ...getFileIconEntries(),
     ...(SHOW_UI_LANGUAGE_SETTING ? getLanguageEntries() : []),
     ...getTypographyEntries(),
     ...getZoomEntries(),

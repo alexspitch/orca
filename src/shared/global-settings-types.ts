@@ -78,6 +78,8 @@ export type GlobalSettings = GlobalSettingsBase &
      *  Existing workspaces and user-typed names are never rewritten. */
     jiraIssueKeyCasing?: JiraIssueKeyCasing
     theme: 'system' | 'dark' | 'light'
+    /** The Explorer's file and folder icons: Orca's own, or the Material Icon Theme's. */
+    fileIconTheme?: 'orca' | 'material'
     /** Controls the left sidebar surface without changing terminal brightness. */
     leftSidebarAppearanceMode: LeftSidebarAppearanceMode
     leftSidebarTintColor?: string
