@@ -1,4 +1,5 @@
 import {
+  BUILD_WEB_ACTIVITY_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
@@ -94,6 +95,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         translate(
           'buildWeb.client.updateServerTrainsRolling',
           'This Orca server does not count the images trains roll out yet. Update the server.'
+        )
+    },
+    {
+      methods: new Set<Method>(['activity', 'notificationsSeen', 'notificationsClear']),
+      capability: BUILD_WEB_ACTIVITY_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerActivity',
+          'This Orca server does not read build-web notifications and tasks yet. Update the server.'
         )
     }
   ]

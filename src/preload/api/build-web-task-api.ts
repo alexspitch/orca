@@ -8,6 +8,7 @@ import type {
   BuildWebTrainsRolling
 } from '../../shared/build-web-train-types'
 import type { BuildWebWatchCheck, BuildWebWatchState } from '../../shared/build-web-watch-types'
+import type { BuildWebActivity } from '../../shared/build-web-activity-types'
 import type {
   BuildWebRecapPage,
   BuildWebRecapQuery,
@@ -141,4 +142,7 @@ export type BuildWebTaskApi = {
   testRunWorkspace: (args: { runId: string; workspace: string }) => Promise<BuildWebTestWorkspace>
   testCase: (args: { key: string }) => Promise<BuildWebTestCaseHistory>
   testNightly: () => Promise<BuildWebLastNightly | null>
+  activity: () => Promise<BuildWebActivity>
+  notificationsSeen: () => Promise<BuildWebMutationResult<true>>
+  notificationsClear: () => Promise<BuildWebMutationResult<true>>
 }

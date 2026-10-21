@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  showsBuildWebActivity,
   showsBuildWebRecaps,
   showsBuildWebStands,
   showsBuildWebTesting,
@@ -56,6 +57,19 @@ describe('the Stands sidebar group', () => {
       false
     )
     expect(showsBuildWebStands({ showBuildWebButton: false, showBuildWebStandsButton: true })).toBe(
+      true
+    )
+  })
+})
+
+describe('the titlebar bell and task counter', () => {
+  it('follow Issues until they are set on their own', () => {
+    expect(showsBuildWebActivity({ showBuildWebButton: true })).toBe(true)
+    expect(showsBuildWebActivity(undefined)).toBe(false)
+    expect(showsBuildWebActivity({ showBuildWebButton: true, showBuildWebActivity: false })).toBe(
+      false
+    )
+    expect(showsBuildWebActivity({ showBuildWebButton: false, showBuildWebActivity: true })).toBe(
       true
     )
   })

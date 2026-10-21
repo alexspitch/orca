@@ -115,4 +115,7 @@ export function registerBuildWebTaskHandlers(): void {
   )
   handle('testCase', BuildWebTestCaseParams, (args) => commands.buildWebTestCase(args))
   ipcMain.handle('buildWeb:testNightly', () => commands.buildWebTestNightly())
+  ipcMain.handle('buildWeb:activity', () => commands.buildWebActivity())
+  ipcMain.handle('buildWeb:notificationsSeen', () => commands.buildWebNotificationsSeen())
+  ipcMain.handle('buildWeb:notificationsClear', () => commands.buildWebNotificationsClear())
 }

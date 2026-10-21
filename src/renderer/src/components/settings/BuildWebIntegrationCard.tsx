@@ -10,6 +10,7 @@ import { BuildWebConnectForm } from '../build-web/BuildWebConnect'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
 import {
+  showsBuildWebActivity,
   showsBuildWebRecaps,
   showsBuildWebStands,
   showsBuildWebTesting,
@@ -25,6 +26,7 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
   const showTestingButton = useAppStore((s) => showsBuildWebTesting(s.settings))
   const showRecapsButton = useAppStore((s) => showsBuildWebRecaps(s.settings))
   const showStandsButton = useAppStore((s) => showsBuildWebStands(s.settings))
+  const showActivity = useAppStore((s) => showsBuildWebActivity(s.settings))
   const updateSettings = useAppStore((s) => s.updateSettings)
   const [status, setStatus] = useState<BuildWebConnectionStatus | null>(null)
   const [replacing, setReplacing] = useState(false)
@@ -231,6 +233,26 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
             onCheckedChange={(checked) =>
               void updateSettings({ showBuildWebStandsButton: checked })
             }
+          />
+        </label>
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>
+            <span className="block">
+              {translate(
+                'buildWeb.settings.showActivityInTitlebar',
+                'Show notifications and tasks in titlebar'
+              )}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {translate(
+                'buildWeb.settings.showActivityInTitlebarHint',
+                "build-web's bell and its running tasks, each with its number"
+              )}
+            </span>
+          </span>
+          <Switch
+            checked={showActivity}
+            onCheckedChange={(checked) => void updateSettings({ showBuildWebActivity: checked })}
           />
         </label>
       </IntegrationCardDetails>

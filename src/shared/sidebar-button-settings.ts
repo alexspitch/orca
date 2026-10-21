@@ -18,6 +18,8 @@ export type SidebarButtonSettings = {
   showBuildWebRecapsButton?: boolean
   /** The «Stands» group of build-web's stands; unset, it follows «Issues». */
   showBuildWebStandsButton?: boolean
+  /** build-web's bell and task counter in the titlebar; unset, they follow «Issues». */
+  showBuildWebActivity?: boolean
 }
 
 /** Trains came after Issues: someone already on build-web sees it without a trip to Settings. */
@@ -38,4 +40,9 @@ export function showsBuildWebRecaps(settings: SidebarButtonSettings | null | und
 /** Stands came after Issues too, and is shown the same way. */
 export function showsBuildWebStands(settings: SidebarButtonSettings | null | undefined): boolean {
   return settings?.showBuildWebStandsButton ?? settings?.showBuildWebButton === true
+}
+
+/** The titlebar's bell and task counter came after Issues too, and are shown the same way. */
+export function showsBuildWebActivity(settings: SidebarButtonSettings | null | undefined): boolean {
+  return settings?.showBuildWebActivity ?? settings?.showBuildWebButton === true
 }

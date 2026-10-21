@@ -18,6 +18,7 @@ import { useAppStore } from '../store'
 import { hasCustomTitleBar, hasMacTrafficLights } from './app-window-chrome'
 import { TitlebarPageHistory } from '@/components/build-web/page-history/TitlebarPageHistory'
 import { usePageHistory } from '@/components/build-web/page-history/page-history-store'
+import { TitlebarBuildWebActivity } from '@/components/build-web/activity/TitlebarBuildWebActivity'
 import type { AppChromeLayout } from './use-app-chrome-layout'
 
 /**
@@ -45,7 +46,7 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
         layout.leftTitlebarChromeLayout.isFloating ? ' w-max' : ' w-full'
       }`}
     >
-      <div className="flex h-full items-center">
+      <div className="flex h-full min-w-0 items-center">
         {hasMacTrafficLights && !layout.isFullScreen ? (
           <div className="titlebar-traffic-light-pad" />
         ) : hasCustomTitleBar ? (
@@ -111,6 +112,8 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
             </TooltipContent>
           </Tooltip>
         )}
+        {/* Why beside the toggle: the arrows on the right are what a narrow header cuts off, not these. */}
+        <TitlebarBuildWebActivity />
       </div>
       {/* Why: the workspace pair shows where its shortcut is live (hidden in Settings/non-stack views); the page pair once a page was opened. */}
       {showWorktreeHistory || hasPageHistory ? (

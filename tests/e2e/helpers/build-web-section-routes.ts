@@ -1,4 +1,5 @@
 import type http from 'node:http'
+import { serveActivity } from './build-web-activity-mock'
 import { serveImageBuilds, type ImageAdoption } from './build-web-images-mock'
 import { serveIssues } from './build-web-issues-mock'
 import { serveRecaps } from './build-web-recaps-mock'
@@ -13,6 +14,7 @@ export function serveSectionRoutes(
   adoptions: readonly ImageAdoption[]
 ): boolean {
   return (
+    serveActivity(res, path, json) ||
     serveTestHistory(res, path, url, json) ||
     serveImageBuilds(res, path, json, adoptions) ||
     serveIssues(res, path, url, json) ||

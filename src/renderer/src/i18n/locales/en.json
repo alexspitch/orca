@@ -20585,7 +20585,8 @@
       "updateServerIssueFiles": "This Orca server does not open task attachments yet. Update the server.",
       "updateServerImageAdopt": "This Orca server cannot settle a failed image with an earlier build yet. Update the server.",
       "updateServerIssueMockups": "This Orca server does not show task mockups yet. Update the server.",
-      "updateServerFavoriteSort": "This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column."
+      "updateServerFavoriteSort": "This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column.",
+      "updateServerActivity": "This Orca server does not read build-web notifications and tasks yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -20820,7 +20821,9 @@
       "showRecapsInSidebar": "Show Recaps in sidebar",
       "showRecapsInSidebarHint": "The reports of build-web automations, newest first",
       "showStandsInSidebar": "Show Stands in sidebar",
-      "showStandsInSidebarHint": "The services, logs and UI logins of each build-web stand"
+      "showStandsInSidebarHint": "The services, logs and UI logins of each build-web stand",
+      "showActivityInTitlebar": "Show notifications and tasks in titlebar",
+      "showActivityInTitlebarHint": "build-web's bell and its running tasks, each with its number"
     },
     "sidebar": {
       "issues": "Issues",
@@ -21523,6 +21526,30 @@
       "label": "Open tasks",
       "list": "List",
       "task": "Task"
+    },
+    "activity": {
+      "group": "build-web",
+      "hide": "Hide from titlebar",
+      "notifications": "build-web notifications",
+      "notificationsUnread": "build-web notifications, {{count}} new",
+      "notificationsTitle": "Notifications",
+      "noNotifications": "No notifications",
+      "clear": "Clear",
+      "kindBuild": "image build",
+      "kindPush": "publish",
+      "kindJob": "stand job",
+      "kindTrain": "train",
+      "kindRuntime": "console",
+      "kindTests": "nightly tests",
+      "kindStatus": "status change",
+      "kindAssigned": "assignment",
+      "kindComment": "comment",
+      "tasks": "build-web tasks",
+      "tasksRunning": "build-web tasks, {{count}} running",
+      "tasksTitle": "Tasks",
+      "noTasks": "Nothing is running",
+      "moreRunning": "{{count}} more running",
+      "moreDone": "{{count}} more finished"
     }
   },
   "gitLog": {

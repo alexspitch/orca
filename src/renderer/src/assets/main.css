@@ -1248,8 +1248,12 @@ html.native-shell .app-layout {
   color: var(--worktree-sidebar-foreground);
 }
 
+/* Why: in a narrow sidebar header the name gives way first, so no control is cut off at its edge. */
 .titlebar-app-name-main {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .titlebar-icon-button {

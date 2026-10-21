@@ -65,6 +65,11 @@ import {
 import { checkBuildWebWatch, getBuildWebWatch } from '../build-web/build-web-watch'
 import { listBuildWebRecaps, readBuildWebRecapReport } from '../build-web/build-web-recaps'
 import {
+  clearBuildWebNotifications,
+  markBuildWebNotificationsSeen,
+  readBuildWebActivity
+} from '../build-web/build-web-activity'
+import {
   getBuildWebLastNightly,
   getBuildWebTestCase,
   getBuildWebTestRun,
@@ -300,5 +305,17 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebTestNightly() {
     return getBuildWebLastNightly()
+  }
+
+  buildWebActivity() {
+    return readBuildWebActivity()
+  }
+
+  buildWebNotificationsSeen() {
+    return markBuildWebNotificationsSeen()
+  }
+
+  buildWebNotificationsClear() {
+    return clearBuildWebNotifications()
   }
 }
