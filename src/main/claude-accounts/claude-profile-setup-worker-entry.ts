@@ -17,7 +17,11 @@ void provisionClaudeAccountProfile({
   userConfigDir: job.userConfigDir,
   installHooks: job.hooks
     ? ({ configDir }) =>
-        new ClaudeHookService().install({ configDir, claudeVersion: job.claudeVersion })
+        new ClaudeHookService().install({
+          configDir,
+          claudeVersion: job.claudeVersion,
+          userFolder: job.profile.external === true
+        })
     : null
 })
   .then(

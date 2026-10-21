@@ -82,6 +82,23 @@ describe('Claude statusLine by resolved version', () => {
     expect(readSettings().statusLine).toEqual(USER_STATUS_LINE)
   })
 
+  it.skipIf(process.platform === 'win32')(
+    'puts a wrapped user statusLine back on a downgrade and wraps it again after the upgrade',
+    () => {
+      mkdirSync(join(tmpHome, '.claude'), { recursive: true })
+      writeFileSync(settingsPath, JSON.stringify({ statusLine: USER_STATUS_LINE }))
+      const service = new ClaudeHookService()
+      service.install({ claudeVersion: '2.1.261' })
+      expect(readSettings().statusLine?.command).toContain('claude-statusline')
+
+      service.install({ claudeVersion: '1.0.63' })
+      expect(readSettings().statusLine).toEqual(USER_STATUS_LINE)
+
+      service.install({ claudeVersion: '2.1.261' })
+      expect(readSettings().statusLine?.command).toContain('claude-statusline')
+    }
+  )
+
   it('keeps installing the statusLine when the version is unresolved', () => {
     new ClaudeHookService().install()
     expect(readSettings().statusLine?.command).toContain('claude-statusline')

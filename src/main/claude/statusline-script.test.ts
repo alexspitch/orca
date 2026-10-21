@@ -190,8 +190,9 @@ describe.skipIf(process.platform === 'win32')('statusline curl throttle (posix b
     scriptPath: string,
     dir: string,
     payload: string,
-    paneKey = PANE_KEY
-  ): Promise<void> {
+    paneKey = PANE_KEY,
+    extraEnv: Record<string, string> = {}
+  ): Promise<string> {
     return new Promise((resolve, reject) => {
       const child = spawn('sh', [scriptPath], {
         env: {
@@ -199,18 +200,23 @@ describe.skipIf(process.platform === 'win32')('statusline curl throttle (posix b
           TMPDIR: dir,
           ORCA_AGENT_HOOK_PORT: '65535',
           ORCA_AGENT_HOOK_TOKEN: 'test-token',
-          ORCA_PANE_KEY: paneKey
+          ORCA_PANE_KEY: paneKey,
+          ...extraEnv
         },
-        stdio: ['pipe', 'ignore', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe']
       })
+      let stdout = ''
       let stderr = ''
+      child.stdout.on('data', (chunk: Buffer) => {
+        stdout += chunk.toString()
+      })
       child.stderr.on('data', (chunk: Buffer) => {
         stderr += chunk.toString()
       })
       child.on('error', reject)
       child.on('close', (code) => {
         if (code === 0) {
-          resolve()
+          resolve(stdout)
         } else {
           reject(new Error(`statusline script exited ${code}: ${stderr}`))
         }
@@ -326,5 +332,27 @@ describe.skipIf(process.platform === 'win32')('statusline curl throttle (posix b
     expect(lineCount(curlLog)).toBe(0)
     expect(lineCount(dateLog)).toBe(0)
     expect(() => readFileSync(stampPathFor(dir), 'utf8')).toThrow()
+  })
+
+  it('stays silent without a wrapped user status line', async () => {
+    const { scriptPath, dir } = makeHarness()
+    expect(await runScript(scriptPath, dir, rateLimitPayload(1_000))).toBe('')
+  })
+
+  it('runs a wrapped user status line on every tick with the payload, then still posts', async () => {
+    const { scriptPath, dir, curlLog, payloadLog } = makeHarness()
+    const userStdinLog = join(dir, 'user stdin.log')
+    const userEnv = {
+      ORCA_STATUSLINE_USER_COMMAND: `/bin/cat > '${userStdinLog}'; printf 'my status\\n'`
+    }
+    const payload = rateLimitPayload(1_000)
+    expect(await runScript(scriptPath, dir, payload, PANE_KEY, userEnv)).toBe('my status\n')
+    expect(readFileSync(userStdinLog, 'utf8')).toBe(`${payload}\n`)
+    expect(readFileSync(payloadLog, 'utf8')).toBe(payload)
+    // Throttled and non-subscriber ticks skip the post but never the user's status line.
+    const throttled = rateLimitPayload(2_000)
+    expect(await runScript(scriptPath, dir, throttled, PANE_KEY, userEnv)).toBe('my status\n')
+    expect(await runScript(scriptPath, dir, '{"model":{}}', PANE_KEY, userEnv)).toBe('my status\n')
+    expect(lineCount(curlLog)).toBe(1)
   })
 })

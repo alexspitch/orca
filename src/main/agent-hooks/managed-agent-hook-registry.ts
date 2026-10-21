@@ -6,6 +6,7 @@ import type { HookInstallAgent } from '../../shared/telemetry-events'
 import { ampHookService } from '../amp/hook-service'
 import { antigravityHookService } from '../antigravity/hook-service'
 import { claudeHookService } from '../claude/hook-service'
+import { removeClaudeUserConfigDirHooks } from '../claude/claude-user-config-dirs'
 import { codexHookService } from '../codex/hook-service'
 import { commandCodeHookService } from '../command-code/hook-service'
 import { copilotHookService } from '../copilot/hook-service'
@@ -101,7 +102,13 @@ export const MANAGED_AGENT_HOOK_SCRIPT_REFRESHERS: readonly ManagedAgentHookScri
 ]
 
 export const MANAGED_AGENT_HOOK_REMOVERS: readonly ManagedAgentHookRemover[] = [
-  ['claude', () => claudeHookService.remove()],
+  [
+    'claude',
+    () => {
+      removeClaudeUserConfigDirHooks()
+      return claudeHookService.remove()
+    }
+  ],
   ['openclaude', () => openClaudeHookService.remove()],
   ['codex', () => codexHookService.remove()],
   ['gemini', () => geminiHookService.remove()],

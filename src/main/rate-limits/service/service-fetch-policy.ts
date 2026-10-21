@@ -12,6 +12,26 @@ import {
 import { mapClaudeUsageWindow } from '../claude-usage-window'
 import { readUserClaudeConfigDir } from '../../claude-accounts/claude-profile-paths'
 import { getClaudeProfileRouter } from '../../claude-accounts/claude-profile-installed-router'
+import {
+  claudeStateFile,
+  isSameClaudeLogin,
+  readClaudeFolderLogin
+} from '../../claude-accounts/claude-account-folder'
+
+// Why: Claude rewrites its state file constantly; a login changes far less often than posts arrive.
+const FOLDER_LOGIN_MAX_AGE_MS = 60_000
+
+function isSameClaudeFolderLogin(left: string | null, right: string | null): boolean {
+  const leftLogin = readClaudeFolderLogin(
+    claudeStateFile(left ?? undefined),
+    FOLDER_LOGIN_MAX_AGE_MS
+  )
+  const rightLogin = readClaudeFolderLogin(
+    claudeStateFile(right ?? undefined),
+    FOLDER_LOGIN_MAX_AGE_MS
+  )
+  return Boolean(leftLogin && rightLogin && isSameClaudeLogin(leftLogin, rightLogin))
+}
 
 export abstract class RateLimitServiceFetchPolicy extends RateLimitServiceFetchTargets {
   protected getMiniMaxCredentialError(message: string): ProviderRateLimits {
@@ -115,7 +135,11 @@ export abstract class RateLimitServiceFetchPolicy extends RateLimitServiceFetchT
       return
     }
     // Why: sessions of other accounts (or other runtimes) report their own quota; mixing them into the active account's bar would lie.
-    if (normalizeClaudeConfigDir(event.configDir) !== snapshot.configDir) {
+    // Another folder signed in to the same account (e.g. a CLAUDE_CONFIG_DIR alias) shares its quota.
+    if (
+      normalizeClaudeConfigDir(event.configDir) !== snapshot.configDir &&
+      !isSameClaudeFolderLogin(event.configDir, snapshot.configDir)
+    ) {
       console.debug('[rate-limits] dropped live Claude usage: configDir mismatch', {
         eventConfigDir: event.configDir,
         snapshotConfigDir: snapshot.configDir

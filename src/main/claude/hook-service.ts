@@ -1,4 +1,4 @@
-import { existsSync, rmSync, writeFileSync } from 'node:fs'
+import { rmSync } from 'node:fs'
 import type { AgentHookSource } from '../../shared/agent-hook-relay'
 import type { SFTPWrapper } from 'ssh2'
 import type { AgentHookInstallState, AgentHookInstallStatus } from '../../shared/agent-hook-types'
@@ -6,7 +6,6 @@ import {
   buildManagedCommandHook,
   readHooksJson,
   writeHooksJson,
-  type HooksConfig,
   writeManagedScript
 } from '../agent-hooks/installer-utils'
 import {
@@ -25,11 +24,10 @@ import {
 } from './windows-hook-files'
 
 export { getManagedScript }
-import { getManagedStatusLineCommand, getManagedStatusLineScript } from './statusline-script'
+import { getManagedStatusLineScript } from './statusline-script'
 import { refuseProfileAtDefaultHome } from './claude-profile-hook-target'
 import {
   applyManagedHooks,
-  applyManagedStatusLine,
   CLAUDE_HOOK_SETTINGS,
   getManagedScriptFileName,
   getConfigPath,
@@ -39,14 +37,16 @@ import {
   getRemoteConfigPath,
   getRemoteManagedEventCommand,
   getStatusLineInstallMarkerPath,
-  getStatusLineScriptFileName,
   getStatusLineScriptPath,
-  getStatusLineSlotState,
   findManagedEventHookForms,
   removeManagedHooks,
-  removeManagedStatusLine,
   type ClaudeCompatibleHookSettings
 } from './hook-settings'
+import {
+  installManagedStatusLine,
+  retireManagedStatusLine,
+  uninstallManagedStatusLine
+} from './statusline-install'
 import {
   getClaudeManagedHookPlan,
   OPENCLAUDE_MANAGED_HOOK_PLAN,
@@ -69,6 +69,8 @@ type ClaudeHookInstallOptions = {
 type ClaudeHookTargetOptions = ClaudeHookInstallOptions & {
   /** An account profile on this host; omitted for the default home. */
   configDir?: string
+  /** configDir is the user's own folder, which gets no settings copy from the default home. */
+  userFolder?: boolean
 }
 
 const DEFAULT_CLAUDE_HOOK_SERVICE_OPTIONS: ClaudeHookServiceOptions = {
@@ -197,54 +199,14 @@ export class ClaudeHookService {
       writeManagedScript(scriptPath, payload)
     }
     // Why: a profile's statusLine arrives with the settings copy from the default home.
-    if (options.configDir === undefined && plan.statusLine === 'install') {
-      nextConfig = this.installManagedStatusLine(nextConfig)
-    } else if (options.configDir === undefined && plan.statusLine === 'retire') {
-      nextConfig = this.retireManagedStatusLine(nextConfig)
+    const ownsStatusLine = options.configDir === undefined || options.userFolder === true
+    if (ownsStatusLine && plan.statusLine === 'install') {
+      nextConfig = installManagedStatusLine(nextConfig, this.options.settings, options.configDir)
+    } else if (ownsStatusLine && plan.statusLine === 'retire') {
+      nextConfig = retireManagedStatusLine(nextConfig, this.options.settings, options.configDir)
     }
     writeHooksJson(configPath, nextConfig)
     return this.getStatus(options)
-  }
-
-  // Why: the statusline feed is opportunistic (usage display, not agent status); a user who deleted the
-  // managed entry has opted out, and the marker distinguishes that deletion from a first install.
-  private installManagedStatusLine(config: HooksConfig): HooksConfig {
-    const scriptFileName = getStatusLineScriptFileName(this.options.settings)
-    const markerPath = getStatusLineInstallMarkerPath(this.options.settings)
-    const slot = getStatusLineSlotState(config, scriptFileName)
-    if (slot === 'user' || (slot === 'empty' && existsSync(markerPath))) {
-      return config
-    }
-    const statusLineScriptPath = getStatusLineScriptPath(this.options.settings)
-    writeManagedScript(statusLineScriptPath, getManagedStatusLineScript('local'))
-    const next = applyManagedStatusLine(
-      config,
-      getManagedStatusLineCommand(statusLineScriptPath),
-      scriptFileName
-    )
-    try {
-      writeFileSync(markerPath, '')
-    } catch {
-      // Best-effort: a missing marker only means one future user deletion gets re-installed once.
-    }
-    return next
-  }
-
-  // Why: a Claude that predates statusLine discards the whole settings file over Orca's; dropping the
-  // marker with it keeps an upgrade from reading the removal as the user's opt-out.
-  private retireManagedStatusLine(config: HooksConfig): HooksConfig {
-    const { config: next, changed } = removeManagedStatusLine(
-      config,
-      getStatusLineScriptFileName(this.options.settings)
-    )
-    if (changed) {
-      try {
-        rmSync(getStatusLineInstallMarkerPath(this.options.settings), { force: true })
-      } catch {
-        // Best-effort: a stale marker only means one upgrade skips re-adding the statusline.
-      }
-    }
-    return next
   }
 
   // Why: install the Claude hook on the remote box (via SFTP); POSIX-only by design (Windows-remote deferred).
@@ -321,9 +283,9 @@ export class ClaudeHookService {
       config,
       getManagedScriptFileName(this.options.settings)
     )
-    const { config: nextConfig, changed: statusLineChanged } = removeManagedStatusLine(
+    const { config: nextConfig, changed: statusLineChanged } = uninstallManagedStatusLine(
       hooksRemoved,
-      getStatusLineScriptFileName(this.options.settings)
+      this.options.settings
     )
     if (hooksChanged || statusLineChanged) {
       writeHooksJson(configPath, nextConfig)

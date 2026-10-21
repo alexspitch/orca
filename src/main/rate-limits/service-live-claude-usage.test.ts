@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ProviderRateLimits } from '../../shared/rate-limit-types'
 import { RateLimitService } from './service'
@@ -283,6 +286,50 @@ describe('RateLimitService', () => {
       expect(service.getState().claude?.session?.usedPercent).toBe(33)
     } finally {
       vi.useRealTimers()
+    }
+  })
+
+  it('accepts posts from another folder signed in to the same account', async () => {
+    vi.useFakeTimers()
+    const home = mkdtempSync(join(tmpdir(), 'orca-live-claude-login-'))
+    const writeLogin = (dir: string, emailAddress: string) => {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(
+        join(dir, '.claude.json'),
+        JSON.stringify({ oauthAccount: { emailAddress, organizationUuid: 'org-1' } })
+      )
+    }
+    try {
+      vi.stubEnv('HOME', home)
+      vi.stubEnv('USERPROFILE', home)
+      vi.stubEnv('CLAUDE_CONFIG_DIR', '')
+      writeLogin(home, 'me@example.com')
+      const aliasDir = join(home, 'work-claude')
+      writeLogin(aliasDir, 'me@example.com')
+      const otherDir = join(home, 'other-claude')
+      writeLogin(otherDir, 'someone@example.com')
+      vi.mocked(fetchClaudeRateLimits).mockResolvedValue(okProvider('claude', 18))
+      mockFreshBackgroundProviderFetches()
+      const service = new RateLimitService()
+      await service.refresh()
+
+      service.ingestLiveClaudeRateLimits({
+        configDir: otherDir,
+        fiveHour: { used_percentage: 99 },
+        sevenDay: null
+      })
+      expect(service.getState().claude?.session?.usedPercent).toBe(18)
+
+      service.ingestLiveClaudeRateLimits({
+        configDir: aliasDir,
+        fiveHour: { used_percentage: 41 },
+        sevenDay: null
+      })
+      expect(service.getState().claude?.session?.usedPercent).toBe(41)
+    } finally {
+      vi.unstubAllEnvs()
+      vi.useRealTimers()
+      rmSync(home, { recursive: true, force: true })
     }
   })
 

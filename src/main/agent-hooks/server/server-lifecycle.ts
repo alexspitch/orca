@@ -8,6 +8,10 @@ import {
   CLAUDE_STATUSLINE_PATHNAME,
   parseClaudeStatusLineBody
 } from '../../../shared/claude-statusline-rate-limits'
+import {
+  CLAUDE_CONFIG_DIR_LAUNCH_PATHNAME,
+  parseClaudeConfigDirLaunchBody
+} from '../../../shared/claude-config-dir-launch'
 import { mergeAgentHookRequestHeaders } from '../../../shared/agent-hook-listener/hook-envelope'
 import { readRequestBody } from '../../../shared/agent-hook-listener/request-body'
 import { resolveHookSource } from '../../../shared/agent-hook-listener/source-routing'
@@ -110,6 +114,15 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerStatusHook
         await this.initializeStatusHookOwner()
         if (!isStatusCurrent()) {
           res.writeHead(404)
+          res.end()
+          return
+        }
+        if (pathname === CLAUDE_CONFIG_DIR_LAUNCH_PATHNAME) {
+          const configDir = parseClaudeConfigDirLaunchBody(body)
+          if (configDir) {
+            await this.onClaudeConfigDir?.(configDir)
+          }
+          res.writeHead(204)
           res.end()
           return
         }

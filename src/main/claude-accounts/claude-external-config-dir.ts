@@ -5,10 +5,12 @@ import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
 import { readHooksJson } from '../agent-hooks/hooks-json-read'
 import { writeHooksJson } from '../agent-hooks/installer-utils'
 import {
+  CLAUDE_HOOK_SETTINGS,
   getConfigPath,
   getManagedScriptFileName,
   removeManagedHooks
 } from '../claude/hook-settings'
+import { uninstallManagedStatusLine } from '../claude/statusline-install'
 import {
   assertOutsideDefaultClaudeHomes,
   type ClaudeProfileDescriptor
@@ -102,7 +104,7 @@ export function resolveExternalClaudeConfigDir(
   return configDir
 }
 
-/** Takes Orca's hooks back out on removal; never throws, so the account is always forgotten. */
+/** Takes Orca's hooks and status line back out on removal; never throws, so the account is always forgotten. */
 export function removeExternalClaudeProfileHooks(configDir: string): void {
   try {
     const configPath = getConfigPath(undefined, configDir)
@@ -110,8 +112,15 @@ export function removeExternalClaudeProfileHooks(configDir: string): void {
     if (!config) {
       return
     }
-    const { config: next, changed } = removeManagedHooks(config, getManagedScriptFileName())
-    if (changed) {
+    const { config: withoutHooks, changed: hooksChanged } = removeManagedHooks(
+      config,
+      getManagedScriptFileName()
+    )
+    const { config: next, changed: statusLineChanged } = uninstallManagedStatusLine(
+      withoutHooks,
+      CLAUDE_HOOK_SETTINGS
+    )
+    if (hooksChanged || statusLineChanged) {
       writeHooksJson(configPath, next, { preserveMode: true })
     }
   } catch (error) {

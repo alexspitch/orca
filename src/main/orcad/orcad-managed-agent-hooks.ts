@@ -10,6 +10,9 @@ import { reconcileStartupManagedAgentHooks } from '../agent-hooks/managed-agent-
 import { refreshInstalledOpenCodeStatusPlugins } from '../opencode/opencode-status-plugin-startup-refresh'
 import type { ProfilePreferences } from '../persistence/loading-store/profile-preferences'
 import type { OrcadRuntimeCleanup } from './orcad-runtime-lifetime'
+import type { AgentHookServer } from '../agent-hooks/server'
+import { listenForClaudeUserConfigDirs } from '../claude/claude-user-config-dirs'
+import { claudeHookService } from '../claude/hook-service'
 
 /**
  * Keeps this host's hook server and its agents' hook configs true to its settings. The startup
@@ -18,13 +21,13 @@ import type { OrcadRuntimeCleanup } from './orcad-runtime-lifetime'
  */
 export function startOrcadManagedAgentHooks(
   store: Pick<ProfilePreferences, 'getSettings' | 'onSettingsChanged'>,
-  setStatusHooksEnabled: (enabled: boolean) => void,
+  hookServer: Pick<AgentHookServer, 'setStatusHooksEnabled' | 'setClaudeConfigDirListener'>,
   registerCleanup: (cleanup: OrcadRuntimeCleanup) => void
 ): void {
   let stopping = false
   const removeSettingsListener = store.onSettingsChanged((updates, settings) => {
     if ('agentStatusHooksEnabled' in updates) {
-      setStatusHooksEnabled(isAgentStatusHooksEnabled(settings))
+      hookServer.setStatusHooksEnabled(isAgentStatusHooksEnabled(settings))
     }
   })
   registerCleanup(() => {
@@ -32,6 +35,7 @@ export function startOrcadManagedAgentHooks(
     removeSettingsListener()
   })
   const getSettings = () => store.getSettings()
+  registerCleanup(listenForClaudeUserConfigDirs(hookServer, claudeHookService, getSettings))
   const shouldHydrateShellPath = getAppEnvironment().isPackaged()
   startCodexHooks({
     pathReady: shouldHydrateShellPath ? hydrateAgentCliShellPath() : Promise.resolve(),

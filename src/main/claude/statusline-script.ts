@@ -24,7 +24,7 @@ export function getManagedStatusLineCommand(scriptPath: string): string {
 
 // Why: Claude Code pipes `rate_limits` to the statusLine command on every turn; forwarding
 // it gives Orca live usage without spending the OAuth usage endpoint's tight budget.
-// Emits no stdout so the in-terminal status line stays visually unchanged.
+// Emits no stdout of its own so the in-terminal status line stays visually unchanged.
 export function getManagedStatusLineScript(target: 'local' | 'posix' = 'local'): string {
   if (target === 'local' && process.platform === 'win32') {
     return [
@@ -101,6 +101,10 @@ export function getManagedStatusLineScript(target: 'local' | 'posix' = 'local'):
     '  payload="${payload}${orca_statusline_line}\n"',
     'done',
     'payload=${payload%?}',
+    // Why: a wrapped user status line (statusline-install.ts) runs first and owns stdout, so Claude shows it unchanged.
+    'if [ -n "${ORCA_STATUSLINE_USER_COMMAND-}" ]; then',
+    '  printf \'%s\\n\' "$payload" | /bin/sh -c "$ORCA_STATUSLINE_USER_COMMAND"',
+    'fi',
     'if [ -z "$payload" ]; then',
     '  exit 0',
     'fi',

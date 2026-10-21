@@ -146,4 +146,5 @@ export type NormalizedLocalHook = {
 }
 
 export type ServerStatusLineListener = ((event: ClaudeStatusLineRateLimits) => void) | null
+export type ServerClaudeConfigDirListener = ((configDir: string) => Promise<void>) | null
 export type ServerAgentStatusListener = ((payload: EnrichedAgentHookEventPayload) => void) | null

@@ -1,3 +1,5 @@
+import { CLAUDE_CONFIG_DIR_LAUNCH_SH } from './claude-config-dir-launch'
+
 /**
  * `claude` re-reads the which-account file on every launch, so a switch reaches open terminals
  * (superset's wrapper rule). Defined only in a pane Orca routed (pointer env set) where `claude` is
@@ -6,11 +8,14 @@
  * follows the selection like System default's folder does; any other value set in the pane wins.
  * Prints nothing: an account folder with no login is created, and Claude's own first run signs in
  * there. The shell's Anthropic auth passes through untouched, as on System default. A pointer that names no absolute folder (never written by Orca) runs nothing, since any
- * fallback would be another account.
+ * fallback would be another account. A folder the user picked first gets Orca's hooks merged in.
  */
 export function getPosixClaudeShellFunction(): string {
   return `__orca_claude_binary="$(unalias claude 2>/dev/null || :; command -v claude 2>/dev/null || :)"
 if [[ -n "\${ORCA_CLAUDE_PROFILE_POINTER:-}" && -n "\${__orca_claude_binary:-}" && -x "\${__orca_claude_binary}" ]]; then
+  function __orca_claude_prepare_folder {
+    /bin/sh -c '${CLAUDE_CONFIG_DIR_LAUNCH_SH}' >/dev/null 2>&1 || :
+  }
   function claude {
     local __orca_claude_home __orca_claude_pointer="\${ORCA_CLAUDE_PROFILE_POINTER:-}"
     # Why: a WSL pane's pointer is relative to the guest home, which the host cannot know at spawn.
@@ -18,11 +23,12 @@ if [[ -n "\${ORCA_CLAUDE_PROFILE_POINTER:-}" && -n "\${__orca_claude_binary:-}" 
     __orca_claude_home="$(cat "$__orca_claude_pointer" 2>/dev/null || :)"
     if [ -n "\${CLAUDE_CONFIG_DIR:-}" ] && [ "$CLAUDE_CONFIG_DIR" != "\${ORCA_CLAUDE_INJECTED_CONFIG_DIR:-}" ] &&
       { [ -z "\${ORCA_CLAUDE_USER_CONFIG_DIR:-}" ] || [ "\${CLAUDE_CONFIG_DIR%/}" != "\${ORCA_CLAUDE_USER_CONFIG_DIR%/}" ]; }; then
+      __orca_claude_prepare_folder
       command claude "$@"; return
     fi
     # Why: Orca's value replaced the user's own at spawn, so System default restores theirs.
     if [ -z "$__orca_claude_home" ] && [ -n "\${CLAUDE_CONFIG_DIR:-}" ] && [ -n "\${ORCA_CLAUDE_USER_CONFIG_DIR:-}" ]; then
-      ( unset ORCA_CLAUDE_INJECTED_CONFIG_DIR; export CLAUDE_CONFIG_DIR="$ORCA_CLAUDE_USER_CONFIG_DIR"; command claude "$@" ); return
+      ( unset ORCA_CLAUDE_INJECTED_CONFIG_DIR; export CLAUDE_CONFIG_DIR="$ORCA_CLAUDE_USER_CONFIG_DIR"; __orca_claude_prepare_folder; command claude "$@" ); return
     fi
     if [ -z "$__orca_claude_home" ]; then
       ( unset CLAUDE_CONFIG_DIR ORCA_CLAUDE_INJECTED_CONFIG_DIR; command claude "$@" ); return
@@ -42,6 +48,10 @@ export function getFishClaudeShellFunction(): string {
   return `
 set -l __orca_claude_type (type -t claude 2>/dev/null)
 if test -n "$ORCA_CLAUDE_PROFILE_POINTER"; and test "$__orca_claude_type" = file
+  function __orca_claude_prepare_folder
+    env CLAUDE_CONFIG_DIR="$argv[1]" /bin/sh -c '${CLAUDE_CONFIG_DIR_LAUNCH_SH}' >/dev/null 2>&1
+    return 0
+  end
   function claude
     # Why: a WSL pane's pointer is relative to the guest home, which the host cannot know at spawn.
     set -l pointer (string replace -r '^~/' "$HOME/" -- "$ORCA_CLAUDE_PROFILE_POINTER")
@@ -49,10 +59,12 @@ if test -n "$ORCA_CLAUDE_PROFILE_POINTER"; and test "$__orca_claude_type" = file
     set -l own (string trim -r -c / -- "$ORCA_CLAUDE_USER_CONFIG_DIR")
     set -l current (string trim -r -c / -- "$CLAUDE_CONFIG_DIR")
     if test -n "$CLAUDE_CONFIG_DIR"; and test "$CLAUDE_CONFIG_DIR" != "$ORCA_CLAUDE_INJECTED_CONFIG_DIR"; and begin; test -z "$own"; or test "$current" != "$own"; end
+      __orca_claude_prepare_folder "$CLAUDE_CONFIG_DIR"
       command claude $argv
       return $status
     end
     if test -z "$profile"; and test -n "$CLAUDE_CONFIG_DIR"; and test -n "$ORCA_CLAUDE_USER_CONFIG_DIR"
+      __orca_claude_prepare_folder "$ORCA_CLAUDE_USER_CONFIG_DIR"
       env -u ORCA_CLAUDE_INJECTED_CONFIG_DIR CLAUDE_CONFIG_DIR="$ORCA_CLAUDE_USER_CONFIG_DIR" claude $argv
       return $status
     end

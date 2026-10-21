@@ -251,6 +251,13 @@ export function applyManagedHooks(
 
 export type StatusLineSlotState = 'managed' | 'user' | 'empty'
 
+export function getStatusLineCommand(config: HooksConfig): string | null {
+  const current = config.statusLine
+  return isPlainObject(current) && typeof current.command === 'string' && current.command
+    ? current.command
+    : null
+}
+
 // Why: install policy needs "user owns the slot" vs "slot is empty" vs "ours" — an empty slot
 // after a prior install means the user deleted the managed entry, which install must respect.
 export function getStatusLineSlotState(
@@ -258,9 +265,7 @@ export function getStatusLineSlotState(
   scriptFileName = getStatusLineScriptFileName()
 ): StatusLineSlotState {
   const isManagedCommand = createManagedCommandMatcher(scriptFileName)
-  const current = config.statusLine
-  const currentCommand =
-    isPlainObject(current) && typeof current.command === 'string' ? current.command : null
+  const currentCommand = getStatusLineCommand(config)
   if (!currentCommand) {
     return 'empty'
   }
@@ -272,29 +277,31 @@ export function getStatusLineInstallMarkerPath(settings = CLAUDE_HOOK_SETTINGS):
   return getSharedManagedScriptPath(`${getStatusLineScriptBaseName(settings)}.installed`)
 }
 
-// Why: statusLine is a single settings slot, not a hooks array — never overwrite a
-// user-owned status line; the usage feed then simply falls back to the OAuth poll.
-export function applyManagedStatusLine(
-  config: HooksConfig,
-  command: string,
-  scriptFileName = getStatusLineScriptFileName()
-): HooksConfig {
-  if (getStatusLineSlotState(config, scriptFileName) === 'user') {
-    return config
-  }
-  return { ...config, statusLine: { type: 'command', command } }
+// Why: statusLine is a single settings slot, not a hooks array — callers replace a user-owned
+// one only after saving its command for the managed script to run (statusline-install.ts).
+export function applyManagedStatusLine(config: HooksConfig, command: string): HooksConfig {
+  // Why: sibling fields such as padding belong to a wrapped user status line.
+  const current = isPlainObject(config.statusLine) ? config.statusLine : {}
+  return { ...config, statusLine: { ...current, type: 'command', command } }
 }
 
+/** `restoreCommand` is the wrapped user command to put back; without one the slot is cleared. */
 export function removeManagedStatusLine(
   config: HooksConfig,
-  scriptFileName = getStatusLineScriptFileName()
+  scriptFileName = getStatusLineScriptFileName(),
+  restoreCommand: string | null = null
 ): { config: HooksConfig; changed: boolean } {
   const isManagedCommand = createManagedCommandMatcher(scriptFileName)
   const current = config.statusLine
-  const currentCommand =
-    isPlainObject(current) && typeof current.command === 'string' ? current.command : null
-  if (!currentCommand || !isManagedCommand(currentCommand)) {
+  const currentCommand = getStatusLineCommand(config)
+  if (!isPlainObject(current) || !currentCommand || !isManagedCommand(currentCommand)) {
     return { config, changed: false }
+  }
+  if (restoreCommand) {
+    return {
+      config: { ...config, statusLine: { ...current, command: restoreCommand } },
+      changed: true
+    }
   }
   const next = { ...config }
   delete next.statusLine

@@ -75,3 +75,43 @@ describe('AgentHookServer /statusline/claude', () => {
     expect(events).toEqual([])
   })
 })
+
+describe('AgentHookServer /claude/config-dir', () => {
+  let server: AgentHookServer
+
+  beforeEach(async () => {
+    server = new AgentHookServer()
+    await server.start({ env: 'production' })
+  })
+
+  afterEach(() => {
+    server.stop()
+  })
+
+  function post(body: string): Promise<Response> {
+    const env = server.buildPtyEnv()
+    return fetch(`http://127.0.0.1:${env.ORCA_AGENT_HOOK_PORT}/claude/config-dir`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Orca-Agent-Hook-Token': env.ORCA_AGENT_HOOK_TOKEN
+      },
+      body
+    })
+  }
+
+  it('answers only once the folder is prepared, so Claude starts with the hooks in place', async () => {
+    const prepared: string[] = []
+    server.setClaudeConfigDirListener(async (configDir) => {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      prepared.push(configDir)
+    })
+
+    const body = new URLSearchParams({ configDir: '/Users/dev/Work Claude' }).toString()
+    await expect(post(body)).resolves.toMatchObject({ status: 204 })
+    expect(prepared).toEqual(['/Users/dev/Work Claude'])
+
+    await expect(post('configDir=')).resolves.toMatchObject({ status: 204 })
+    expect(prepared).toEqual(['/Users/dev/Work Claude'])
+  })
+})

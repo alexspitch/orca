@@ -20,6 +20,10 @@ end
 set -e __orca_codex_type
 set -l __orca_claude_type (type -t claude 2>/dev/null)
 if test -n "$ORCA_CLAUDE_PROFILE_POINTER"; and test "$__orca_claude_type" = file
+  function __orca_claude_prepare_folder
+    env CLAUDE_CONFIG_DIR="$argv[1]" /bin/sh -c '[ -n "${ORCA_AGENT_HOOK_ENDPOINT:-}" ] && [ -r "$ORCA_AGENT_HOOK_ENDPOINT" ] && . "$ORCA_AGENT_HOOK_ENDPOINT"; [ -n "${ORCA_AGENT_HOOK_PORT:-}" ] && [ -n "${ORCA_AGENT_HOOK_TOKEN:-}" ] && [ -n "${CLAUDE_CONFIG_DIR:-}" ] && curl -sS -X POST "http://127.0.0.1:${ORCA_AGENT_HOOK_PORT}/claude/config-dir" --connect-timeout 0.5 --max-time 5 -H "Content-Type: application/x-www-form-urlencoded" -H "X-Orca-Agent-Hook-Token: ${ORCA_AGENT_HOOK_TOKEN}" --data-urlencode "configDir=${CLAUDE_CONFIG_DIR}"' >/dev/null 2>&1
+    return 0
+  end
   function claude
     # Why: a WSL pane's pointer is relative to the guest home, which the host cannot know at spawn.
     set -l pointer (string replace -r '^~/' "$HOME/" -- "$ORCA_CLAUDE_PROFILE_POINTER")
@@ -27,10 +31,12 @@ if test -n "$ORCA_CLAUDE_PROFILE_POINTER"; and test "$__orca_claude_type" = file
     set -l own (string trim -r -c / -- "$ORCA_CLAUDE_USER_CONFIG_DIR")
     set -l current (string trim -r -c / -- "$CLAUDE_CONFIG_DIR")
     if test -n "$CLAUDE_CONFIG_DIR"; and test "$CLAUDE_CONFIG_DIR" != "$ORCA_CLAUDE_INJECTED_CONFIG_DIR"; and begin; test -z "$own"; or test "$current" != "$own"; end
+      __orca_claude_prepare_folder "$CLAUDE_CONFIG_DIR"
       command claude $argv
       return $status
     end
     if test -z "$profile"; and test -n "$CLAUDE_CONFIG_DIR"; and test -n "$ORCA_CLAUDE_USER_CONFIG_DIR"
+      __orca_claude_prepare_folder "$ORCA_CLAUDE_USER_CONFIG_DIR"
       env -u ORCA_CLAUDE_INJECTED_CONFIG_DIR CLAUDE_CONFIG_DIR="$ORCA_CLAUDE_USER_CONFIG_DIR" claude $argv
       return $status
     end

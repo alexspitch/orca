@@ -229,6 +229,9 @@ __orca_deferred_init() {
   unset __orca_codex_binary
   __orca_claude_binary="$(unalias claude 2>/dev/null || :; command -v claude 2>/dev/null || :)"
   if [[ -n "${ORCA_CLAUDE_PROFILE_POINTER:-}" && -n "${__orca_claude_binary:-}" && -x "${__orca_claude_binary}" ]]; then
+    function __orca_claude_prepare_folder {
+      /bin/sh -c '[ -n "${ORCA_AGENT_HOOK_ENDPOINT:-}" ] && [ -r "$ORCA_AGENT_HOOK_ENDPOINT" ] && . "$ORCA_AGENT_HOOK_ENDPOINT"; [ -n "${ORCA_AGENT_HOOK_PORT:-}" ] && [ -n "${ORCA_AGENT_HOOK_TOKEN:-}" ] && [ -n "${CLAUDE_CONFIG_DIR:-}" ] && curl -sS -X POST "http://127.0.0.1:${ORCA_AGENT_HOOK_PORT}/claude/config-dir" --connect-timeout 0.5 --max-time 5 -H "Content-Type: application/x-www-form-urlencoded" -H "X-Orca-Agent-Hook-Token: ${ORCA_AGENT_HOOK_TOKEN}" --data-urlencode "configDir=${CLAUDE_CONFIG_DIR}"' >/dev/null 2>&1 || :
+    }
     function claude {
       local __orca_claude_home __orca_claude_pointer="${ORCA_CLAUDE_PROFILE_POINTER:-}"
       # Why: a WSL pane's pointer is relative to the guest home, which the host cannot know at spawn.
@@ -236,11 +239,12 @@ __orca_deferred_init() {
       __orca_claude_home="$(cat "$__orca_claude_pointer" 2>/dev/null || :)"
       if [ -n "${CLAUDE_CONFIG_DIR:-}" ] && [ "$CLAUDE_CONFIG_DIR" != "${ORCA_CLAUDE_INJECTED_CONFIG_DIR:-}" ] &&
         { [ -z "${ORCA_CLAUDE_USER_CONFIG_DIR:-}" ] || [ "${CLAUDE_CONFIG_DIR%/}" != "${ORCA_CLAUDE_USER_CONFIG_DIR%/}" ]; }; then
+        __orca_claude_prepare_folder
         command claude "$@"; return
       fi
       # Why: Orca's value replaced the user's own at spawn, so System default restores theirs.
       if [ -z "$__orca_claude_home" ] && [ -n "${CLAUDE_CONFIG_DIR:-}" ] && [ -n "${ORCA_CLAUDE_USER_CONFIG_DIR:-}" ]; then
-        ( unset ORCA_CLAUDE_INJECTED_CONFIG_DIR; export CLAUDE_CONFIG_DIR="$ORCA_CLAUDE_USER_CONFIG_DIR"; command claude "$@" ); return
+        ( unset ORCA_CLAUDE_INJECTED_CONFIG_DIR; export CLAUDE_CONFIG_DIR="$ORCA_CLAUDE_USER_CONFIG_DIR"; __orca_claude_prepare_folder; command claude "$@" ); return
       fi
       if [ -z "$__orca_claude_home" ]; then
         ( unset CLAUDE_CONFIG_DIR ORCA_CLAUDE_INJECTED_CONFIG_DIR; command claude "$@" ); return

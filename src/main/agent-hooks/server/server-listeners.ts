@@ -15,6 +15,7 @@ import type {
   AgentHookStatusChangeEntry,
   AgentHookStatusFreshnessObservation,
   EnrichedAgentHookEventPayload,
+  ServerClaudeConfigDirListener,
   StatusDropListener
 } from './server-types'
 import { toAgentStatusIpcPayload } from './server-status-identity'
@@ -106,6 +107,13 @@ export abstract class AgentHookServerListeners extends AgentHookServerState {
     listener: ((event: ClaudeStatusLineRateLimits) => void) | null
   ): void {
     this.onClaudeStatusLine = listener
+  }
+
+  protected onClaudeConfigDir: ServerClaudeConfigDirListener = null
+
+  /** A pane's `claude` is about to run in the user's own folder; resolves once Orca's hooks are in it. */
+  setClaudeConfigDirListener(listener: ServerClaudeConfigDirListener): void {
+    this.onClaudeConfigDir = listener
   }
 
   subscribeStatusChanges(listener: (statuses: AgentHookStatusChangeEntry[]) => void): () => void {

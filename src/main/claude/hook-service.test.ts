@@ -361,44 +361,6 @@ describe('ClaudeHookService.install', () => {
     }
   })
 
-  it('never overwrites a user-owned statusLine command', () => {
-    const tmpHome = mkdtempSync(join(tmpdir(), 'orca-claude-user-statusline-'))
-    vi.stubEnv('HOME', tmpHome)
-    vi.stubEnv('USERPROFILE', tmpHome)
-    try {
-      const settingsPath = join(tmpHome, '.claude', 'settings.json')
-      mkdirSync(join(tmpHome, '.claude'), { recursive: true })
-      writeFileSync(
-        settingsPath,
-        JSON.stringify({
-          statusLine: {
-            type: 'command',
-            command: '/usr/local/bin/my-statusline'
-          }
-        })
-      )
-
-      expect(new ClaudeHookService().install().state).toBe('installed')
-
-      const settings = JSON.parse(readFileSync(settingsPath, 'utf-8'))
-      expect(settings.statusLine).toEqual({
-        type: 'command',
-        command: '/usr/local/bin/my-statusline'
-      })
-
-      // remove() must also leave the user's statusLine untouched.
-      new ClaudeHookService().remove()
-      const afterRemove = JSON.parse(readFileSync(settingsPath, 'utf-8'))
-      expect(afterRemove.statusLine).toEqual({
-        type: 'command',
-        command: '/usr/local/bin/my-statusline'
-      })
-    } finally {
-      vi.unstubAllEnvs()
-      rmSync(tmpHome, { recursive: true, force: true })
-    }
-  })
-
   it('removes the managed statusLine on remove()', () => {
     const tmpHome = mkdtempSync(join(tmpdir(), 'orca-claude-statusline-remove-'))
     vi.stubEnv('HOME', tmpHome)

@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   mkdtempSync,
+  readFileSync,
   rmSync,
   statSync,
   writeFileSync
@@ -71,7 +72,7 @@ function fixture() {
     expect(result.stderr).toBe('')
     return result
   }
-  return { a, b, pointer, run }
+  return { a, b, bin, pointer, run }
 }
 const injected = (home: string) => [
   `CLAUDE_CONFIG_DIR=${home}`,
@@ -126,6 +127,25 @@ describe.each(SHELLS)('the claude function in %s', (shell) => {
     expect(f.run(shell, rc).stdout).toBe(`HOME=/rc/own KEY=fake TWIN=${f.a}\n`)
     const unset = f.run(shell, [`ORCA_CLAUDE_INJECTED_CONFIG_DIR=${f.a}`, ...own])
     expect(unset.stdout).toBe('HOME=default KEY=fake TWIN=none\n')
+  })
+
+  it('has Orca prepare a folder the user picked before Claude starts in it', () => {
+    const f = fixture()
+    const curlLog = join(f.bin, 'curl.log')
+    writeFileSync(join(f.bin, 'curl'), `#!/bin/sh\nprintf '%s\\n' "$@" >> '${curlLog}'\n`)
+    chmodSync(join(f.bin, 'curl'), 0o700)
+    const hook = ['ORCA_AGENT_HOOK_PORT=4242', 'ORCA_AGENT_HOOK_TOKEN=t0k']
+    writeFileSync(f.pointer, f.a)
+    // A folder Orca injected for an account is its own setup's, not the user's.
+    f.run(shell, [...injected(f.b), ...hook])
+    expect(existsSync(curlLog)).toBe(false)
+
+    const picked = f.run(shell, [`CLAUDE_CONFIG_DIR=${f.b}`, ...hook])
+    expect(picked.stdout).toBe(`HOME=${f.b} KEY=fake TWIN=none\n`)
+    const args = readFileSync(curlLog, 'utf8')
+    expect(args).toContain('http://127.0.0.1:4242/claude/config-dir\n')
+    expect(args).toContain('X-Orca-Agent-Hook-Token: t0k\n')
+    expect(args).toContain(`configDir=${f.b}\n`)
   })
 
   it('reads a WSL pane’s home-relative pointer against $HOME', () => {

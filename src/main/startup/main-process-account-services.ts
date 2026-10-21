@@ -12,6 +12,8 @@ import {
   saveOpenCodeGoApiKey
 } from '../opencode/opencode-go-api-key-store'
 import { agentHookServer } from '../agent-hooks/server'
+import { listenForClaudeUserConfigDirs } from '../claude/claude-user-config-dirs'
+import { claudeHookService } from '../claude/hook-service'
 import { resolveHostCodexSessionSourceHome } from '../codex/codex-session-source-home'
 import { browserManager } from '../browser/browser-manager'
 import { prewarmStructuredAgentModelCatalogs } from '../runtime/structured-agent-model-catalog-wiring'
@@ -58,6 +60,7 @@ export function initializeMainProcessAccountServices(): void {
     codexAccountLifecycle: { onHostSystemDefaultSelected: state.codexSessionMigration.requestRun },
     setClaudeStatusLineListener: (listener) => agentHookServer.setClaudeStatusLineListener(listener)
   })
+  listenForClaudeUserConfigDirs(agentHookServer, claudeHookService, () => store.getSettings())
   state.rateLimits = services.rateLimits
   state.codexRuntimeHome = services.codexRuntimeHome
   state.codexAccounts = services.codexAccounts
