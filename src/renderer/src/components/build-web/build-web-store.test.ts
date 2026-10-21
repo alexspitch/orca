@@ -72,6 +72,13 @@ describe('build-web store', () => {
     expect(useBuildWebStore.getState().sort.dir).toBe('asc')
   })
 
+  it('sorts by favorites starred first, as the console does, and asks the host for it', () => {
+    useBuildWebStore.getState().sortBy('favorite')
+    const state = useBuildWebStore.getState()
+    expect(state.sort).toEqual({ sort: 'favorite', dir: 'asc' })
+    expect(issueQueryOf(state)).toMatchObject({ sort: 'favorite', dir: 'asc' })
+  })
+
   it('collapses a full card to where it came from: the side card, or the list', () => {
     const store = useBuildWebStore.getState()
     store.openIssue('1')

@@ -1,5 +1,6 @@
 import {
   BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY,
@@ -97,6 +98,29 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
     }
   ]
 
+// Why: an older server's params schema refuses an argument value it predates with a raw
+// validation error, so ask first and say what to update instead.
+const NEWER_ARGUMENTS: {
+  applies: (method: Method, arg: unknown) => boolean
+  capability: string
+  refusal: () => string
+}[] = [
+  {
+    applies: (method, arg) =>
+      method === 'listIssues' &&
+      typeof arg === 'object' &&
+      arg !== null &&
+      'sort' in arg &&
+      arg.sort === 'favorite',
+    capability: BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerFavoriteSort',
+        'This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column.'
+      )
+  }
+]
+
 /**
  * One call to build-web through whichever host holds the token: this app's main process,
  * or a paired Orca server (which must announce `build-web.v1` first).
@@ -115,13 +139,12 @@ export async function callBuildWeb<M extends Method>(
         'This Orca server does not support build-web yet. Update the server to use Issues.'
       )
     )
-    const newer = NEWER_METHODS.find((n) => n.methods.has(method))
-    if (newer) {
-      await assertRuntimeEnvironmentCapability(
-        target.environmentId,
-        newer.capability,
-        newer.refusal()
-      )
+    const newer = [
+      ...NEWER_METHODS.filter((n) => n.methods.has(method)),
+      ...NEWER_ARGUMENTS.filter((n) => n.applies(method, args[0]))
+    ]
+    for (const { capability, refusal } of newer) {
+      await assertRuntimeEnvironmentCapability(target.environmentId, capability, refusal())
     }
     return callRuntimeRpc<ResultOf<M>>(target, `buildWeb.${method}`, args[0], {
       timeoutMs: buildWebHostWaitMs(method, args[0]) + BUILD_WEB_CLIENT_MARGIN_MS

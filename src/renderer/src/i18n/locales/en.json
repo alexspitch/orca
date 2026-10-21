@@ -20514,7 +20514,8 @@
       "openFull": "Open {{key}} full screen",
       "foldFamily": "Hide the subtasks of {{key}}",
       "unfoldFamily": "Show {{count}} subtask(s) of {{key}}",
-      "subtaskCount": "Subtasks: {{count}}, open: {{open}}"
+      "subtaskCount": "Subtasks: {{count}}, open: {{open}}",
+      "sortFavorites": "Favorites first"
     },
     "state": {
       "loading": "Loading tasks…",
@@ -20582,7 +20583,8 @@
       "updateServerTrainsRolling": "This Orca server does not count the images trains roll out yet. Update the server.",
       "updateServerIssueFiles": "This Orca server does not open task attachments yet. Update the server.",
       "updateServerImageAdopt": "This Orca server cannot settle a failed image with an earlier build yet. Update the server.",
-      "updateServerIssueMockups": "This Orca server does not show task mockups yet. Update the server."
+      "updateServerIssueMockups": "This Orca server does not show task mockups yet. Update the server.",
+      "updateServerFavoriteSort": "This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column."
     },
     "status": {
       "unknown": "Unknown",

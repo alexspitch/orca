@@ -18,3 +18,6 @@ export const BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY = 'build-web-image-adopt.v
 
 /** A runtime that names where a task's mockup is shown: `buildWeb.issueMockupView`. */
 export const BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY = 'build-web-issue-mockups.v1'
+
+/** A runtime whose `buildWeb.listIssues` accepts `sort: 'favorite'`; an older one refuses the value. */
+export const BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY = 'build-web-issue-favorite-sort.v1'

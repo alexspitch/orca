@@ -155,7 +155,9 @@ export const BUILD_WEB_ISSUE_SORTS = [
   'priority',
   'type',
   'status',
-  'updated_at'
+  'updated_at',
+  // The viewer's stars; ascending puts the starred first, as on the console.
+  'favorite'
 ] as const
 export type BuildWebIssueSort = (typeof BUILD_WEB_ISSUE_SORTS)[number]
 

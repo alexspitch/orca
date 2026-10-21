@@ -323,9 +323,13 @@ export function BuildWebIssueList({
                 label={translate('buildWeb.list.updated', 'Updated')}
                 className="w-24"
               />
-              <th className="w-16 py-2 pr-3 md:pr-5">
-                <span className="sr-only">{translate('buildWeb.list.marks', 'Marks')}</span>
-              </th>
+              <BuildWebSortHeader
+                {...header}
+                sortKey="favorite"
+                label={translate('buildWeb.list.sortFavorites', 'Favorites first')}
+                icon={<Star className="size-3" />}
+                className="w-16 pr-3 text-right md:pr-5"
+              />
             </tr>
           </thead>
           <tbody>
