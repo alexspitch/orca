@@ -38,6 +38,7 @@ import {
   runtimeHostConnectionStateForEntry
 } from '@/runtime/runtime-host-connection-state'
 import { RuntimeRepairDialog } from '../settings/RuntimeRepairDialog'
+import { ServerLoadStatusSegment } from './ServerLoadStatusSegment'
 
 export function SshStatusSegment({
   compact,
@@ -171,133 +172,141 @@ export function SshStatusSegment({
     setRepairTarget({ id: host.id, label: host.label })
   }
   return (
-    <DropdownMenu
-      open={menuOpen}
-      onOpenChange={(open) => {
-        setMenuOpen(open)
-        if (open) {
-          void hydrateRuntimeEnvironmentStatuses()
-          void syncSshConfigTargetsPassively()
-          recordFeatureInteraction('ssh')
-        }
-      }}
-    >
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 cursor-pointer rounded px-1 py-0.5 hover:bg-accent/70"
-          aria-label={translate(
-            'auto.components.status.bar.SshStatusSegment.fdc57e9970',
-            'Remote host connection status'
-          )}
-        >
-          {iconOnly ? (
-            <span className="inline-flex items-center gap-1">
-              <span
-                className={`inline-block size-2 rounded-full ${overallDotColor(overall, connectedHostCount)}`}
-              />
-              {anyConnecting ? (
-                <Loader2 className="size-3 animate-spin text-muted-foreground" />
-              ) : (
-                <MonitorSmartphone className="size-3 text-muted-foreground" />
-              )}
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1.5">
-              {anyConnecting ? (
-                <Loader2 className="size-3 animate-spin text-yellow-500" />
-              ) : overall === 'connected' ? (
-                <Server className="size-3 text-emerald-500" />
-              ) : overall === 'attention' ? (
-                connectedHostCount > 0 ? (
-                  <Server className="size-3 text-destructive" />
-                ) : (
-                  <ServerOff className="size-3 text-destructive" />
-                )
-              ) : overall === 'partial' ? (
-                <Server className="size-3 text-muted-foreground" />
-              ) : (
-                <ServerOff className="size-3 text-muted-foreground" />
-              )}
-              {!compact && (
-                <span className="text-[11px]">
-                  <span className="text-muted-foreground">
-                    {anyConnecting
-                      ? connectingHostsLabel()
-                      : connectedHostCountLabel(connectedHostCount)}
-                  </span>
-                </span>
-              )}
-              <span
-                className={`inline-block size-1.5 rounded-full ${overallDotColor(overall, connectedHostCount)}`}
-              />
-            </span>
-          )}
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        side="top"
-        align="start"
-        sideOffset={8}
-        className="w-[min(20rem,calc(100vw-1rem))]"
-      >
-        <div className="px-2 pt-1.5 pb-1 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-          {translate('auto.components.status.bar.SshStatusSegment.6e8a9a4242', 'Remote Hosts')}
-        </div>
-        {connectedRuntimeHosts.map((host) => (
-          <RuntimeHostStatusRow
-            key={host.id}
-            label={host.label}
-            state={host.state}
-            detail={runtimeHostConnectionDetail(host.remoteControl)}
-            diagnostics={host.remoteControl}
-            blocked={host.blocked}
-            onConnect={() => connectRuntimeHost(host.id)}
-            onDisconnect={() => disconnectRuntimeHost(host.id)}
-            onRepair={() => openRepair(host)}
-          />
-        ))}
-        {connectedTargets.map((t) => (
-          <SshTargetStatusRow key={t.id} targetId={t.id} label={t.label} status={t.status} />
-        ))}
-        {inactiveRuntimeHosts.map((host) => (
-          <RuntimeHostStatusRow
-            key={host.id}
-            label={host.label}
-            state={host.state}
-            detail={runtimeHostConnectionDetail(host.remoteControl)}
-            diagnostics={host.remoteControl}
-            blocked={host.blocked}
-            onConnect={() => connectRuntimeHost(host.id)}
-            onDisconnect={() => disconnectRuntimeHost(host.id)}
-            onRepair={() => openRepair(host)}
-          />
-        ))}
-        {disconnectedTargets.map((t) => (
-          <SshTargetStatusRow key={t.id} targetId={t.id} label={t.label} status={t.status} />
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onSelect={() => {
+    <>
+      <DropdownMenu
+        open={menuOpen}
+        onOpenChange={(open) => {
+          setMenuOpen(open)
+          if (open) {
+            void hydrateRuntimeEnvironmentStatuses()
+            void syncSshConfigTargetsPassively()
             recordFeatureInteraction('ssh')
-            openSettingsTarget({ pane: 'servers', repoId: null })
-            setActiveView('settings')
-          }}
+          }
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 cursor-pointer rounded px-1 py-0.5 hover:bg-accent/70"
+            aria-label={translate(
+              'auto.components.status.bar.SshStatusSegment.fdc57e9970',
+              'Remote host connection status'
+            )}
+          >
+            {iconOnly ? (
+              <span className="inline-flex items-center gap-1">
+                <span
+                  className={`inline-block size-2 rounded-full ${overallDotColor(overall, connectedHostCount)}`}
+                />
+                {anyConnecting ? (
+                  <Loader2 className="size-3 animate-spin text-muted-foreground" />
+                ) : (
+                  <MonitorSmartphone className="size-3 text-muted-foreground" />
+                )}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5">
+                {anyConnecting ? (
+                  <Loader2 className="size-3 animate-spin text-yellow-500" />
+                ) : overall === 'connected' ? (
+                  <Server className="size-3 text-emerald-500" />
+                ) : overall === 'attention' ? (
+                  connectedHostCount > 0 ? (
+                    <Server className="size-3 text-destructive" />
+                  ) : (
+                    <ServerOff className="size-3 text-destructive" />
+                  )
+                ) : overall === 'partial' ? (
+                  <Server className="size-3 text-muted-foreground" />
+                ) : (
+                  <ServerOff className="size-3 text-muted-foreground" />
+                )}
+                {!compact && (
+                  <span className="text-[11px]">
+                    <span className="text-muted-foreground">
+                      {anyConnecting
+                        ? connectingHostsLabel()
+                        : connectedHostCountLabel(connectedHostCount)}
+                    </span>
+                  </span>
+                )}
+                <span
+                  className={`inline-block size-1.5 rounded-full ${overallDotColor(overall, connectedHostCount)}`}
+                />
+              </span>
+            )}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          side="top"
+          align="start"
+          sideOffset={8}
+          className="w-[min(20rem,calc(100vw-1rem))]"
         >
-          {translate(
-            'auto.components.status.bar.SshStatusSegment.3ad70e0365',
-            'Manage Remote Hosts…'
-          )}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-      {repairTarget && (
-        <RuntimeRepairDialog
-          open
-          onOpenChange={(open) => !open && setRepairTarget(null)}
-          environmentId={repairTarget.id}
-          name={repairTarget.label}
-        />
-      )}
-    </DropdownMenu>
+          <div className="px-2 pt-1.5 pb-1 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            {translate('auto.components.status.bar.SshStatusSegment.6e8a9a4242', 'Remote Hosts')}
+          </div>
+          {connectedRuntimeHosts.map((host) => (
+            <RuntimeHostStatusRow
+              key={host.id}
+              label={host.label}
+              state={host.state}
+              detail={runtimeHostConnectionDetail(host.remoteControl)}
+              diagnostics={host.remoteControl}
+              blocked={host.blocked}
+              onConnect={() => connectRuntimeHost(host.id)}
+              onDisconnect={() => disconnectRuntimeHost(host.id)}
+              onRepair={() => openRepair(host)}
+            />
+          ))}
+          {connectedTargets.map((t) => (
+            <SshTargetStatusRow key={t.id} targetId={t.id} label={t.label} status={t.status} />
+          ))}
+          {inactiveRuntimeHosts.map((host) => (
+            <RuntimeHostStatusRow
+              key={host.id}
+              label={host.label}
+              state={host.state}
+              detail={runtimeHostConnectionDetail(host.remoteControl)}
+              diagnostics={host.remoteControl}
+              blocked={host.blocked}
+              onConnect={() => connectRuntimeHost(host.id)}
+              onDisconnect={() => disconnectRuntimeHost(host.id)}
+              onRepair={() => openRepair(host)}
+            />
+          ))}
+          {disconnectedTargets.map((t) => (
+            <SshTargetStatusRow key={t.id} targetId={t.id} label={t.label} status={t.status} />
+          ))}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={() => {
+              recordFeatureInteraction('ssh')
+              openSettingsTarget({ pane: 'servers', repoId: null })
+              setActiveView('settings')
+            }}
+          >
+            {translate(
+              'auto.components.status.bar.SshStatusSegment.3ad70e0365',
+              'Manage Remote Hosts…'
+            )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+        {repairTarget && (
+          <RuntimeRepairDialog
+            open
+            onOpenChange={(open) => !open && setRepairTarget(null)}
+            environmentId={repairTarget.id}
+            name={repairTarget.label}
+          />
+        )}
+      </DropdownMenu>
+      {/* Why beside the hosts menu: each server running Orca shows its own load at a glance. */}
+      <ServerLoadStatusSegment
+        hosts={connectedRuntimeHosts}
+        compact={compact}
+        iconOnly={iconOnly}
+      />
+    </>
   )
 }

@@ -21860,5 +21860,17 @@
     "trust": "Review and Trust",
     "trustPrompt": "This project lists its services with a command from orca.yaml. Orca runs it on the workspace host:",
     "unsupported": "Services are not supported on this host."
+  },
+  "statusBar": {
+    "serverLoad": {
+      "cpu": "CPU {{value0}} · load {{value1}} on {{value2}} cores",
+      "cpuFromLoad": "Load {{value0}} on {{value1}} cores ({{value2}})",
+      "memory": "Memory {{value0}} of {{value1}} ({{value2}})",
+      "high": "High load",
+      "reading": "{{value0}}: reading load…",
+      "unreachable": "Couldn't read {{value0}}'s load.",
+      "update": "Update Orca on {{value0}} to see its load.",
+      "summary": "{{value0}}: CPU {{value1}}, memory {{value2}}"
+    }
   }
 }

@@ -79,6 +79,13 @@ export type HostMemory = {
   loadAverage1m: number
 }
 
+/** A host's load as the status bar shows it, without the process sweep a MemorySnapshot runs. */
+export type HostLoad = HostMemory & {
+  /** CPU busy share since the host's previous reading, all cores = 100; null when unknown. */
+  cpuPercent: number | null
+  collectedAt: number
+}
+
 export type MemorySnapshot = {
   app: AppMemory
   worktrees: WorktreeMemory[]

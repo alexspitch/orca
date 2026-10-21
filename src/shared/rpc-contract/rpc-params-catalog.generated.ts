@@ -1028,6 +1028,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'desktopBrowserBridge.result': DesktopBrowserBridgeResultParams,
   'devServices.run': DevServicesRunParams,
   'devServices.status': DevServicesStatusParams,
+  'diagnostics.host': null,
   'diagnostics.memory': null,
   'emulator.attach': AttachParamsOfEmulatorParams,
   'emulator.availability': EmulatorAvailabilityParams,

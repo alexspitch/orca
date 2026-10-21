@@ -42,6 +42,8 @@ vi.mock('../../store', () => {
 vi.mock('./runtime-environment-explicit-connect', () => ({
   connectRuntimeHostAndReloadProjects: mocks.connectRuntime
 }))
+// Why: this suite reads the hosts menu; each server's load chip has its own tests.
+vi.mock('./ServerLoadStatusSegment', () => ({ ServerLoadStatusSegment: () => null }))
 vi.mock('../settings/RuntimeRepairDialog', () => ({
   RuntimeRepairDialog: ({ environmentId, name }: { environmentId: string; name: string }) => (
     <div role="dialog">{`Re-pair ${name} (${environmentId})`}</div>
