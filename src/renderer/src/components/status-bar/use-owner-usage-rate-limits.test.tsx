@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => {
 })
 
 vi.mock('@/runtime/use-worktree-runtime-target', () => ({
-  useActiveAccountOwner: () => ({ target: mocks.owner, wslHostDistro: null })
+  useUsageAccountOwner: () => ({ target: mocks.owner, wslHostDistro: null })
 }))
 vi.mock('@/runtime/runtime-rpc-client', () => ({ callRuntimeRpc: mocks.callRuntimeRpc }))
 vi.mock('@/runtime/runtime-provider-accounts-client', () => ({

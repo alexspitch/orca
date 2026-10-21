@@ -6,10 +6,11 @@ import {
   watchProviderAccounts,
   type ProviderAccountsSnapshot
 } from '@/runtime/runtime-provider-accounts-client'
-import { useActiveAccountOwner } from '@/runtime/use-worktree-runtime-target'
+import { useUsageAccountOwner } from '@/runtime/use-worktree-runtime-target'
 import type { RateLimitState } from '../../../../shared/rate-limit-types'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { useAppStore } from '../../store'
+import type { UsageChipAccounts } from './status-bar-account-chips'
 import {
   resolveOwnerUsageRateLimits,
   type OwnerUsageFailureReason,
@@ -28,6 +29,7 @@ type OwnedUsage = {
   ownerId: string
   rateLimits: RateLimitState | null
   failure: OwnerUsageFailureReason | null
+  accounts: UsageChipAccounts | null
 }
 
 export type OwnerUsageRateLimits = {
@@ -36,6 +38,10 @@ export type OwnerUsageRateLimits = {
   remoteOwned: boolean
   /** Forces the owning host to re-read usage; null when this device owns it. */
   refreshRemote: (() => Promise<void>) | null
+  /** A remote owner's own account rosters; null when this device owns usage or none arrived. */
+  remoteAccounts: UsageChipAccounts | null
+  /** True while a remote owner's usage cannot be verified, so its numbers are last known. */
+  remoteStale: boolean
 }
 
 /**
@@ -43,8 +49,8 @@ export type OwnerUsageRateLimits = {
  * usage comes from its own accounts snapshot, so it is read on the execution host.
  */
 export function useOwnerUsageRateLimits(local: RateLimitState): OwnerUsageRateLimits {
-  // Why: route by the focused workspace's owner, never by the Active Server setting.
-  const { target } = useActiveAccountOwner(LOCAL_TARGET)
+  // Why: route by the focused workspace's owner or the footer's chosen host, never by the Active Server setting.
+  const { target } = useUsageAccountOwner(LOCAL_TARGET)
   const ownerId = runtimeTargetEnvironmentId(target)
   const ownerName = useAppStore(
     (s) => s.runtimeEnvironments.find((environment) => environment.id === ownerId)?.name ?? null
@@ -64,7 +70,8 @@ export function useOwnerUsageRateLimits(local: RateLimitState): OwnerUsageRateLi
       apply({
         ownerId: owner,
         rateLimits: current?.ownerId === owner ? current.rateLimits : null,
-        failure
+        failure,
+        accounts: current?.ownerId === owner ? current.accounts : null
       })
     },
     [apply]
@@ -73,7 +80,12 @@ export function useOwnerUsageRateLimits(local: RateLimitState): OwnerUsageRateLi
   const applySnapshot = useCallback(
     (owner: string, snapshot: ProviderAccountsSnapshot) => {
       if (snapshot.rateLimits) {
-        apply({ ownerId: owner, rateLimits: snapshot.rateLimits, failure: null })
+        apply({
+          ownerId: owner,
+          rateLimits: snapshot.rateLimits,
+          failure: null,
+          accounts: { claude: snapshot.claude, codex: snapshot.codex }
+        })
       } else {
         // Why: a host that predates published usage answers without it; say so, never spin.
         fail(owner, 'usage-not-published')
@@ -175,6 +187,8 @@ export function useOwnerUsageRateLimits(local: RateLimitState): OwnerUsageRateLi
   return {
     rateLimits,
     remoteOwned: ownerId !== null,
-    refreshRemote: ownerId ? refreshRemote : null
+    refreshRemote: ownerId ? refreshRemote : null,
+    remoteAccounts: ownerId && owned?.ownerId === ownerId ? owned.accounts : null,
+    remoteStale: ownerState.kind === 'remote-unverifiable'
   }
 }

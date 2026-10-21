@@ -24,7 +24,8 @@ describe('pairing-local UI fields', () => {
       'agentsReadFilter',
       'agentsGroupBy',
       'activityClearedAtByPaneKey',
-      'manuallyUnreadTurnsByPaneKey'
+      'manuallyUnreadTurnsByPaneKey',
+      'statusBarUsageScope'
     ])
   })
 

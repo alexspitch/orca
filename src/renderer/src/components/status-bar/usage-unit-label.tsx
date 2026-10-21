@@ -14,18 +14,20 @@ export function usageChipShowsPercentage(
   return getStatusBarUsageSections(p, mode).length > 0
 }
 
+/** `chipKeys` names each provider's chip, in order; one chip per provider unless accounts split them. */
 export function getUsageUnitLabelState(
   providers: readonly ProviderRateLimits[],
   collapsedProviders: readonly string[],
-  mode: StatusBarUsageMode
+  mode: StatusBarUsageMode,
+  chipKeys: readonly string[] = providers.map((p) => p.provider)
 ): UsageUnitLabelState {
-  const withPercentage = providers.filter((p) => usageChipShowsPercentage(p, mode))
+  const withPercentage = providers.flatMap((p, index) =>
+    usageChipShowsPercentage(p, mode) ? [chipKeys[index] ?? p.provider] : []
+  )
   if (withPercentage.length === 0) {
     return 'absent'
   }
-  return withPercentage.every((p) => collapsedProviders.includes(p.provider))
-    ? 'collapsed'
-    : 'shown'
+  return withPercentage.every((key) => collapsedProviders.includes(key)) ? 'collapsed' : 'shown'
 }
 
 /** Stays measurable while collapsed so the density calculation remains stable. */

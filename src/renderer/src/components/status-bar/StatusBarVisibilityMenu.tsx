@@ -11,6 +11,7 @@ import { ClaudeIcon, GeminiIcon, MiniMaxIcon, OpenAIIcon, OpenCodeGoIcon } from 
 import { translate } from '@/i18n/i18n'
 import { isStatusBarItemAvailable } from './status-bar-agent-gating'
 import type { StatusBarController } from './use-status-bar-controller'
+import { StatusBarUsageScopeMenuItems } from './StatusBarUsageScopeMenuItems'
 
 export function StatusBarVisibilityMenu({
   controller
@@ -185,6 +186,7 @@ export function StatusBarVisibilityMenu({
           <Plug className="size-3.5" />
           {translate('auto.components.status.bar.StatusBar.9659e38343', 'Ports')}
         </DropdownMenuCheckboxItem>
+        <StatusBarUsageScopeMenuItems />
       </DropdownMenuContent>
     </DropdownMenu>
   )

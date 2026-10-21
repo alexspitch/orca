@@ -96,6 +96,7 @@ vi.mock('../../store', () => {
   const state = (): Record<string, unknown> => ({
     settings: { ...storeSettings, activeRuntimeEnvironmentId },
     runtimeEnvironments: [],
+    statusBarUsageScope: { host: { kind: 'auto' }, allAccounts: false },
     usagePercentageDisplay: 'used',
     openSettingsPage: vi.fn(),
     openSettingsTarget: vi.fn(),

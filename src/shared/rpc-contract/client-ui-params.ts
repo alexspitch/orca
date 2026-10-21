@@ -204,6 +204,16 @@ export const UiUpdateFields = z
     statusBarVisible: z.boolean().optional(),
     usagePercentageDisplay: z.enum(['used', 'remaining']).optional(),
     statusBarUsageMode: z.enum(['verbose', 'compact']).optional(),
+    statusBarUsageScope: z
+      .object({
+        host: z.discriminatedUnion('kind', [
+          z.object({ kind: z.literal('auto') }),
+          z.object({ kind: z.literal('local') }),
+          z.object({ kind: z.literal('environment'), environmentId: z.string().min(1).max(256) })
+        ]),
+        allAccounts: z.boolean()
+      })
+      .optional(),
     dismissedUpdateVersion: NullableString.optional(),
     dismissedUnexpectedSignoutVersion: NullableString.optional(),
     lastUpdateCheckAt: z.number().finite().nullable().optional(),

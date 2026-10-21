@@ -7,6 +7,7 @@ import type { ContextualTourId } from './contextual-tours'
 import type { FeatureInteractionState } from './feature-interactions'
 import type { UsagePercentageDisplay } from './usage-percentage-display'
 import type { StatusBarUsageMode } from './status-bar-usage-mode'
+import type { StatusBarUsageScope } from './status-bar-usage-scope'
 import type { PersistedTrustedOrcaHooks } from './orca-yaml-hook-types'
 import type { CustomPet } from './pet-types'
 import type {
@@ -142,6 +143,8 @@ export type PersistedUIState = {
   usagePercentageDisplay?: UsagePercentageDisplay
   /** Client-side footer presentation; verbose preserves the pre-roster all-window default. */
   statusBarUsageMode?: StatusBarUsageMode
+  /** Whose accounts the footer shows, and whether every account gets a chip; host ids are this device's. */
+  statusBarUsageScope?: StatusBarUsageScope
   dismissedUpdateVersion: string | null
   /** Version when the sign-out notice was seen or dismissed; any value suppresses future appearances. */
   dismissedUnexpectedSignoutVersion?: string | null

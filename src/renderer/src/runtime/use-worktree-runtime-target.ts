@@ -65,3 +65,36 @@ export function useActiveAccountOwner(fallback: RuntimeClientTarget): AccountOwn
   )
   return useMemo(() => accountOwnerFor(ownerTarget, wslHostDistro), [ownerTarget, wslHostDistro])
 }
+
+/**
+ * {@link useActiveAccountOwner}, unless the status bar's usage host names this computer or a server
+ * that is still paired; a forgotten server falls back to the focused workspace's owner.
+ */
+export function useUsageAccountOwner(fallback: RuntimeClientTarget): AccountOwner {
+  const automatic = useActiveAccountOwner(fallback)
+  const host = useAppStore((state) => state.statusBarUsageScope.host)
+  const environmentId = host.kind === 'environment' ? host.environmentId : null
+  // Why a string: a fresh lookup object per store write would re-render on every change.
+  const pairedKey = useAppStore((state) => {
+    const environment = environmentId
+      ? state.runtimeEnvironments.find((candidate) => candidate.id === environmentId)
+      : undefined
+    if (!environment) {
+      return null
+    }
+    return (
+      wslHostDistroForTarget({ kind: 'environment', environmentId: environment.id }, [
+        environment
+      ]) ?? ''
+    )
+  })
+  return useMemo(() => {
+    if (host.kind === 'local') {
+      return accountOwnerFor({ kind: 'local' }, null)
+    }
+    if (environmentId && pairedKey !== null) {
+      return accountOwnerFor({ kind: 'environment', environmentId }, pairedKey || null)
+    }
+    return automatic
+  }, [automatic, environmentId, host.kind, pairedKey])
+}

@@ -15,12 +15,17 @@ import { useStatusBarMenuFocusHandoff } from './ProviderDetailsMenu'
 import { CLOSE_ALL_CONTEXT_MENUS_EVENT } from '@/lib/close-all-context-menus'
 import { useStatusBarDensity } from './status-bar-density'
 import { useOwnerUsageRateLimits } from './use-owner-usage-rate-limits'
+import { useLocalInactiveAccountRefresh } from './use-local-inactive-account-refresh'
+import { buildUsageChips, localUsageChipAccounts } from './status-bar-account-chips'
 
 export function useStatusBarController(floatingTerminalOpen: boolean) {
   const floatingTerminalShortcut = useShortcutLabel('floatingTerminal.toggle')
   const localRateLimits = useAppStore((s) => s.rateLimits)
   // Why: with a remote account owner the agents run there, so its usage is the one to show.
-  const { rateLimits, remoteOwned, refreshRemote } = useOwnerUsageRateLimits(localRateLimits)
+  const { rateLimits, remoteOwned, refreshRemote, remoteAccounts, remoteStale } =
+    useOwnerUsageRateLimits(localRateLimits)
+  const usageScope = useAppStore((s) => s.statusBarUsageScope)
+  useLocalInactiveAccountRefresh(usageScope.allAccounts && !remoteOwned)
   const settings = useAppStore((s) => s.settings)
   const refreshRateLimits = useAppStore((s) => s.refreshRateLimits)
   const openSettingsTarget = useAppStore((s) => s.openSettingsTarget)
@@ -224,6 +229,13 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
     showCursor ? visibleCursor : null,
     showZcode ? visibleZcode : null
   ].filter((p): p is ProviderRateLimits => p !== null)
+  // Why: account chips are named from the usage host's own rosters, never this viewer's for a server.
+  const usageChips = buildUsageChips(rosterProviders, {
+    allAccounts: usageScope.allAccounts,
+    accounts: remoteOwned ? remoteAccounts : localUsageChipAccounts(settings),
+    rateLimits,
+    stale: remoteStale
+  })
 
   const handleManageAccounts = (): void => {
     setUsageMenuOpen(false)
@@ -293,6 +305,10 @@ export function useStatusBarController(floatingTerminalOpen: boolean) {
     statusBarItems,
     statusBarUsageMode,
     toggleStatusBarItem,
+    // Why: the switchers' account rows belong to the usage host, not necessarily this computer.
+    ownerInactiveClaudeAccounts: rateLimits.inactiveClaudeAccounts,
+    ownerInactiveCodexAccounts: rateLimits.inactiveCodexAccounts,
+    usageChips,
     usageMenuFocusHandoff,
     usageMenuOpen,
     usagePercentageDisplay,

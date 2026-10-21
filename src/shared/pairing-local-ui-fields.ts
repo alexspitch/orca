@@ -30,7 +30,9 @@ export const PAIRING_LOCAL_UI_FIELDS = [
   'agentsReadFilter',
   'agentsGroupBy',
   'activityClearedAtByPaneKey',
-  'manuallyUnreadTurnsByPaneKey'
+  'manuallyUnreadTurnsByPaneKey',
+  // Names this client's paired servers, which the host behind a pairing cannot resolve.
+  'statusBarUsageScope'
 ] as const satisfies readonly (keyof PersistedUIState)[]
 
 export type PairingLocalUiField = (typeof PAIRING_LOCAL_UI_FIELDS)[number]

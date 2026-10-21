@@ -7,9 +7,9 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAppStore } from '../../store'
 import type { ClaudeRateLimitAccountsState } from '../../../../shared/managed-account-types'
-import type { ProviderRateLimits } from '../../../../shared/rate-limit-types'
+import type { InactiveAccountUsage, ProviderRateLimits } from '../../../../shared/rate-limit-types'
 import { defaultScopeHost } from '@/lib/default-creation-host'
-import { useActiveAccountOwner } from '@/runtime/use-worktree-runtime-target'
+import { useUsageAccountOwner } from '@/runtime/use-worktree-runtime-target'
 import { runtimeTargetEnvironmentId } from '@/runtime/runtime-client-target'
 import {
   fetchProviderAccountsSnapshot,
@@ -55,13 +55,16 @@ export function ClaudeSwitcherMenu({
   compact,
   iconOnly,
   asSubmenu = false,
-  triggerContent
+  triggerContent,
+  inactiveAccounts
 }: {
   claude: ProviderRateLimits
   compact: boolean
   iconOnly: boolean
   asSubmenu?: boolean
   triggerContent?: React.ReactNode
+  /** The usage host's inactive accounts; this computer's when omitted. */
+  inactiveAccounts?: readonly InactiveAccountUsage[]
 }): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [accountsExpanded, setAccountsExpanded] = useState(false)
@@ -80,12 +83,13 @@ export function ClaudeSwitcherMenu({
   const recordFeatureInteraction = useAppStore((s) => s.recordFeatureInteraction)
   const refreshClaudeRateLimitsForTarget = useAppStore((s) => s.refreshClaudeRateLimitsForTarget)
   const fetchInactiveClaudeAccountUsage = useAppStore((s) => s.fetchInactiveClaudeAccountUsage)
-  const inactiveClaudeAccounts = useAppStore((s) => s.rateLimits.inactiveClaudeAccounts)
+  const localInactiveClaudeAccounts = useAppStore((s) => s.rateLimits.inactiveClaudeAccounts)
+  const inactiveClaudeAccounts = inactiveAccounts ?? localInactiveClaudeAccounts
   const claudeTarget = useAppStore((s) => s.rateLimits.claudeTarget)
   const settings = useAppStore((s) => s.settings)
   const runtimeEnvironments = useAppStore((s) => s.runtimeEnvironments)
-  // Why: no host picker; the focused workspace's owner, else the default scope host.
-  const { target: runtimeTarget, wslHostDistro } = useActiveAccountOwner(defaultScopeHost(settings))
+  // Why: the footer's chosen host, else the focused workspace's owner, else the default scope host.
+  const { target: runtimeTarget, wslHostDistro } = useUsageAccountOwner(defaultScopeHost(settings))
   const activeRuntimeEnvironmentId = runtimeTargetEnvironmentId(runtimeTarget)
   const hasActiveRuntimeEnvironment = activeRuntimeEnvironmentId !== null
   const providerAccountHostLabel = hasActiveRuntimeEnvironment

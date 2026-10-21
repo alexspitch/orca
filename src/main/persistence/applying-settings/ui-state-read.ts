@@ -12,6 +12,7 @@ import {
 } from '../../../shared/workspace-statuses'
 import { normalizeUsagePercentageDisplay } from '../../../shared/usage-percentage-display'
 import { normalizeStatusBarUsageMode } from '../../../shared/status-bar-usage-mode'
+import { normalizeStatusBarUsageScope } from '../../../shared/status-bar-usage-scope'
 import { clampMarkdownTocPanelWidth } from '../../../shared/markdown-toc-panel-width'
 import { clampCombinedDiffFileTreeWidth } from '../../../shared/combined-diff-file-tree-width'
 import {
@@ -58,6 +59,7 @@ export function getPersistedUI(
     syncTaskStatusFromWorkspaceBoard: state.ui?.syncTaskStatusFromWorkspaceBoard === true,
     usagePercentageDisplay: normalizeUsagePercentageDisplay(state.ui?.usagePercentageDisplay),
     statusBarUsageMode: normalizeStatusBarUsageMode(state.ui?.statusBarUsageMode),
+    statusBarUsageScope: normalizeStatusBarUsageScope(state.ui?.statusBarUsageScope),
     statusBarCompactChangeNoticeDismissed:
       state.ui?.statusBarCompactChangeNoticeDismissed !== false,
     // Why: strict boolean coercion so a missing/legacy value reads as false (first-run notice still fires).

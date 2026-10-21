@@ -223,14 +223,20 @@ export function ProviderSegment({
   p,
   compact,
   display,
-  mode = 'verbose'
+  mode = 'verbose',
+  accountLabel = null
 }: {
   p: ProviderRateLimits | null
   compact: boolean
   display: UsagePercentageDisplay
   mode?: StatusBarUsageMode
+  /** Names the account when the footer shows one chip per account. */
+  accountLabel?: string | null
 }): React.JSX.Element {
   const provider = p?.provider ?? 'claude'
+  const accountTag = accountLabel ? (
+    <span className="max-w-24 truncate text-muted-foreground">{accountLabel}</span>
+  ) : null
   const statusLabel = p ? getProviderUsageStatusLabel(p) : ''
   // Why: not a problem; Claude updates its own login the next time it runs.
   const calm = p ? isClaudeUsageWaitingForClaude(p) : false
@@ -240,6 +246,7 @@ export function ProviderSegment({
     return (
       <span className="inline-flex items-center gap-1 text-muted-foreground">
         <ProviderIcon provider={provider} />
+        {accountTag}
         <span className="animate-pulse">···</span>
       </span>
     )
@@ -252,6 +259,7 @@ export function ProviderSegment({
     return (
       <span className="inline-flex items-center gap-1 text-muted-foreground">
         <ProviderIcon provider={provider} />
+        {accountTag}
         <span className="animate-pulse">···</span>
       </span>
     )
@@ -261,7 +269,8 @@ export function ProviderSegment({
   if (p.status === 'unavailable') {
     return (
       <span className="inline-flex items-center gap-1 text-muted-foreground/50">
-        <ProviderIcon provider={provider} /> --
+        <ProviderIcon provider={provider} />
+        {accountTag} --
       </span>
     )
   }
@@ -271,6 +280,7 @@ export function ProviderSegment({
     return (
       <span className="inline-flex items-center gap-1 text-muted-foreground">
         <ProviderIcon provider={provider} />
+        {accountTag}
         {!calm && <AlertTriangle size={11} className="text-muted-foreground/80" />}
         {!compact && <span className="text-[11px] font-medium">{statusLabel}</span>}
       </span>
@@ -285,6 +295,7 @@ export function ProviderSegment({
   return (
     <span className="inline-flex items-center gap-1.5">
       <ProviderIcon provider={provider} />
+      {accountTag}
       {mode === 'verbose' && tightest && !compact ? (
         <MiniBar usedPct={clampUsedPercent(tightest.window.usedPercent)} display={display} />
       ) : null}

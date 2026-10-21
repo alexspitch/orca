@@ -19,6 +19,10 @@ import {
   normalizeStatusBarUsageMode
 } from '../../../../../shared/status-bar-usage-mode'
 import {
+  DEFAULT_STATUS_BAR_USAGE_SCOPE,
+  normalizeStatusBarUsageScope
+} from '../../../../../shared/status-bar-usage-scope'
+import {
   normalizeExecutionHostOrder,
   normalizeExecutionHostScope,
   normalizeVisibleExecutionHostIds
@@ -273,6 +277,12 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
       }
       window.api.ui.set(updates).catch(console.error)
       set(updates)
+    },
+    statusBarUsageScope: DEFAULT_STATUS_BAR_USAGE_SCOPE,
+    setStatusBarUsageScope: (scope) => {
+      const normalized = normalizeStatusBarUsageScope(scope)
+      window.api.ui.set({ statusBarUsageScope: normalized }).catch(console.error)
+      set({ statusBarUsageScope: normalized })
     }
   }
 }

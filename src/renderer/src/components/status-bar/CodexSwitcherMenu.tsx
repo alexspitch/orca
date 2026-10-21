@@ -15,7 +15,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu'
-import type { ProviderRateLimits } from '../../../../shared/rate-limit-types'
+import type { InactiveAccountUsage, ProviderRateLimits } from '../../../../shared/rate-limit-types'
 import { translate } from '@/i18n/i18n'
 import { STATUS_BAR_CONTEXT_MENU_EXEMPT_PROPS } from './status-bar-context-menu-policy'
 import { AccountRuntimeToggle, CodexRestartStatusPrompt } from './StatusBarAccountControls'
@@ -33,13 +33,16 @@ export function CodexSwitcherMenu({
   compact,
   iconOnly,
   asSubmenu = false,
-  triggerContent
+  triggerContent,
+  inactiveAccounts
 }: {
   codex: ProviderRateLimits
   compact: boolean
   iconOnly: boolean
   asSubmenu?: boolean
   triggerContent?: React.ReactNode
+  /** The usage host's inactive accounts; this computer's when omitted. */
+  inactiveAccounts?: readonly InactiveAccountUsage[]
 }): React.JSX.Element {
   const {
     accountsExpanded,
@@ -72,6 +75,7 @@ export function CodexSwitcherMenu({
     suppressNextAccountSelectRef,
     switchGroups
   } = useCodexSwitcherController(codex)
+  const shownInactiveAccounts = inactiveAccounts ?? inactiveCodexAccounts
 
   return (
     <ProviderDetailsMenu
@@ -210,7 +214,7 @@ export function CodexSwitcherMenu({
               <>
                 {selectedGroup.targets.map((target) => {
                   const inactiveUsage = target.id
-                    ? inactiveCodexAccounts.find((a) => a.accountId === target.id)
+                    ? shownInactiveAccounts.find((a) => a.accountId === target.id)
                     : null
                   // Why: sign-in spawns a local `codex login`, so a remote-owned account can't be re-authed from this desktop.
                   const showSignInAction =

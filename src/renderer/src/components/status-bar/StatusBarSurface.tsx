@@ -98,6 +98,9 @@ export function StatusBarSurface({
     showResourceUsage,
     showSsh,
     statusBarUsageMode,
+    ownerInactiveClaudeAccounts,
+    ownerInactiveCodexAccounts,
+    usageChips,
     usageMenuFocusHandoff,
     usageMenuOpen,
     usagePercentageDisplay,
@@ -105,7 +108,12 @@ export function StatusBarSurface({
     usageTightestOnly
   } = controller
   const usageMode = usageTightestOnly ? 'compact' : statusBarUsageMode
-  const unitLabelState = getUsageUnitLabelState(rosterProviders, collapsedUsageProviders, usageMode)
+  const unitLabelState = getUsageUnitLabelState(
+    usageChips.map((chip) => chip.p),
+    collapsedUsageProviders,
+    usageMode,
+    usageChips.map((chip) => chip.key)
+  )
 
   return (
     <div
@@ -157,31 +165,32 @@ export function StatusBarSurface({
                         display={usagePercentageDisplay}
                       />
                     ) : null}
-                    {rosterProviders.map((p) => (
+                    {usageChips.map((chip) => (
                       // Why: collapsed chips leave the row but stay measurable, so the density hook can bring them back.
                       <span
-                        key={p.provider}
-                        data-usage-chip={p.provider}
-                        data-usage-urgent={getUsageTone(p) === 'urgent'}
-                        data-usage-percentage={usageChipShowsPercentage(p, usageMode)}
-                        data-usage-collapsed={collapsedUsageProviders.includes(p.provider)}
-                        aria-hidden={collapsedUsageProviders.includes(p.provider)}
+                        key={chip.key}
+                        data-usage-chip={chip.key}
+                        data-usage-urgent={getUsageTone(chip.p) === 'urgent'}
+                        data-usage-percentage={usageChipShowsPercentage(chip.p, usageMode)}
+                        data-usage-collapsed={collapsedUsageProviders.includes(chip.key)}
+                        aria-hidden={collapsedUsageProviders.includes(chip.key)}
                         className="inline-flex data-[usage-collapsed=true]:invisible data-[usage-collapsed=true]:absolute"
                       >
                         <ProviderSegment
-                          p={p}
+                          p={chip.p}
                           compact={compact}
                           display={usagePercentageDisplay}
                           mode={usageMode}
+                          accountLabel={chip.accountLabel}
                         />
                       </span>
                     ))}
                     {collapseUsage ? (
                       <UsageOverflowChip
-                        providerCount={rosterProviders.length}
-                        hidden={rosterProviders.filter((p) =>
-                          collapsedUsageProviders.includes(p.provider)
-                        )}
+                        providerCount={usageChips.length}
+                        hidden={usageChips
+                          .filter((chip) => collapsedUsageProviders.includes(chip.key))
+                          .map((chip) => chip.p)}
                         display={usagePercentageDisplay}
                       />
                     ) : null}
@@ -223,6 +232,7 @@ export function StatusBarSurface({
                             iconOnly={false}
                             asSubmenu
                             triggerContent={rowNode}
+                            inactiveAccounts={ownerInactiveClaudeAccounts}
                           />
                         )
                       }
@@ -234,6 +244,7 @@ export function StatusBarSurface({
                             iconOnly={false}
                             asSubmenu
                             triggerContent={rowNode}
+                            inactiveAccounts={ownerInactiveCodexAccounts}
                           />
                         )
                       }
