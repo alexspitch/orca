@@ -20,7 +20,8 @@ export const ORCAD_CHILD_ENTRY_POINTS = {
   sessionScanner: 'src/main/ai-vault/session-scanner-service-entry.ts',
   workerThreadChildProcess:
     'src/main/worker-thread-child-process/worker-thread-child-process-entry.ts',
-  claudeProfileSetup: 'src/main/claude-accounts/claude-profile-setup-worker-entry.ts'
+  claudeProfileSetup: 'src/main/claude-accounts/claude-profile-setup-worker-entry.ts',
+  usageScanWorker: 'src/main/usage/usage-scan-worker-entry.ts'
 }
 
 /** Each child ships flat beside orcad.js under its source basename; the runtime resolvers look there. */

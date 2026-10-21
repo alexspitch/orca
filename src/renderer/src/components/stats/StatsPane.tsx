@@ -8,6 +8,8 @@ import { GrokUsagePane } from './GrokUsagePane'
 import { OpenCodeUsagePane } from './OpenCodeUsagePane'
 import { MuseUsagePane } from './MuseUsagePane'
 import { UsageOverviewPane } from './UsageOverviewPane'
+import { UsageSourceSelect } from './UsageSourceSelect'
+import { useUsageServers } from './use-usage-servers'
 import { Button } from '../ui/button'
 import {
   DropdownMenu,
@@ -17,6 +19,7 @@ import {
 } from '../ui/dropdown-menu'
 import { AgentIcon } from '@/lib/agent-catalog'
 import { getIntlLocale, translate } from '@/i18n/i18n'
+import { usageServersKey } from '@/store/slices/usage-hosts/usage-host-types'
 export { getStatsPaneSearchEntries } from './stats-search'
 
 function formatDuration(ms: number): string {
@@ -105,7 +108,16 @@ export function StatsPane(): React.JSX.Element {
   const summary = useAppStore((s) => s.statsSummary)
   const fetchStatsSummary = useAppStore((s) => s.fetchStatsSummary)
   const recordFeatureInteraction = useAppStore((s) => s.recordFeatureInteraction)
+  const usageSource = useAppStore((s) => s.usageSource)
+  const usageServers = useUsageServers()
   const [activeUsageTab, setActiveUsageTab] = useState<UsageTab>('overview')
+  // Why a key: a new source remounts the panel, whose mount fetch reads it; "all" refetches as servers come and go.
+  const usageSourceKey =
+    usageSource.kind === 'server'
+      ? `server:${usageSource.environmentId}`
+      : usageSource.kind === 'all'
+        ? `all:${usageServersKey(usageServers)}`
+        : 'local'
   const activeUsageOption =
     USAGE_ANALYTICS_OPTIONS.find((option) => option.id === activeUsageTab) ??
     USAGE_ANALYTICS_OPTIONS[0]
@@ -163,50 +175,53 @@ export function StatsPane(): React.JSX.Element {
           <h3 className="text-sm font-semibold text-foreground">
             {translate('auto.components.stats.StatsPane.c79f073d4c', 'Usage Analytics')}
           </h3>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                data-testid="usage-provider-select"
-                aria-label={translate(
-                  'auto.components.stats.StatsPane.42d3e0bdf7',
-                  'Usage analytics provider: {{value0}}',
-                  { value0: activeUsageOption.label }
-                )}
-                className="min-w-36 justify-between"
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <UsageAnalyticsOptionIcon tab={activeUsageOption.id} />
-                  <span className="truncate">{activeUsageOption.label}</span>
-                </span>
-                <ChevronDown className="ml-1 size-3.5 text-muted-foreground" aria-hidden />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              {USAGE_ANALYTICS_OPTIONS.map((option) => (
-                <DropdownMenuItem key={option.id} onSelect={() => setActiveUsageTab(option.id)}>
+          <div className="flex min-w-0 items-center gap-2">
+            <UsageSourceSelect servers={usageServers} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-testid="usage-provider-select"
+                  aria-label={translate(
+                    'auto.components.stats.StatsPane.42d3e0bdf7',
+                    'Usage analytics provider: {{value0}}',
+                    { value0: activeUsageOption.label }
+                  )}
+                  className="min-w-36 justify-between"
+                >
                   <span className="flex min-w-0 items-center gap-2">
-                    <UsageAnalyticsOptionIcon tab={option.id} />
-                    <span className="truncate">{option.label}</span>
+                    <UsageAnalyticsOptionIcon tab={activeUsageOption.id} />
+                    <span className="truncate">{activeUsageOption.label}</span>
                   </span>
-                  <Check
-                    className={`ml-auto size-3.5 ${
-                      activeUsageTab === option.id ? 'opacity-100' : 'opacity-0'
-                    }`}
-                    aria-hidden
-                  />
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <ChevronDown className="ml-1 size-3.5 text-muted-foreground" aria-hidden />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                {USAGE_ANALYTICS_OPTIONS.map((option) => (
+                  <DropdownMenuItem key={option.id} onSelect={() => setActiveUsageTab(option.id)}>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <UsageAnalyticsOptionIcon tab={option.id} />
+                      <span className="truncate">{option.label}</span>
+                    </span>
+                    <Check
+                      className={`ml-auto size-3.5 ${
+                        activeUsageTab === option.id ? 'opacity-100' : 'opacity-0'
+                      }`}
+                      aria-hidden
+                    />
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Why: the Stats section lives inside the scroll-tracked settings page. Keeping only the
             active panel mounted avoids hidden tab-content layout/focus churn that produced a visible
             vertical jitter below the usage card when switching disabled providers. */}
-        <div>
+        <div key={usageSourceKey}>
           {activeUsageTab === 'overview' ? (
             <UsageOverviewPane />
           ) : activeUsageTab === 'claude' ? (

@@ -1,4 +1,5 @@
 import { claudeProfileTranscriptDirs } from '../claude-usage/transcript-file-discovery'
+import { claudeUserFolderTranscriptDirs } from '../claude-usage/claude-user-folder-transcript-dirs'
 import { existsSync } from 'node:fs'
 import { Worker } from 'node:worker_threads'
 import { currentWorkerEntryLayout, resolveWorkerThreadEntryPath } from '../worker-thread-entry-path'
@@ -63,7 +64,10 @@ export function scanClaudeUsageFilesViaWorker(
     (body) =>
       getSharedClient().scan(
         body.providerId === 'claude'
-          ? { ...body, profileDirs: claudeProfileTranscriptDirs() }
+          ? {
+              ...body,
+              profileDirs: [...claudeProfileTranscriptDirs(), ...claudeUserFolderTranscriptDirs()]
+            }
           : body
       ),
     worktrees,

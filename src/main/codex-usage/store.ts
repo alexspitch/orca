@@ -1,5 +1,5 @@
 import { codexOpenCodeTokenSessions } from '../usage/agent-token-usage'
-import { app } from 'electron'
+import { getAppEnvironment } from '../../shared/app-environment'
 import { join } from 'node:path'
 import type {
   CodexUsageBreakdownKind,
@@ -68,13 +68,14 @@ export function normalizePersistedState(state: CodexUsagePersistedState): CodexU
   }
 }
 
-export function initCodexUsagePath(): void {
-  _codexUsageFile = join(app.getPath('userData'), 'orca-codex-usage.json')
+/** `userDataPath` defaults to the host's (Electron's userData on the desktop, orcad's data dir). */
+export function initCodexUsagePath(userDataPath = getAppEnvironment().getPath('userData')): void {
+  _codexUsageFile = join(userDataPath, 'orca-codex-usage.json')
 }
 
 function getCodexUsageFile(): string {
   if (!_codexUsageFile) {
-    _codexUsageFile = join(app.getPath('userData'), 'orca-codex-usage.json')
+    _codexUsageFile = join(getAppEnvironment().getPath('userData'), 'orca-codex-usage.json')
   }
   return _codexUsageFile
 }

@@ -1,10 +1,9 @@
-import { mkdirSync, readFileSync, rmSync, statSync } from 'node:fs'
+import { mkdirSync, rmSync, statSync } from 'node:fs'
 import { dirname, isAbsolute } from 'node:path'
 import {
   isAgentStatusHooksEnabledForAgent,
   type AgentStatusHooksSettings
 } from '../../shared/agent-status-hooks-setting'
-import { getSharedManagedScriptPath } from '../agent-hooks/installer-utils'
 import { removeExternalClaudeProfileHooks } from '../claude-accounts/claude-external-config-dir'
 import { writeFileAtomically } from '../codex-accounts/fs-utils'
 import { resolveClaudeCommand } from '../codex-cli/command'
@@ -12,27 +11,18 @@ import { probeRecentClaudeCliVersion } from './claude-hook-event-versions'
 import { CLAUDE_HOOK_SETTINGS } from './hook-settings'
 import type { ClaudeHookService } from './hook-service'
 import { removeStatusLineInstallMarker } from './statusline-install'
+import {
+  claudeUserConfigDirRegistryPath as registryPath,
+  readClaudeUserConfigDirs
+} from './claude-user-config-dir-registry'
+
+export { readClaudeUserConfigDirs }
 
 /*
  * Folders a pane's `claude` ran in by the user's own CLAUDE_CONFIG_DIR (an alias, a one-off export).
  * Orca merges its hooks and usage status line into each before Claude starts, and remembers them so
  * turning Claude hooks off takes them back out.
  */
-
-function registryPath(): string {
-  return getSharedManagedScriptPath('claude-user-config-dirs.json')
-}
-
-export function readClaudeUserConfigDirs(): string[] {
-  try {
-    const parsed: unknown = JSON.parse(readFileSync(registryPath(), 'utf-8'))
-    return Array.isArray(parsed)
-      ? parsed.filter((dir): dir is string => typeof dir === 'string')
-      : []
-  } catch {
-    return []
-  }
-}
 
 function isDirectory(path: string): boolean {
   try {

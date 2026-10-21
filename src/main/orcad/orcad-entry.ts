@@ -203,6 +203,8 @@ async function startOrcadRuntime(
   // Before hook reconcile, the daemon and the runtime: each reads or inherits this env.
   await loginEnvironment
   startOrcadManagedAgentHooks(profileStore, agentHookServer, registerCleanup)
+  const { startOrcadUsageStores } = await import('./orcad-usage-stores')
+  startOrcadUsageStores(profileStore, registerCleanup)
 
   // Why before the runtime and the PTY handlers: `setLocalPtyProvider` installs the daemon
   // adapter as THE local provider, and the registry's contract is that it lands before

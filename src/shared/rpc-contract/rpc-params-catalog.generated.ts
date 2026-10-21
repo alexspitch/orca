@@ -674,6 +674,7 @@ import {
   TerminalUpdateViewport
 } from './terminal-viewport-schemas-params'
 import { UpdaterCheckParams } from './updater-params'
+import { UsageRefreshParams, UsageSnapshotParams } from './usage-params'
 import {
   LayoutApplyParams,
   LayoutSubscribeParams,
@@ -1541,6 +1542,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'updater.download': null,
   'updater.getStatus': null,
   'updater.install': null,
+  'usage.refresh': UsageRefreshParams,
+  'usage.snapshot': UsageSnapshotParams,
   'workspacePorts.kill': WorkspacePortKillParams,
   'workspacePorts.killHost': WorkspacePortKillHostParams,
   'workspacePorts.scan': WorkspacePortScanParams,

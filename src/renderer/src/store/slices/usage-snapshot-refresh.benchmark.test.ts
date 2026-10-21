@@ -8,6 +8,7 @@ import type {
   CodexUsageSummary
 } from '../../../../shared/codex-usage-types'
 import { createCodexUsageSlice } from './usage-provider-slices'
+import { createStatsSlice } from './stats'
 
 type Deferred<T> = {
   promise: Promise<T>
@@ -29,7 +30,10 @@ async function flushImmediatePromises(): Promise<void> {
 }
 
 function createCodexOnlyStore() {
-  return create<AppState>()((...args) => createCodexUsageSlice(...args) as AppState)
+  return create<AppState>()(
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: these slices are all the code under test reads.
+    (...args) => ({ ...createStatsSlice(...args), ...createCodexUsageSlice(...args) }) as AppState
+  )
 }
 
 function createScanState(overrides: Partial<CodexUsageScanState> = {}): CodexUsageScanState {

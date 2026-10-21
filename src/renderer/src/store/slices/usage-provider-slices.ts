@@ -20,41 +20,21 @@ import type {
   MuseUsageSnapshot
 } from '../../../../shared/muse-usage-types'
 import type { AppState } from '../types'
-
-type UsageSnapshot = {
-  scanState: {
-    enabled: boolean
-    isScanning: boolean
-    lastScanCompletedAt: number | null
-    lastScanError: string | null
-  }
-  summary: object
-  daily: object[]
-  modelBreakdown: object[]
-  projectBreakdown: object[]
-  recentSessions: object[]
-}
-
-type UsageProviderTypes<
-  Scope extends string,
-  Range extends string,
-  Snapshot extends UsageSnapshot
-> = {
-  scope: Scope
-  range: Range
-  snapshot: Snapshot
-}
-
-type UsageData<T extends UsageProviderTypes<string, string, UsageSnapshot>> = {
-  scope: T['scope']
-  range: T['range']
-  scanState: T['snapshot']['scanState'] | null
-  summary: T['snapshot']['summary'] | null
-  daily: T['snapshot']['daily']
-  modelBreakdown: T['snapshot']['modelBreakdown']
-  projectBreakdown: T['snapshot']['projectBreakdown']
-  recentSessions: T['snapshot']['recentSessions']
-}
+import {
+  createUsagePatch,
+  readUsageData,
+  type UsageData,
+  type UsageProviderTypes,
+  type UsageSnapshot
+} from './usage-provider-data'
+import { resolveUsageHostApi } from './usage-hosts/usage-host-api'
+import { isSameUsageSource } from './usage-hosts/usage-host-types'
+import {
+  CLAUDE_USAGE_MERGE_OPS,
+  CODEX_USAGE_MERGE_OPS,
+  MUSE_USAGE_MERGE_OPS,
+  OPENCODE_USAGE_MERGE_OPS
+} from './usage-hosts/usage-provider-merge-ops'
 
 type UsageApi<T extends UsageProviderTypes<string, string, UsageSnapshot>> = {
   getScanState: () => Promise<T['snapshot']['scanState']>
@@ -90,43 +70,9 @@ type UsageProviderConfig<
   initialScope: T['scope']
   initialRange: T['range']
   getApi: () => UsageApi<T>
+  /** The API reading the usage source `state` picks (see usage-hosts/usage-host-api.ts). */
+  resolveApi: (state: AppState, local: UsageApi<T>) => UsageApi<T>
   hasCachedData: (scanState: T['snapshot']['scanState']) => boolean
-}
-
-const usageDataFields = [
-  'scope',
-  'range',
-  'scanState',
-  'summary',
-  'daily',
-  'modelBreakdown',
-  'projectBreakdown',
-  'recentSessions'
-] as const satisfies readonly (keyof UsageData<UsageProviderTypes<string, string, UsageSnapshot>>)[]
-
-function usageDataKey(prefix: string, field: string): string {
-  return `${prefix}Usage${field[0].toUpperCase()}${field.slice(1)}`
-}
-
-function readUsageData<T extends UsageProviderTypes<string, string, UsageSnapshot>>(
-  state: AppState,
-  prefix: string
-): UsageData<T> {
-  const values = state as unknown as Record<string, unknown>
-  return Object.fromEntries(
-    usageDataFields.map((field) => [field, values[usageDataKey(prefix, field)]])
-  ) as UsageData<T>
-}
-
-function createUsagePatch<T extends UsageProviderTypes<string, string, UsageSnapshot>>(
-  prefix: string,
-  patch: Partial<UsageData<T>>
-): Partial<AppState> {
-  return Object.fromEntries(
-    usageDataFields
-      .filter((field) => field in patch)
-      .map((field) => [usageDataKey(prefix, field), patch[field]])
-  ) as Partial<AppState>
 }
 
 function createUsageProviderSlice<
@@ -143,7 +89,14 @@ function createUsageProviderSlice<
 
     const fetchUsage = async (opts?: { forceRefresh?: boolean }): Promise<void> => {
       try {
-        const api = config.getApi()
+        const source = get().usageSource
+        const api = config.resolveApi(get(), config.getApi())
+        // Why: a fetch for the previous source must not land on the one now shown.
+        const updateIfCurrent = (patch: Partial<UsageData<T>>): void => {
+          if (isSameUsageSource(get().usageSource, source)) {
+            update(patch)
+          }
+        }
         const scanState = (await api.getScanState()) as T['snapshot']['scanState'] | undefined
         // Desktop-only usage APIs resolve undefined in paired web clients.
         if (!scanState) {
@@ -151,11 +104,12 @@ function createUsageProviderSlice<
         }
 
         const current = read()
+        // Why isScanning too: a source switch clears the data and shows loading until it answers.
         const preserveLoading =
-          opts?.forceRefresh === true &&
+          (opts?.forceRefresh === true || current.scanState?.isScanning === true) &&
           current.scanState?.enabled === true &&
           current.summary === null
-        update({
+        updateIfCurrent({
           scanState: preserveLoading
             ? {
                 ...scanState,
@@ -179,7 +133,7 @@ function createUsageProviderSlice<
           snapshot.scanState.lastScanCompletedAt !== null ||
           config.hasCachedData(snapshot.scanState)
         ) {
-          update({
+          updateIfCurrent({
             ...snapshot,
             scanState:
               opts?.forceRefresh === true
@@ -187,12 +141,12 @@ function createUsageProviderSlice<
                 : snapshot.scanState
           })
         } else {
-          update({ scanState: { ...scanState, isScanning: true, lastScanError: null } })
+          updateIfCurrent({ scanState: { ...scanState, isScanning: true, lastScanError: null } })
         }
 
         await api.refresh({ force: opts?.forceRefresh ?? false })
         const refreshedSelection = read()
-        update(
+        updateIfCurrent(
           await api.getSnapshot({
             scope: refreshedSelection.scope,
             range: refreshedSelection.range,
@@ -289,6 +243,14 @@ export const createClaudeUsageSlice = createUsageProviderSlice<
   initialScope: 'orca',
   initialRange: '30d',
   getApi: () => window.api.claudeUsage,
+  resolveApi: (state, local) =>
+    resolveUsageHostApi(
+      'claude',
+      local,
+      CLAUDE_USAGE_MERGE_OPS,
+      state.usageSource,
+      state.usageServers
+    ),
   hasCachedData: (state) => state.hasAnyClaudeData
 })
 
@@ -298,6 +260,14 @@ export const createCodexUsageSlice = createUsageProviderSlice<'codex', 'Codex', 
   initialScope: 'orca',
   initialRange: '30d',
   getApi: () => window.api.codexUsage,
+  resolveApi: (state, local) =>
+    resolveUsageHostApi(
+      'codex',
+      local,
+      CODEX_USAGE_MERGE_OPS,
+      state.usageSource,
+      state.usageServers
+    ),
   hasCachedData: (state) => state.hasAnyCodexData
 })
 
@@ -311,6 +281,14 @@ export const createOpenCodeUsageSlice = createUsageProviderSlice<
   initialScope: 'orca',
   initialRange: '30d',
   getApi: () => window.api.openCodeUsage,
+  resolveApi: (state, local) =>
+    resolveUsageHostApi(
+      'opencode',
+      local,
+      OPENCODE_USAGE_MERGE_OPS,
+      state.usageSource,
+      state.usageServers
+    ),
   hasCachedData: (state) => state.hasAnyOpenCodeData
 })
 
@@ -320,5 +298,7 @@ export const createMuseUsageSlice = createUsageProviderSlice<'muse', 'Muse', Mus
   initialScope: 'orca',
   initialRange: '30d',
   getApi: () => window.api.museUsage,
+  resolveApi: (state, local) =>
+    resolveUsageHostApi('muse', local, MUSE_USAGE_MERGE_OPS, state.usageSource, state.usageServers),
   hasCachedData: (state) => state.hasAnyMuseData
 })
