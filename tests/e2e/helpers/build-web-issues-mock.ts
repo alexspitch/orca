@@ -176,6 +176,30 @@ const BLOCKERS = [
 /** The statuses each badge question asked for, in order; the spec clears it. */
 export const blockerQueries: (string | null)[] = []
 
+/** The patches sent to the files demo task, and its status as they left it. */
+export const issuePatches: Record<string, unknown>[] = []
+let filesIssueStatus = ROW.status
+
+export function resetIssuePatches(): void {
+  issuePatches.length = 0
+  filesIssueStatus = ROW.status
+}
+
+/** PATCH /api/tms/issues/:id of the files demo task: keeps the status, answers the row. */
+export function patchFilesIssue(
+  id: string,
+  body: Record<string, unknown>
+): { issue: Record<string, unknown> } | null {
+  if (id !== ISSUE_ID) {
+    return null
+  }
+  issuePatches.push(body)
+  if (typeof body.status === 'string') {
+    filesIssueStatus = body.status
+  }
+  return { issue: { ...ROW, status: filesIssueStatus } }
+}
+
 export function serveIssues(
   res: http.ServerResponse,
   path: string,
@@ -191,7 +215,10 @@ export function serveIssues(
     const rows = BLOCKERS.filter((row) => !statuses || statuses.includes(row.status))
     json(res, 200, { issues: rows, total: rows.length })
   } else if (path === '/api/tms/issues') {
-    const rows = url.searchParams.get('q') === SUB_ROW.key ? [SUB_ROW] : [ROW, PLAN_ROW]
+    const rows =
+      url.searchParams.get('q') === SUB_ROW.key
+        ? [SUB_ROW]
+        : [{ ...ROW, status: filesIssueStatus }, PLAN_ROW]
     json(res, 200, { issues: rows, total: rows.length })
   } else if (path === '/api/tms/issues/assignees') {
     json(res, 200, { users: [] })
@@ -199,7 +226,7 @@ export function serveIssues(
     json(res, 200, { versions: [] })
   } else if (path === `/api/tms/issues/${ISSUE_ID}`) {
     json(res, 200, {
-      issue: { ...ROW, description: 'The stand drops calls.', steps: [] },
+      issue: { ...ROW, status: filesIssueStatus, description: 'The stand drops calls.', steps: [] },
       branches: ['master'],
       comments: [
         {

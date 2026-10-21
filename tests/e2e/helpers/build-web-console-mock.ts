@@ -1,5 +1,6 @@
 import http from 'node:http'
 import { serveSectionRoutes } from './build-web-section-routes'
+import { patchFilesIssue } from './build-web-issues-mock'
 import type { ImageAdoption } from './build-web-images-mock'
 
 // A build-web console on loopback with the stand routes the Stands page reads, plus a stand UI (on
@@ -215,6 +216,11 @@ export async function startBuildWebConsoleMock(
       ops.push({ standId: op[1], kind: body.kind, services: body.services ?? [] })
       jobReads = 0
       return json(res, 201, { op: { id: 'job-1', kind: body.kind, status: 'queued', error: null } })
+    }
+    const issuePatch = /^\/api\/tms\/issues\/([^/]+)$/.exec(path)
+    if (issuePatch && req.method === 'PATCH') {
+      const answer = patchFilesIssue(issuePatch[1], JSON.parse((await readBody(req)) || '{}'))
+      return answer ? json(res, 200, answer) : json(res, 404, { error: 'no such task' })
     }
     if (path === '/api/image-builds/adopt-success' && req.method === 'POST') {
       const body = JSON.parse((await readBody(req)) || '{}')

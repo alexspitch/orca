@@ -16,7 +16,8 @@ import { EditableDescription, EditableSteps, EditableTitle } from './BuildWebIss
 import { SectionTitle } from './BuildWebIssueBody'
 import { useBuildWebTarget } from './use-build-web-data'
 import { BuildWebSessionBadge } from './BuildWebSessionBadge'
-import { PriorityChip, ProductChip, StatusChip, TypeChip } from './BuildWebToneChip'
+import { PriorityChip, ProductChip, TypeChip } from './BuildWebToneChip'
+import { StatusPicker } from './BuildWebRowPickers'
 import { useBuildWebDrawerWidth } from './use-build-web-drawer-width'
 
 /** The side card of a task: fields to edit, its text to read, and the ways out of it. */
@@ -74,7 +75,7 @@ export function BuildWebIssueDrawer({
             <span className="flex min-w-0 flex-wrap items-center gap-1.5">
               <ProductChip product={detail.product} />
               <TypeChip type={detail.type} />
-              <StatusChip status={detail.status} />
+              <StatusPicker issue={detail} busy={saving} onPatch={(patch) => void save(patch)} />
               <PriorityChip priority={detail.priority} />
             </span>
           ) : null}

@@ -4,13 +4,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueDetail, BuildWebIssuePatch } from '../../../../../shared/build-web-types'
 import { productLabel, statusLabel } from '../build-web-labels'
-import {
-  BuildWebToneChip,
-  PriorityChip,
-  ProductChip,
-  StatusChip,
-  TypeChip
-} from '../BuildWebToneChip'
+import { BuildWebToneChip, PriorityChip, ProductChip, TypeChip } from '../BuildWebToneChip'
+import { StatusPicker } from '../BuildWebRowPickers'
 import { BuildWebSessionBadge } from '../BuildWebSessionBadge'
 import { EditableTitle } from '../BuildWebIssueEditors'
 import { nextStatus } from './issue-card-facts'
@@ -79,7 +74,7 @@ export function IssueHeader({
             className="text-lg leading-snug font-semibold"
           />
           <div className="flex flex-wrap items-center gap-2">
-            <StatusChip status={detail.status} />
+            <StatusPicker issue={detail} busy={saving} onPatch={onSave} />
             <ProductChip product={detail.product} />
             <TypeChip type={detail.type} />
             <PriorityChip priority={detail.priority} />
