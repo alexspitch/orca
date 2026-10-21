@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792600039000",
+      "date": "2026-10-21",
+      "commit": "ef00a9dc20c7",
+      "features": [
+        "Right-clicking the status bar now offers \"Usage from\", letting you pin the usage meters to this computer or a paired server instead of following the focused workspace.",
+        "Right-clicking the status bar now offers \"All Claude & Codex Accounts\", showing a separate usage chip for every account on the chosen host, active account first.",
+        "The Claude and Codex account switchers now follow the same host as the usage meters and show usage for that host's inactive accounts.",
+        "An unreachable server's accounts in the status bar keep their last usage numbers, marked as stale."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.238-custom.1792594301000",
       "date": "2026-10-21",
       "commit": "a01f16004603",
