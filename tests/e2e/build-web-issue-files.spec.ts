@@ -26,7 +26,8 @@ test.afterEach(async () => {
 
 async function openTaskCard(page: Page): Promise<void> {
   await page.evaluate(() => window.__store?.getState().openBuildWebPage())
-  await page.getByRole('button', { name: 'Attachments demo' }).click()
+  // Why exact: the page history's Back names the card too («Back to IS-900 · Attachments demo»).
+  await page.getByRole('button', { name: 'Attachments demo', exact: true }).click()
   await expect(page.getByText('Attachments 4')).toBeVisible({ timeout: 15_000 })
 }
 

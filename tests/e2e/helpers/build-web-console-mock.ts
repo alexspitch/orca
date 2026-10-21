@@ -229,7 +229,9 @@ export async function startBuildWebConsoleMock(
     const report = /^\/api\/automations\/runs\/([^/]+)\/report$/.exec(path)
     if (report) {
       res.writeHead(200, { 'content-type': 'text/html' })
-      return res.end(`<h1>Report ${report[1]}</h1>`)
+      return res.end(
+        `<h1>Report ${report[1]}</h1><table><tr><td>IS-901</td><td>bug</td></tr><tr><td>IS-901.1</td><td>chore</td></tr></table>`
+      )
     }
     if (path === '/api/deploys') {
       return json(res, 200, { deploys: [] })

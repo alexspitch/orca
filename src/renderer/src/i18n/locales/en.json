@@ -21264,7 +21264,8 @@
       "capped": "Not every report of this month is shown; narrow the filters.",
       "view": "View",
       "calendarView": "Calendar",
-      "listView": "List"
+      "listView": "List",
+      "taskMissing": "build-web has no task {{key}}."
     },
     "logView": {
       "noResults": "No results",
@@ -21489,6 +21490,15 @@
       "list": "Mockups and screens",
       "openInBrowser": "Open in browser",
       "noPages": "The archive holds no .html page."
+    },
+    "history": {
+      "label": "Page history",
+      "recent": "Recent pages",
+      "back": "Back",
+      "backTo": "Back to {{page}}",
+      "forward": "Forward",
+      "forwardTo": "Forward to {{page}}",
+      "task": "Task"
     }
   },
   "gitLog": {

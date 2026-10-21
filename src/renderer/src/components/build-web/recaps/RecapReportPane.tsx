@@ -4,6 +4,7 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import { BuildWebListState } from '../BuildWebListState'
 import { RecapReportFrame } from './RecapReportFrame'
 import { useRecapReport } from './use-recap-report'
+import { openRecapTask } from './open-recap-task'
 
 /** One report, read whole and then shown in its frame. */
 export function RecapReportPane({
@@ -26,6 +27,11 @@ export function RecapReportPane({
       loadingLabel={translate('buildWeb.recaps.loadingReport', 'Loading the report…')}
     />
   ) : (
-    <RecapReportFrame runId={recap.id} title={recap.name} html={html} />
+    <RecapReportFrame
+      runId={recap.id}
+      title={recap.name}
+      html={html}
+      onOpenTask={(key) => void openRecapTask(target, recap, key)}
+    />
   )
 }

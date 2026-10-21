@@ -72,6 +72,15 @@ const fileRows = () => [
 
 const PLAN_ISSUE_ID = 'iss-plan'
 const PLAN_ROW = { ...ROW, id: PLAN_ISSUE_ID, key: 'IS-901', title: 'Plan and mockups demo' }
+// A subtask, found only by its own number — as build-web's search answers for one.
+const SUB_ROW = {
+  ...ROW,
+  id: 'iss-sub',
+  key: 'IS-901.1',
+  title: 'Subtask demo',
+  parent_id: PLAN_ISSUE_ID,
+  parent_key: 'IS-901'
+}
 const PLAN_MD = [
   '# Plan of the fix',
   '',
@@ -123,7 +132,14 @@ function servePlanIssue(
 ): boolean {
   const view = /^\/api\/tms\/issues\/iss-plan\/files\/([^/]+)\/view$/.exec(path)
   const page = /^\/mockups\/tok-([^/]+)\/(.+)$/.exec(path)
-  if (path === `/api/tms/issues/${PLAN_ISSUE_ID}`) {
+  if (path === '/api/tms/issues/iss-sub') {
+    json(res, 200, {
+      issue: { ...SUB_ROW, description: 'A part of the fix.', steps: [] },
+      branches: ['master'],
+      comments: [],
+      files: []
+    })
+  } else if (path === `/api/tms/issues/${PLAN_ISSUE_ID}`) {
     json(res, 200, {
       issue: { ...PLAN_ROW, description: 'Calls drop on the stand.', steps: [] },
       branches: ['master'],
@@ -153,13 +169,15 @@ function servePlanIssue(
 export function serveIssues(
   res: http.ServerResponse,
   path: string,
+  url: URL,
   json: (res: http.ServerResponse, status: number, body: unknown) => void
 ): boolean {
   if (servePlanIssue(res, path, json)) {
     return true
   }
   if (path === '/api/tms/issues') {
-    json(res, 200, { issues: [ROW, PLAN_ROW], total: 2 })
+    const rows = url.searchParams.get('q') === SUB_ROW.key ? [SUB_ROW] : [ROW, PLAN_ROW]
+    json(res, 200, { issues: rows, total: rows.length })
   } else if (path === '/api/tms/issues/assignees') {
     json(res, 200, { users: [] })
   } else if (path === '/api/tms/versions') {

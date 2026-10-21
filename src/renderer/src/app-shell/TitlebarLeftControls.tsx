@@ -16,6 +16,8 @@ import {
 import { useShortcutLabel } from '../hooks/useShortcutLabel'
 import { useAppStore } from '../store'
 import { hasCustomTitleBar, hasMacTrafficLights } from './app-window-chrome'
+import { TitlebarPageHistory } from '@/components/build-web/page-history/TitlebarPageHistory'
+import { usePageHistory } from '@/components/build-web/page-history/page-history-store'
 import type { AppChromeLayout } from './use-app-chrome-layout'
 
 /**
@@ -31,6 +33,8 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
   const leftSidebarShortcutLabel = useShortcutLabel('sidebar.left.toggle')
   const historyBackShortcutLabel = useShortcutLabel('worktree.history.back')
   const historyForwardShortcutLabel = useShortcutLabel('worktree.history.forward')
+  const showWorktreeHistory = shouldShowWorktreeHistoryControls(layout.activeView)
+  const hasPageHistory = usePageHistory((s) => s.entries.length > 0)
 
   return (
     // Why: measure the ENTIRE row so TabGroupPanel's collapse spacer reserves enough width; measuring only the inner cluster left back/forward over the first tab.
@@ -108,46 +112,51 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
           </Tooltip>
         )}
       </div>
-      {/* Why: Back/Forward span worktree + page history, so show the cluster wherever the shortcut is live (hidden in Settings/non-stack views). */}
-      {shouldShowWorktreeHistoryControls(layout.activeView) && (
+      {/* Why: the workspace pair shows where its shortcut is live (hidden in Settings/non-stack views); the page pair once a page was opened. */}
+      {showWorktreeHistory || hasPageHistory ? (
         // With the sidebar collapsed the header shrink-wraps and ml-auto has no spare width, so keep a fixed gutter before Back.
         <div className="ml-auto mr-3 flex items-center pl-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className="sidebar-toggle sidebar-toggle-compact"
-                onClick={() => useAppStore.getState().goBackWorktree()}
-                disabled={!canGoBackWorktree}
-                aria-label={translate('auto.App.064bd07810', 'Go back')}
-              >
-                <ArrowLeft size={12} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={6}>
-              {translate('auto.App.fe21e8f6f5', 'Go back ({{value0}})', {
-                value0: historyBackShortcutLabel
-              })}
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className="sidebar-toggle sidebar-toggle-compact"
-                onClick={() => useAppStore.getState().goForwardWorktree()}
-                disabled={!canGoForwardWorktree}
-                aria-label={translate('auto.App.cf9099fe98', 'Go forward')}
-              >
-                <ArrowRight size={12} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" sideOffset={6}>
-              {translate('auto.App.f7aa73e785', 'Go forward ({{value0}})', {
-                value0: historyForwardShortcutLabel
-              })}
-            </TooltipContent>
-          </Tooltip>
+          {showWorktreeHistory ? (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="sidebar-toggle sidebar-toggle-compact"
+                    onClick={() => useAppStore.getState().goBackWorktree()}
+                    disabled={!canGoBackWorktree}
+                    aria-label={translate('auto.App.064bd07810', 'Go back')}
+                  >
+                    <ArrowLeft size={12} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={6}>
+                  {translate('auto.App.fe21e8f6f5', 'Go back ({{value0}})', {
+                    value0: historyBackShortcutLabel
+                  })}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    className="sidebar-toggle sidebar-toggle-compact"
+                    onClick={() => useAppStore.getState().goForwardWorktree()}
+                    disabled={!canGoForwardWorktree}
+                    aria-label={translate('auto.App.cf9099fe98', 'Go forward')}
+                  >
+                    <ArrowRight size={12} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" sideOffset={6}>
+                  {translate('auto.App.f7aa73e785', 'Go forward ({{value0}})', {
+                    value0: historyForwardShortcutLabel
+                  })}
+                </TooltipContent>
+              </Tooltip>
+            </>
+          ) : null}
+          {hasPageHistory ? <TitlebarPageHistory separated={showWorktreeHistory} /> : null}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

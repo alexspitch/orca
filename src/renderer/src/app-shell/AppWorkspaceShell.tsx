@@ -12,6 +12,7 @@ import { RightSidebarToggle, TitlebarMainStrip } from './TitlebarMainStrip'
 import type { AppChromeLayout } from './use-app-chrome-layout'
 import type { FloatingWorkspacePanelState } from './use-floating-workspace-panel'
 
+import { usePageHistoryRecording } from '../components/build-web/page-history/page-history-navigation'
 const Landing = lazy(() => import('../components/Landing'))
 const WorktreeCreationPanel = lazy(
   () => import('../components/worktree-creation/WorktreeCreationPanel')
@@ -109,6 +110,8 @@ export function AppWorkspaceShell(props: {
   floatingWorkspace: FloatingWorkspacePanelState
 }): React.JSX.Element {
   const { layout, floatingWorkspace } = props
+  // Why here: the shell outlives every page and titlebar layout, so no page is shown unrecorded.
+  usePageHistoryRecording()
   const titlebarLeftControls = <TitlebarLeftControls layout={layout} />
   const titlebarMainStrip = <TitlebarMainStrip layout={layout} />
   // Why: keep virtualized scroll memory above the sidebar's workspace/landing remount so the left list doesn't restart at scrollTop 0.

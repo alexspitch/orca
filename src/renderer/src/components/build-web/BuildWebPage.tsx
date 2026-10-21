@@ -27,6 +27,7 @@ import { BuildWebTakeToWorkDialog } from './BuildWebTakeToWorkDialog'
 import { useTakeToWork } from './use-take-to-work'
 import { BuildWebIssueFullScreen } from './issue/BuildWebIssueFullScreen'
 import { BuildLogDialog } from './images/BuildLogDialog'
+import { isPageHistoryRestoring } from './page-history/page-history-store'
 
 /** Defers the visible spinner so a fast local answer never flashes one (STYLEGUIDE, UX rule 1). */
 function useDeferred(active: boolean, delayMs = 200): boolean {
@@ -59,8 +60,17 @@ export default function BuildWebPage(): React.JSX.Element {
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const { taking, takeToWork, closeTaking } = useTakeToWork()
 
-  // Why on leaving: coming back to Issues shows the list, not the card that was open before.
-  useEffect(() => () => useBuildWebStore.getState().openIssue(null), [])
+  // Why on leaving: coming back to Issues shows the list, not the card that was open before — unless
+  // the page history is showing a card elsewhere. Why the view check: StrictMode's rehearsed unmount
+  // runs this while Issues is still the page, and must not close a card a link just opened.
+  useEffect(
+    () => () => {
+      if (useAppStore.getState().activeView !== 'build-web' && !isPageHistoryRestoring()) {
+        useBuildWebStore.getState().openIssue(null)
+      }
+    },
+    []
+  )
 
   useBuildWebPageEscape(() => {
     const current = useBuildWebStore.getState()

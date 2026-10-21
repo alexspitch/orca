@@ -19,6 +19,7 @@ import { RecapList } from './RecapList'
 import { RecapReportPane } from './RecapReportPane'
 import { RecapsFilterBar } from './RecapsFilterBar'
 import { useRecapMonth } from './use-recap-month'
+import { recordPage, usePageHistory } from '../page-history/page-history-store'
 
 const PAGE = 50
 const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
@@ -45,7 +46,21 @@ function RecapListView({
   const [data, setData] = useState<BuildWebRecapPage | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  // A report shown again from the page history, kept even when these filters would not list it.
+  const [restored, setRestored] = useState<BuildWebRecap | null>(
+    () => usePageHistory.getState().shownRecap
+  )
+  const restoredId = useRef(restored?.id ?? null)
+  const [selectedId, setSelectedId] = useState<string | null>(restored?.id ?? null)
+  const shownRecap = usePageHistory((s) => s.shownRecap)
+  useEffect(() => {
+    if (shownRecap) {
+      restoredId.current = shownRecap.id
+      setRestored(shownRecap)
+      setSelectedId(shownRecap.id)
+      usePageHistory.setState({ shownRecap: null })
+    }
+  }, [shownRecap])
   // Why: an answer to filters since changed must not land over the newer one.
   const latest = useRef(0)
 
@@ -70,7 +85,9 @@ function RecapListView({
       setData(result.value)
       setError(null)
       setSelectedId((current) =>
-        results.some((r) => r.id === current) ? current : (results[0]?.id ?? null)
+        results.some((r) => r.id === current) || (current && current === restoredId.current)
+          ? current
+          : (results[0]?.id ?? null)
       )
     } catch (failure) {
       if (mine === latest.current) {
@@ -101,7 +118,16 @@ function RecapListView({
       />
     )
   }
-  const selected = data.results.find((r) => r.id === selectedId) ?? null
+  const selected =
+    data.results.find((r) => r.id === selectedId) ??
+    (restored && restored.id === selectedId ? restored : null)
+  const select = (id: string) => {
+    setSelectedId(id)
+    const recap = data.results.find((r) => r.id === id)
+    if (recap) {
+      recordPage({ kind: 'recap', recap })
+    }
+  }
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4 md:px-5">
       <RecapsFilterBar
@@ -148,7 +174,7 @@ function RecapListView({
               <RecapList
                 recaps={data.results}
                 selectedId={selected?.id ?? null}
-                onSelect={setSelectedId}
+                onSelect={select}
                 page={page}
                 pageSize={PAGE}
                 total={data.total}
@@ -180,8 +206,19 @@ function RecapCalendarView({
 }: ViewProps): React.JSX.Element {
   const [today] = useState(() => new Date())
   const [month, setMonth] = useState<RecapMonth>(() => monthOf(today))
-  const [open, setOpen] = useState<BuildWebRecap | null>(null)
+  const [open, setOpen] = useState<BuildWebRecap | null>(() => usePageHistory.getState().shownRecap)
   const { data, capped, error, loading, reload } = useRecapMonth(target, filters, month)
+  const shownRecap = usePageHistory((s) => s.shownRecap)
+  useEffect(() => {
+    if (shownRecap) {
+      setOpen(shownRecap)
+      usePageHistory.setState({ shownRecap: null })
+    }
+  }, [shownRecap])
+  const openReport = (recap: BuildWebRecap) => {
+    setOpen(recap)
+    recordPage({ kind: 'recap', recap })
+  }
 
   if (data === null) {
     return error ? (
@@ -230,7 +267,7 @@ function RecapCalendarView({
               </span>
             ) : null}
           </div>
-          <RecapCalendar month={month} today={today} recaps={data.results} onOpen={setOpen} />
+          <RecapCalendar month={month} today={today} recaps={data.results} onOpen={openReport} />
         </>
       )}
     </div>

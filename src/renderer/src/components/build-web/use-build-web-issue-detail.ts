@@ -10,6 +10,7 @@ import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebTarget } from './use-build-web-data'
 import { toastJiraOutcome, useConfirmStatusMove } from './use-build-web-issue-write'
+import { labelIssuePage } from './page-history/page-history-store'
 
 const CARD_FIELDS = [
   'product',
@@ -63,6 +64,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       }
       setDetail(next)
       setFailed(null)
+      labelIssuePage(next.id, `${next.key} · ${next.title}`)
       const [users, list] = await Promise.all([
         callBuildWeb(target, 'listAssignees').catch(() => []),
         next.product === 'unknown'

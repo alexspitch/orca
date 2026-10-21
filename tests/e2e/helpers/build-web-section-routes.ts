@@ -15,7 +15,7 @@ export function serveSectionRoutes(
   return (
     serveTestHistory(res, path, url, json) ||
     serveImageBuilds(res, path, json, adoptions) ||
-    serveIssues(res, path, json) ||
+    serveIssues(res, path, url, json) ||
     serveRecaps(res, path, url, json)
   )
 }

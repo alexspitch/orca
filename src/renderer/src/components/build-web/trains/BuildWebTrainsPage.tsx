@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils'
 import type { BuildWebTrain } from '../../../../../shared/build-web-train-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
+import { withoutPageRecording } from '../page-history/page-history-store'
 import { useBuildWebStore } from '../build-web-store'
 import { useBuildWebStatus, useBuildWebTarget } from '../use-build-web-data'
 import { useBuildWebPageEscape } from '../use-build-web-page-escape'
@@ -81,9 +82,10 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
     void load()
   }, [load])
 
+  // Why the page first, unrecorded: the history gets the card, not an Issues list nobody saw.
   const openIssue = (id: string) => {
+    withoutPageRecording(() => useAppStore.getState().openBuildWebPage())
     useBuildWebStore.getState().openIssue(id)
-    useAppStore.getState().openBuildWebPage()
   }
 
   /** Depart now; the schedule stays — the next hour still departs. */
