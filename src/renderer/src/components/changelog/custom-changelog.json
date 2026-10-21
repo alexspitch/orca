@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792570875000",
+      "date": "2026-10-21",
+      "commit": "46142cdfce5f",
+      "features": [
+        "Each number on the sidebar's Issues, Images, Trains and Testing items now has its own tooltip explaining what it counts.",
+        "A page history button pair with a recent-pages list (⟲ ← →) now sits beside the workspace Back/Forward, letting you return to Orca's pages, task cards and recap reports.",
+        "Task numbers in Recaps reports are now links that open the task's card full screen, and task-type cells show as coloured chips.",
+        "A task's full-screen card, including over the Testing list, now has Plan and Mockups tabs showing the task's plan and its mockup pages."
+      ],
+      "settings": [],
+      "fixes": [
+        "The Sidebar → Issues number now counts only open blockers among the tasks the page shows, no longer including done or won't-fix tasks.",
+        "In development builds, a task card opened from a link in Issues or Testing no longer closes immediately on its own."
+      ]
+    },
+    {
       "version": "1.4.234-custom.1792524628000",
       "date": "2026-10-20",
       "commit": "4a1a5c3bb097",
