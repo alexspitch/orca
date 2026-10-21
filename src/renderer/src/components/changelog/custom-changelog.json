@@ -1,6 +1,19 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792594301000",
+      "date": "2026-10-21",
+      "commit": "a01f16004603",
+      "features": [
+        "The status bar's usage limit chips now turn green, yellow or red depending on how much of each limit has been used.",
+        "Stats & Usage has a picker to show usage for this computer, a paired server, or this computer and all servers together."
+      ],
+      "settings": [],
+      "fixes": [
+        "Stats & Usage now counts Claude sessions stored in a custom Claude config folder, which were previously missing from the totals."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792589021000",
       "date": "2026-10-21",
       "commit": "73c489112617",
