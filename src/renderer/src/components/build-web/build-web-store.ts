@@ -238,15 +238,16 @@ export function issueQueryOf(
 
 /** The filters the sidebar's blocker count follows: the list's, without its search and paging. */
 export function issueSummaryQueryOf(
-  state: Pick<BuildWebState, 'quick' | 'statuses' | 'product'>
+  state: Pick<BuildWebState, 'quick' | 'statuses' | 'product' | 'query'>
 ): BuildWebIssueSummaryQuery {
   return {
     mine: state.quick.has('mine'),
     ai: state.quick.has('ai'),
     favorite: state.quick.has('favorite'),
     jira: state.quick.has('jira'),
-    // Why an empty list rather than none: «any status» here, where none means the open ones.
+    // Why the page's choice as it is: the host counts its open statuses only, all of them for none.
     status: BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s)),
-    product: state.product === 'all' ? undefined : [state.product]
+    product: state.product === 'all' ? undefined : [state.product],
+    q: state.query.trim() || undefined
   }
 }

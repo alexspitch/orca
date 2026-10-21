@@ -198,10 +198,10 @@ export const BUILD_WEB_OPEN_STATUSES: readonly BuildWebStatus[] = [
 /** The Issues badge: tasks at the top priority (Jira's Highest, Blocker, Critical). */
 export type BuildWebIssueSummary = { blockers: number; capped: boolean }
 
-/** The list's filters the badge counts within; without a status, the open ones. */
+/** The list's filters the badge counts within, its search too; only open tasks are counted. */
 export type BuildWebIssueSummaryQuery = Pick<
   BuildWebIssueQuery,
-  'mine' | 'ai' | 'favorite' | 'jira' | 'status' | 'product'
+  'mine' | 'ai' | 'favorite' | 'jira' | 'status' | 'product' | 'q'
 >
 
 export type BuildWebIssuePage = { issues: BuildWebIssueRow[]; total: number }

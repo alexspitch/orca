@@ -166,6 +166,16 @@ function servePlanIssue(
   return true
 }
 
+// The Issues badge's question — tasks sorted by priority — answered with an open blocker and a
+// closed one, within the statuses asked for, as the console filters them.
+const BLOCKERS = [
+  { ...ROW, id: 'iss-blocker', key: 'IS-910', title: 'Calls lost', priority: 5 },
+  { ...ROW, id: 'iss-done', key: 'IS-911', title: 'Fixed blocker', priority: 5, status: 'done' }
+]
+
+/** The statuses each badge question asked for, in order; the spec clears it. */
+export const blockerQueries: (string | null)[] = []
+
 export function serveIssues(
   res: http.ServerResponse,
   path: string,
@@ -175,7 +185,12 @@ export function serveIssues(
   if (servePlanIssue(res, path, json)) {
     return true
   }
-  if (path === '/api/tms/issues') {
+  if (path === '/api/tms/issues' && url.searchParams.get('sort') === 'priority') {
+    blockerQueries.push(url.searchParams.get('status'))
+    const statuses = url.searchParams.get('status')?.split(',')
+    const rows = BLOCKERS.filter((row) => !statuses || statuses.includes(row.status))
+    json(res, 200, { issues: rows, total: rows.length })
+  } else if (path === '/api/tms/issues') {
     const rows = url.searchParams.get('q') === SUB_ROW.key ? [SUB_ROW] : [ROW, PLAN_ROW]
     json(res, 200, { issues: rows, total: rows.length })
   } else if (path === '/api/tms/issues/assignees') {

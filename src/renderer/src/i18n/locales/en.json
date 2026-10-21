@@ -20812,7 +20812,7 @@
       "images": "Images",
       "imagesBuilding": "{{label}}, {{count}} building",
       "issuesBlockers": "{{label}}, {{count}} blockers",
-      "blockersHint": "Open tasks at the highest priority (Jira Highest, Blocker, Critical)",
+      "blockersHint": "Blockers: open tasks at the highest priority (Jira Highest, Blocker, Critical), within the Issues filters",
       "trains": "Trains",
       "testing": "Testing",
       "recaps": "Recaps",
@@ -20822,7 +20822,11 @@
       "testingFailed": "{{label}}, {{count}} failed",
       "testingFailedHint": "Tests that failed in the last nightly run of master",
       "trainsRolling": "{{label}}, {{count}} rolling out",
-      "trainsRollingHint": "Images on their way to a stand in {{trains}} train(s)"
+      "trainsRollingHint": "Images on their way to a stand in {{trains}} train(s)",
+      "blockersFilters": "Filters: {{filters}}",
+      "blockersAll": "No filter: every open task",
+      "blockersCapped": "At least {{count}}: only the {{count}} highest-priority tasks are read",
+      "imagesBuildingHint": "Images building now, each image and distribution once"
     },
     "priority": {
       "highest": "Highest",

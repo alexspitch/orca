@@ -49,7 +49,8 @@ export const BuildWebIssueSummaryParams = z.object({
   favorite: z.boolean().optional(),
   jira: z.boolean().optional(),
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
-  product: z.array(Product).max(5).optional()
+  product: z.array(Product).max(5).optional(),
+  q: z.string().max(200).optional()
 })
 
 export const BuildWebVersionsParams = z.object({ product: Product })

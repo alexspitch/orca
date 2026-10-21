@@ -6,9 +6,10 @@ import {
 import { requireBuildWebCredential } from './build-web-connection'
 import { listBuildWebIssues } from './build-web-issue-read'
 
-// The Issues badge: how many tasks the Issues list's filters leave sit at the top priority — the
-// console's own reading of Jira's Highest, Blocker and Critical (ticketImport.priorityOfJira). The
-// console cannot filter by priority, so one page sorted by it carries them first.
+// The Issues badge: how many open tasks the Issues list's filters and search leave sit at the top
+// priority — the console's own reading of Jira's Highest, Blocker and Critical
+// (ticketImport.priorityOfJira). The console cannot filter by priority, so one page sorted by it
+// carries them first. A closed task (done, won't fix) blocks nothing, whatever the list shows.
 
 const TTL_MS = 60_000
 const PAGE = 100
@@ -25,9 +26,15 @@ export async function buildWebIssueSummary(
     ai: filters.ai === true,
     favorite: filters.favorite === true,
     jira: filters.jira === true,
-    // Why: an empty list is «any status» on the page, as it is to the console.
-    status: filters.status ?? [...BUILD_WEB_OPEN_STATUSES],
-    product: filters.product
+    // Why: no status, or an empty list («any status» on the page), is every open status.
+    status: filters.status?.length
+      ? BUILD_WEB_OPEN_STATUSES.filter((s) => filters.status?.includes(s))
+      : [...BUILD_WEB_OPEN_STATUSES],
+    product: filters.product,
+    q: filters.q?.trim() || undefined
+  }
+  if (query.status.length === 0) {
+    return { blockers: 0, capped: false }
   }
   const key = `${credential.baseUrl}#${credential.generation}#${JSON.stringify(query)}`
   if (cached?.key === key && Date.now() - cached.at < TTL_MS) {
@@ -36,7 +43,6 @@ export async function buildWebIssueSummary(
   const page = await listBuildWebIssues({
     view: 'all',
     ...query,
-    status: query.status.length ? query.status : undefined,
     sort: 'priority',
     dir: 'desc',
     limit: PAGE

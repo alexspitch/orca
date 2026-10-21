@@ -7,6 +7,7 @@ import { translate } from '@/i18n/i18n'
 import { callBuildWeb } from '../build-web/build-web-client'
 import { HideSidebarMenu } from './sidebar-nav-controls'
 import { useBuildWebBadge } from './use-build-web-badge'
+import { SidebarCountBadge } from './SidebarCountBadge'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { BuildWebImageSummary } from '../../../../shared/build-web-image-types'
 
@@ -47,14 +48,6 @@ export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
                 })
               : building
           }
-          title={
-            failed
-              ? translate(
-                  'buildWeb.sidebar.imagesFailedHint',
-                  'Images whose last build failed, as the Images page counts them'
-                )
-              : undefined
-          }
           className={cn(
             'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
             active
@@ -68,20 +61,24 @@ export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
           />
           <span className="flex-1">{label}</span>
           {running ? (
-            <span
-              aria-hidden="true"
-              className="min-w-5 rounded-full bg-worktree-sidebar-foreground/10 px-1.5 text-center text-2xs leading-5 tabular-nums"
-            >
-              {running}
-            </span>
+            <SidebarCountBadge
+              count={running}
+              tone="neutral"
+              hint={translate(
+                'buildWeb.sidebar.imagesBuildingHint',
+                'Images building now, each image and distribution once'
+              )}
+            />
           ) : null}
           {failed ? (
-            <span
-              aria-hidden="true"
-              className="min-w-5 rounded-full bg-chip-tone-red/15 px-1.5 text-center text-2xs leading-5 text-chip-tone-red tabular-nums"
-            >
-              {failed}
-            </span>
+            <SidebarCountBadge
+              count={failed}
+              tone="red"
+              hint={translate(
+                'buildWeb.sidebar.imagesFailedHint',
+                'Images whose last build failed, as the Images page counts them'
+              )}
+            />
           ) : null}
         </button>
       </ContextMenuTrigger>
