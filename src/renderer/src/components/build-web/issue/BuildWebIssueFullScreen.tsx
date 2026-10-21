@@ -20,9 +20,21 @@ import { IssueGuideTab } from './IssueGuideTab'
 import { IssueCommitsTab } from './IssueCommitsTab'
 import { imageTally, readsRuns, writesRuns } from './issue-card-facts'
 import { useIssueRun } from './use-issue-run'
+import { useIssuePlan } from './plan/use-issue-plan'
+import { IssuePlanTab } from './plan/IssuePlanTab'
+import { IssueMockupsTab } from './plan/IssueMockupsTab'
+import { filesWithRole, planProgress } from './plan/issue-file-roles'
 
 type CardTab = BuildWebCardTab
-const TABS: readonly CardTab[] = ['overview', 'build', 'guide', 'commits', 'subtasks']
+const TABS: readonly CardTab[] = [
+  'overview',
+  'plan',
+  'mockups',
+  'build',
+  'guide',
+  'commits',
+  'subtasks'
+]
 const NO_PERMS: string[] = []
 
 /** The task on the whole page, with build-web's tabs: Overview, Build, Guide & Jira, Commits, Subtasks. */
@@ -50,6 +62,7 @@ export function BuildWebIssueFullScreen({
     reload: reloadRun
   } = useIssueRun(target, issueId ?? '', Boolean(issueId) && runsVisible)
   const detail = state.detail
+  const plan = useIssuePlan(target, detail)
   if (!issueId || state.error) {
     return <BuildWebListState kind="error" error={state.error} />
   }
@@ -79,10 +92,27 @@ export function BuildWebIssueFullScreen({
       )
     }
   }
+  const mockupCount = filesWithRole(detail.files, 'mockup').length
+  // As build-web's tab: how far the plan has got once it is read, else how many plans there are.
+  const planLabel = () => {
+    const steps = plan.text ? planProgress(plan.text) : null
+    if (steps?.total) {
+      return translate('buildWeb.card.planSteps', 'Plan {{done}} / {{total}}', steps)
+    }
+    return plan.plans.length
+      ? translate('buildWeb.card.planCount', 'Plan {{count}}', { count: plan.plans.length })
+      : translate('buildWeb.card.plan', 'Plan')
+  }
   const label = (t: CardTab) => {
     switch (t) {
       case 'overview':
         return translate('buildWeb.card.overview', 'Overview')
+      case 'plan':
+        return planLabel()
+      case 'mockups':
+        return mockupCount
+          ? translate('buildWeb.card.mockupsCount', 'Mockups {{count}}', { count: mockupCount })
+          : translate('buildWeb.card.mockups', 'Mockups')
       case 'build':
         return tally
           ? translate('buildWeb.card.buildCount', 'Build {{ok}} / {{total}}', tally)
@@ -140,6 +170,21 @@ export function BuildWebIssueFullScreen({
               onOpenIssue={(id) => openIssue(id, true)}
             />
           </TabsContent>
+          {visited.has('plan') ? (
+            <TabsContent value="plan" forceMount hidden={current !== 'plan'}>
+              <IssuePlanTab issueKey={detail.key} plan={plan} />
+            </TabsContent>
+          ) : null}
+          {visited.has('mockups') ? (
+            <TabsContent
+              value="mockups"
+              forceMount
+              hidden={current !== 'mockups'}
+              className="h-full"
+            >
+              <IssueMockupsTab target={target} detail={detail} />
+            </TabsContent>
+          ) : null}
           {showRuns && visited.has('build') ? (
             <TabsContent value="build" forceMount hidden={current !== 'build'}>
               <IssueBuildTab

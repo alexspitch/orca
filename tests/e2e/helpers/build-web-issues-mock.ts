@@ -1,7 +1,9 @@
 import type http from 'node:http'
 
 // build-web's task list and one task's card with files: of the task (Markdown, HTML, a picture,
-// a video too large for a tab) and of a comment (a log), plus the files' own bytes.
+// a video too large for a tab) and of a comment (a log), plus the files' own bytes. A second task
+// has a plan and two mockups — an archive of two pages and a single page — served by token under
+// `/mockups/` with the console's own sandbox, as build-web does.
 
 const ISSUE_ID = 'iss-files'
 const ROW = {
@@ -68,13 +70,96 @@ const fileRows = () => [
   }
 ]
 
+const PLAN_ISSUE_ID = 'iss-plan'
+const PLAN_ROW = { ...ROW, id: PLAN_ISSUE_ID, key: 'IS-901', title: 'Plan and mockups demo' }
+const PLAN_MD = [
+  '# Plan of the fix',
+  '',
+  '- [x] Reproduce the dropped call',
+  '- [ ] Patch the engine timeout',
+  ''
+].join('\n')
+const roleFile = (id: string, name: string, mime: string, role: string, at: string) => ({
+  id,
+  name,
+  size: 100,
+  mime,
+  comment_id: null,
+  role,
+  created_by: 'qa@box.test',
+  created_at: at
+})
+const PLAN_FILES = [
+  roleFile('p1p1p1p1p1p1', 'plan.md', 'text/markdown', 'plan', '2026-10-21T08:00:00Z'),
+  roleFile('m1m1m1m1m1m1', 'screens.zip', 'application/zip', 'mockup', '2026-10-21T09:00:00Z'),
+  roleFile('m2m2m2m2m2m2', 'login.html', 'text/html', 'mockup', '2026-10-20T09:00:00Z')
+]
+const MOCKUP_SCREENS: Record<string, string[]> = {
+  m1m1m1m1m1m1: ['index.html', 'pages/settings.html'],
+  m2m2m2m2m2m2: ['login.html']
+}
+const MOCKUP_PAGES: Record<string, { type: string; body: string }> = {
+  'index.html': {
+    type: 'text/html; charset=utf-8',
+    body: '<!doctype html><link rel="stylesheet" href="style.css"><h1 id="home">Mockup home screen</h1>'
+  },
+  'style.css': { type: 'text/css', body: '#home { color: rgb(200, 0, 0); }' },
+  'pages/settings.html': {
+    type: 'text/html; charset=utf-8',
+    body: '<!doctype html><h1>Mockup settings screen</h1>'
+  },
+  'login.html': {
+    type: 'text/html; charset=utf-8',
+    body: '<!doctype html><h1>Mockup login page</h1>'
+  }
+}
+// The console's policy for a mockup: sandboxed, and no frame-ancestors, so Orca's card can frame it.
+const MOCKUP_CSP = "sandbox allow-scripts; default-src * data: blob: 'unsafe-inline' 'unsafe-eval'"
+
+function servePlanIssue(
+  res: http.ServerResponse,
+  path: string,
+  json: (res: http.ServerResponse, status: number, body: unknown) => void
+): boolean {
+  const view = /^\/api\/tms\/issues\/iss-plan\/files\/([^/]+)\/view$/.exec(path)
+  const page = /^\/mockups\/tok-([^/]+)\/(.+)$/.exec(path)
+  if (path === `/api/tms/issues/${PLAN_ISSUE_ID}`) {
+    json(res, 200, {
+      issue: { ...PLAN_ROW, description: 'Calls drop on the stand.', steps: [] },
+      branches: ['master'],
+      comments: [],
+      files: PLAN_FILES
+    })
+  } else if (path === `/api/tms/issues/${PLAN_ISSUE_ID}/files/p1p1p1p1p1p1`) {
+    res.writeHead(200, { 'content-type': 'text/markdown' })
+    res.end(PLAN_MD)
+  } else if (view) {
+    json(res, 200, {
+      base: `/mockups/tok-${view[1]}/`,
+      screens: (MOCKUP_SCREENS[view[1]] ?? []).map((name) => ({ name, path: name }))
+    })
+  } else if (page && MOCKUP_PAGES[page[2]]) {
+    res.writeHead(200, {
+      'content-type': MOCKUP_PAGES[page[2]].type,
+      'content-security-policy': MOCKUP_CSP
+    })
+    res.end(MOCKUP_PAGES[page[2]].body)
+  } else {
+    return false
+  }
+  return true
+}
+
 export function serveIssues(
   res: http.ServerResponse,
   path: string,
   json: (res: http.ServerResponse, status: number, body: unknown) => void
 ): boolean {
+  if (servePlanIssue(res, path, json)) {
+    return true
+  }
   if (path === '/api/tms/issues') {
-    json(res, 200, { issues: [ROW], total: 1 })
+    json(res, 200, { issues: [ROW, PLAN_ROW], total: 2 })
   } else if (path === '/api/tms/issues/assignees') {
     json(res, 200, { users: [] })
   } else if (path === '/api/tms/versions') {

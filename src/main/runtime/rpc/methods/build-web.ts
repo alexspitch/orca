@@ -234,5 +234,11 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebIssueFileParams,
     handler: async (params, { runtime }) => runtime.buildWebIssueFile(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.issueMockupView',
+    permission: 'workspace',
+    params: BuildWebIssueFileParams,
+    handler: async (params, { runtime }) => runtime.buildWebIssueMockupView(params)
   })
 ]

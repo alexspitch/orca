@@ -102,6 +102,7 @@ function fileOf(value: unknown): BuildWebIssueFile | null {
         size: numberOf(v.size),
         mime: textOf(v.mime),
         comment_id: textOrNull(v.comment_id),
+        role: v.role === 'plan' || v.role === 'mockup' ? v.role : '',
         created_by: textOf(v.created_by),
         created_at: textOf(v.created_at)
       }

@@ -4,6 +4,7 @@ import type {
   BuildWebConnectionStatus,
   BuildWebIssueDetail,
   BuildWebIssueFileContent,
+  BuildWebMockupView,
   BuildWebIssuePage,
   BuildWebIssuePatch,
   BuildWebIssueQuery,
@@ -119,6 +120,7 @@ export type BuildWebApi = {
   commitDiff: (args: { id: string; sha: string }) => Promise<BuildWebCommitDiff>
   guideShot: (args: { runId: string; slug: string }) => Promise<BuildWebGuideShot>
   issueFile: (args: { id: string; fileId: string }) => Promise<BuildWebIssueFileContent>
+  issueMockupView: (args: { id: string; fileId: string }) => Promise<BuildWebMockupView>
   /** Desktop only: writes a file `issueFile` read to this computer, for its tabs; the path. */
   stageIssueFile: (args: {
     issueKey: string

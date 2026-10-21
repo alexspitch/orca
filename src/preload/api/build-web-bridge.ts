@@ -36,6 +36,7 @@ export const buildWebApi = {
   commitDiff: (args) => ipcRenderer.invoke('buildWeb:commitDiff', args),
   guideShot: (args) => ipcRenderer.invoke('buildWeb:guideShot', args),
   issueFile: (args) => ipcRenderer.invoke('buildWeb:issueFile', args),
+  issueMockupView: (args) => ipcRenderer.invoke('buildWeb:issueMockupView', args),
   stageIssueFile: (args) => ipcRenderer.invoke('buildWeb:stageIssueFile', args),
   buildCombos: (args) => ipcRenderer.invoke('buildWeb:buildCombos', args),
   cancelBuild: (args) => ipcRenderer.invoke('buildWeb:cancelBuild', args),

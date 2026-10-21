@@ -112,9 +112,16 @@ export type BuildWebIssueFile = {
   mime: string
   /** The comment it was attached with; null for a file of the task itself. */
   comment_id: string | null
+  /** The card's Plan or Mockups tab it is shown in; '' for plain evidence. Absent from older hosts. */
+  role?: BuildWebIssueFileRole
   created_by: string
   created_at: string
 }
+
+export type BuildWebIssueFileRole = '' | 'plan' | 'mockup'
+
+/** Where a mockup is shown: `base` (absolute, valid for hours) + a screen's `path`. */
+export type BuildWebMockupView = { base: string; screens: { name: string; path: string }[] }
 
 /** Files Orca opens in its own tabs; a larger one opens in the browser instead. */
 export const BUILD_WEB_ISSUE_FILE_OPEN_MAX_BYTES = 3 * 1024 * 1024

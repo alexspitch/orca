@@ -15,3 +15,6 @@ export const BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY = 'build-web-issue-files.v
 
 /** A runtime that settles a failed image with its last successful build: `buildWeb.adoptImageSuccess`. */
 export const BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY = 'build-web-image-adopt.v1'
+
+/** A runtime that names where a task's mockup is shown: `buildWeb.issueMockupView`. */
+export const BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY = 'build-web-issue-mockups.v1'

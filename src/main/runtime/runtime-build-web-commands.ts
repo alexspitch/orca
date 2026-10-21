@@ -55,7 +55,10 @@ import {
   pushBuildWebImages,
   adoptBuildWebImageSuccess
 } from '../build-web/build-web-images'
-import { getBuildWebIssueFile } from '../build-web/build-web-issue-files'
+import {
+  getBuildWebIssueFile,
+  getBuildWebIssueMockupView
+} from '../build-web/build-web-issue-files'
 import {
   getBuildWebCommitDiff,
   getBuildWebGuideShot,
@@ -217,5 +220,9 @@ export class RuntimeBuildWebCommands {
 
   buildWebIssueFile(args: In<typeof BuildWebIssueFileParams>) {
     return getBuildWebIssueFile(args.id, args.fileId)
+  }
+
+  buildWebIssueMockupView(args: In<typeof BuildWebIssueFileParams>) {
+    return getBuildWebIssueMockupView(args.id, args.fileId)
   }
 }

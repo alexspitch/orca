@@ -937,6 +937,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.imageTestSources': null,
   'buildWeb.issueCommits': BuildWebCommitsParams,
   'buildWeb.issueFile': BuildWebIssueFileParams,
+  'buildWeb.issueMockupView': BuildWebIssueFileParams,
   'buildWeb.issueSummary': BuildWebIssueSummaryParams,
   'buildWeb.jiraDraft': BuildWebIssueId,
   'buildWeb.jiraInfo': BuildWebJiraKeyParams,

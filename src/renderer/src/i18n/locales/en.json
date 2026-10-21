@@ -20569,7 +20569,8 @@
       "updateServerTestHistory": "This Orca server does not support Test history yet. Update the server to use it.",
       "updateServerTrainsRolling": "This Orca server does not count the images trains roll out yet. Update the server.",
       "updateServerIssueFiles": "This Orca server does not open task attachments yet. Update the server.",
-      "updateServerImageAdopt": "This Orca server cannot settle a failed image with an earlier build yet. Update the server."
+      "updateServerImageAdopt": "This Orca server cannot settle a failed image with an earlier build yet. Update the server.",
+      "updateServerIssueMockups": "This Orca server does not show task mockups yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -20674,7 +20675,12 @@
       "work": "Work",
       "buildBranch": "build",
       "commitPrefix": "Commits prefixed {{key}}",
-      "resizePanel": "Resize the panel"
+      "resizePanel": "Resize the panel",
+      "plan": "Plan",
+      "planCount": "Plan {{count}}",
+      "planSteps": "Plan {{done}} / {{total}}",
+      "mockups": "Mockups",
+      "mockupsCount": "Mockups {{count}}"
     },
     "build": {
       "none": "The task has no build yet.",
@@ -21471,6 +21477,18 @@
       "title": "Attachments {{count}}",
       "label": "Attachments",
       "openFailed": "Could not open {{name}}: {{error}}"
+    },
+    "plan": {
+      "none": "The task has no plan. Attach one with",
+      "file": "Plan file",
+      "progress": "Plan progress",
+      "done": "{{done}} of {{total}} done"
+    },
+    "mockups": {
+      "none": "The task has no mockups. Attach a page or a zip of pages with",
+      "list": "Mockups and screens",
+      "openInBrowser": "Open in browser",
+      "noPages": "The archive holds no .html page."
     }
   },
   "gitLog": {

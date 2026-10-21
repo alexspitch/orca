@@ -98,6 +98,9 @@ export function registerBuildWebHandlers(): void {
   handle('commitDiff', BuildWebCommitDiffParams, (args) => commands.buildWebCommitDiff(args))
   handle('guideShot', BuildWebGuideShotParams, (args) => commands.buildWebGuideShot(args))
   handle('issueFile', BuildWebIssueFileParams, (args) => commands.buildWebIssueFile(args))
+  handle('issueMockupView', BuildWebIssueFileParams, (args) =>
+    commands.buildWebIssueMockupView(args)
+  )
   // Why local only: the file is staged on this computer for its tabs, whichever host read it.
   handle('stageIssueFile', BuildWebStageIssueFileParams, (args) => stageBuildWebIssueFile(args))
   registerBuildWebTaskHandlers()
