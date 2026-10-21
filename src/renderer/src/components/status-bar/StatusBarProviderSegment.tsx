@@ -55,8 +55,12 @@ function WindowLabel({
   showLabel?: boolean
   labelFirst?: boolean
 }): React.JSX.Element {
+  // Why by consumption: "left" and "used" displays of one window must read the same color.
   return (
-    <span className="tabular-nums">
+    <span
+      data-usage-tone={getWindowUsageTone(w.usedPercent)}
+      className="tabular-nums data-[usage-tone=normal]:text-status-success data-[usage-tone=urgent]:text-destructive data-[usage-tone=warning]:text-status-warning"
+    >
       {showLabel && labelFirst ? `${label} ` : ''}
       {formatBareUsagePercentage(w.usedPercent, display)}
       {showLabel && !labelFirst ? ` ${label}` : ''}
@@ -81,15 +85,20 @@ export function ProviderLetterBadge({ p }: { p: ProviderRateLimits }): React.JSX
 
 export type UsageTone = 'urgent' | 'warning' | 'normal'
 
-/** Urgency by consumption, matching the usage bar colors, whatever % display the user chose. */
-export function getUsageTone(p: ProviderRateLimits): UsageTone {
-  const tightest = getTightestUsageSection(p)
-  const used = tightest ? clampUsedPercent(tightest.window.usedPercent) : 0
+/** One window's urgency by consumption, at the thresholds the usage bars change color. */
+export function getWindowUsageTone(usedPercent: number): UsageTone {
+  const used = clampUsedPercent(usedPercent)
   return used >= USAGE_URGENT_PERCENT
     ? 'urgent'
     : used >= USAGE_WARNING_PERCENT
       ? 'warning'
       : 'normal'
+}
+
+/** Urgency by consumption, matching the usage bar colors, whatever % display the user chose. */
+export function getUsageTone(p: ProviderRateLimits): UsageTone {
+  const tightest = getTightestUsageSection(p)
+  return getWindowUsageTone(tightest ? tightest.window.usedPercent : 0)
 }
 
 /**
