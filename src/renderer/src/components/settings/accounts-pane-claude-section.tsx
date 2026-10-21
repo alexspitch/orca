@@ -14,6 +14,8 @@ import {
 } from './provider-account-visibility'
 import { formatAccountTimestamp, getClaudeAccountRuntimeLabel } from './accounts-pane-runtime'
 import type { AccountsPaneSectionModel } from './accounts-pane-types'
+import { ClaudeAccountNamePopover } from './claude-account-name-popover'
+import { ClaudeFolderAccountPopover } from './claude-folder-account-popover'
 import {
   canOfferClaudeSignInLink,
   ClaudeSignInLinkMenu,
@@ -135,6 +137,19 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                 />
               ) : null}
             </ButtonGroup>
+            {/* Why also on a server: the folder is named on that host, so no local browser is needed. */}
+            <ClaudeFolderAccountPopover
+              owner={accountOwner}
+              hostLabel={accountRuntimeSentenceLabel}
+              disabled={
+                claudeAction !== 'idle' ||
+                wslCapabilitiesLoading ||
+                accountRuntimeUnavailable ||
+                accountRuntime.runtime !== 'host'
+              }
+              busy={claudeAction === 'adding-folder'}
+              runClaudeAccountAction={runClaudeAccountAction}
+            />
             {claudeAction === 'adding' ? (
               <Button
                 variant="ghost"
@@ -284,7 +299,9 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                       className="flex min-w-0 flex-1 flex-col gap-0.5 text-left disabled:cursor-default"
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm font-medium">{account.email}</span>
+                        <span className="truncate text-sm font-medium">
+                          {account.label || account.email}
+                        </span>
                         <Badge
                           variant="outline"
                           className="h-4 shrink-0 rounded px-1.5 text-[10px] font-medium leading-none text-foreground/70"
@@ -309,9 +326,14 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                               'accounts.claude.signInRequired',
                               'Sign in again to use this account'
                             )
-                          : account.organizationName
-                            ? `${account.organizationName} · ${formatAccountTimestamp(account.lastAuthenticatedAt)}`
-                            : formatAccountTimestamp(account.lastAuthenticatedAt)}
+                          : [
+                              account.label ? account.email : null,
+                              account.organizationName,
+                              account.externalConfigDir,
+                              formatAccountTimestamp(account.lastAuthenticatedAt)
+                            ]
+                              .filter(Boolean)
+                              .join(' · ')}
                       </span>
                     </button>
                     <div className="flex shrink-0 items-center justify-end gap-1 max-md:w-full max-md:flex-wrap">
@@ -341,6 +363,13 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                           />
                         ) : null}
                       </ButtonGroup>
+                      <ClaudeAccountNamePopover
+                        owner={accountOwner}
+                        account={account}
+                        disabled={isBusy}
+                        busy={claudeAction === `rename:${account.id}`}
+                        runClaudeAccountAction={runClaudeAccountAction}
+                      />
                       <Button
                         variant="ghost"
                         size="xs"

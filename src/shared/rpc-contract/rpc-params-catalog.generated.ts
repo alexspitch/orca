@@ -38,6 +38,7 @@ import { pluginConsentRequestSchema } from '../plugins/plugin-consent-request'
 import {
   AccountsUnsubscribeParams,
   AddClaudeFromConfigDirParams,
+  AddClaudeFromFolderParams,
   AddCodexFromHomeParams,
   AddDataAccountParams,
   BeginClaudeSignInParams,
@@ -46,6 +47,7 @@ import {
   ListAccountsParams,
   RemoveAccountParams,
   RemoveDataAccountParams,
+  RenameClaudeAccountParams,
   SelectAccountParams,
   SelectCodexAccountForTargetParams,
   SelectDataAccountParams
@@ -720,6 +722,7 @@ import {
 // schema client-side runs the coercing transforms and rewrites the wire bytes.
 export const RPC_PARAMS_BY_METHOD = {
   'accounts.addClaudeFromConfigDir': AddClaudeFromConfigDirParams,
+  'accounts.addClaudeFromFolder': AddClaudeFromFolderParams,
   'accounts.addCodexFromHome': AddCodexFromHomeParams,
   'accounts.addDataFromHome': AddDataAccountParams,
   'accounts.antigravityAddCurrent': AntigravityAccountTargetParams,
@@ -739,6 +742,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'accounts.removeClaude': RemoveAccountParams,
   'accounts.removeCodex': RemoveAccountParams,
   'accounts.removeData': RemoveDataAccountParams,
+  'accounts.renameClaude': RenameClaudeAccountParams,
   'accounts.selectClaude': SelectAccountParams,
   'accounts.selectCodex': SelectAccountParams,
   'accounts.selectCodexForTarget': SelectCodexAccountForTargetParams,

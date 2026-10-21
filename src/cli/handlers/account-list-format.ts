@@ -3,7 +3,7 @@ import type { ManagedDataAccountsState } from '../../shared/managed-account-type
 // Why: Claude and Codex managed-account summaries both carry id+email+active id,
 // so one formatter renders either provider's block.
 type AccountsBlock = {
-  accounts: readonly { id: string; email: string; needsSignIn?: true }[]
+  accounts: readonly { id: string; email: string; label?: string | null; needsSignIn?: true }[]
   activeAccountId: string | null
   activeAccountIdsByRuntime?: {
     host: string | null
@@ -36,9 +36,9 @@ export function formatAccountsBlock(label: string, block: AccountsBlock): string
   ])
   const lines = block.accounts.map(
     (account) =>
-      `  ${account.email}${activeAccountIds.has(account.id) ? ' (active)' : ''}${
-        account.needsSignIn ? ' (sign in again in Orca Settings > AI Provider Accounts)' : ''
-      }`
+      `  ${account.label ? `${account.label} <${account.email}>` : account.email}${
+        activeAccountIds.has(account.id) ? ' (active)' : ''
+      }${account.needsSignIn ? ' (sign in again in Orca Settings > AI Provider Accounts)' : ''}`
   )
   return `Managed ${label} accounts (${block.accounts.length}):\n${lines.join('\n')}`
 }

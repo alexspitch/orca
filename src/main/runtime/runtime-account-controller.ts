@@ -232,6 +232,17 @@ export class RuntimeAccountController {
     return this.requireServices().claudeAccounts.cancelSignIn(signIn)
   }
 
+  addClaudeFromFolder(
+    configDir: string,
+    label?: string | null
+  ): Promise<ClaudeRateLimitAccountsState> {
+    return this.requireServices().claudeAccounts.addAccountFromConfigDir(configDir, label)
+  }
+
+  renameClaude(accountId: string, label: string | null): ClaudeRateLimitAccountsState {
+    return this.requireServices().claudeAccounts.renameAccount(accountId, label)
+  }
+
   removeCodex(accountId: string): Promise<CodexRateLimitAccountsState> {
     return this.requireServices().codexAccounts.removeAccount(accountId)
   }

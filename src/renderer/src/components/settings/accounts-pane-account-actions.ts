@@ -228,7 +228,7 @@ export function createClaudeAccountActionRunner(
             showUpdatedToast()
           }
         })
-      } else if (action === 'adding') {
+      } else if (action === 'adding' || action === 'adding-folder') {
         showUpdatedToast()
       }
     } catch (error) {

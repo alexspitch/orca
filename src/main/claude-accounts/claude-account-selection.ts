@@ -42,7 +42,11 @@ export type ClaudeAccountStore = {
 
 export type ClaudeAccountRuntime = Pick<
   ClaudeRuntimeAuthService,
-  'syncForCurrentSelection' | 'publishAll' | 'removeAccountFolder' | 'prepareAccountFolder'
+  | 'syncForCurrentSelection'
+  | 'publishAll'
+  | 'removeAccountFolder'
+  | 'prepareAccountFolder'
+  | 'resolveExternalConfigDir'
 > & {
   router: Pick<
     ClaudeRuntimeAuthService['router'],
@@ -95,6 +99,8 @@ export class ClaudeAccountSelection {
       authMethod: account.authMethod ?? 'unknown',
       organizationUuid: account.organizationUuid ?? null,
       organizationName: account.organizationName ?? null,
+      ...(account.externalConfigDir ? { externalConfigDir: account.externalConfigDir } : {}),
+      ...(account.label ? { label: account.label } : {}),
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
       lastAuthenticatedAt: account.lastAuthenticatedAt
@@ -153,6 +159,20 @@ export class ClaudeAccountSelection {
     await this.runtimeAuth.syncForCurrentSelection(target)
     this.rateLimits.evictInactiveClaudeCache(accountId)
     this.refreshUsage(wasSelected ? accountId : undefined, target)
+    return this.list()
+  }
+
+  /** Names an account, or clears its name with an empty one; the order and selection stay. */
+  setLabel(accountId: string, label: string | null): ClaudeRateLimitAccountsState {
+    this.requireAccount(accountId)
+    const name = label?.trim() || null
+    this.saveSettings({
+      claudeManagedAccounts: this.store
+        .getSettings()
+        .claudeManagedAccounts.map((entry) =>
+          entry.id === accountId ? { ...entry, label: name } : entry
+        )
+    })
     return this.list()
   }
 

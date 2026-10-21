@@ -79,6 +79,10 @@ export type ClaudeManagedAccount = {
   authMethod: 'subscription-oauth' | 'unknown'
   organizationUuid?: string | null
   organizationName?: string | null
+  /** A host folder the user signed in to themselves: launches run there, Orca never deletes it. */
+  externalConfigDir?: string | null
+  /** The user's name for the account, shown in place of its email; null or absent when unset. */
+  label?: string | null
   createdAt: number
   updatedAt: number
   lastAuthenticatedAt: number
@@ -92,6 +96,9 @@ export type ClaudeManagedAccountSummary = {
   authMethod: 'subscription-oauth' | 'unknown'
   organizationUuid?: string | null
   organizationName?: string | null
+  /** Set for an account saved from the user's own folder on the host. */
+  externalConfigDir?: string | null
+  label?: string | null
   createdAt: number
   updatedAt: number
   lastAuthenticatedAt: number

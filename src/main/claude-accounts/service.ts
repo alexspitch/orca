@@ -51,6 +51,21 @@ export class ClaudeAccountService {
     return this.signInHidden({ runtime: target.runtime, wslDistro: target.wslDistro }, copyLink)
   }
 
+  /** Saves a host folder the user already signed in to; Orca routes to it and never deletes it. */
+  addAccountFromConfigDir(
+    configDir: string,
+    label?: string | null
+  ): Promise<ClaudeRateLimitAccountsState> {
+    this.supersedePendingLogin()
+    return this.serializeMutation(() => this.registration.addFromConfigDir(configDir, label))
+  }
+
+  // Why not queued: a pending sign-in holds the queue for minutes, and every roster writer
+  // reads the roster right before it saves, so a rename between them is never lost.
+  renameAccount(accountId: string, label: string | null): ClaudeRateLimitAccountsState {
+    return this.selection.setLabel(accountId, label)
+  }
+
   reauthenticateAccount(
     accountId: string,
     copyLink = false

@@ -15,7 +15,6 @@ import { writeFileAtomically } from '../codex-accounts/fs-utils'
 import { resolveClaudeCommand } from '../codex-cli/command'
 import {
   claudeProfileMarkerPath,
-  describeClaudeProfile,
   type ClaudeProfileDescriptor,
   readUserClaudeConfigDir,
   readUserClaudeConfigDirAsSet,
@@ -31,14 +30,18 @@ import {
   type ClaudeAccountSelectionTarget
 } from './runtime-selection'
 import { wslClaudeProfilePointer } from './claude-profile-wsl-paths'
-import { isDirectory, listClaudeProfileHomes } from './claude-profile-installed-router'
 import {
   claudeStateFile,
   readClaudeFolderLogin,
-  removeClaudeAccountFolder,
   isSameClaudeLogin,
   type ClaudeFolderLogin
 } from './claude-account-folder'
+import {
+  describeClaudeAccountProfile,
+  isClaudeAccountHomePresent,
+  listClaudeAccountHomes,
+  removeClaudeAccountProfile
+} from './claude-account-profile-location'
 import { resolveLoginShellEnvironment } from '../startup/login-shell-environment'
 
 const REFRESH_WAIT_MS = 5_000
@@ -60,7 +63,8 @@ export class ClaudeProfileRouter {
   readonly pointerPath: string
   private readonly setups = new Map<string, Promise<ClaudeProfileSetupReport>>()
   private env: NodeJS.ProcessEnv
-  private readonly envReady: Promise<unknown>
+  /** Settles once the login shell's env, and with it System default's folder, is known. */
+  readonly envReady: Promise<unknown>
   private envResolved: boolean
   constructor(
     private readonly args: {
@@ -138,11 +142,11 @@ export class ClaudeProfileRouter {
 
   /** Null for System default. Throws for a missing folder: falling back would run the wrong account. */
   routedHome(): string | null {
-    const home = this.routedProfile()?.home ?? null
-    if (home !== null && !isDirectory(home)) {
+    const profile = this.routedProfile()
+    if (profile && !isClaudeAccountHomePresent(profile)) {
       throw claudeProfileMissing()
     }
-    return home
+    return profile?.home ?? null
   }
 
   /** Pointer first, then setup in the background, as superset does. No saved accounts means no pointer. */
@@ -193,8 +197,9 @@ export class ClaudeProfileRouter {
     if (!profile) {
       return this.preparation()
     }
-    // Why the marker: setup writes it last, so a missing folder is set up too.
-    if (!existsSync(claudeProfileMarkerPath(profile))) {
+    // Why the marker: setup writes it last, so a missing folder is set up too. The user's own
+    // folder has none: it is already signed in, and only Orca's hooks are merged there.
+    if (!profile.external && !existsSync(claudeProfileMarkerPath(profile))) {
       const report = await this.setUp(profile).catch(() => null)
       if (report?.outcome !== 'prepared') {
         throw claudeProfileSetupFailed()
@@ -228,7 +233,7 @@ export class ClaudeProfileRouter {
   /** Deletes an account's folder after any setup running for it, which would otherwise recreate it. */
   async removeAccount(accountId: string): Promise<void> {
     await this.setups.get(accountId)?.catch(() => {})
-    await removeClaudeAccountFolder(this.args.dataRoot, accountId)
+    await removeClaudeAccountProfile(this.args.dataRoot, this.describe(accountId))
   }
 
   /** True once an older Orca copied an account's login into System default: it left this snapshot. */
@@ -242,10 +247,8 @@ export class ClaudeProfileRouter {
   }
 
   private describe(accountId: string): ClaudeProfileDescriptor {
-    return describeClaudeProfile(this.args.dataRoot, accountId, {
-      executionHostId: 'local',
-      runtime: 'host'
-    })
+    const accounts = this.args.getSettings().claudeManagedAccounts
+    return describeClaudeAccountProfile(this.args.dataRoot, accounts, accountId)
   }
 
   /** One setup per account at a time; a later request reuses the running one. */
@@ -372,6 +375,6 @@ export class ClaudeProfileRouter {
 
   /** Every account folder on this host, selected or not. */
   accountHomes(): string[] {
-    return listClaudeProfileHomes(this.args.dataRoot)
+    return listClaudeAccountHomes(this.args.dataRoot, this.args.getSettings().claudeManagedAccounts)
   }
 }

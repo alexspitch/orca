@@ -7,6 +7,8 @@ import {
   BeginClaudeSignInParams,
   FinishClaudeSignInParams,
   AddClaudeFromConfigDirParams,
+  AddClaudeFromFolderParams,
+  RenameClaudeAccountParams,
   AddCodexFromHomeParams,
   ConsumeCodexResetCreditParams,
   ListAccountsParams,
@@ -166,6 +168,21 @@ export const ACCOUNT_METHODS = [
         'Update the Orca CLI to add accounts. Importing Claude logins is no longer supported.'
       )
     }
+  }),
+  // Why any client: the path names a folder on this host, and the folder is only read.
+  defineMethod({
+    name: 'accounts.addClaudeFromFolder',
+    permission: 'accounts-admin',
+    params: AddClaudeFromFolderParams,
+    handler: async (params, { runtime }) =>
+      runtime.addClaudeAccountFromFolder(params.configDir, params.label)
+  }),
+  defineMethod({
+    name: 'accounts.renameClaude',
+    permission: 'accounts-admin',
+    params: RenameClaudeAccountParams,
+    handler: async (params, { runtime }) =>
+      runtime.renameClaudeAccount(params.accountId, params.label)
   }),
   defineMethod({
     name: 'accounts.addCodexFromHome',

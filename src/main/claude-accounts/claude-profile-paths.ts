@@ -20,6 +20,8 @@ export type ClaudeProfileDescriptor = {
   accountId: string
   target: ClaudeProfileTarget
   home: string
+  /** The user's own folder (see claude-external-config-dir.ts), never under dataRoot. */
+  external?: true
 }
 
 export type ClaudeProfileRead<T> =
@@ -208,7 +210,7 @@ function assertDistinctClaudeProfile(profile: string, defaultHome: string): void
 }
 
 /** Claude's default homes: a profile may never be, contain, or sit inside one. */
-function assertOutsideDefaultClaudeHomes(
+export function assertOutsideDefaultClaudeHomes(
   profileHome: string,
   userHome: string,
   userConfigDir?: string

@@ -4,7 +4,11 @@ import type {
 } from '../../../shared/managed-account-types'
 import type { RateLimitState } from '../../../shared/rate-limit-types'
 import type { RuntimeRpcResponse } from '../../../shared/runtime-rpc-envelope'
-import { callRuntimeRpc } from './runtime-rpc-client'
+import {
+  CLAUDE_ACCOUNT_LABEL_RUNTIME_CAPABILITY,
+  CLAUDE_FOLDER_ACCOUNT_RUNTIME_CAPABILITY
+} from '../../../shared/account-runtime-capabilities'
+import { assertRuntimeEnvironmentCapability, callRuntimeRpc } from './runtime-rpc-client'
 import { RuntimeRpcCallError } from './runtime-rpc-result'
 import type { RuntimeClientTarget } from '../../../shared/runtime-client-target'
 
@@ -248,6 +252,48 @@ export async function selectClaudeProviderAccount(
     )
   }
   return window.api.claudeAccounts.select(selection)
+}
+
+/** Saves a folder already signed in on the owning host; the path is read there, not here. */
+export async function addClaudeProviderAccountFromFolder(
+  target: RuntimeClientTarget,
+  configDir: string,
+  label: string
+): Promise<ClaudeRateLimitAccountsState> {
+  if (target.kind === 'environment') {
+    await assertRuntimeEnvironmentCapability(
+      target.environmentId,
+      CLAUDE_FOLDER_ACCOUNT_RUNTIME_CAPABILITY,
+      'This Orca host cannot add a Claude account from a folder yet. Update Orca on that host.'
+    )
+  }
+  return callRuntimeRpc<ClaudeRateLimitAccountsState>(
+    target,
+    'accounts.addClaudeFromFolder',
+    { configDir, ...(label ? { label } : {}) },
+    { timeoutMs: REMOTE_ACCOUNT_MUTATION_TIMEOUT_MS }
+  )
+}
+
+/** An empty name clears it, so the account shows its email again. */
+export async function renameClaudeProviderAccount(
+  target: RuntimeClientTarget,
+  accountId: string,
+  label: string
+): Promise<ClaudeRateLimitAccountsState> {
+  if (target.kind === 'environment') {
+    await assertRuntimeEnvironmentCapability(
+      target.environmentId,
+      CLAUDE_ACCOUNT_LABEL_RUNTIME_CAPABILITY,
+      'This Orca host cannot name Claude accounts yet. Update Orca on that host.'
+    )
+  }
+  return callRuntimeRpc<ClaudeRateLimitAccountsState>(
+    target,
+    'accounts.renameClaude',
+    { accountId, label: label || null },
+    { timeoutMs: REMOTE_ACCOUNT_MUTATION_TIMEOUT_MS }
+  )
 }
 
 export async function selectCodexProviderAccount(

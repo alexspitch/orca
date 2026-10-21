@@ -41,6 +41,12 @@ import {
 import { getWslAccountTarget } from './account-wsl-location'
 import { addDataAccount, listDataAccounts, mutateDataAccount } from './data-account-commands'
 import { formatAccountsBlock, formatDataAccounts } from './account-list-format'
+import {
+  addClaudeAccountFromFolder,
+  assertClaudeAccountAddSupported,
+  nameClaudeAccount,
+  readClaudeAccountAddOptions
+} from './claude-account-add-commands'
 
 // Why: add returns just that provider's state; list returns the full snapshot.
 type AccountsListSnapshot = {
@@ -144,7 +150,10 @@ async function runAgentLoginInTerminal(
 }
 
 /** Signs in to a new account folder the host created, then registers it (superset AddAccountDialog). */
-async function addClaudeAccount({ client, cwd, json }: HandlerContext): Promise<void> {
+async function addClaudeAccount(
+  { client, cwd, json }: HandlerContext,
+  label: string | undefined
+): Promise<void> {
   const { result: signIn } = await client.call<ClaudeAccountSignIn>(
     'accounts.beginClaudeSignIn',
     getWslAccountTarget(cwd) ?? {},
@@ -192,7 +201,9 @@ async function addClaudeAccount({ client, cwd, json }: HandlerContext): Promise<
       )
     }
   )
-  printResult(result, json, (state) => formatAccountsBlock('Claude', state))
+  // Why after the sign-in: finish's params are strict, so an older host would refuse a label.
+  const named = label ? await nameClaudeAccount(client, signIn.accountId, label) : result
+  printResult(named, json, (state) => formatAccountsBlock('Claude', state))
 }
 
 /** Logs into a Codex account in a temp CODEX_HOME, then registers it with the local runtime. */
@@ -277,6 +288,12 @@ export const ACCOUNT_HANDLERS: Record<string, CommandHandler> = {
       )
     }
     rejectAccountRemoteSelectionFlags(ctx, 'orca account add')
+    const claude = readClaudeAccountAddOptions(ctx, agent)
+    await assertClaudeAccountAddSupported(ctx.client, claude)
+    if (claude.configDir !== undefined) {
+      await addClaudeAccountFromFolder(ctx, claude.configDir, claude.label)
+      return
+    }
     if (agent === 'opencode' || agent === 'devin') {
       await addDataAccount(ctx, agent, runAgentLoginInTerminal)
       return
@@ -284,7 +301,7 @@ export const ACCOUNT_HANDLERS: Record<string, CommandHandler> = {
     // Why: fail on runtime version skew before burning a full OAuth round trip.
     await assertAccountImportSupported(ctx, agent)
     await ctx.client.call('accounts.list', { refreshUsage: false })
-    await (agent === 'claude' ? addClaudeAccount(ctx) : addCodexAccount(ctx))
+    await (agent === 'claude' ? addClaudeAccount(ctx, claude.label) : addCodexAccount(ctx))
   },
   'account list': async (ctx) => {
     rejectAccountRemoteSelectionFlags(ctx, 'orca account list')

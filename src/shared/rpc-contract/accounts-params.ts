@@ -74,6 +74,24 @@ export const AddClaudeFromConfigDirParams = z.object({
     .optional()
 })
 
+const ClaudeAccountLabel = z.string().trim().max(120, 'Account name is longer than 120 characters')
+
+// Why a new method, not addClaudeFromConfigDir: older CLIs send that one to copy a login.
+export const AddClaudeFromFolderParams = z
+  .object({
+    configDir: z.string().trim().min(1, 'Missing configDir'),
+    label: ClaudeAccountLabel.optional()
+  })
+  .strict()
+
+/** An empty or null label clears the name, so the account shows its email again. */
+export const RenameClaudeAccountParams = z
+  .object({
+    accountId: z.string().min(1, 'Missing accountId'),
+    label: ClaudeAccountLabel.nullable()
+  })
+  .strict()
+
 export const AddCodexFromHomeParams = z.object({
   sourceHome: z.string().min(1, 'Missing sourceHome'),
   runtime: z.enum(['host', 'wsl']).optional(),

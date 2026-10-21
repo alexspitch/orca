@@ -1,7 +1,7 @@
 import type * as NodeCliCommandResolutionModule from '../../shared/node-cli-command-resolution'
 import { EventEmitter } from 'node:events'
 import { existsSync } from 'node:fs'
-import { delimiter } from 'node:path'
+import { delimiter, join, resolve } from 'node:path'
 import type * as NodeFs from 'node:fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -64,6 +64,8 @@ import {
 } from '../../shared/windows-batch-spawn'
 import {
   ACCOUNT_IMPORT_RUNTIME_CAPABILITY,
+  CLAUDE_ACCOUNT_LABEL_RUNTIME_CAPABILITY,
+  CLAUDE_FOLDER_ACCOUNT_RUNTIME_CAPABILITY,
   CLAUDE_SIGN_IN_RUNTIME_CAPABILITY
 } from '../../shared/account-runtime-capabilities'
 
@@ -651,6 +653,94 @@ describe('account CLI handlers', () => {
       'Missing a value for --agent. Use `--agent claude`, `--agent codex`, `--agent opencode`, or `--agent devin`.'
     )
     expect(spawnMock).not.toHaveBeenCalled()
+  })
+
+  it('saves a signed-in Claude folder without a login, resolved against the cwd', async () => {
+    callMock.mockImplementation((method: string) =>
+      Promise.resolve({
+        id: 'test',
+        ok: true,
+        result:
+          method === 'status.get'
+            ? {
+                capabilities: [
+                  CLAUDE_FOLDER_ACCOUNT_RUNTIME_CAPABILITY,
+                  CLAUDE_ACCOUNT_LABEL_RUNTIME_CAPABILITY
+                ]
+              }
+            : accountState('work@example.com'),
+        _meta: { runtimeId: 'test-runtime' }
+      })
+    )
+    const cwd = resolve('/srv/orca')
+    await ACCOUNT_HANDLERS['account add']({
+      ...context('claude', false, cwd),
+      flags: new Map([
+        ['config-dir', 'claude-work'],
+        ['label', ' Work ']
+      ])
+    })
+    expect(callMock).toHaveBeenCalledWith(
+      'accounts.addClaudeFromFolder',
+      { configDir: join(cwd, 'claude-work'), label: 'Work' },
+      { timeoutMs: 60_000 }
+    )
+    expect(callMock).not.toHaveBeenCalledWith('accounts.beginClaudeSignIn', expect.anything())
+    expect(spawnMock).not.toHaveBeenCalled()
+  })
+
+  it('names a Claude account once its sign-in is saved', async () => {
+    const signInCall = callMock.getMockImplementation()!
+    callMock.mockImplementation((method: string, ...rest: unknown[]) =>
+      method === 'status.get'
+        ? Promise.resolve({
+            id: 'test',
+            ok: true,
+            result: {
+              capabilities: [
+                CLAUDE_SIGN_IN_RUNTIME_CAPABILITY,
+                CLAUDE_ACCOUNT_LABEL_RUNTIME_CAPABILITY
+              ]
+            },
+            _meta: { runtimeId: 'test-runtime' }
+          })
+        : signInCall(method, ...rest)
+    )
+    await ACCOUNT_HANDLERS['account add']({
+      ...context('claude'),
+      flags: new Map([['label', 'Work']])
+    })
+    const methods = callMock.mock.calls.map(([method]) => method)
+    expect(methods.indexOf('accounts.renameClaude')).toBeGreaterThan(
+      methods.indexOf('accounts.finishClaudeSignIn')
+    )
+    expect(callMock).toHaveBeenCalledWith('accounts.renameClaude', {
+      accountId: 'draft',
+      label: 'Work'
+    })
+  })
+
+  it('refuses --config-dir for another provider or a runtime without folder accounts', async () => {
+    await expect(
+      ACCOUNT_HANDLERS['account add']({
+        ...context('codex'),
+        flags: new Map([
+          ['agent', 'codex'],
+          ['config-dir', '/srv/codex']
+        ])
+      })
+    ).rejects.toThrow('works only with --agent claude')
+    await expect(
+      ACCOUNT_HANDLERS['account add']({
+        ...context('claude'),
+        flags: new Map([['config-dir', '/srv/claude-work']])
+      })
+    ).rejects.toThrow('too old to add a Claude account from a folder')
+    expect(callMock).not.toHaveBeenCalledWith(
+      'accounts.addClaudeFromFolder',
+      expect.anything(),
+      expect.anything()
+    )
   })
 
   it('marks an account selected for WSL as active in human output', async () => {

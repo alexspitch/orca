@@ -184,7 +184,8 @@ describe('status bar runtime switch groups', () => {
     const runtimeState: ClaudeRateLimitAccountsState = {
       accounts: [
         summary('legacy', 'old@example.test', { needsSignIn: true }),
-        summary('relabelled', 'now@example.test')
+        summary('relabelled', 'now@example.test'),
+        summary('named', 'named@example.test', { label: 'Work' })
       ],
       activeAccountId: null,
       activeAccountIdsByRuntime: { host: null, wsl: {} }
@@ -194,7 +195,8 @@ describe('status bar runtime switch groups', () => {
       ...getDefaultSettings('/tmp'),
       claudeManagedAccounts: [
         { ...summary('legacy', 'old@example.test'), managedAuthPath: '' },
-        { ...summary('relabelled', 'added-as@example.test'), managedAuthPath: '' }
+        { ...summary('relabelled', 'added-as@example.test'), managedAuthPath: '' },
+        { ...summary('named', 'named@example.test'), managedAuthPath: '' }
       ],
       activeClaudeManagedAccountId: null,
       activeClaudeManagedAccountIdsByRuntime: { host: null, wsl: {} }
@@ -206,7 +208,8 @@ describe('status bar runtime switch groups', () => {
     ).toEqual([
       ['System default', false, null],
       ['old@example.test', true, 'Sign in again to use this account'],
-      ['now@example.test', false, null]
+      ['now@example.test', false, null],
+      ['Work', false, null]
     ])
   })
 

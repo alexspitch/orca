@@ -58,6 +58,7 @@ function fixture(accounts: ClaudeManagedAccount[] = [account('a'), account('b')]
       copiedLoginIntoSystemDefault: () => existsSync(join(root, 'claude-runtime-auth')),
       coveredBySystemDefault: (id: string) => covered.has(id)
     },
+    resolveExternalConfigDir: vi.fn(async (input: string) => input),
     syncForCurrentSelection: vi.fn(async (_target?: ClaudeAccountSelectionTarget) => {}),
     publishAll: vi.fn(async () => {}),
     prepareAccountFolder: vi.fn(async (id: string) => {
@@ -183,6 +184,70 @@ describe('ClaudeAccountService', () => {
       runtime: 'host'
     })
     expect(f.settings().claudeManagedAccounts).toHaveLength(2)
+  })
+
+  it('saves a signed-in folder by reference, once, and only with a login', async () => {
+    const f = fixture()
+    const work = join(f.root, 'work')
+    mkdirSync(work)
+    await expect(f.service.addAccountFromConfigDir(work)).rejects.toThrow('No Claude login')
+    writeFileSync(
+      join(work, '.claude.json'),
+      JSON.stringify({ oauthAccount: { emailAddress: 'work@example.test' } })
+    )
+    const state = await f.service.addAccountFromConfigDir(work, ' Work ')
+    const saved = f.settings().claudeManagedAccounts.at(-1)
+    expect(saved).toMatchObject({
+      label: 'Work',
+      email: 'work@example.test',
+      managedAuthPath: work,
+      managedAuthRuntime: 'host',
+      externalConfigDir: work
+    })
+    expect(state.accounts.find((row) => row.id === saved?.id)?.externalConfigDir).toBe(work)
+    expect(f.runtimeAuth.prepareAccountFolder).not.toHaveBeenCalled()
+    expect(f.runtimeAuth.syncForCurrentSelection).toHaveBeenCalledWith({ runtime: 'host' })
+    await expect(f.service.addAccountFromConfigDir(work)).rejects.toThrow('already added')
+
+    const other = join(f.root, 'other')
+    mkdirSync(other)
+    writeFileSync(
+      join(other, '.claude.json'),
+      JSON.stringify({ oauthAccount: { emailAddress: 'B@example.test' } })
+    )
+    await expect(f.service.addAccountFromConfigDir(other)).rejects.toThrow('already added')
+    expect(f.settings().claudeManagedAccounts).toHaveLength(3)
+  })
+
+  it('names an account and clears the name, keeping its order and selection', () => {
+    const f = fixture([account('a', { updatedAt: 2 }), account('b')])
+    expect(f.service.renameAccount('b', '  Personal ').accounts.map((row) => row.label)).toEqual([
+      undefined,
+      'Personal'
+    ])
+    expect(f.service.renameAccount('b', '').accounts[1]?.label).toBeUndefined()
+    expect(f.settings().claudeManagedAccounts[1]).toMatchObject({ label: null, updatedAt: 1 })
+    expect(f.settings().activeClaudeManagedAccountId).toBe('a')
+    expect(() => f.service.renameAccount('gone', 'X')).toThrow('no longer exists')
+  })
+
+  it('keeps a saved folder and name when the account signs in again', async () => {
+    const f = fixture([
+      account('a'),
+      account('w', {
+        managedAuthPath: '/srv/claude-work',
+        externalConfigDir: '/srv/claude-work',
+        label: 'Work'
+      })
+    ])
+    const begun = await f.service.beginSignIn({ accountId: 'w' })
+    f.signIn('w', 'w2@example.test')
+    await f.service.finishSignIn(begun)
+    expect(f.settings().claudeManagedAccounts.find((entry) => entry.id === 'w')).toMatchObject({
+      email: 'w2@example.test',
+      externalConfigDir: '/srv/claude-work',
+      label: 'Work'
+    })
   })
 
   it('relabels a saved account signed in again under another login', async () => {

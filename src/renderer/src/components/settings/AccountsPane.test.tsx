@@ -214,7 +214,8 @@ function account(
 
 function render(
   state: Partial<ClaudeRateLimitAccountsState> = {},
-  settings: Partial<GlobalSettings> = {}
+  settings: Partial<GlobalSettings> = {},
+  overrides: Partial<AccountsPaneSectionModel> = {}
 ): string {
   const claudeAccounts: ClaudeRateLimitAccountsState = {
     accounts: [],
@@ -277,7 +278,8 @@ function render(
     settings: { ...getDefaultSettings('/tmp'), ...settings },
     systemClaudeActive: claudeAccounts.activeAccountId === null,
     visibleClaudeAccounts: claudeAccounts.accounts,
-    wslCapabilitiesLoading: false
+    wslCapabilitiesLoading: false,
+    ...overrides
   }
   return renderToStaticMarkup(React.createElement(() => renderClaudeAccountsSection(model)))
 }
@@ -333,5 +335,29 @@ describe('Claude accounts section', () => {
     })
     expect(own).toContain('System default: me@example.test')
     expect(own).not.toContain('An earlier Orca version')
+  })
+
+  it('offers a signed-in folder on a remote host, where a sign-in cannot run, and names it', () => {
+    const markup = render(
+      {
+        accounts: [account('work', 'work@example.test', { externalConfigDir: '/srv/claude-work' })]
+      },
+      {},
+      { isRemoteAccountScope: true, accountOwner: { kind: 'environment', environmentId: 'srv' } }
+    )
+    const button = (label: string): string => {
+      const end = markup.indexOf(`${label}</button>`)
+      return markup.slice(markup.lastIndexOf('<button', end), end)
+    }
+    expect(button('Add Account')).toContain('disabled=""')
+    expect(button('Add Folder')).not.toContain('disabled=""')
+    expect(markup).toContain('/srv/claude-work')
+  })
+
+  it('shows a named account by its name, with its email underneath, and offers a rename', () => {
+    const markup = render({ accounts: [account('work', 'work@example.test', { label: 'Work' })] })
+    expect(markup).toMatch(/<span class="truncate text-sm font-medium">Work<\/span>/)
+    expect(markup).toContain('work@example.test · ')
+    expect(markup).toContain('Rename</button>')
   })
 })

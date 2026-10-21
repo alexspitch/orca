@@ -183,6 +183,9 @@ function formatCommandFlagHelp(flag: string, commandPath: string[]): string {
   if (command === 'account add' && flag === 'agent') {
     return '--agent <id>           Account provider: claude, codex, opencode, or devin (default claude)'
   }
+  if (command === 'account add' && flag === 'config-dir') {
+    return '--config-dir <path>     Claude only: save a folder already signed in on this host'
+  }
   if (command.startsWith('account ') && flag === 'agent') {
     return '--agent <id>           Account provider: opencode or devin'
   }

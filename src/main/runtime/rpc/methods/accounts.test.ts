@@ -69,6 +69,42 @@ describe('account RPC methods', () => {
     expect(runtime.finishClaudeSignIn).not.toHaveBeenCalled()
   })
 
+  it('lets a paired desktop save a folder on this host as a Claude account', async () => {
+    const add = vi.fn().mockResolvedValue({ accounts: [] })
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler only calls this stub.
+    const runtime = { addClaudeAccountFromFolder: add } as unknown as OrcaRuntimeService
+    const addMethod = method('accounts.addClaudeFromFolder')
+    if (isStreamingMethod(addMethod)) {
+      throw new Error('accounts.addClaudeFromFolder must be a request method')
+    }
+
+    const params = addMethod.params?.parse({ configDir: ' /srv/claude-work ' })
+    await addMethod.handler(params, { runtime, clientKind: 'runtime' })
+
+    expect(add).toHaveBeenCalledWith('/srv/claude-work', undefined)
+  })
+
+  it('lets a paired desktop name a Claude account, and clear it with an empty name', async () => {
+    const rename = vi.fn().mockReturnValue({ accounts: [] })
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the handler only calls this stub.
+    const runtime = { renameClaudeAccount: rename } as unknown as OrcaRuntimeService
+    const renameMethod = method('accounts.renameClaude')
+    if (isStreamingMethod(renameMethod)) {
+      throw new Error('accounts.renameClaude must be a request method')
+    }
+
+    for (const label of [' Work ', null]) {
+      const params = renameMethod.params?.parse({ accountId: 'a', label })
+      await renameMethod.handler(params, { runtime, clientKind: 'runtime' })
+    }
+
+    expect(rename.mock.calls).toEqual([
+      ['a', 'Work'],
+      ['a', null]
+    ])
+    expect(() => renameMethod.params?.parse({ accountId: 'a', label: 'x'.repeat(121) })).toThrow()
+  })
+
   it('keeps explicit account-list refreshes on the forced refresh lane', async () => {
     const snapshot = { claude: null, codex: null }
     const runtime = {

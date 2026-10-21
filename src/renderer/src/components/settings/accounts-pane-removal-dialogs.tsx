@@ -24,8 +24,12 @@ export function renderAccountsRemovalDialogs(
     runCodexAccountAction,
     setRemoveClaudeTarget,
     setRemoveCodexTarget,
-    accountOwner
+    accountOwner,
+    claudeAccounts
   } = model
+  const removeClaudeFolder = claudeAccounts.accounts.find(
+    (account) => account.id === removeClaudeTarget?.id
+  )?.externalConfigDir
   return (
     <>
       <Dialog
@@ -84,10 +88,16 @@ export function renderAccountsRemovalDialogs(
               )}
             </DialogTitle>
             <DialogDescription>
-              {translate(
-                'settings.accounts.claudeRemoveFolder',
-                "Orca deletes this account's Claude folder and its sign-in from this computer. Chat history shared with System default stays. If it is selected, the next Claude you start uses System default."
-              )}
+              {removeClaudeFolder
+                ? translate(
+                    'settings.accounts.claudeRemoveExternalFolder',
+                    'Orca forgets this account and takes its hooks back out of {{value0}}. The folder and its sign-in stay. If it is selected, the next Claude you start uses System default.',
+                    { value0: removeClaudeFolder }
+                  )
+                : translate(
+                    'settings.accounts.claudeRemoveFolder',
+                    "Orca deletes this account's Claude folder and its sign-in from this computer. Chat history shared with System default stays. If it is selected, the next Claude you start uses System default."
+                  )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

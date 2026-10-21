@@ -41,7 +41,7 @@ export type CodexAccountAction =
   | `remove:${string}`
   | `select:${string}`
 
-export type ClaudeAccountAction = CodexAccountAction
+export type ClaudeAccountAction = CodexAccountAction | 'adding-folder' | `rename:${string}`
 
 export type RemoveAccountTarget = {
   id: string

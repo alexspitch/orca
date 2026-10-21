@@ -396,7 +396,8 @@
     "followSymlinkedDirectories": "Follow symlinked directories",
     "followSymlinkedDirectoriesDescription": "Search linked folders in Quick Open and expand local linked folders in File Explorer.",
     "accounts": {
-      "claudeRemoveFolder": "Orca deletes this account's Claude folder and its sign-in from this computer. Chat history shared with System default stays. If it is selected, the next Claude you start uses System default."
+      "claudeRemoveFolder": "Orca deletes this account's Claude folder and its sign-in from this computer. Chat history shared with System default stays. If it is selected, the next Claude you start uses System default.",
+      "claudeRemoveExternalFolder": "Orca forgets this account and takes its hooks back out of {{value0}}. The folder and its sign-in stay. If it is selected, the next Claude you start uses System default."
     }
   },
   "menu": {
@@ -20108,7 +20109,18 @@
         "settingKeep": "Never restart",
         "restartingOne": "Restarting 1 Claude session on {{account}}",
         "restartingOther": "Restarting {{count}} Claude sessions on {{account}}"
-      }
+      },
+      "addFolder": "Add Folder",
+      "addFolderLabel": "Signed-in Claude folder",
+      "addFolderDescription": "A CLAUDE_CONFIG_DIR folder on {{value0}} that is already signed in. Orca runs this account in it and adds its hooks there, but never deletes the folder.",
+      "addFolderSubmit": "Add Account",
+      "addFolderPlaceholder": "~/.claude-work",
+      "rename": "Rename",
+      "nameTitle": "Account name",
+      "nameDescription": "Shown instead of {{value0}}. Leave it empty to show the email.",
+      "nameSave": "Save",
+      "nameLabel": "Name (optional)",
+      "namePlaceholder": "Shows the email if empty"
     },
     "managedData": {
       "description": "Add accounts by running this command in a terminal on the Orca host. Selection applies to new explicit agent launches on that host; direct SSH relay and Windows-hosted WSL launches use their own credentials.",

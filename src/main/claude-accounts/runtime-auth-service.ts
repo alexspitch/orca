@@ -5,6 +5,7 @@ import { resolveLocalAccountRuntimeTarget } from '../../shared/local-account-run
 import type { Store } from '../persistence'
 import { isWslDistroRunning } from '../wsl-background-distro-gate'
 import { getDefaultWslDistro, getWslHome } from '../wsl'
+import { resolveExternalClaudeConfigDir } from './claude-external-config-dir'
 import { ClaudeProfileRouter } from './claude-profile-router'
 import { ClaudeWslProfileRouter } from './claude-profile-wsl-router'
 import {
@@ -126,6 +127,16 @@ export class ClaudeRuntimeAuthService {
         `[claude-profile] Could not delete the Claude account folder in WSL ${wsl.distro}:`,
         error
       )
+    })
+  }
+
+  /** Checks a host folder the user signed in to themselves; returns the spelling launches pass. */
+  async resolveExternalConfigDir(input: string): Promise<string> {
+    // Why: System default, which the folder must stay clear of, comes from the login shell.
+    await this.router.envReady
+    return resolveExternalClaudeConfigDir(input, {
+      dataRoot: this.dataRoot,
+      userConfigDir: this.router.userConfigDir()
     })
   }
 

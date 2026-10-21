@@ -10,18 +10,23 @@ export const ACCOUNT_COMMAND_SPECS: CommandSpec[] = [
     path: ['account', 'add'],
     summary: 'Add a managed agent account by signing in on this Orca host',
     usage:
-      'orca account add [--agent claude|codex|opencode|devin] [--label <name>] [--integration <id>] [--json]',
-    allowedFlags: [...GLOBAL_FLAGS, 'agent', 'label', 'integration'],
+      'orca account add [--agent claude|codex|opencode|devin] [--label <name>] [--integration <id>] [--config-dir <path>] [--json]',
+    allowedFlags: [...GLOBAL_FLAGS, 'agent', 'label', 'integration', 'config-dir'],
     notes: [
       'Runs the agent login (`claude login` / `codex login`) in this terminal, then registers the account with the local Orca runtime.',
       'Codex uses device authorization so the browser can complete sign-in from a different machine.',
       'OpenCode 2 uses `opencode auth login --standalone` in private XDG directories. Devin uses `devin auth login --force-manual-token-flow`.',
-      'Use --integration <id> to skip the OpenCode integration picker; --label names the saved OpenCode or Devin profile.',
+      'Use --integration <id> to skip the OpenCode integration picker; --label names the saved account (Claude, OpenCode or Devin).',
       'OpenCode and Devin profiles apply to new explicit host agent launches. Direct SSH relay and Windows-hosted WSL selection are not supported; run the command on a headless Orca runtime on that host.',
       'Sign in with the account you want to add (e.g. use a private/incognito browser window for a second account).',
+      'Claude only: --config-dir <path> saves a folder on this host that is already signed in (`CLAUDE_CONFIG_DIR=<path> claude auth login`) instead of signing in. Orca runs that account in the folder, adds its hooks there, and never deletes it.',
       '--agent defaults to claude. Requires the Orca runtime to be running on this machine.'
     ],
-    examples: ['orca account add', 'orca account add --agent codex']
+    examples: [
+      'orca account add',
+      'orca account add --agent codex',
+      'orca account add --config-dir ~/.claude-work --label Work'
+    ]
   },
   {
     path: ['account', 'list'],

@@ -23,6 +23,7 @@ export const CLAUDE_SIGN_IN_NOT_FINISHED_MESSAGE =
   'Claude has not finished signing in to this account yet. Finish the sign-in in the terminal, then try again.'
 const CLAUDE_LOGIN_WITHOUT_ACCOUNT_MESSAGE =
   'Claude login completed, but Orca could not resolve the account email.'
+const CLAUDE_ACCOUNT_ALREADY_ADDED_MESSAGE = 'This Claude account is already added.'
 
 /**
  * Sign-in runs `claude auth login` against the account's own folder: hidden from Settings, in
@@ -71,6 +72,63 @@ export class ClaudeAccountRegistration {
     }
   }
 
+  /**
+   * Saves a host folder the user already signed in to as an account, by reference: Claude keeps
+   * renewing that login in place, so nothing is copied and the folder is never deleted.
+   */
+  async addFromConfigDir(
+    input: string,
+    label?: string | null
+  ): Promise<ClaudeRateLimitAccountsState> {
+    const { store, rateLimits, runtimeAuth, selection } = this.deps
+    const configDir = await runtimeAuth.resolveExternalConfigDir(input)
+    const login = readClaudeFolderLogin(claudeStateFile(configDir))
+    if (!login) {
+      throw new Error(
+        `No Claude login in ${configDir}. Sign in there first: CLAUDE_CONFIG_DIR="${configDir}" claude auth login`
+      )
+    }
+    const accounts = store.getSettings().claudeManagedAccounts
+    if (
+      accounts.some((account) => account.externalConfigDir === configDir) ||
+      findDuplicateClaudeAccount(accounts, {
+        email: login.email,
+        organizationUuid: login.organizationUuid,
+        managedAuthRuntime: 'host',
+        wslDistro: null
+      })
+    ) {
+      throw new Error(CLAUDE_ACCOUNT_ALREADY_ADDED_MESSAGE)
+    }
+    const id = randomUUID()
+    const now = Date.now()
+    selection.saveSettings({
+      claudeManagedAccounts: [
+        ...accounts,
+        {
+          id,
+          email: login.email,
+          organizationUuid: login.organizationUuid,
+          organizationName: login.organizationName,
+          managedAuthPath: configDir,
+          managedAuthRuntime: 'host',
+          wslDistro: null,
+          wslLinuxAuthPath: null,
+          externalConfigDir: configDir,
+          label: label?.trim() || null,
+          authMethod: 'subscription-oauth',
+          createdAt: now,
+          updatedAt: now,
+          lastAuthenticatedAt: now
+        }
+      ]
+    })
+    rateLimits.evictInactiveClaudeCache(id)
+    await runtimeAuth.syncForCurrentSelection({ runtime: 'host' })
+    selection.refreshUsage(undefined, { runtime: 'host' })
+    return selection.list()
+  }
+
   private async prepare(request: ClaudeSignInRequest) {
     const saved = request.accountId ? this.deps.selection.requireAccount(request.accountId) : null
     const target = saved ? getClaudeSelectionTargetForAccount(saved) : signInTarget(request)
@@ -112,7 +170,7 @@ export class ClaudeAccountRegistration {
       })
     ) {
       await runtimeAuth.removeAccountFolder(signIn.accountId, target)
-      throw new Error('This Claude account is already added.')
+      throw new Error(CLAUDE_ACCOUNT_ALREADY_ADDED_MESSAGE)
     }
     const now = Date.now()
     selection.saveSettings({
@@ -126,6 +184,9 @@ export class ClaudeAccountRegistration {
           managedAuthPath: folder.readPath,
           ...scope,
           wslLinuxAuthPath: target.runtime === 'wsl' ? folder.configDir : null,
+          // Why kept: signing in again writes into the user's own folder, which stays the account's.
+          ...(saved?.externalConfigDir ? { externalConfigDir: saved.externalConfigDir } : {}),
+          ...(saved?.label ? { label: saved.label } : {}),
           authMethod: 'subscription-oauth',
           createdAt: saved?.createdAt ?? now,
           updatedAt: now,

@@ -1,4 +1,5 @@
 import type { AgentHookInstallStatus } from '../../shared/agent-hook-types'
+import { resolveExternalClaudeConfigDir } from './claude-external-config-dir'
 import { shareClaudeProfileHistory } from './claude-profile-history'
 import { prepareClaudeProfileDirectory, type ClaudeProfileDescriptor } from './claude-profile-paths'
 import { provisionClaudeProfile } from './claude-profile-provisioning'
@@ -13,11 +14,7 @@ import {
 /** `refused`: the profile failed its ownership gate and no surface was touched. */
 export type ClaudeProfileSetupReport = ClaudeProfileReport & { outcome: 'refused' | 'prepared' }
 
-/**
- * The one entry for setting up a managed Claude profile. Runs on the execution host that owns the
- * profile; for WSL that is inside the guest, never across a UNC path.
- */
-export async function provisionClaudeAccountProfile(args: {
+type ClaudeProfileSetupArgs = {
   dataRoot: string
   profile: ClaudeProfileDescriptor
   userHome: string
@@ -26,7 +23,18 @@ export async function provisionClaudeAccountProfile(args: {
   /** Null when Orca's Claude hooks are turned off. Runs after the settings copy so its entries survive it. */
   installHooks: ((target: { configDir: string }) => AgentHookInstallStatus) | null
   platform?: NodeJS.Platform
-}): Promise<ClaudeProfileSetupReport> {
+}
+
+/**
+ * The one entry for setting up a managed Claude profile. Runs on the execution host that owns the
+ * profile; for WSL that is inside the guest, never across a UNC path.
+ */
+export async function provisionClaudeAccountProfile(
+  args: ClaudeProfileSetupArgs
+): Promise<ClaudeProfileSetupReport> {
+  if (args.profile.external) {
+    return provisionExternalClaudeProfile(args)
+  }
   const platform = args.platform ?? process.platform
   const report = createClaudeProfileReport()
   let markSetUp: () => void
@@ -59,18 +67,46 @@ export async function provisionClaudeAccountProfile(args: {
       warnClaudeProfile(report, 'profile', error)
     }
   }
-  const installHooks = args.installHooks
-  await runClaudeProfileSurface(report, 'hooks', () => {
+  await installProfileHooks(report, args.installHooks, home)
+  // Last: a setup cut off before here leaves no marker, so the next launch waits for a full one.
+  markSetUp()
+  return { outcome: 'prepared', ...report }
+}
+
+/** The user's own folder gets only the gate and Orca's hooks, and no marker: launches never wait on it. */
+async function provisionExternalClaudeProfile(
+  args: ClaudeProfileSetupArgs
+): Promise<ClaudeProfileSetupReport> {
+  const report = createClaudeProfileReport()
+  const home = args.profile.home
+  try {
+    // Why again at every setup: System default may since have moved onto this folder.
+    const checked = resolveExternalClaudeConfigDir(home, args)
+    if (checked !== home) {
+      throw new ClaudeProfileSurfaceError('invalid-profile', 'Claude folder path is not normalized')
+    }
+  } catch (error) {
+    report.surfaces.profile = 'failed'
+    warnClaudeProfile(report, 'profile', error)
+    return { outcome: 'refused', ...report }
+  }
+  await installProfileHooks(report, args.installHooks, home)
+  return { outcome: 'prepared', ...report }
+}
+
+function installProfileHooks(
+  report: ClaudeProfileReport,
+  installHooks: ClaudeProfileSetupArgs['installHooks'],
+  configDir: string
+): Promise<void> {
+  return runClaudeProfileSurface(report, 'hooks', () => {
     if (!installHooks) {
       return 'absent'
     }
-    const status = installHooks({ configDir: home })
+    const status = installHooks({ configDir })
     if (status.state !== 'installed') {
       throw new Error(status.detail ?? `Claude hooks ${status.state}`)
     }
     return 'merged'
   })
-  // Last: a setup cut off before here leaves no marker, so the next launch waits for a full one.
-  markSetUp()
-  return { outcome: 'prepared', ...report }
 }
