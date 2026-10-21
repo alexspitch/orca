@@ -1,6 +1,24 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792610727000",
+      "date": "2026-10-21",
+      "commit": "8bb360397ce7",
+      "features": [
+        "The titlebar now shows a build-web notifications bell beside the sidebar toggle, with a red unread count for failed builds, console errors and updates to your tasks.",
+        "Opening the titlebar bell marks notifications as read; clicking one opens its task's card, and Clear empties the list for you only.",
+        "A new tasks icon in the titlebar counts running stand jobs, image builds and test runs, and lists recently finished ones with their status.",
+        "Clicking an entry in the titlebar tasks list opens a console job's live log with Cancel, a build's task card, or a test run's console page."
+      ],
+      "settings": [
+        "Settings → Integrations can show or hide the titlebar notifications and tasks icons; by default they follow the Issues setting, and they can be hidden from the context menu."
+      ],
+      "fixes": [
+        "A task card opened from the titlebar no longer closes on its own the first time a build-web page loads.",
+        "In a narrow sidebar header the app name now shortens with an ellipsis instead of cutting off the controls beside it."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792600039000",
       "date": "2026-10-21",
       "commit": "ef00a9dc20c7",
