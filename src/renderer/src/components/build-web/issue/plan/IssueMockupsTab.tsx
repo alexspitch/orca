@@ -63,7 +63,7 @@ export function IssueMockupsTab({
       <AttachHint
         text={translate(
           'buildWeb.mockups.none',
-          'The task has no mockups. Attach a page or a zip of pages with'
+          'The task has no artifacts. Attach a page or a zip of pages with'
         )}
         command={`bw.sh attach ${detail.key} <mockup.html|mockups.zip> --mockup`}
       />
@@ -77,7 +77,7 @@ export function IssueMockupsTab({
     <div className="flex h-full min-h-96 gap-3">
       {showList ? (
         <nav
-          aria-label={translate('buildWeb.mockups.list', 'Mockups and screens')}
+          aria-label={translate('buildWeb.mockups.list', 'Artifacts and screens')}
           className="scrollbar-sleek flex w-64 shrink-0 flex-col gap-0.5 overflow-y-auto"
         >
           {mockups.map((m) => (

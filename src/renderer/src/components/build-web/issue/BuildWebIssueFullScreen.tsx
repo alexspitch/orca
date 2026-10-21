@@ -109,8 +109,8 @@ export function BuildWebIssueFullScreen({
         return planLabel()
       case 'mockups':
         return mockupCount
-          ? translate('buildWeb.card.mockupsCount', 'Mockups {{count}}', { count: mockupCount })
-          : translate('buildWeb.card.mockups', 'Mockups')
+          ? translate('buildWeb.card.mockupsCount', 'Artifacts {{count}}', { count: mockupCount })
+          : translate('buildWeb.card.mockups', 'Artifacts')
       case 'build':
         return tally
           ? translate('buildWeb.card.buildCount', 'Build {{ok}} / {{total}}', tally)

@@ -42,7 +42,8 @@ test('a task card: the plan with its progress, and the mockups framed screen by 
     }, mock.baseUrl)
     expect(connected).toBe(true)
 
-    await orcaPage.getByRole('button', { name: 'Open IS-901 full screen' }).click()
+    // The title opens the card full screen.
+    await orcaPage.getByRole('button', { name: 'Plan and mockups demo' }).click()
     // The plan is read with the card, so its tab already says how far it has got.
     const planTab = orcaPage.getByRole('tab', { name: 'Plan 1 / 2' })
     await expect(planTab).toBeVisible({ timeout: 15_000 })
@@ -56,7 +57,7 @@ test('a task card: the plan with its progress, and the mockups framed screen by 
     await expect(orcaPage.getByText('1 of 2 done')).toBeVisible()
     await shot('issue-plan')
 
-    await orcaPage.getByRole('tab', { name: 'Mockups 2' }).click()
+    await orcaPage.getByRole('tab', { name: 'Artifacts 2' }).click()
     // The newest mockup first: the archive, on its first page, with its own stylesheet.
     const frame = orcaPage.frameLocator('iframe[title="index.html"]')
     await expect(frame.getByRole('heading', { name: 'Mockup home screen' })).toBeVisible({
@@ -65,7 +66,7 @@ test('a task card: the plan with its progress, and the mockups framed screen by 
     await expect(frame.locator('#home')).toHaveCSS('color', 'rgb(200, 0, 0)')
     await shot('issue-mockup-archive')
 
-    const list = orcaPage.getByRole('navigation', { name: 'Mockups and screens' })
+    const list = orcaPage.getByRole('navigation', { name: 'Artifacts and screens' })
     await list.getByRole('button', { name: 'settings.html' }).click()
     await expect(
       orcaPage

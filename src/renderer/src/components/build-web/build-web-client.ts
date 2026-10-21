@@ -76,7 +76,7 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
       refusal: () =>
         translate(
           'buildWeb.client.updateServerIssueMockups',
-          'This Orca server does not show task mockups yet. Update the server.'
+          'This Orca server does not show task artifacts yet. Update the server.'
         )
     },
     {
