@@ -1,6 +1,23 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792589021000",
+      "date": "2026-10-21",
+      "commit": "73c489112617",
+      "features": [
+        "The status bar shows each connected Orca server's CPU and memory use, with a red dot when either reaches 90% and grey when unreachable.",
+        "Issues page: clicking a task title opens its full card as a tab beside a List tab, and open tabs are restored after restarting.",
+        "Issues page: clicking the star column header sorts favorite tasks first, and a second click reverses the order.",
+        "Live Claude usage now works even when you have your own Claude status line or start Claude with your own CLAUDE_CONFIG_DIR folder.",
+        "The command line can add a Claude account from an existing signed-in folder and give it a name."
+      ],
+      "settings": [
+        "Settings → Accounts → Add Folder saves a Claude account from an already signed-in folder on the host, including on remote servers.",
+        "Settings → Accounts lets you rename Claude accounts, and the name replaces the email in Settings, the status-bar switcher and switch notices."
+      ],
+      "fixes": []
+    },
+    {
       "version": "1.4.238-custom.1792570875000",
       "date": "2026-10-21",
       "commit": "46142cdfce5f",
