@@ -244,12 +244,14 @@ export function ImageListView({
             <tbody>
               {rows.map((row) => {
                 const linkable = Boolean(row.last && imageRefOf(row.last))
+                // Why the dist too: an image building for redos and rhel at once is a row each.
+                const rowKey = `${row.image}|${row.last?.dist ?? ''}`
                 return (
                   <tr
-                    key={row.image}
+                    key={rowKey}
                     className={cn(
                       'border-b border-border hover:bg-accent',
-                      picks.has(row.image) && 'bg-accent'
+                      picks.has(rowKey) && 'bg-accent'
                     )}
                   >
                     <td className="py-2 pl-3 md:pl-5">
@@ -257,8 +259,8 @@ export function ImageListView({
                       {linkable ? (
                         <Checkbox
                           emphasis="strong"
-                          checked={picks.has(row.image)}
-                          onCheckedChange={() => picks.toggle(row.image, row.last)}
+                          checked={picks.has(rowKey)}
+                          onCheckedChange={() => picks.toggle(rowKey, row.last)}
                           aria-label={translate('buildWeb.images.pick', 'Pick {{image}}', {
                             image: row.image
                           })}

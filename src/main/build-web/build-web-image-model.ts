@@ -74,6 +74,34 @@ function newestMatching(
   return last
 }
 
+/**
+ * Each image's distributions whose newest build (passing the version and dists) is running: a
+ * build started for redos and rhel at once is two builds going, not one.
+ */
+function runningByDist(
+  newest: BuildWebImageBuild[],
+  version: string | undefined,
+  dists: string[]
+): Map<string, BuildWebImageBuild[]> {
+  const seen = new Set<string>()
+  const running = new Map<string, BuildWebImageBuild[]>()
+  for (const build of newest) {
+    const key = `${build.image}|${build.dist}`
+    if (
+      seen.has(key) ||
+      (version && build.product_version !== version) ||
+      (dists.length && !dists.includes(build.dist))
+    ) {
+      continue
+    }
+    seen.add(key)
+    if (build.status === 'running') {
+      running.set(build.image, [...(running.get(build.image) ?? []), build])
+    }
+  }
+  return running
+}
+
 /** A build's release line, as the console's adopt-success reads it: its product version, else its branch. */
 const lineOf = (b: BuildWebImageBuild) => b.product_version ?? `branch:${b.branch}`
 
@@ -109,8 +137,15 @@ export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): B
   const textMatches = (image: string) => !hit || hit.has(image)
   const inProducts = (product: string) => !args.products?.length || args.products.includes(product)
   const last = newestMatching(newest, args.version, dists)
+  const running = runningByDist(newest, args.version, dists)
   const byFilters: BuildWebImageRow[] = catalog.images
-    .map((i) => ({ image: i.image, product: i.product, last: last.get(i.image) ?? null }))
+    .flatMap((i): BuildWebImageRow[] => {
+      const going = running.get(i.image) ?? []
+      // Why a row per distribution only while several build: the list stays one row per image.
+      return going.length > 1
+        ? going.map((build) => ({ image: i.image, product: i.product, last: build }))
+        : [{ image: i.image, product: i.product, last: last.get(i.image) ?? null }]
+    })
     .filter((row) => (!args.version && !dists.length) || row.last)
     .filter((row) => textMatches(row.image))
   const inScope = byFilters.filter((row) => inProducts(row.product))
@@ -145,7 +180,11 @@ export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): B
     total: rows.length,
     of: catalog.images.length,
     counts: {
-      products: countBy(byFilters, (row) => row.product),
+      // Why by image: an image building for two distributions is two rows, but one image.
+      products: countBy(
+        [...new Map(byFilters.map((row) => [row.image, row])).values()],
+        (row) => row.product
+      ),
       dists: distCounts,
       statuses: countBy(inScope, (row) => row.last?.status ?? null)
     },

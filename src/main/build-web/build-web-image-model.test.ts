@@ -139,6 +139,30 @@ describe('image model', () => {
     expect(history.builds.map((b) => b.tag)).toEqual(['3.1b1', '3.1b2'])
   })
 
+  it('lists an image building for redos and rhel at once once per distribution', () => {
+    const both: ImageCatalog = {
+      ...catalog,
+      builds: [
+        build({ image: 'sa/ui', dist: 'redos', status: 'running', ref: null, run_id: 'run-9' }),
+        build({ image: 'sa/ui', dist: 'rhel', status: 'running', ref: null, run_id: 'run-9' }),
+        build({ image: 'sa/ui', dist: 'rhel', number: 1 }),
+        build({ number: 2, tag: '3.1b2' })
+      ]
+    }
+    const page = imagePage(both, { page: 0, pageSize: 50, statuses: ['running'] })
+    expect(page.rows.map((r) => [r.image, r.last?.dist])).toEqual([
+      ['sa/ui', 'redos'],
+      ['sa/ui', 'rhel']
+    ])
+    // Two builds going, as the sidebar counts them; still one image of its product.
+    expect(page.counts.statuses?.running).toBe(2)
+    expect(imagePage(both, { page: 0, pageSize: 50 }).counts.products).toEqual({ sa: 2, dc: 1 })
+    // A single distribution picked: its own build only.
+    expect(
+      imagePage(both, { page: 0, pageSize: 50, dists: ['rhel'] }).rows.map((r) => r.last?.dist)
+    ).toEqual(['rhel', 'rhel'])
+  })
+
   it('narrows to the rows whose last build is running or failed, and counts them', () => {
     const running = imagePage(catalog, { page: 0, pageSize: 50, statuses: ['running'] })
     expect(running.rows.map((r) => r.image).sort()).toEqual(['dc/asr', 'sa/ui'])
