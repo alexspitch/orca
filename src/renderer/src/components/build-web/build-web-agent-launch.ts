@@ -2,6 +2,7 @@ import { toast } from 'sonner'
 import { focusTerminalTabSurface } from '@/lib/focus-terminal-tab-surface'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
 import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
+import { adoptAgentSessionLaunchVerdict } from '@/lib/agent-session-launch-plan'
 import { findStructuredAgentSessionTab } from '@/lib/structured-agent-session-tab-activation'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
@@ -119,8 +120,10 @@ export async function launchBuildWebBatch(args: {
   worktree: Worktree
   issues: BuildWebIssueRow[]
   flags: TakeToWorkFlags
+  /** Another Claude account of the worktree's host than its selection; absent runs the selection. */
+  claudeAccountId?: string
 }): Promise<boolean> {
-  const { target, baseUrl, worktree, issues, flags } = args
+  const { target, baseUrl, worktree, issues, flags, claudeAccountId } = args
   const keys = issues.map((i) => i.key)
   const prompt = buildWebBatchPrompt(keys, flags)
   const sessionName = taskSessionName(issues)
@@ -131,7 +134,18 @@ export async function launchBuildWebBatch(args: {
   )
   let revealFailed = false
   const result = launchAgentInNewTab({
-    requestId: newAgentLaunchRequestId(),
+    // Why a decided terminal route with an account: only a pane's spawn env carries it to its host.
+    ...(claudeAccountId
+      ? {
+          agentSessionLaunchPlan: adoptAgentSessionLaunchVerdict({
+            route: 'terminal-tui',
+            requestId: newAgentLaunchRequestId(),
+            agent: 'claude',
+            worktreeId: worktree.id
+          }),
+          claudeAccountId
+        }
+      : { requestId: newAgentLaunchRequestId() }),
     agent: 'claude',
     worktreeId: worktree.id,
     groupId: worktree.id,

@@ -30,6 +30,8 @@ import { taskSessionName } from './build-web-task-session'
 import { createBatchWorktree } from './build-web-new-worktree'
 import { TakeToWorkNewWorktree, type NewWorktreeDraft } from './TakeToWorkNewWorktree'
 import { BuildWebToneChip, ProductChip, StatusChip } from './BuildWebToneChip'
+import { TakeToWorkAgentPicker } from './TakeToWorkAgentPicker'
+import { useClaudeLaunchAccounts } from '../tab-bar/use-claude-launch-accounts'
 
 function Option({
   checked,
@@ -87,6 +89,16 @@ function TakeToWorkForm({
     name: batchWorktreeName(issues.map((i) => i.key)),
     baseBranch: ''
   }))
+  // Why a worktree of the picked repo for a new one: it runs on the host the new one will.
+  const hostWorktreeId =
+    mode === 'new' ? worktreesByRepo[draft.repoId]?.[0]?.id : (worktreeId ?? undefined)
+  const accounts = useClaudeLaunchAccounts(hostWorktreeId ?? '', Boolean(hostWorktreeId))
+  const [pickedAccountId, setPickedAccountId] = useState<string | undefined>(undefined)
+  // Why: an account of a host no longer picked would fail the pane, so it falls back to the selection.
+  const claudeAccountId = accounts.some((a) => a.id === pickedAccountId)
+    ? pickedAccountId
+    : undefined
+  const account = claudeAccountId ? { claudeAccountId } : {}
   const check = validateBuildWebBatch(issues)
   const held = issues.filter((i) => i.agent_session)
   const worktree = worktrees.find((w) => w.id === worktreeId) ?? null
@@ -116,7 +128,14 @@ function TakeToWorkForm({
         const created = await createBatchWorktree({ ...draft, name: draft.name.trim() })
         if (created) {
           remember(created.id)
-          await launchBuildWebBatch({ target, baseUrl, worktree: created, issues, flags: { auto } })
+          await launchBuildWebBatch({
+            target,
+            baseUrl,
+            worktree: created,
+            issues,
+            flags: { auto },
+            ...account
+          })
         }
       })()
       return
@@ -126,7 +145,7 @@ function TakeToWorkForm({
     }
     remember(worktree.id)
     onClose()
-    void launchBuildWebBatch({ target, baseUrl, worktree, issues, flags: { auto } })
+    void launchBuildWebBatch({ target, baseUrl, worktree, issues, flags: { auto }, ...account })
   }
 
   return (
@@ -207,10 +226,11 @@ function TakeToWorkForm({
           </p>
         </div>
       )}
-      <p className="text-sm">
-        <span className="text-muted-foreground">{translate('buildWeb.take.agent', 'Agent')}: </span>
-        {translate('buildWeb.take.claude', 'Claude Code')}
-      </p>
+      <TakeToWorkAgentPicker
+        accounts={accounts}
+        value={claudeAccountId}
+        onChange={setPickedAccountId}
+      />
       <p className="text-sm">
         <span className="text-muted-foreground">
           {translate('buildWeb.take.session', 'Session')}:{' '}

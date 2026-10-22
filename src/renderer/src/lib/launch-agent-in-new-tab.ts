@@ -84,7 +84,7 @@ export type LaunchAgentInNewTabArgs = LaunchAgentInNewTabRequest & {
   /** Opens instead of this agent's terminal when the host declines its structured chat. */
   onStructuredHostDeclined?: () => StructuredLaunchTerminal
   /** Claude only: this account's folder on the workspace's host, not its selection. Needs a
-   *  terminal route; the host resolves the folder at spawn. */
+   *  terminal route; the host resolves the folder at spawn, so a prompt keeps the pane's own spawn. */
   claudeAccountId?: string
 }
 
@@ -257,8 +257,10 @@ function launchAgentInNewTabInternal(args: LaunchAgentInNewTabArgs): LaunchAgent
   if (beforeSurfaceOpen?.({ kind: 'local-terminal' }) === false) {
     return null
   }
+  // Why not through the host with an account: its plan builds the agent's env and drops the account.
   if (
     pasteDraftAfterLaunch !== null &&
+    !args.claudeAccountId &&
     newTabPromptLaunchesThroughHost({ promptDelivery, pastesPrompt: true, isRemote })
   ) {
     const launched = launchNewTabPromptThroughHost({

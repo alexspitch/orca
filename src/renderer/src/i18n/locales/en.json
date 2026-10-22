@@ -20552,6 +20552,8 @@
       "noRepo": "No sa-dc-ap-products repository found; showing every git worktree.",
       "agent": "Agent",
       "claude": "Claude Code",
+      "claudeAccount": "Claude Code — {{account}}",
+      "agentHint": "Another account runs this session only; the host's selected account stays as it is.",
       "auto": "Auto mode",
       "autoHint": "No stop after the plans; only tasks handed to AI",
       "held": "Already held by a session: {{list}}. Starting replaces it.",
