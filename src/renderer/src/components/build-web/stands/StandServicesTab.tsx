@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
 import type {
   BuildWebStandGroup,
@@ -17,8 +16,7 @@ import { useStandGroups } from './stand-groups-store'
 import { StandLogPanel } from './StandLogPanel'
 import { StandServicesTable } from './StandServicesTable'
 import { useStandStatus } from './use-stand-status'
-
-const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
+import { useStandOp } from './use-stand-op'
 
 /** What the stand runs; restart one service or bring the whole stand up, and read a service's log. */
 export function StandServicesTab({
@@ -31,12 +29,10 @@ export function StandServicesTab({
   const { status, error, loading, reload } = useStandStatus(target, group.statusCardId)
   const job = useStandGroups((s) => s.jobs[group.key] ?? null)
   const setJob = useStandGroups((s) => s.setJob)
-  const confirm = useConfirmationDialog()
+  const op = useStandOp(target, group)
   const [logService, setLogService] = useState<string | null>(null)
-  const [starting, setStarting] = useState(false)
-  const [opError, setOpError] = useState<string | null>(null)
-  const running = job?.status === 'queued' || job?.status === 'running'
-  const canOperate = group.opsCardId !== null && !starting && !running
+  const { running, canOperate, error: opError } = op
+  const runOp = (kind: BuildWebStandOpKind, service?: string) => op.run(kind, service)
 
   // Why: an operation started elsewhere (build-web, another window) shows here too.
   const cardIds = group.cards.map((c) => c.id).join(',')
@@ -53,64 +49,6 @@ export function StandServicesTab({
       alive = false
     }
   }, [cardIds, group.key, setJob, target])
-
-  const place = `${group.sshHost}:${group.dir}`
-  const lockNote = group.lock
-    ? ` ${translate('buildWeb.stands.ops.lockNote', 'The stand is held by {{holder}}; the operation waits for it.', { holder: group.lock.heldBy })}`
-    : ''
-  const runOp = async (kind: BuildWebStandOpKind, service?: string): Promise<void> => {
-    if (!group.opsCardId) {
-      return
-    }
-    const ok = await confirm(
-      kind === 'up'
-        ? {
-            title: translate('buildWeb.stands.ops.upTitle', 'Bring {{stand}} up?', {
-              stand: group.name
-            }),
-            description:
-              translate(
-                'buildWeb.stands.ops.upDescription',
-                'docker compose up -d in {{place}}: every service is created or recreated as its compose files say.',
-                { place }
-              ) + lockNote,
-            confirmLabel: translate('buildWeb.stands.ops.upConfirm', 'Run up -d')
-          }
-        : {
-            title: translate('buildWeb.stands.ops.restartTitle', 'Restart {{service}}?', {
-              service: service ?? ''
-            }),
-            description:
-              translate(
-                'buildWeb.stands.ops.restartDescription',
-                'docker compose restart {{service}} in {{place}}.',
-                { service: service ?? '', place }
-              ) + lockNote,
-            confirmLabel: translate('buildWeb.stands.ops.restartConfirm', 'Restart')
-          }
-    )
-    if (!ok) {
-      return
-    }
-    setStarting(true)
-    setOpError(null)
-    try {
-      const result = await callBuildWeb(target, 'standOp', {
-        standId: group.opsCardId,
-        kind,
-        ...(service ? { services: [service] } : {})
-      })
-      if (result.ok) {
-        setJob(group.key, result.value)
-      } else {
-        setOpError(result.error)
-      }
-    } catch (failure) {
-      setOpError(message(failure))
-    } finally {
-      setStarting(false)
-    }
-  }
 
   const services = status?.services ?? []
   const table = (compact: boolean) => (

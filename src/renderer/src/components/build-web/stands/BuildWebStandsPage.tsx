@@ -99,7 +99,7 @@ function StandsView({
       {group ? (
         <StandView key={group.key} target={target} group={group} />
       ) : (
-        <StandDirectory groups={groups} health={health} onSelect={select} />
+        <StandDirectory target={target} groups={groups} health={health} onSelect={select} />
       )}
     </div>
   )

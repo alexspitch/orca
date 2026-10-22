@@ -21380,7 +21380,9 @@
         "up": "docker compose up -d",
         "disabled": "The stand is disabled in build-web.",
         "upHint": "Every service of the stand",
-        "dismiss": "Hide"
+        "dismiss": "Hide",
+        "running": "An operation is already running on the stand",
+        "upRow": "Update the stand: docker compose up -d"
       },
       "services": {
         "count": "{{n}} services",

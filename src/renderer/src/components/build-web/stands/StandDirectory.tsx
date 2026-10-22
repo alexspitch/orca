@@ -1,4 +1,6 @@
-import { Eye, EyeOff } from 'lucide-react'
+import { useEffect } from 'react'
+import { CircleArrowUp, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
@@ -7,11 +9,13 @@ import type {
   BuildWebStandGroup,
   BuildWebStandHealthMap
 } from '../../../../../shared/build-web-stand-types'
+import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { useStandGroups } from './stand-groups-store'
 import { productsOf, StandFacts } from './StandFacts'
 import { StandHealthCell } from './StandHealthCell'
 import { StandProductChip } from './StandProductChip'
+import { useStandOp } from './use-stand-op'
 
 function HideToggle({
   hidden,
@@ -45,12 +49,61 @@ function HideToggle({
   )
 }
 
+/** `docker compose up -d` of the stand, from its row; its progress is followed on the stand's own page. */
+function StandUpButton({
+  target,
+  group,
+  onStarted
+}: {
+  target: RuntimeClientTarget
+  group: BuildWebStandGroup
+  onStarted: () => void
+}): React.JSX.Element {
+  const op = useStandOp(target, group)
+  useEffect(() => {
+    if (op.error) {
+      toast.error(op.error)
+    }
+  }, [op.error])
+  const label = !group.opsCardId
+    ? translate('buildWeb.stands.ops.disabled', 'The stand is disabled in build-web.')
+    : op.running
+      ? translate('buildWeb.stands.ops.running', 'An operation is already running on the stand')
+      : translate('buildWeb.stands.ops.upRow', 'Update the stand: docker compose up -d')
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {/* Why the span: a disabled button gets no pointer events, so no tooltip. */}
+        <span tabIndex={op.canOperate ? -1 : 0}>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={label}
+            disabled={!op.canOperate}
+            onClick={(event) => {
+              event.stopPropagation()
+              void op.run('up').then((started) => started && onStarted())
+            }}
+          >
+            {op.running ? <Loader2 className="animate-spin" /> : <CircleArrowUp />}
+          </Button>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={4}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 /** Every stand, one row each, for a page opened without one picked; hidden ones only on request. */
 export function StandDirectory({
+  target,
   groups,
   health,
   onSelect
 }: {
+  target: RuntimeClientTarget
   groups: BuildWebStandGroup[]
   health: BuildWebStandHealthMap | null
   onSelect: (key: string) => void
@@ -59,6 +112,12 @@ export function StandDirectory({
   const showHidden = useStandGroups((s) => s.showHidden)
   const setHidden = useStandGroups((s) => s.setHidden)
   const setShowHidden = useStandGroups((s) => s.setShowHidden)
+  const setTab = useStandGroups((s) => s.setTab)
+  // Why open the stand: its Services tab follows the operation's log to the end.
+  const followOp = (key: string) => {
+    setTab('services')
+    onSelect(key)
+  }
   if (groups.length === 0) {
     return (
       <p className="px-3 py-10 text-center text-sm text-muted-foreground">
@@ -103,7 +162,7 @@ export function StandDirectory({
                 <th className="w-[26%] py-2">
                   {translate('buildWeb.stands.columns.health', 'Monitoring')}
                 </th>
-                <th className="w-12 py-2 pr-3" />
+                <th className="w-20 py-2 pr-3" />
               </tr>
             </thead>
             <tbody>
@@ -150,7 +209,14 @@ export function StandDirectory({
                       ) : null}
                     </td>
                     <td className="py-1.5 pr-3">
-                      <span className="flex justify-end">
+                      <span className="flex justify-end gap-0.5">
+                        {isHidden ? null : (
+                          <StandUpButton
+                            target={target}
+                            group={group}
+                            onStarted={() => followOp(group.key)}
+                          />
+                        )}
                         <HideToggle
                           hidden={isHidden}
                           onToggle={() => setHidden(group.key, !isHidden)}
