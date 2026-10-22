@@ -4,6 +4,9 @@ export const BUILD_WEB_RUNTIME_CAPABILITY = 'build-web.v1'
 /** A runtime that serves the «Stands» page's `buildWeb.stand*` methods. */
 export const BUILD_WEB_STANDS_RUNTIME_CAPABILITY = 'build-web-stands.v1'
 
+/** A runtime that monitors every stand at once: `buildWeb.standHealth`. */
+export const BUILD_WEB_STAND_HEALTH_RUNTIME_CAPABILITY = 'build-web-stand-health.v1'
+
 /** A runtime that serves Testing's «Test history» tab: `buildWeb.test*` and test-job logs. */
 export const BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY = 'build-web-test-history.v1'
 

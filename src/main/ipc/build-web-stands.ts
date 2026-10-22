@@ -1,6 +1,7 @@
 import { ipcMain } from 'electron'
 import type { ZodTypeAny, z } from 'zod'
 import {
+  BuildWebStandHealthParams,
   BuildWebStandIdsParams,
   BuildWebStandLoginParams,
   BuildWebStandLogsReadParams,
@@ -27,6 +28,7 @@ function handle<S extends ZodTypeAny>(
 export function registerBuildWebStandHandlers(): void {
   ipcMain.handle('buildWeb:standGroups', () => commands.buildWebStandGroups())
   handle('standStatus', BuildWebStandParams, (args) => commands.buildWebStandStatus(args))
+  handle('standHealth', BuildWebStandHealthParams, (args) => commands.buildWebStandHealth(args))
   handle('standAccounts', BuildWebStandIdsParams, (args) => commands.buildWebStandAccounts(args))
   handle('standJobs', BuildWebStandIdsParams, (args) => commands.buildWebStandJobs(args))
   handle('standOp', BuildWebStandOpParams, (args) => commands.buildWebStandOp(args))

@@ -94,6 +94,7 @@ export const buildWebApi = {
   notificationsClear: () => ipcRenderer.invoke('buildWeb:notificationsClear'),
   standGroups: () => ipcRenderer.invoke('buildWeb:standGroups'),
   standStatus: (args) => ipcRenderer.invoke('buildWeb:standStatus', args),
+  standHealth: (args) => ipcRenderer.invoke('buildWeb:standHealth', args),
   standAccounts: (args) => ipcRenderer.invoke('buildWeb:standAccounts', args),
   standJobs: (args) => ipcRenderer.invoke('buildWeb:standJobs', args),
   standOp: (args) => ipcRenderer.invoke('buildWeb:standOp', args),

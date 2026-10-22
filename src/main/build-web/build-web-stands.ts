@@ -7,7 +7,7 @@ import type {
   BuildWebStandStatus
 } from '../../shared/build-web-stand-types'
 import { BUILD_WEB_LONG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
-import { requireBuildWebCredential } from './build-web-connection'
+import { requireBuildWebCredential, type BuildWebCredential } from './build-web-connection'
 import { jobOf } from './build-web-guide-actions'
 import { buildWebMutation, buildWebRequest } from './build-web-request'
 import { recordOf, recordsOf } from './build-web-response-fields'
@@ -19,32 +19,39 @@ const enc = encodeURIComponent
 // Why: the operations that change what a stand runs; a screenshot run on it changes nothing.
 const STAND_JOB_KINDS = new Set(['deploy', 'generate', 'up', 'restart', 'apply'])
 
+export async function fetchBuildWebStandGroups(
+  credential: BuildWebCredential
+): Promise<BuildWebStandGroup[]> {
+  const answer = recordOf(await buildWebRequest({ ...credential, path: '/api/stands' }))
+  return standGroupsOf(
+    recordsOf(answer?.stands)
+      .map(standCardOf)
+      .filter((c) => c !== null)
+  )
+}
+
 export function listBuildWebStandGroups(): Promise<BuildWebMutationResult<BuildWebStandGroup[]>> {
-  return buildWebMutation(async () => {
-    const credential = requireBuildWebCredential()
-    const answer = recordOf(await buildWebRequest({ ...credential, path: '/api/stands' }))
-    return standGroupsOf(
-      recordsOf(answer?.stands)
-        .map(standCardOf)
-        .filter((c) => c !== null)
-    )
-  })
+  return buildWebMutation(() => fetchBuildWebStandGroups(requireBuildWebCredential()))
 }
 
 /** What the stand runs — read over SSH by the console, so seconds. */
+export async function fetchBuildWebStandStatus(
+  credential: BuildWebCredential,
+  standId: string
+): Promise<BuildWebStandStatus> {
+  return standStatusOf(
+    await buildWebRequest({
+      ...credential,
+      path: `/api/stands/${enc(standId)}/status`,
+      timeoutMs: BUILD_WEB_LONG_TIMEOUT_MS
+    })
+  )
+}
+
 export function readBuildWebStandStatus(
   standId: string
 ): Promise<BuildWebMutationResult<BuildWebStandStatus>> {
-  return buildWebMutation(async () => {
-    const credential = requireBuildWebCredential()
-    return standStatusOf(
-      await buildWebRequest({
-        ...credential,
-        path: `/api/stands/${enc(standId)}/status`,
-        timeoutMs: BUILD_WEB_LONG_TIMEOUT_MS
-      })
-    )
-  })
+  return buildWebMutation(() => fetchBuildWebStandStatus(requireBuildWebCredential(), standId))
 }
 
 /** The UI logins of every card of a stand: each product's UI has its own. */

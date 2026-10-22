@@ -27,6 +27,8 @@ export const BUILD_WEB_LONG_METHODS: ReadonlySet<string> = new Set([
   // A stand's compose and containers, read over SSH before the answer or the log's first byte.
   'standStatus',
   'startStandLogs',
+  // Every enabled stand's status, a few at a time.
+  'standHealth',
   // A watcher pass asks Jira about every watched ticket.
   'watchCheck'
 ])

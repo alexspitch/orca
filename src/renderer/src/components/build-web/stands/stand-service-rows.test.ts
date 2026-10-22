@@ -3,10 +3,9 @@ import type { BuildWebStandService } from '../../../../../shared/build-web-stand
 import {
   buildNumberOf,
   imagePartsOf,
-  isNotApplied,
-  serviceStateLabel,
-  serviceStateTone
-} from './stand-service-rows'
+  isNotApplied
+} from '../../../../../shared/build-web-stand-services'
+import { serviceStateLabel, serviceStateTone } from './stand-service-rows'
 
 const service = (over: Partial<BuildWebStandService> = {}): BuildWebStandService => ({
   service: 'sa-backend',

@@ -139,6 +139,11 @@ export async function buildWebImageSummary(): Promise<BuildWebImageSummary> {
   return { running: runningImageCount(images), failed: failedImageCount(images) }
 }
 
+/** Every build the console recorded, newest first; an older copy will do. */
+export async function recentBuildWebImageBuilds(): Promise<BuildWebImageBuild[]> {
+  return (await catalog({ maxAgeMs: SUMMARY_TTL_MS, background: true })).builds
+}
+
 export async function listBuildWebImages(
   args: BuildWebImagePageArgs & { refresh?: boolean }
 ): Promise<BuildWebImagePage> {

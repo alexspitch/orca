@@ -20603,7 +20603,8 @@
       "updateServerImageAdopt": "This Orca server cannot settle a failed image with an earlier build yet. Update the server.",
       "updateServerIssueMockups": "This Orca server does not show task artifacts yet. Update the server.",
       "updateServerFavoriteSort": "This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column.",
-      "updateServerActivity": "This Orca server does not read build-web notifications and tasks yet. Update the server."
+      "updateServerActivity": "This Orca server does not read build-web notifications and tasks yet. Update the server.",
+      "updateServerStandHealth": "This Orca server does not monitor the stands yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -20861,7 +20862,11 @@
       "blockersFilters": "Filters: {{filters}}",
       "blockersAll": "No filter: every open task",
       "blockersCapped": "At least {{count}}: only the {{count}} highest-priority tasks are read",
-      "imagesBuildingHint": "Images building now, each image and distribution once"
+      "imagesBuildingHint": "Images building now, each image and distribution once",
+      "standsFailing": "{{label}}, {{count}} services failing",
+      "standsOutdated": "{{label}}, {{count}} to update",
+      "standsFailingHint": "Services on running stands that are down or unhealthy",
+      "standsOutdatedHint": "Services on running stands with a newer image to roll out"
     },
     "priority": {
       "highest": "Highest",
@@ -21387,7 +21392,26 @@
         "product": "Application",
         "allProducts": "All applications",
         "noneForProduct": "No UI logins for this application."
-      }
+      },
+      "columns": {
+        "name": "Name",
+        "product": "Product",
+        "health": "Monitoring"
+      },
+      "health": {
+        "unknown": "not read",
+        "stopped": "stopped",
+        "ok": "OK",
+        "failing": "{{count}} failing",
+        "outdated": "{{count}} to update",
+        "hidden": "hidden"
+      },
+      "hide": "Hide from the list and stop monitoring",
+      "unhide": "Show in the list and monitor again",
+      "hiddenCount": "{{count}} hidden",
+      "collapseHidden": "Leave them out",
+      "showHidden": "Show them",
+      "allHidden": "Every stand is hidden."
     },
     "testHistory": {
       "retries": "{{count}} retry(ies)",

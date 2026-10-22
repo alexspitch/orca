@@ -11,7 +11,7 @@ export function SidebarCountBadge({
   hint
 }: {
   count: string | number
-  tone: 'red' | 'neutral'
+  tone: 'red' | 'amber' | 'neutral'
   hint: React.ReactNode
 }): React.JSX.Element {
   return (
@@ -21,9 +21,9 @@ export function SidebarCountBadge({
           aria-hidden="true"
           className={cn(
             'min-w-5 rounded-full px-1.5 text-center text-2xs leading-5 tabular-nums',
-            tone === 'red'
-              ? 'bg-chip-tone-red/15 text-chip-tone-red'
-              : 'bg-worktree-sidebar-foreground/10'
+            tone === 'red' && 'bg-chip-tone-red/15 text-chip-tone-red',
+            tone === 'amber' && 'bg-chip-tone-amber/15 text-chip-tone-amber',
+            tone === 'neutral' && 'bg-worktree-sidebar-foreground/10'
           )}
         >
           {count}

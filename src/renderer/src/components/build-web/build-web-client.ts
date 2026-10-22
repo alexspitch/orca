@@ -5,6 +5,7 @@ import {
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY,
+  BUILD_WEB_STAND_HEALTH_RUNTIME_CAPABILITY,
   BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
   BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY,
   BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY
@@ -86,6 +87,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         translate(
           'buildWeb.client.updateServerImageAdopt',
           'This Orca server cannot settle a failed image with an earlier build yet. Update the server.'
+        )
+    },
+    {
+      methods: new Set<Method>(['standHealth']),
+      capability: BUILD_WEB_STAND_HEALTH_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerStandHealth',
+          'This Orca server does not monitor the stands yet. Update the server.'
         )
     },
     {

@@ -16,13 +16,19 @@ type StandGroupsState = {
   error: string | null
   loading: boolean
   loadedAt: number
+  /** Bumped by every forced read, so what hangs off the directory reads again with it. */
+  refreshes: number
   selectedKey: string | null
   tab: StandTab
+  hiddenKeys: string[]
+  showHidden: boolean
   /** The operation followed on each stand, by group key. */
   jobs: Record<string, BuildWebJob>
   load: (target: RuntimeClientTarget, contextKey: string, force?: boolean) => Promise<void>
   select: (key: string | null) => void
   setTab: (tab: StandTab) => void
+  setHidden: (key: string, hidden: boolean) => void
+  setShowHidden: (show: boolean) => void
   setJob: (key: string, job: BuildWebJob | null) => void
 }
 
@@ -35,8 +41,11 @@ export const useStandGroups = create<StandGroupsState>()((set, get) => ({
   error: null,
   loading: false,
   loadedAt: 0,
+  refreshes: 0,
   selectedKey: prefs.selectedKey,
   tab: prefs.tab,
+  hiddenKeys: prefs.hiddenKeys,
+  showHidden: prefs.showHidden,
   jobs: {},
   load: async (target, contextKey, force = false) => {
     const state = get()
@@ -45,6 +54,9 @@ export const useStandGroups = create<StandGroupsState>()((set, get) => ({
       return
     }
     const mine = ++generation
+    if (force) {
+      set((s) => ({ refreshes: s.refreshes + 1 }))
+    }
     set(sameHost ? { loading: true } : { contextKey, groups: null, error: null, loading: true })
     try {
       const result = await callBuildWeb(target, 'standGroups')
@@ -69,6 +81,16 @@ export const useStandGroups = create<StandGroupsState>()((set, get) => ({
   setTab: (tab) => {
     writeStandViewPrefs({ tab })
     set({ tab })
+  },
+  setHidden: (key, hidden) => {
+    const rest = get().hiddenKeys.filter((k) => k !== key)
+    const hiddenKeys = hidden ? [...rest, key] : rest
+    writeStandViewPrefs({ hiddenKeys })
+    set({ hiddenKeys })
+  },
+  setShowHidden: (showHidden) => {
+    writeStandViewPrefs({ showHidden })
+    set({ showHidden })
   },
   setJob: (key, job) =>
     set((state) => {

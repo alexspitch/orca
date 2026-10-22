@@ -4,6 +4,7 @@ import type {
   BuildWebLogPiece,
   BuildWebStandAccount,
   BuildWebStandGroup,
+  BuildWebStandHealthMap,
   BuildWebStandLoginTarget,
   BuildWebStandLogTail,
   BuildWebStandOpKind,
@@ -14,6 +15,10 @@ import type {
 export type BuildWebStandApi = {
   standGroups: () => Promise<BuildWebMutationResult<BuildWebStandGroup[]>>
   standStatus: (args: { standId: string }) => Promise<BuildWebMutationResult<BuildWebStandStatus>>
+  standHealth: (args?: {
+    refresh?: boolean
+    hidden?: string[]
+  }) => Promise<BuildWebMutationResult<BuildWebStandHealthMap>>
   standAccounts: (args: {
     standIds: string[]
   }) => Promise<BuildWebMutationResult<BuildWebStandAccount[]>>

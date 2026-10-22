@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { ChevronLeft, Lock, RefreshCw } from 'lucide-react'
+import { ChevronLeft, RefreshCw } from 'lucide-react'
 import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -11,74 +11,12 @@ import { useBuildWebStatus, useBuildWebTarget } from '../use-build-web-data'
 import { useBuildWebPageEscape } from '../use-build-web-page-escape'
 import { BuildWebConnect } from '../BuildWebConnect'
 import { BuildWebListState } from '../BuildWebListState'
-import { BuildWebToneChip } from '../BuildWebToneChip'
 import { useStandGroups } from './stand-groups-store'
-import { StandProductChip } from './StandProductChip'
+import { StandDirectory } from './StandDirectory'
+import { StandFacts } from './StandFacts'
 import { StandServicesTab } from './StandServicesTab'
 import { StandUsersTab } from './StandUsersTab'
-
-function StandFacts({ group }: { group: BuildWebStandGroup }): React.JSX.Element {
-  const products = [...new Set(group.cards.map((c) => c.product))]
-  return (
-    <span className="flex min-w-0 flex-wrap items-center gap-1.5">
-      <span className="truncate font-mono text-xs text-muted-foreground">
-        {group.sshHost}:{group.dir}
-      </span>
-      {group.branch ? <BuildWebToneChip label={group.branch} tone={null} mono /> : null}
-      {products.map((p) => (
-        <StandProductChip key={p} product={p} />
-      ))}
-      {group.enabled ? null : (
-        <BuildWebToneChip label={translate('buildWeb.stands.disabled', 'disabled')} tone="faint" />
-      )}
-      {group.lock ? (
-        <span
-          className="flex items-center gap-1 text-xs text-muted-foreground"
-          title={group.lock.since ?? undefined}
-        >
-          <Lock className="size-3" />
-          {group.lock.heldBy}
-        </span>
-      ) : null}
-    </span>
-  )
-}
-
-/** Every stand, one row each, for a page opened without one picked. */
-function StandDirectory({
-  groups,
-  onSelect
-}: {
-  groups: BuildWebStandGroup[]
-  onSelect: (key: string) => void
-}): React.JSX.Element {
-  if (groups.length === 0) {
-    return (
-      <p className="px-3 py-10 text-center text-sm text-muted-foreground">
-        {translate(
-          'buildWeb.stands.none',
-          'No stands yet. They are added in build-web’s settings.'
-        )}
-      </p>
-    )
-  }
-  return (
-    <ul className="scrollbar-sleek min-h-0 overflow-auto rounded-md border border-border">
-      {groups.map((group) => (
-        <li key={group.key} className="border-b border-border/60 last:border-b-0">
-          <button
-            type="button"
-            onClick={() => onSelect(group.key)}
-            className="flex w-full flex-col gap-1 px-3 py-2 text-left hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
-          >
-            <span className="truncate text-sm font-medium">{group.name}</span>
-            <StandFacts group={group} />
-          </button>
-        </li>
-      ))}
-    </ul>
-  )
-}
+import { useStandHealth } from './use-stand-health'
 
 function StandView({
   target,
@@ -140,6 +78,8 @@ function StandsView({
   const error = useStandGroups((s) => s.error)
   const load = useStandGroups((s) => s.load)
   const select = useStandGroups((s) => s.select)
+  const refreshes = useStandGroups((s) => s.refreshes)
+  const { health } = useStandHealth(target, refreshes)
   useEffect(() => {
     void load(target, contextKey)
   }, [contextKey, load, target])
@@ -159,7 +99,7 @@ function StandsView({
       {group ? (
         <StandView key={group.key} target={target} group={group} />
       ) : (
-        <StandDirectory groups={groups} onSelect={select} />
+        <StandDirectory groups={groups} health={health} onSelect={select} />
       )}
     </div>
   )

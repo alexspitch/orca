@@ -57,6 +57,21 @@ export type BuildWebStandStatus = {
   detailsError: string | null
 }
 
+/** A stand's services at a glance, for the sidebar item and the stands table. */
+export type BuildWebStandHealth = {
+  /** Some service runs; a stopped stand is not judged, its counts stay 0. */
+  running: boolean
+  /** Services down or unhealthy. */
+  failing: number
+  /** Services the compose files or the registry have moved past. */
+  outdated: number
+  /** Why the stand could not be read. */
+  error: string | null
+}
+
+/** Every enabled stand's health, by group key. */
+export type BuildWebStandHealthMap = Record<string, BuildWebStandHealth>
+
 export type BuildWebStandAccount = {
   id: string
   description: string

@@ -1,5 +1,6 @@
 import type { z } from 'zod'
 import type {
+  BuildWebStandHealthParams,
   BuildWebStandIdsParams,
   BuildWebStandLogsReadParams,
   BuildWebStandLogsStartParams,
@@ -12,6 +13,7 @@ import {
   startBuildWebStandLogs,
   stopBuildWebStandLogs
 } from '../build-web/build-web-stand-logs'
+import { readBuildWebStandHealth } from '../build-web/build-web-stand-health'
 import {
   listBuildWebStandAccounts,
   listBuildWebStandGroups,
@@ -32,6 +34,10 @@ export class RuntimeBuildWebStandCommands {
 
   buildWebStandStatus(args: In<typeof BuildWebStandParams>) {
     return readBuildWebStandStatus(args.standId)
+  }
+
+  buildWebStandHealth(args: In<typeof BuildWebStandHealthParams>) {
+    return readBuildWebStandHealth(args ?? {})
   }
 
   buildWebStandAccounts(args: In<typeof BuildWebStandIdsParams>) {

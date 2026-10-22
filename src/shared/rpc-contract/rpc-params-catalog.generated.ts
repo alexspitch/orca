@@ -171,6 +171,7 @@ import {
   BuildWebVersionsParams
 } from './build-web-params'
 import {
+  BuildWebStandHealthParams,
   BuildWebStandIdsParams,
   BuildWebStandLogsReadParams,
   BuildWebStandLogsStartParams,
@@ -982,6 +983,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.shotsJob': BuildWebRunId,
   'buildWeb.standAccounts': BuildWebStandIdsParams,
   'buildWeb.standGroups': null,
+  'buildWeb.standHealth': BuildWebStandHealthParams,
   'buildWeb.standJobs': BuildWebStandIdsParams,
   'buildWeb.standLogs': BuildWebStandLogsReadParams,
   'buildWeb.standOp': BuildWebStandOpParams,

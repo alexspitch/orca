@@ -1,5 +1,6 @@
 import { defineMethod } from '../core'
 import {
+  BuildWebStandHealthParams,
   BuildWebStandIdsParams,
   BuildWebStandLogsReadParams,
   BuildWebStandLogsStartParams,
@@ -21,6 +22,12 @@ export const BUILD_WEB_STAND_METHODS = [
     permission: 'workspace',
     params: BuildWebStandParams,
     handler: async (params, { runtime }) => runtime.buildWebStandStatus(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.standHealth',
+    permission: 'workspace',
+    params: BuildWebStandHealthParams,
+    handler: async (params, { runtime }) => runtime.buildWebStandHealth(params)
   }),
   defineMethod({
     name: 'buildWeb.standAccounts',

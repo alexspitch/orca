@@ -10,6 +10,15 @@ const Id = z.string().trim().min(1, 'Missing id').max(128).refine(notDotSegment,
 const ServiceName = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$/, 'Not a service name')
 const LogTail = z.literal(BUILD_WEB_STAND_LOG_TAILS)
 
+// Why a group key, not a card id: a stand is the cards over one host, directory and branch.
+const StandKey = z.string().min(1).max(1024)
+export const BuildWebStandHealthParams = z
+  .object({
+    refresh: z.boolean().optional(),
+    /** Stands the viewer hid; the host does not read them. */
+    hidden: z.array(StandKey).max(500).optional()
+  })
+  .optional()
 export const BuildWebStandIdsParams = z.object({ standIds: z.array(Id).min(1).max(20) })
 export const BuildWebStandOpParams = z.object({
   standId: Id,

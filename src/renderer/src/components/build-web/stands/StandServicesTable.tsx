@@ -8,10 +8,9 @@ import { BuildWebToneChip } from '../BuildWebToneChip'
 import {
   buildNumberOf,
   imagePartsOf,
-  isNotApplied,
-  serviceStateLabel,
-  serviceStateTone
-} from './stand-service-rows'
+  isNotApplied
+} from '../../../../../shared/build-web-stand-services'
+import { serviceStateLabel, serviceStateTone } from './stand-service-rows'
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '—')
 
