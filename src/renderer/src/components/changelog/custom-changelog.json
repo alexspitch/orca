@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792654368000",
+      "date": "2026-10-22",
+      "commit": "eae913b37b1e",
+      "features": [
+        "A task's Word documents now open read-only in a tab of its worktree, laid out like Word, with Open in Default App as a fallback.",
+        "Any .docx opened from the explorer uses the same Word viewer, including on a paired Orca server; old .doc files and files over 3 MB still open in the browser.",
+        "The «Take to work» dialog's Agent line lets you pick which Claude account of the worktree's host starts the session, without changing the host's selected account."
+      ],
+      "settings": [],
+      "fixes": [
+        "A task's Word documents no longer open in the browser at the console's address instead of inside Orca."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792648425000",
       "date": "2026-10-22",
       "commit": "2d857cc6046f",
