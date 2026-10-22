@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792655864000",
+      "date": "2026-10-22",
+      "commit": "17e20eadcc32",
+      "features": [
+        "The file icon theme chosen in Settings → Appearance now also applies to Source Control's file and folder rows, including changes, staged files and commit history."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.238-custom.1792654368000",
       "date": "2026-10-22",
       "commit": "eae913b37b1e",
