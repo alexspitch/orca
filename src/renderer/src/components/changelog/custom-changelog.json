@@ -1,6 +1,25 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792645541000",
+      "date": "2026-10-22",
+      "commit": "b0a5a185226d",
+      "features": [
+        "Settings → Appearance → File Icons lets the Explorer show Material Icon Theme icons for files and folders, with light variants on light backgrounds.",
+        "The new-tab menu offers «Claude — account» entries to start Claude under another account on the workspace's host for that session only.",
+        "The Mockups tab on a build-web task card is now called Artifacts.",
+        "The status chip on a build-web task card, full screen or in the side panel, now opens a picker with every available status.",
+        "New build-web notifications such as failed builds, console errors or task comments appear as a desktop banner, or as a toast while Orca is in front."
+      ],
+      "settings": [
+        "Settings → Appearance gets a File Icons option to choose between Orca's own icons and the Material Icon Theme in the Explorer.",
+        "Settings → Notifications gets «build-web» for desktop banners and «build-web Inside Orca» for in-app toasts, both for build-web notifications."
+      ],
+      "fixes": [
+        "The plan spec's link to open a task now works again, opening the task's card by its title instead of a removed full-screen button."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792610727000",
       "date": "2026-10-21",
       "commit": "8bb360397ce7",
