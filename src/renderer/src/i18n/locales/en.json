@@ -21591,6 +21591,8 @@
       "kindStatus": "status change",
       "kindAssigned": "assignment",
       "kindComment": "comment",
+      "kindTelegramReply": "Telegram reply",
+      "kindTelegramLink": "Telegram link request",
       "tasks": "build-web tasks",
       "tasksRunning": "build-web tasks, {{count}} running",
       "tasksTitle": "Tasks",

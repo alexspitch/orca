@@ -35,6 +35,10 @@ export function notificationKindLabel(kind: string): string {
       return translate('buildWeb.activity.kindAssigned', 'assignment')
     case 'comment':
       return translate('buildWeb.activity.kindComment', 'comment')
+    case 'telegram_reply':
+      return translate('buildWeb.activity.kindTelegramReply', 'Telegram reply')
+    case 'telegram_link':
+      return translate('buildWeb.activity.kindTelegramLink', 'Telegram link request')
     default:
       return kind
   }
