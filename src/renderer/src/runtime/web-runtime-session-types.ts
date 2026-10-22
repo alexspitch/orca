@@ -24,6 +24,8 @@ export type CreateWebRuntimeSessionTerminalArgs = {
   shell?: string
   cwd?: string
   env?: Record<string, string>
+  /** The account the host lays over a host-built agent's env (`terminal.*AgentSession`). */
+  accountEnv?: Record<string, string>
   envToDelete?: string[]
   startupCommandDelivery?: StartupCommandDelivery
   launchConfig?: SleepingAgentLaunchConfig

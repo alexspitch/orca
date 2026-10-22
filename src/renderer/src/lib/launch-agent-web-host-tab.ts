@@ -1,4 +1,5 @@
 import { toast } from 'sonner'
+import { claudeLaunchAccountEnv } from '../../../shared/claude-launch-account'
 import { useAppStore } from '@/store'
 import {
   createWebRuntimeAgentSessionTerminal,
@@ -76,7 +77,9 @@ export function launchAgentInWebHostTab(args: {
       ? { promptDelivery: structuredPromptDelivery }
       : {}),
     ...(agentArgs !== undefined ? { agentArgs } : {}),
-    ...(launchPreferences ? { launchPreferences } : {})
+    ...(launchPreferences ? { launchPreferences } : {}),
+    // Why: the host builds this agent itself, so only `accountEnv` carries the account to it.
+    ...claudeLaunchAccountEnv(startupPlan.env)
   } as const
 
   const handleCreation = ({

@@ -1,4 +1,5 @@
 import { readTerminalSpawnDeferral } from '../../../../shared/host-spawn-admission'
+import { claudeLaunchAccountEnv } from '../../../../shared/claude-launch-account'
 import { remoteRestoreSpawnIntentParams } from '../../runtime/remote-restore-spawn-intent'
 import { createAgentSessionKeyboardOptions } from '@/runtime/agent-session-keyboard-capability'
 import { createRemoteRuntimeDisconnectedInputGrace } from './remote-runtime-disconnected-input-grace'
@@ -3150,6 +3151,7 @@ export function createRemoteRuntimePtyTransport(
                     ...(agentLaunchPreferences
                       ? { launchPreferences: agentLaunchPreferences }
                       : {}),
+                    ...claudeLaunchAccountEnv(envToSend),
                     placement: { tabId, leafId },
                     presentation: 'background',
                     ...spawnIntentParams
@@ -3170,6 +3172,8 @@ export function createRemoteRuntimePtyTransport(
                       ...(agentLaunchPreferences
                         ? { launchPreferences: agentLaunchPreferences }
                         : {}),
+                      // Why: the host builds this agent itself; only `accountEnv` carries the account.
+                      ...claudeLaunchAccountEnv(envToSend),
                       placement: { tabId, leafId },
                       presentation: 'background'
                     },

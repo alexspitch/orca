@@ -119,6 +119,7 @@ export async function createWebRuntimeSessionTerminalResult(
                         ...(args.launchPreferences
                           ? { launchPreferences: args.launchPreferences }
                           : {}),
+                        ...(args.accountEnv ? { accountEnv: args.accountEnv } : {}),
                         presentation: 'background'
                       },
                       timeoutMs: 15_000
@@ -147,6 +148,7 @@ export async function createWebRuntimeSessionTerminalResult(
                             : {}),
                           ...(args.cwd ? { startupCwd: args.cwd } : {}),
                           ...(args.viewMode ? { viewMode: args.viewMode } : {}),
+                          ...(args.accountEnv ? { accountEnv: args.accountEnv } : {}),
                           presentation: 'background'
                         },
                         clientOperationId
@@ -175,7 +177,7 @@ export async function createWebRuntimeSessionTerminalResult(
               targetGroupId: args.targetGroupId,
               command: args.command,
               cwd: args.cwd,
-              ...(args.env ? { env: args.env } : {}),
+              ...(args.env || args.accountEnv ? { env: { ...args.env, ...args.accountEnv } } : {}),
               ...(args.envToDelete ? { envToDelete: args.envToDelete } : {}),
               startupCommandDelivery: args.startupCommandDelivery,
               ...(args.launchConfig ? { launchConfig: args.launchConfig } : {}),

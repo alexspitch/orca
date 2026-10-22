@@ -12,7 +12,8 @@ export const ANTIGRAVITY_CHAT_SIGN_IN_RUNTIME_CAPABILITY =
   'accounts.antigravity-chat-sign-in.v1' as const
 export const DATA_ACCOUNT_RUNTIME_CAPABILITY = 'accounts.managed-data-profiles.v1' as const
 // Why: an older host ignores ORCA_CLAUDE_LAUNCH_ACCOUNT and runs its selected account instead.
-export const CLAUDE_LAUNCH_ACCOUNT_RUNTIME_CAPABILITY = 'accounts.claude-launch-account.v1' as const
+// v2: a host-built agent session takes it in `accountEnv`; v1 dropped it there.
+export const CLAUDE_LAUNCH_ACCOUNT_RUNTIME_CAPABILITY = 'accounts.claude-launch-account.v2' as const
 
 export const ACCOUNT_RUNTIME_CAPABILITIES = [
   ACCOUNT_IMPORT_RUNTIME_CAPABILITY,

@@ -115,6 +115,26 @@ describe('launchAgentInNewTab paired web runtime', () => {
     expect(mocks.closeTab).not.toHaveBeenCalled()
   })
 
+  it('carries a named Claude account to the host that builds the agent', async () => {
+    const { launchAgentInNewTab } = await import('./launch-agent-in-new-tab')
+
+    launchAgentInNewTab({
+      requestId: 'request-account',
+      agent: 'claude',
+      worktreeId: 'wt-1',
+      groupId: 'group-1',
+      claudeAccountId: 'acc-1'
+    })
+
+    // Why: without a prompt the host gets no env, so only `accountEnv` names the account.
+    expect(mocks.createWebRuntimeSessionTerminal).toHaveBeenCalledWith(
+      expect.objectContaining({
+        agent: 'claude',
+        accountEnv: { ORCA_CLAUDE_LAUNCH_ACCOUNT: 'acc-1' }
+      })
+    )
+  })
+
   it('forwards prompt launch env and captured config to the host runtime', async () => {
     store.settings.agentDefaultArgs = { codex: '--model gpt-5 --reasoning-effort high' }
     store.settings.agentDefaultEnv = { codex: { CODEX_PROFILE: 'captured' } }

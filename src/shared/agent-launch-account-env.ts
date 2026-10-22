@@ -4,7 +4,8 @@
  *
  * Deliberately narrow. Only the four routing variables, only absolute POSIX paths (the pointer may
  * be `~/`-relative, as the `claude` shell function expands it), and never read for a structured
- * session, whose home stays host-derived.
+ * session, whose home stays host-derived. Also the one Claude account a launch names
+ * (ORCA_CLAUDE_LAUNCH_ACCOUNT), an id the host resolves to its folder itself.
  */
 
 import { z } from 'zod'
@@ -12,6 +13,7 @@ import {
   CLAUDE_INJECTED_CONFIG_DIR_ENV,
   CLAUDE_PROFILE_POINTER_ENV
 } from './claude-profile-routing'
+import { CLAUDE_LAUNCH_ACCOUNT_ENV } from './claude-launch-account'
 
 export const AGENT_LAUNCH_ACCOUNT_ENV_KEYS = [
   'CLAUDE_CONFIG_DIR',
@@ -42,7 +44,11 @@ function isAccountPath(key: AgentLaunchAccountEnvKey, value: string): boolean {
 /** Why a refusal, not a drop: a dropped home would start the agent under another account. */
 export const AgentLaunchAccountEnv = z.record(z.string(), z.string()).superRefine((env, ctx) => {
   for (const [key, value] of Object.entries(env)) {
-    if (!isAccountEnvKey(key)) {
+    if (key === CLAUDE_LAUNCH_ACCOUNT_ENV) {
+      if (!/^[A-Za-z0-9._-]{1,128}$/.test(value)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: 'Invalid account id' })
+      }
+    } else if (!isAccountEnvKey(key)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: 'Not an account variable' })
     } else if (!isAccountPath(key, value)) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: [key], message: 'Invalid account path' })
