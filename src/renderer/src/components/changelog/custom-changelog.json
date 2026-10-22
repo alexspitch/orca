@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792676821000",
+      "date": "2026-10-22",
+      "commit": "718d08e765df",
+      "features": [
+        "Chat Platform is now a full product across Orca: task filters and picker, Images, image builds, task builds, trains and «Take to work» all support it.",
+        "The full-screen task card has «Archive» and «Restore» buttons, and archived tasks show who archived them and when.",
+        "The task list in Sidebar → Issues gets an «Archive» quick filter for viewing archived tasks; Orca still opens on live tasks.",
+        "The comment box on a task card can send a comment to the assignee in Telegram, moving the task to «Awaiting response».",
+        "Task comments are marked «Telegram» when sent there and «from Telegram» when the assignee replies from Telegram."
+      ],
+      "settings": [],
+      "fixes": [
+        "Sidebar → Images now lists an image building for several distributions at once once per distribution, so the running count matches the sidebar badge."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792674668000",
       "date": "2026-10-22",
       "commit": "c3d89a923451",
