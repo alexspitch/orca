@@ -187,7 +187,7 @@ export function testsChoice(
   return { forced, skipTests: !forced && !runTests }
 }
 
-export const RUN_PRODUCTS = ['sa', 'dc', 'ap', 'storage'] as const
+export const RUN_PRODUCTS = ['sa', 'dc', 'ap', 'storage', 'cp'] as const
 export type RunProduct = (typeof RUN_PRODUCTS)[number] | 'other'
 
 /** Which product an image is built on, by its name — CI's own classification. */
@@ -203,6 +203,9 @@ export function productOfImage(image: string): RunProduct {
   }
   if (image.startsWith('speechanalytics/') || image.startsWith('common/')) {
     return 'sa'
+  }
+  if (image.startsWith('chatplatform/')) {
+    return 'cp'
   }
   return 'other'
 }

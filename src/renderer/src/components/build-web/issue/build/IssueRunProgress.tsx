@@ -36,6 +36,7 @@ import { useRunScan } from './use-run-scan'
 import { useRunActions } from './use-run-actions'
 import { RUN_ROW_GRID, RunImageRow, type RunRowContext } from './RunImageRow'
 import { RunAddImage, RunFilters, RunRefBar, RunSelectionBar } from './RunBars'
+import { repoField } from '../../../../../../shared/build-web-repos'
 import { BuildMenu } from './RunMenus'
 
 /** A task's run, after build-web's Progress: its images, what to build, what to publish. */
@@ -83,12 +84,14 @@ export function IssueRunProgress({
   const [hidePending, setHidePending] = useState(() => readViewPrefs().hidePending)
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
 
+  const runRepo = run.repo
   useEffect(() => {
     // Optional helpers: without them the add row offers the run's own branch, and no Tests chip.
-    void callBuildWeb(target, 'imageNames').then(setImages, () => setImages([]))
-    void callBuildWeb(target, 'branches').then(setBranches, () => setBranches([]))
+    const args = repoField(runRepo)
+    void callBuildWeb(target, 'imageNames', args).then(setImages, () => setImages([]))
+    void callBuildWeb(target, 'branches', args).then(setBranches, () => setBranches([]))
     void callBuildWeb(target, 'imageTestSources').then(setTestDirs, () => setTestDirs({}))
-  }, [target])
+  }, [runRepo, target])
 
   const list = useMemo(() => Object.values(cells), [cells])
   const building = status === 'building'

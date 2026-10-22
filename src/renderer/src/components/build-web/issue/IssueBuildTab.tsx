@@ -10,6 +10,7 @@ import { BuildWebListState } from '../BuildWebListState'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { loginOf } from '../build-web-labels'
 import { IssueNewBuild } from './build/IssueNewBuild'
+import { repoOfProduct } from '../../../../../shared/build-web-repos'
 import { IssueRunProgress } from './build/IssueRunProgress'
 
 const SETTLED = new Set(['success', 'failed', 'partial', 'pending'])
@@ -106,7 +107,12 @@ export function IssueBuildTab({
         ) : null}
         <IssueNewBuild
           target={target}
-          issue={{ id: detail.id, key: detail.key, branch: detail.branches[0] ?? 'master' }}
+          issue={{
+            id: detail.id,
+            key: detail.key,
+            branch: detail.branches[0] ?? 'master',
+            repo: repoOfProduct(detail.product)
+          }}
           testing={testing}
           onStarted={onChanged}
         />

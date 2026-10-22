@@ -143,5 +143,6 @@ it('groups images the way their release branches do', () => {
   expect(productOfImage('dc/ib-api-server')).toBe('dc')
   expect(productOfImage('common/x')).toBe('sa')
   expect(productOfImage('auth-portal/y')).toBe('ap')
+  expect(productOfImage('chatplatform/agent-manager')).toBe('cp')
   expect(productOfImage('misc/z')).toBe('other')
 })

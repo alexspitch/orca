@@ -1,5 +1,6 @@
 import {
   BUILD_WEB_COMMENT_CHANNELS,
+  BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES,
   type BuildWebAgentSession,
   type BuildWebComment,
@@ -12,7 +13,7 @@ import {
 } from '../../shared/build-web-types'
 import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 
-const PRODUCTS: readonly BuildWebProduct[] = ['sa', 'dc', 'ap', 'storage', 'tools']
+const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
 const SURFACES: readonly BuildWebAgentSession['surface_kind'][] = [
   'terminal',
   'structured',

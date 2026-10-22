@@ -20585,7 +20585,8 @@
       "createFailed": "Could not create the worktree: {{error}}",
       "session": "Session",
       "inThisWorktree": "The skill works in this worktree (-no-worktree) and never makes its own.",
-      "pickBase": "Pick the branch the worktree starts from."
+      "pickBase": "Pick the branch the worktree starts from.",
+      "chatPlatformWorktree": "Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone."
     },
     "session": {
       "label": "Agent session",
@@ -20612,7 +20613,8 @@
       "updateServerStandHealth": "This Orca server does not monitor the stands yet. Update the server.",
       "updateServerCommentTelegram": "This Orca server cannot send a comment to Telegram yet. Update the server, or send it to the console.",
       "updateServerArchive": "This Orca server cannot archive tasks yet. Update the server.",
-      "updateServerArchiveList": "This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off."
+      "updateServerArchiveList": "This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.",
+      "updateServerChatPlatform": "This Orca server does not know Chat Platform yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -21252,7 +21254,9 @@
       "imageHeld": "held",
       "heldLine": "{{target}} held: red tests in {{workspace}}{{waiting}}",
       "held": "held: red tests in {{workspace}} since {{since}}",
-      "heldCount": "held {{n}}"
+      "heldCount": "held {{n}}",
+      "noStand": "no stand",
+      "runBodyNoStand": "The window builds what accumulated on {{branch}} and moves the tasks that rode along; with no stand nothing is deployed. The schedule stays as it is."
     },
     "testing": {
       "about": "Watching {{watching}} · build the missing images and publish them on → {{done}} · every {{seconds}}s",

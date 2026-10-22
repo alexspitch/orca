@@ -132,14 +132,15 @@ export async function listBuildWebTrains(): Promise<BuildWebTrain[]> {
     .filter((t) => typeof t.id === 'string')
     .map((t) => {
       const last = recordOf(t.last_run)
-      const standId = textOf(t.stand_id)
+      const standId = textOrNull(t.stand_id)
       return {
         id: textOf(t.id),
         name: textOf(t.name),
         branch: textOf(t.branch),
+        repo: t.repo === 'chat-platform' ? ('chat-platform' as const) : ('products' as const),
         dist: textOf(t.dist),
         stand_id: standId,
-        stand_name: names.get(standId) || standId,
+        stand_name: standId ? names.get(standId) || standId : '',
         hours: (Array.isArray(t.hours) ? t.hours : []).filter(
           (h): h is number => typeof h === 'number'
         ),

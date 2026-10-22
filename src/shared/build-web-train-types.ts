@@ -1,3 +1,5 @@
+import type { BuildWebRepo } from './build-web-repos'
+
 // build-web's build trains, as Orca's «Trains» page shows them: scheduled windows that build what
 // accumulated, put it on a stand and move the tasks that rode along on to testing.
 
@@ -14,9 +16,12 @@ export type BuildWebTrain = {
   id: string
   name: string
   branch: string
+  /** The repository the branch is of; both have a master, so a chat-platform train says so. */
+  repo: BuildWebRepo
   dist: string
-  stand_id: string
-  /** The stand's name, looked up on the console; the id when it has none. */
+  /** Null only on a chat-platform train: it builds and moves the tasks without a deploy. */
+  stand_id: string | null
+  /** The stand's name, looked up on the console; the id when it has none, '' without a stand. */
   stand_name: string
   /** The hours a window opens at, in the console's own time zone. */
   hours: number[]

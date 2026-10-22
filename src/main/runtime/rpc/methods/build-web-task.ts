@@ -9,6 +9,7 @@ import {
   BuildWebComboParams,
   BuildWebCombosParams,
   BuildWebDetectParams,
+  BuildWebRepoParams,
   BuildWebFreshnessParams,
   BuildWebGuideStartParams,
   BuildWebGuideStreamParams,
@@ -100,20 +101,20 @@ export const BUILD_WEB_TASK_METHODS = [
   defineMethod({
     name: 'buildWeb.imageNames',
     permission: 'workspace',
-    params: null,
-    handler: async (_params, { runtime }) => runtime.buildWebImageNames()
+    params: BuildWebRepoParams,
+    handler: async (params, { runtime }) => runtime.buildWebImageNames(params)
   }),
   defineMethod({
     name: 'buildWeb.branches',
     permission: 'workspace',
-    params: null,
-    handler: async (_params, { runtime }) => runtime.buildWebBranches()
+    params: BuildWebRepoParams,
+    handler: async (params, { runtime }) => runtime.buildWebBranches(params)
   }),
   defineMethod({
     name: 'buildWeb.fetchRepo',
     permission: 'workspace',
-    params: null,
-    handler: async (_params, { runtime }) => runtime.buildWebFetchRepo()
+    params: BuildWebRepoParams,
+    handler: async (params, { runtime }) => runtime.buildWebFetchRepo(params)
   }),
   defineMethod({
     name: 'buildWeb.imageTestSources',

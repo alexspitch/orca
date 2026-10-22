@@ -14,6 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import {
   BUILD_WEB_ISSUE_TYPES,
+  BUILD_WEB_PRODUCTS,
   BUILD_WEB_SUBTASK_STATUSES,
   type BuildWebIssueDetail,
   type BuildWebIssuePatch,
@@ -32,7 +33,7 @@ import { BUILD_WEB_PRIORITIES, loginOf, productLabel, typeLabel } from './build-
 import { PriorityChip, StatusChip, TypeChip } from './BuildWebToneChip'
 
 const NONE = '__none__'
-const PRODUCTS: readonly BuildWebProduct[] = ['sa', 'dc', 'ap', 'storage', 'tools']
+const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
 
 type Option = { value: string; label: React.ReactNode }
 

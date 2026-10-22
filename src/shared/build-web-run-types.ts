@@ -1,3 +1,5 @@
+import type { BuildWebRepo } from './build-web-repos'
+
 // A task's build in build-web, and its guide and commits, as Orca's full-screen card shows them.
 
 /** A piece of a build log from `offset`; `next` is where the following read starts. */
@@ -30,6 +32,8 @@ export type BuildWebRun = {
   /** created | pending | building | success | failed | partial */
   status: string
   branch: string
+  /** The repository the branch is of: chat-platform for a `cp` task; the monorepo from an older console. */
+  repo: BuildWebRepo
   ticket: string | null
   dist_type: string
   error: string | null

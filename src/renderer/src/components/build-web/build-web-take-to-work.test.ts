@@ -5,6 +5,7 @@ import type { Worktree } from '../../../../shared/worktree/types'
 import {
   batchWorktreeName,
   buildWebBatchPrompt,
+  isChatPlatformBatch,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
   takeToWorkRepos,
@@ -80,6 +81,15 @@ describe('skill call', () => {
       '/build-web-tasks batch IS-2.1 -no-worktree -auto'
     )
     expect(() => buildWebBatchPrompt(['IS-1 -auto; whoami'], { auto: false })).toThrow()
+  })
+
+  it('lets the skill make chat-platform’s worktree for a batch of Chat Platform tasks', () => {
+    expect(buildWebBatchPrompt(['CPDEV-12'], { auto: true, ownWorktree: true })).toBe(
+      '/build-web-tasks batch CPDEV-12 -auto'
+    )
+    expect(isChatPlatformBatch([{ product: 'cp' }, { product: 'cp' }])).toBe(true)
+    expect(isChatPlatformBatch([{ product: 'cp' }, { product: 'dc' }])).toBe(false)
+    expect(isChatPlatformBatch([])).toBe(false)
   })
 })
 

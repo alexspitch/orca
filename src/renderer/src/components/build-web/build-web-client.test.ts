@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
-  BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY
+  BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
+  BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY
 } from '../../../../shared/build-web-capability'
 
 const rpc = vi.hoisted(() => ({
@@ -17,7 +18,7 @@ vi.mock('@/runtime/runtime-rpc-client', () => ({
   callRuntimeRpc: rpc.call
 }))
 
-import { callBuildWeb } from './build-web-client'
+import { callBuildWeb, namesChatPlatform } from './build-web-client'
 
 const server = { kind: 'environment', environmentId: 'srv' } as const
 
@@ -63,5 +64,32 @@ describe('callBuildWeb', () => {
       { id: 'i1' },
       expect.anything()
     )
+  })
+
+  it('asks a server for Chat Platform before naming product cp or its repository', async () => {
+    await expect(
+      callBuildWeb(server, 'listIssues', { view: 'all', product: ['cp'] })
+    ).rejects.toThrow('does not know Chat Platform')
+    await expect(callBuildWeb(server, 'branches', { repo: 'chat-platform' })).rejects.toThrow(
+      'does not know Chat Platform'
+    )
+    expect(rpc.call).not.toHaveBeenCalled()
+    await callBuildWeb(server, 'branches', {})
+    expect(rpc.call).toHaveBeenCalledTimes(1)
+
+    rpc.supported.add(BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY)
+    await callBuildWeb(server, 'listIssues', { view: 'all', product: ['cp'] })
+    expect(rpc.call).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('namesChatPlatform', () => {
+  it('sees cp as a product, a filter, a task’s new product, or the repository', () => {
+    expect(namesChatPlatform({ product: 'cp' })).toBe(true)
+    expect(namesChatPlatform({ product: ['sa', 'cp'] })).toBe(true)
+    expect(namesChatPlatform({ id: 'i', patch: { product: 'cp' } })).toBe(true)
+    expect(namesChatPlatform({ repo: 'chat-platform' })).toBe(true)
+    expect(namesChatPlatform({ product: ['sa'], patch: { product: 'dc' } })).toBe(false)
+    expect(namesChatPlatform(undefined)).toBe(false)
   })
 })

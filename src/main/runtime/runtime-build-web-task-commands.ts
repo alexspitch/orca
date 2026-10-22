@@ -10,6 +10,7 @@ import type {
   BuildWebComboParams,
   BuildWebCombosParams,
   BuildWebDetectParams,
+  BuildWebRepoParams,
   BuildWebFreshnessParams,
   BuildWebGuideStartParams,
   BuildWebGuideStreamParams,
@@ -139,23 +140,23 @@ export class RuntimeBuildWebTaskCommands {
   }
 
   buildWebDetectImages(args: In<typeof BuildWebDetectParams>) {
-    return detectBuildWebImages(args.branch, args.ticket)
+    return detectBuildWebImages(args.branch, args.ticket, args.repo ?? 'products')
   }
 
   buildWebCreateIssueRun(args: In<typeof BuildWebIssueRunParams>) {
     return createBuildWebIssueRun(args)
   }
 
-  buildWebImageNames() {
-    return listBuildWebImageNames()
+  buildWebImageNames(args?: In<typeof BuildWebRepoParams>) {
+    return listBuildWebImageNames(args?.repo ?? 'products')
   }
 
-  buildWebBranches() {
-    return listBuildWebBranches()
+  buildWebBranches(args?: In<typeof BuildWebRepoParams>) {
+    return listBuildWebBranches(args?.repo ?? 'products')
   }
 
-  buildWebFetchRepo() {
-    return fetchBuildWebRepo()
+  buildWebFetchRepo(args?: In<typeof BuildWebRepoParams>) {
+    return fetchBuildWebRepo(args?.repo ?? 'products')
   }
 
   buildWebImageTestSources() {

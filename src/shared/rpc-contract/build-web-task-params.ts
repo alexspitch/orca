@@ -30,9 +30,14 @@ export const BuildWebRunCombosParams = z.object({ runId: Id, combos: Combos })
 export const BuildWebFreshnessParams = z.object({ runId: Id, fetch: z.boolean() })
 export const BuildWebTestingParams = z.object({ runId: Id, testingStatus: Testing })
 export const BuildWebAdoptParams = z.object({ id: Id, testingStatus: Testing })
+// Why only chat-platform: the monorepo is the console's default and its requests name none.
+const Repo = z.literal('chat-platform').optional()
+/** The repository a branch list, image list or fetch is of; absent is the monorepo. */
+export const BuildWebRepoParams = z.object({ repo: Repo }).optional()
 export const BuildWebDetectParams = z.object({
   branch: Branch,
-  ticket: z.string().regex(/^[A-Za-z][A-Za-z0-9_]*-[\d.]+$/, 'Missing task number')
+  ticket: z.string().regex(/^[A-Za-z][A-Za-z0-9_]*-[\d.]+$/, 'Missing task number'),
+  repo: Repo
 })
 export const BuildWebIssueRunParams = z.object({
   issueId: Id,

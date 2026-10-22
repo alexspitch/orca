@@ -73,13 +73,20 @@ export type BuildWebTaskApi = {
     id: string
     testingStatus: BuildWebTestingStatus
   }) => Promise<BuildWebMutationResult<BuildWebAdoptResult>>
-  detectImages: (args: { branch: string; ticket: string }) => Promise<BuildWebDetect>
+  detectImages: (args: {
+    branch: string
+    ticket: string
+    repo?: 'chat-platform'
+  }) => Promise<BuildWebDetect>
   createIssueRun: (
     args: BuildWebIssueRunArgs
   ) => Promise<BuildWebMutationResult<{ id: string; existing: boolean }>>
-  imageNames: () => Promise<string[]>
-  branches: () => Promise<BuildWebBranch[]>
-  fetchRepo: () => Promise<BuildWebMutationResult<BuildWebBranch[]>>
+  /** Without `repo`, the monorepo's: what every client before chat-platform asked for. */
+  imageNames: (args?: { repo?: 'chat-platform' }) => Promise<string[]>
+  branches: (args?: { repo?: 'chat-platform' }) => Promise<BuildWebBranch[]>
+  fetchRepo: (args?: {
+    repo?: 'chat-platform'
+  }) => Promise<BuildWebMutationResult<BuildWebBranch[]>>
   imageTestSources: () => Promise<Record<string, string[]>>
   startGuide: (args: {
     runId: string

@@ -16,6 +16,7 @@ import type {
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
 import { ImagePicker } from './ImagePicker'
+import { repoField, type BuildWebRepo } from '../../../../../../shared/build-web-repos'
 import { NewBuildRows, ReadOnlyField, Step, rowKey, testingNote, type Row } from './NewBuildParts'
 
 // A task's first build, after build-web's IssueNewBuild: the release branch is the task's, the
@@ -28,7 +29,7 @@ export function IssueNewBuild({
   onStarted
 }: {
   target: RuntimeClientTarget
-  issue: { id: string; key: string; branch: string }
+  issue: { id: string; key: string; branch: string; repo: BuildWebRepo }
   testing: BuildWebTestingStatus
   onStarted: () => void
 }): React.JSX.Element {
@@ -43,13 +44,17 @@ export function IssueNewBuild({
   const [busy, setBusy] = useState<'fetch' | 'detect' | 'start' | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Why the repository: a `cp` task's images and branches are chat-platform's, not the monorepo's.
+  const repo = repoField(issue.repo)
+  const repoKey = issue.repo
   useEffect(() => {
-    void callBuildWeb(target, 'imageNames').then(setAllImages, () => setAllImages([]))
-    void callBuildWeb(target, 'branches').then(
+    const args = repoField(repoKey)
+    void callBuildWeb(target, 'imageNames', args).then(setAllImages, () => setAllImages([]))
+    void callBuildWeb(target, 'branches', args).then(
       (list) => setBranches(list.map((b) => b.name)),
       () => setBranches([])
     )
-  }, [target])
+  }, [repoKey, target])
 
   const rows: Row[] = useMemo(() => {
     if (!detect) {
@@ -89,7 +94,7 @@ export function IssueNewBuild({
 
   const fetchBranches = async () => {
     setBusy('fetch')
-    const result = await callBuildWeb(target, 'fetchRepo').catch((failure) => ({
+    const result = await callBuildWeb(target, 'fetchRepo', repo).catch((failure) => ({
       ok: false as const,
       error: messageOf(failure)
     }))
@@ -105,7 +110,11 @@ export function IssueNewBuild({
     setError(null)
     setBusy('detect')
     try {
-      const found = await callBuildWeb(target, 'detectImages', { branch, ticket: issue.key })
+      const found = await callBuildWeb(target, 'detectImages', {
+        branch,
+        ticket: issue.key,
+        ...repo
+      })
       setDetect(found)
       // Suggested images are a guess, so they start unticked.
       setOff(new Set(found.suggested_images.map((image) => rowKey({ image, branch }))))

@@ -16,10 +16,11 @@ import { useBuildWebStatus, useBuildWebTarget } from '../use-build-web-data'
 import { useBuildWebPageEscape } from '../use-build-web-page-escape'
 import { BuildWebConnect } from '../BuildWebConnect'
 import { BuildWebListState } from '../BuildWebListState'
-import { BuildWebToneChip } from '../BuildWebToneChip'
+import { BuildWebToneChip, ProductChip } from '../BuildWebToneChip'
 import { BuildLogDialog } from '../images/BuildLogDialog'
 import { TrainHistory } from './TrainHistory'
 import { TrainPreviewDialog } from './TrainPreviewDialog'
+import { trainStandLabel } from './train-stand-label'
 import { trainRunTone } from './train-tones'
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '—')
@@ -92,11 +93,17 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
   const runNow = async (train: BuildWebTrain) => {
     const accepted = await confirm({
       title: translate('buildWeb.trains.runTitle', 'Depart «{{name}}» now?', { name: train.name }),
-      description: translate(
-        'buildWeb.trains.runBody',
-        'The window builds what accumulated on {{branch}}, puts it on {{stand}} and moves the tasks that rode along. The schedule stays as it is.',
-        { branch: train.branch, stand: train.stand_name }
-      ),
+      description: train.stand_id
+        ? translate(
+            'buildWeb.trains.runBody',
+            'The window builds what accumulated on {{branch}}, puts it on {{stand}} and moves the tasks that rode along. The schedule stays as it is.',
+            { branch: train.branch, stand: train.stand_name }
+          )
+        : translate(
+            'buildWeb.trains.runBodyNoStand',
+            'The window builds what accumulated on {{branch}} and moves the tasks that rode along; with no stand nothing is deployed. The schedule stays as it is.',
+            { branch: train.branch }
+          ),
       confirmLabel: translate('buildWeb.trains.run', 'Depart now')
     })
     if (!accepted) {
@@ -190,8 +197,10 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate font-mono text-xs">{t.branch}</span>
                 <BuildWebToneChip label={t.dist} tone={null} />
+                {/* Why: both repositories have a master; the chat-platform one says so. */}
+                {t.repo === 'chat-platform' ? <ProductChip product="cp" /> : null}
               </span>
-              <span className="truncate text-xs">{t.stand_name}</span>
+              <span className="truncate text-xs">{trainStandLabel(t)}</span>
               <span className="truncate font-mono text-xs">{t.hours.join(', ') || '—'}</span>
               <span className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 py-1 text-xs">
                 <span className="truncate">{when(t.last_window)}</span>

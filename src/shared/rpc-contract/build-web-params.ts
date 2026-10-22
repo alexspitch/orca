@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   BUILD_WEB_ISSUE_SORTS,
   BUILD_WEB_ISSUE_TYPES,
+  BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES
 } from '../build-web-types'
 import { BUILD_WEB_IMAGE_SORTS } from '../build-web-image-types'
@@ -15,7 +16,7 @@ const required = (message: string, max: number) => z.string().trim().min(1, mess
 const notDotSegment = (value: string) => value !== '.' && value !== '..'
 const Id = required('Missing task id', 128).refine(notDotSegment, 'Invalid id')
 const Status = z.enum(BUILD_WEB_STATUSES)
-const Product = z.enum(['sa', 'dc', 'ap', 'storage', 'tools'])
+const Product = z.enum(BUILD_WEB_PRODUCTS)
 // Why: build-web's own limits — a longer value would be refused there with a less useful message.
 const ShortText = z.string().max(200)
 
@@ -34,7 +35,7 @@ export const BuildWebIssueQueryParams = z.object({
   dir: z.enum(['asc', 'desc']).optional(),
   q: z.string().max(500).optional(),
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
-  product: z.array(Product).max(5).optional(),
+  product: z.array(Product).max(BUILD_WEB_PRODUCTS.length).optional(),
   limit: z.number().int().min(1).max(100).optional(),
   offset: z.number().int().min(0).max(100_000).optional(),
   tree: z.boolean().optional(),
@@ -51,7 +52,7 @@ export const BuildWebIssueSummaryParams = z.object({
   favorite: z.boolean().optional(),
   jira: z.boolean().optional(),
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
-  product: z.array(Product).max(5).optional(),
+  product: z.array(Product).max(BUILD_WEB_PRODUCTS.length).optional(),
   q: z.string().max(200).optional()
 })
 

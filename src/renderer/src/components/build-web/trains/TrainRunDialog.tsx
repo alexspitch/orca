@@ -28,6 +28,7 @@ import {
 } from './train-window'
 import { trainActionLine } from './train-action-line'
 import { trainRunTone } from './train-tones'
+import { trainStandLabel } from './train-stand-label'
 import { TrainRunImages } from './TrainRunImages'
 
 const hhmm = (iso: string) =>
@@ -157,9 +158,11 @@ export function TrainRunDialog({
               <span className="font-mono text-xs">{train.branch}</span>
               <span aria-hidden>·</span>
               <span>
-                {translate('buildWeb.trains.onStand', 'stand {{stand}}', {
-                  stand: train.stand_name
-                })}
+                {train.stand_id
+                  ? translate('buildWeb.trains.onStand', 'stand {{stand}}', {
+                      stand: train.stand_name
+                    })
+                  : trainStandLabel(train)}
               </span>
             </span>
           </DialogDescription>

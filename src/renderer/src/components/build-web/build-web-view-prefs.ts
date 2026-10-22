@@ -40,7 +40,7 @@ type ViewPrefs = {
 }
 
 export const RUN_DISTS = ['all', 'rhel', 'redos'] as const
-export const RUN_PRODUCT_FILTERS = ['all', 'sa', 'dc', 'ap', 'storage'] as const
+export const RUN_PRODUCT_FILTERS = ['all', 'sa', 'dc', 'ap', 'storage', 'cp'] as const
 export type RunFilter = {
   dist: (typeof RUN_DISTS)[number]
   product: (typeof RUN_PRODUCT_FILTERS)[number]

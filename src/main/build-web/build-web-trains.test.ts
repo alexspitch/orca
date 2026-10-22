@@ -15,7 +15,7 @@ vi.mock('./build-web-request', async (importOriginal) => ({
   buildWebRequest: mocks.request
 }))
 
-const { countBuildWebRollingImages } = await import('./build-web-trains')
+const { countBuildWebRollingImages, listBuildWebTrains } = await import('./build-web-trains')
 
 const image = (name: string) => ({ image: name, dist: 'rhel', why: [], tickets: [] })
 const train = (id: string, runId: string | null, status: string) => ({
@@ -61,5 +61,25 @@ describe('the images trains roll out', () => {
   it('is zero when no train is on its way', async () => {
     mocks.request.mockResolvedValue({ trains: [train('t-done', 'r5', 'done')] })
     expect(await countBuildWebRollingImages()).toEqual({ images: 0, trains: 0 })
+  })
+})
+
+describe('the trains list', () => {
+  it('names the repository of a chat-platform train, and a train with no stand', async () => {
+    mocks.request.mockImplementation(async ({ path }) =>
+      path === '/api/stands'
+        ? { stands: [{ id: 's1', name: 'DC 3.1' }] }
+        : {
+            trains: [
+              { id: 't1', name: 'dc', branch: 'master', stand_id: 's1' },
+              { id: 't2', name: 'cp', branch: 'master', repo: 'chat-platform', stand_id: null }
+            ]
+          }
+    )
+    const trains = await listBuildWebTrains()
+    expect(trains.map((t) => [t.repo, t.stand_id, t.stand_name])).toEqual([
+      ['products', 's1', 'DC 3.1'],
+      ['chat-platform', null, '']
+    ])
   })
 })

@@ -6,11 +6,12 @@ import { invalidateBuildWebImageCatalog } from './build-web-images'
 import { buildWebMutation, buildWebRequest } from './build-web-request'
 import { numberOf, recordOf, textOf, textsOf } from './build-web-response-fields'
 import { runOf } from './build-web-runs'
+import { repoField, repoOfImage } from '../../shared/build-web-repos'
 
 // Building one image from Images, after build-web's ImageBuildDialog: a run for the image on the
 // chosen branch, then its builds started at once (build-web leaves that to its Progress page).
 
-const PRODUCTS_WITH_RELEASES = new Set(['sa', 'dc', 'ap', 'storage', 'tools'])
+const PRODUCTS_WITH_RELEASES = new Set(['sa', 'dc', 'ap', 'storage', 'cp', 'tools'])
 const enc = encodeURIComponent
 const collator = new Intl.Collator(undefined, { numeric: true })
 const TEST_JOB_LOG = /^\/api\/tests\/runs\/[^/?#]+\/jobs\/[^/?#]+\/log$/
@@ -46,6 +47,8 @@ export function startBuildWebImageBuild(
           branch: args.branch,
           ticket: args.ticket || null,
           images: [args.image],
+          // Why: the run's branch belongs to the image's repository; chat-platform has its own master.
+          ...repoField(repoOfImage(args.image)),
           distType: args.dist,
           pushToRepo: false,
           detected: null

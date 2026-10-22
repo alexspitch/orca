@@ -63,6 +63,7 @@ export function runOf(value: unknown, baseUrl: string): BuildWebRun | null {
     id: v.id,
     status: textOf(v.status),
     branch: textOf(v.branch),
+    repo: v.repo === 'chat-platform' ? 'chat-platform' : 'products',
     ticket: textOrNull(v.ticket),
     dist_type: textOf(v.dist_type),
     error: textOrNull(v.error),

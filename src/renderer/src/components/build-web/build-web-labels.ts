@@ -60,7 +60,16 @@ export function productLabel(product: BuildWebIssueProduct): string {
   if (product === 'unknown') {
     return translate('buildWeb.product.unknown', 'Unknown')
   }
-  return product === 'storage' ? 'Storage' : product === 'tools' ? 'Tools' : product.toUpperCase()
+  switch (product) {
+    case 'storage':
+      return 'Storage'
+    case 'tools':
+      return 'Tools'
+    case 'cp':
+      return 'Chat Platform'
+    default:
+      return product.toUpperCase()
+  }
 }
 
 /** build-web's five priorities, highest first; an unknown number reads as itself. */

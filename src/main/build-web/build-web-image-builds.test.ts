@@ -75,6 +75,27 @@ describe('image builds', () => {
     expect(mocks.invalidate).toHaveBeenCalled()
   })
 
+  it('builds a Chat Platform image from chat-platform’s branch, and lists its version branches', async () => {
+    mocks.request.mockResolvedValueOnce({ id: 'run-3' }).mockResolvedValueOnce({ ok: true })
+    await startBuildWebImageBuild({
+      image: 'chatplatform/agent-manager',
+      branch: 'master',
+      dist: 'rhel'
+    })
+    expect(mocks.request.mock.calls[0][0].body).toMatchObject({ repo: 'chat-platform' })
+    mocks.request.mockResolvedValueOnce({ id: 'run-4' }).mockResolvedValueOnce({ ok: true })
+    await startBuildWebImageBuild({ image: 'dc/x', branch: 'master', dist: 'rhel' })
+    expect(mocks.request.mock.calls[2][0].body).not.toHaveProperty('repo')
+
+    mocks.request.mockResolvedValueOnce({ branches: ['master', 'version-2.5', 'version-2.6'] })
+    expect(await listBuildWebVersionBranches('cp')).toEqual([
+      'version-2.6',
+      'version-2.5',
+      'master'
+    ])
+    expect(mocks.request.mock.calls[4][0].path).toBe('/api/tms/versions/branches?product=cp')
+  })
+
   it('asks for a build without tests only when told to', async () => {
     mocks.request.mockResolvedValueOnce({ id: 'run-1' }).mockResolvedValueOnce({ ok: true })
     await startBuildWebImageBuild({

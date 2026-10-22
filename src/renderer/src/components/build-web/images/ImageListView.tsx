@@ -35,7 +35,7 @@ import {
 } from './image-view-parts'
 import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-build-web-images'
 
-const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'other'] as const
+const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'cp', 'other'] as const
 const DISTS = ['rhel', 'redos'] as const
 // In progress first: the quick filter for what is building now.
 const STATUS_FILTERS = ['running', 'failed'] as const
@@ -45,7 +45,9 @@ const productName = (p: string) =>
     ? translate('buildWeb.images.other', 'Other')
     : p === 'storage'
       ? 'Storage'
-      : p.toUpperCase()
+      : p === 'cp'
+        ? 'Chat Platform'
+        : p.toUpperCase()
 
 export function ImageListView({
   target,

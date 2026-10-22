@@ -5,6 +5,7 @@ import {
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
+  BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY,
   BUILD_WEB_STAND_HEALTH_RUNTIME_CAPABILITY,
@@ -129,6 +130,22 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
     }
   ]
 
+const field = (value: unknown, name: string): unknown =>
+  typeof value === 'object' && value !== null && name in value
+    ? Object.fromEntries(Object.entries(value))[name]
+    : undefined
+
+/** The call names product `cp` — as a filter, a task's new product — or chat-platform's repository. */
+export function namesChatPlatform(arg: unknown): boolean {
+  const product = field(arg, 'product')
+  return (
+    product === 'cp' ||
+    (Array.isArray(product) && product.includes('cp')) ||
+    field(field(arg, 'patch'), 'product') === 'cp' ||
+    field(arg, 'repo') === 'chat-platform'
+  )
+}
+
 // Why: an older server's params schema refuses an argument value it predates with a raw
 // validation error, so ask first and say what to update instead.
 const NEWER_ARGUMENTS: {
@@ -136,6 +153,15 @@ const NEWER_ARGUMENTS: {
   capability: string
   refusal: () => string
 }[] = [
+  {
+    applies: (_method, arg) => namesChatPlatform(arg),
+    capability: BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerChatPlatform',
+        'This Orca server does not know Chat Platform yet. Update the server.'
+      )
+  },
   {
     applies: (method, arg) =>
       method === 'listIssues' &&

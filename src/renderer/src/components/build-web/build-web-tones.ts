@@ -59,6 +59,8 @@ export function productTone(product: string): ChipTone | null {
       return 'green'
     case 'storage':
       return 'orange'
+    case 'cp':
+      return 'sky'
     case 'tools':
     case 'other':
       return 'neutral'

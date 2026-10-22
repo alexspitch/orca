@@ -11,11 +11,13 @@ import { requireBuildWebCredential } from './build-web-connection'
 import { buildWebMutation, buildWebRequest } from './build-web-request'
 import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 import { runOf } from './build-web-runs'
+import { repoField, type BuildWebRepo } from '../../shared/build-web-repos'
 
 // A task's first build, after build-web's IssueBuilds and IssueNewBuild: images already built
 // after the task's last commit are adopted; otherwise the form finds the images and makes the run.
 
 const enc = encodeURIComponent
+const repoQuery = (repo: BuildWebRepo) => (repo === 'products' ? '' : `?repo=${enc(repo)}`)
 
 function sourcesOf(value: unknown): Record<string, string[]> {
   const v = recordOf(value) ?? {}
@@ -52,7 +54,8 @@ export function adoptBuildWebBuilt(
 /** Which images the task's commits on the branch touch, and which shared code suggests more. */
 export async function detectBuildWebImages(
   branch: string,
-  ticket: string
+  ticket: string,
+  repo: BuildWebRepo = 'products'
 ): Promise<BuildWebDetect> {
   const credential = requireBuildWebCredential()
   const answer =
@@ -61,7 +64,7 @@ export async function detectBuildWebImages(
         ...credential,
         method: 'POST',
         path: '/api/detect',
-        body: { branch, ticket },
+        body: { branch, ticket, ...repoField(repo) },
         timeoutMs: BUILD_WEB_LONG_TIMEOUT_MS
       })
     ) ?? {}
@@ -113,22 +116,29 @@ export function createBuildWebIssueRun(
 }
 
 /** Every image CI builds, for «Add image». */
-export async function listBuildWebImageNames(): Promise<string[]> {
+export async function listBuildWebImageNames(repo: BuildWebRepo = 'products'): Promise<string[]> {
   const credential = requireBuildWebCredential()
-  const answer = recordOf(await buildWebRequest({ ...credential, path: '/api/images' }))
+  const answer = recordOf(
+    await buildWebRequest({ ...credential, path: `/api/images${repoQuery(repo)}` })
+  )
   return textsOf(answer?.images)
 }
 
 /** The branches an image can be built from; `fromTree` ones build without Jenkins' tests. */
-export async function listBuildWebBranches(): Promise<BuildWebBranch[]> {
+export async function listBuildWebBranches(
+  repo: BuildWebRepo = 'products'
+): Promise<BuildWebBranch[]> {
   const credential = requireBuildWebCredential()
   return branchesOf(
-    recordOf(await buildWebRequest({ ...credential, path: '/api/branches' }))?.branches
+    recordOf(await buildWebRequest({ ...credential, path: `/api/branches${repoQuery(repo)}` }))
+      ?.branches
   )
 }
 
 /** Fetch from Bitbucket on the console, then list the branches again. */
-export function fetchBuildWebRepo(): Promise<BuildWebMutationResult<BuildWebBranch[]>> {
+export function fetchBuildWebRepo(
+  repo: BuildWebRepo = 'products'
+): Promise<BuildWebMutationResult<BuildWebBranch[]>> {
   return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     const answer = recordOf(
@@ -136,6 +146,7 @@ export function fetchBuildWebRepo(): Promise<BuildWebMutationResult<BuildWebBran
         ...credential,
         method: 'POST',
         path: '/api/fetch',
+        ...(repo === 'products' ? {} : { body: repoField(repo) }),
         timeoutMs: BUILD_WEB_LONG_TIMEOUT_MS
       })
     )

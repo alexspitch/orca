@@ -90,18 +90,32 @@ export function batchCheckMessage(check: BatchCheck): string | null {
   }
 }
 
-export type TakeToWorkFlags = { auto: boolean }
+export type TakeToWorkFlags = {
+  auto: boolean
+  /** The skill makes its own worktree: a `cp` batch, worked in chat-platform beside its clone. */
+  ownWorktree?: boolean
+}
+
+/** A batch of `cp` tasks: the session stays in the monorepo, the work goes to chat-platform. */
+export const isChatPlatformBatch = (issues: readonly Pick<BuildWebIssueRow, 'product'>[]) =>
+  issues.length > 0 && issues.every((issue) => issue.product === 'cp')
 
 /**
- * The skill call — only checked keys and fixed flags, never task text. Always `-no-worktree`: Orca
- * makes the worktree the session runs in when one is wanted; the skill never makes its own.
+ * The skill call — only checked keys and fixed flags, never task text. `-no-worktree` unless the
+ * skill makes its own: Orca makes the worktree the session runs in when one is wanted, and for a
+ * `cp` batch the skill refuses a monorepo session tree and makes chat-platform's beside its clone.
  */
 export function buildWebBatchPrompt(keys: string[], flags: TakeToWorkFlags): string {
   const unique = [...new Set(keys)]
   if (unique.length === 0 || unique.length > MAX_BATCH || unique.some((k) => !KEY_RE.test(k))) {
     throw new Error('invalid task keys')
   }
-  return ['/build-web-tasks batch', ...unique, '-no-worktree', flags.auto ? '-auto' : '']
+  return [
+    '/build-web-tasks batch',
+    ...unique,
+    flags.ownWorktree ? '' : '-no-worktree',
+    flags.auto ? '-auto' : ''
+  ]
     .filter(Boolean)
     .join(' ')
 }

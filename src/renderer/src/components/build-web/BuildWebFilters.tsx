@@ -10,7 +10,7 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { translate } from '@/i18n/i18n'
-import type { BuildWebProduct } from '../../../../shared/build-web-types'
+import { BUILD_WEB_PRODUCTS, type BuildWebProduct } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { BuildWebStatusFilter, BuildWebToWorkToggle } from './BuildWebStatusFilter'
 import { quickFilterLabel } from './build-web-labels'
@@ -25,7 +25,7 @@ const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
   jira: <Ticket />,
   archived: <Archive />
 }
-const PRODUCTS: readonly BuildWebProduct[] = ['sa', 'dc', 'ap', 'storage', 'tools']
+const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
 
 /** Fold or unfold every family on the page at once, as build-web's toolbar does. */
 function FoldAllButton(): React.JSX.Element {

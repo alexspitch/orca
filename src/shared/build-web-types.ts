@@ -3,7 +3,7 @@ import type { SecretAtRestProtection } from './secret-at-rest-protection'
 // build-web: the internal build console whose task registry Orca shows in its Issues page.
 // Shapes mirror tools/build-web's own JSON (snake_case) so nothing is renamed on the way through.
 
-export const BUILD_WEB_PRODUCTS = ['sa', 'dc', 'ap', 'storage', 'tools'] as const
+export const BUILD_WEB_PRODUCTS = ['sa', 'dc', 'ap', 'storage', 'cp', 'tools'] as const
 export type BuildWebProduct = (typeof BUILD_WEB_PRODUCTS)[number]
 
 export const BUILD_WEB_STATUSES = [

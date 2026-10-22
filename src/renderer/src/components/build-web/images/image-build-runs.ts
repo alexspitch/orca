@@ -22,6 +22,6 @@ export const useImageBuildRuns = create<ImageBuildRuns>()((set) => ({
 export const isBuildGoing = (status: string): boolean =>
   /^(pending|queued|building|running|in_progress)$/i.test(status)
 
-/** The version a branch builds: `3.1` for `dc-release-3.1`, master as itself (build-web's rule). */
+/** The version a branch builds: `3.1` for `dc-release-3.1`, `2.6` for chat-platform's `version-2.6`, master as itself. */
 export const versionOfBranch = (branch: string): string =>
-  /-release-(\d+(?:\.\d+)*)$/.exec(branch)?.[1] ?? branch
+  /(?:-release-|^version-)(\d+(?:\.\d+)*)$/.exec(branch)?.[1] ?? branch

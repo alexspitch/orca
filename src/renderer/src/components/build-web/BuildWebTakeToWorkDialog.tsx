@@ -19,6 +19,7 @@ import { useBuildWebTarget } from './use-build-web-data'
 import {
   batchWorktreeName,
   buildWebBatchPrompt,
+  isChatPlatformBatch,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
   takeToWorkRepos,
@@ -80,9 +81,13 @@ function TakeToWorkForm({
     )
   )
   const [auto, setAuto] = useState(false)
-  const [mode, setMode] = useState<'existing' | 'new'>(() =>
+  // Why: the skill runs from the monorepo and makes chat-platform's worktree itself.
+  const chatPlatform = isChatPlatformBatch(issues)
+  const flags = { auto, ownWorktree: chatPlatform }
+  const [picked, setMode] = useState<'existing' | 'new'>(() =>
     worktrees.length ? 'existing' : 'new'
   )
+  const mode = chatPlatform ? 'existing' : picked
   const ownRepos = useMemo(() => takeToWorkRepos(repos).repos, [repos])
   const [draft, setDraft] = useState<NewWorktreeDraft>(() => ({
     repoId: ownRepos[0]?.id ?? '',
@@ -105,7 +110,7 @@ function TakeToWorkForm({
   const prompt = check.ok
     ? buildWebBatchPrompt(
         issues.map((i) => i.key),
-        { auto }
+        flags
       )
     : ''
 
@@ -133,7 +138,7 @@ function TakeToWorkForm({
             baseUrl,
             worktree: created,
             issues,
-            flags: { auto },
+            flags,
             ...account
           })
         }
@@ -145,7 +150,7 @@ function TakeToWorkForm({
     }
     remember(worktree.id)
     onClose()
-    void launchBuildWebBatch({ target, baseUrl, worktree, issues, flags: { auto }, ...account })
+    void launchBuildWebBatch({ target, baseUrl, worktree, issues, flags, ...account })
   }
 
   return (
@@ -194,7 +199,7 @@ function TakeToWorkForm({
             <TabsTrigger value="existing" disabled={!worktrees.length}>
               {translate('buildWeb.take.existing', 'Existing worktree')}
             </TabsTrigger>
-            <TabsTrigger value="new">
+            <TabsTrigger value="new" disabled={chatPlatform}>
               {translate('buildWeb.take.createNew', 'Create a new worktree')}
             </TabsTrigger>
           </TabsList>
@@ -219,10 +224,15 @@ function TakeToWorkForm({
                   'buildWeb.take.noRepo',
                   'No sa-dc-ap-products repository found; showing every git worktree.'
                 )}{' '}
-            {translate(
-              'buildWeb.take.inThisWorktree',
-              'The skill works in this worktree (-no-worktree) and never makes its own.'
-            )}
+            {chatPlatform
+              ? translate(
+                  'buildWeb.take.chatPlatformWorktree',
+                  'Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone.'
+                )
+              : translate(
+                  'buildWeb.take.inThisWorktree',
+                  'The skill works in this worktree (-no-worktree) and never makes its own.'
+                )}
           </p>
         </div>
       )}
