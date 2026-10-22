@@ -1,6 +1,23 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792674668000",
+      "date": "2026-10-22",
+      "commit": "c3d89a923451",
+      "features": [
+        "The build-web bell menu now names Telegram rows as «Telegram reply» and «Telegram link request» instead of showing their raw kind.",
+        "IS and SDAP task numbers in terminal output become links that open the build-web card in Issues or the Jira issue on Tasks, showing the task title on hover.",
+        "Sidebar → Stands shows red and amber counts of down or unhealthy services and services with newer images on running stands.",
+        "The Stands list is now a table with Name, Product and Monitoring columns, and stands can be hidden, which also stops their monitoring.",
+        "The «to update» chip and the sidebar's amber count now list each service with its running build and the newer one available."
+      ],
+      "settings": [],
+      "fixes": [
+        "Claude Code's agents view with background sessions awaiting input no longer shows a red Blocked dot and Needs permission on the worktree.",
+        "Stand monitoring no longer counts builds from another registry as updates, only checks running services, and counts stands sharing one host and directory once."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792655864000",
       "date": "2026-10-22",
       "commit": "17e20eadcc32",
