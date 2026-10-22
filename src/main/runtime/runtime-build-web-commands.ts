@@ -127,7 +127,7 @@ export class RuntimeBuildWebCommands {
   }
 
   buildWebAddComment(args: In<typeof BuildWebCommentParams>) {
-    return addBuildWebComment(args.id, args.body, args.jira)
+    return addBuildWebComment(args.id, args.body, args.jira, args.telegram === true)
   }
 
   buildWebSetAgentSession(args: In<typeof BuildWebAgentSessionParams>) {

@@ -5,6 +5,7 @@ import type {
   BuildWebIssueRow,
   BuildWebJiraOutcome,
   BuildWebMutationResult,
+  BuildWebTelegramOutcome,
   BuildWebUpdateOutcome
 } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
@@ -22,6 +23,17 @@ function withoutFavorite({
 }
 
 /** What the console's mirror to Jira did — a move or a comment; shown, never assumed. */
+/** The console's `{ ok, awaiting }` or `{ ok: false, error }`; null when the comment stayed in the console. */
+export function telegramOutcomeOf(value: unknown): BuildWebTelegramOutcome | null {
+  const telegram = recordOf(value)
+  if (!telegram) {
+    return null
+  }
+  return telegram.ok === true
+    ? { ok: true, awaiting: telegram.awaiting === true }
+    : { ok: false, error: textOf(telegram.error) || 'Telegram refused the message' }
+}
+
 function jiraOutcomeOf(value: unknown): BuildWebJiraOutcome | null {
   const jira = recordOf(value)
   if (!jira) {
@@ -64,10 +76,12 @@ export function setBuildWebFavorite(
   })
 }
 
+/** `telegram`: sent to the assignee in Telegram too, and the task moved to awaiting their answer. */
 export function addBuildWebComment(
   id: string,
   body: string,
-  jira: boolean
+  jira: boolean,
+  telegram = false
 ): Promise<BuildWebMutationResult<BuildWebCommentOutcome>> {
   return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
@@ -76,10 +90,14 @@ export function addBuildWebComment(
         ...credential,
         method: 'POST',
         path: issuePath(id, '/comments'),
-        body: { body, jira }
+        body: { body, jira, ...(telegram ? { channel: 'telegram' } : {}) }
       })
     )
-    return { id: textOf(recordOf(answer?.comment)?.id), jira: jiraOutcomeOf(answer?.jira) }
+    return {
+      id: textOf(recordOf(answer?.comment)?.id),
+      jira: jiraOutcomeOf(answer?.jira),
+      telegram: telegramOutcomeOf(answer?.telegram)
+    }
   })
 }
 

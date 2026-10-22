@@ -1,5 +1,6 @@
 import {
   BUILD_WEB_ACTIVITY_RUNTIME_CAPABILITY,
+  BUILD_WEB_COMMENT_TELEGRAM_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
@@ -137,6 +138,20 @@ const NEWER_ARGUMENTS: {
       translate(
         'buildWeb.client.updateServerFavoriteSort',
         'This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column.'
+      )
+  },
+  {
+    applies: (method, arg) =>
+      method === 'addComment' &&
+      typeof arg === 'object' &&
+      arg !== null &&
+      'telegram' in arg &&
+      arg.telegram === true,
+    capability: BUILD_WEB_COMMENT_TELEGRAM_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerCommentTelegram',
+        'This Orca server cannot send a comment to Telegram yet. Update the server, or send it to the console.'
       )
   }
 ]

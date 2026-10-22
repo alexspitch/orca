@@ -12,6 +12,7 @@ import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { loginOf } from './build-web-labels'
 import { BuildWebIssueFiles } from './BuildWebIssueFiles'
+import { BuildWebToneChip } from './BuildWebToneChip'
 
 const messageOf = (failure: unknown) =>
   failure instanceof Error ? failure.message : String(failure)
@@ -24,6 +25,28 @@ function jiraNote(jira: { ok: true; status: string } | { ok: false; error: strin
       })
     )
   }
+}
+
+/** Where a comment went to or came from, beside its author, as build-web marks it. */
+function ChannelMark({
+  channel
+}: {
+  channel: BuildWebComment['channel']
+}): React.JSX.Element | null {
+  if (!channel) {
+    return null
+  }
+  const [label, note] =
+    channel === 'telegram'
+      ? [
+          translate('buildWeb.comment.toTelegram', 'Telegram'),
+          translate('buildWeb.comment.toTelegramNote', 'Sent to the assignee in Telegram')
+        ]
+      : [
+          translate('buildWeb.comment.fromTelegram', 'from Telegram'),
+          translate('buildWeb.comment.fromTelegramNote', 'The assignee’s reply in Telegram')
+        ]
+  return <BuildWebToneChip label={label} title={note} tone="sky" />
 }
 
 /** One comment; its author may correct it or take it back, as build-web allows. */
@@ -108,6 +131,7 @@ function CommentItem({
           {c.edited_at ? ` · ${translate('buildWeb.comment.edited', 'edited')}` : ''}
           {c.jira_sync ? ` · ${translate('buildWeb.comment.inJira', 'Jira')}` : ''}
         </span>
+        <ChannelMark channel={c.channel} />
         {mine && draft === null ? (
           <span className="ml-auto flex opacity-60 group-hover:opacity-100">
             <Button

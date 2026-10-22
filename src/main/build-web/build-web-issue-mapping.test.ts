@@ -123,6 +123,23 @@ describe('issue rows', () => {
     expect(detail?.files).toEqual([])
   })
 
+  it('reads where each comment went and whether one may go to Telegram', () => {
+    const detail = issueDetailOf('https://bw.test', {
+      issue: raw,
+      telegram_available: true,
+      comments: [
+        { id: 'c1', author: 'a', body: 'asked', created_at: 't', channel: 'telegram' },
+        { id: 'c2', author: 'b', body: 'answer', created_at: 't', channel: 'telegram_reply' },
+        { id: 'c3', author: 'a', body: 'plain', created_at: 't', channel: 'fax' },
+        { id: 'c4', author: 'a', body: 'older console', created_at: 't' }
+      ]
+    })
+    expect(detail?.telegram_available).toBe(true)
+    expect(detail?.comments.map((c) => c.channel)).toEqual(['telegram', 'telegram_reply', '', ''])
+    // A console before IS-195 says nothing: no Telegram.
+    expect(issueDetailOf('https://bw.test', { issue: raw })?.telegram_available).toBe(false)
+  })
+
   it('reads the files of the task and of its comments', () => {
     const detail = issueDetailOf('https://bw.test', {
       issue: raw,

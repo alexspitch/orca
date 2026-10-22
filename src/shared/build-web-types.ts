@@ -102,7 +102,12 @@ export type BuildWebComment = {
   edited_at: string | null
   /** Kept in step with the task's Jira issue: an edit and the delete go there too. */
   jira_sync: boolean
+  /** `telegram`: sent to the assignee in Telegram; `telegram_reply`: their answer from there; '' the console. */
+  channel: BuildWebCommentChannel
 }
+
+export const BUILD_WEB_COMMENT_CHANNELS = ['', 'telegram', 'telegram_reply'] as const
+export type BuildWebCommentChannel = (typeof BUILD_WEB_COMMENT_CHANNELS)[number]
 
 /** A file of the task, or of one of its comments: a screenshot, a recording, a document. */
 export type BuildWebIssueFile = {
@@ -146,6 +151,8 @@ export type BuildWebIssueDetail = BuildWebIssueRow & {
   comments: BuildWebComment[]
   /** Absent from consoles before attachments; empty then. */
   files: BuildWebIssueFile[]
+  /** A comment may go to the assignee in Telegram: a bot, a linked assignee, and not the reader. */
+  telegram_available: boolean
 }
 
 /** The console's own sort keys for the task list. */
@@ -237,7 +244,15 @@ export type BuildWebUpdateOutcome = {
   issue: Omit<BuildWebIssueRow, 'favorite'> | null
   jira: BuildWebJiraOutcome | null
 }
-export type BuildWebCommentOutcome = { id: string; jira: BuildWebJiraOutcome | null }
+/** Whether a comment went to the assignee in Telegram, and whether the task now awaits the answer. */
+export type BuildWebTelegramOutcome = { ok: true; awaiting: boolean } | { ok: false; error: string }
+
+export type BuildWebCommentOutcome = {
+  id: string
+  jira: BuildWebJiraOutcome | null
+  /** Null when the comment was not sent to Telegram. */
+  telegram: BuildWebTelegramOutcome | null
+}
 
 export type BuildWebMutationResult<T> =
   | { ok: true; value: T }

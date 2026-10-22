@@ -71,6 +71,7 @@ export type BuildWebApi = {
     id: string
     body: string
     jira: boolean
+    telegram?: boolean
   }) => Promise<BuildWebMutationResult<BuildWebCommentOutcome>>
   setAgentSession: (args: {
     id: string

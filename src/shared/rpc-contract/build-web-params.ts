@@ -93,7 +93,9 @@ export const BuildWebFavoriteParams = z.object({ id: Id, on: z.boolean() })
 export const BuildWebCommentParams = z.object({
   id: Id,
   body: required('Write a comment', 4000),
-  jira: z.boolean()
+  jira: z.boolean(),
+  // Why optional: older clients never send it; a client asks the capability before it does.
+  telegram: z.boolean().optional()
 })
 
 export const BuildWebAgentSessionParams = z.object({

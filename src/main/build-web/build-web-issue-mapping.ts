@@ -1,4 +1,5 @@
 import {
+  BUILD_WEB_COMMENT_CHANNELS,
   BUILD_WEB_STATUSES,
   type BuildWebAgentSession,
   type BuildWebComment,
@@ -88,7 +89,8 @@ function commentOf(value: unknown): BuildWebComment | null {
         body: textOf(v.body),
         created_at: textOf(v.created_at),
         edited_at: textOrNull(v.edited_at),
-        jira_sync: v.jira_sync === true
+        jira_sync: v.jira_sync === true,
+        channel: BUILD_WEB_COMMENT_CHANNELS.find((c) => c === v.channel) ?? ''
       }
     : null
 }
@@ -145,6 +147,7 @@ export function issueDetailOf(baseUrl: string, value: unknown): BuildWebIssueDet
       : [],
     files: Array.isArray(card.files)
       ? card.files.map(fileOf).filter((f): f is BuildWebIssueFile => f !== null)
-      : []
+      : [],
+    telegram_available: card.telegram_available === true
   }
 }

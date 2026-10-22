@@ -20609,7 +20609,8 @@
       "updateServerIssueMockups": "This Orca server does not show task artifacts yet. Update the server.",
       "updateServerFavoriteSort": "This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column.",
       "updateServerActivity": "This Orca server does not read build-web notifications and tasks yet. Update the server.",
-      "updateServerStandHealth": "This Orca server does not monitor the stands yet. Update the server."
+      "updateServerStandHealth": "This Orca server does not monitor the stands yet. Update the server.",
+      "updateServerCommentTelegram": "This Orca server cannot send a comment to Telegram yet. Update the server, or send it to the console."
     },
     "status": {
       "unknown": "Unknown",
@@ -20719,7 +20720,15 @@
       "planCount": "Plan {{count}}",
       "planSteps": "Plan {{done}} / {{total}}",
       "mockups": "Artifacts",
-      "mockupsCount": "Artifacts {{count}}"
+      "mockupsCount": "Artifacts {{count}}",
+      "commentNotInTelegram": "Saved, but not sent to Telegram: {{error}}",
+      "commentSentTelegramAwaiting": "Sent to the assignee in Telegram; the task awaits their answer.",
+      "commentSentTelegram": "Sent to the assignee in Telegram.",
+      "commentChannel": "Where the comment goes",
+      "channelConsole": "Console",
+      "channelTelegram": "Telegram",
+      "telegramHint": "Goes to the assignee in Telegram, and the task moves to «Awaiting response». Their reply to it is written here.",
+      "sendTelegram": "Send to Telegram"
     },
     "build": {
       "none": "The task has no build yet.",
@@ -20923,7 +20932,11 @@
       "delete": "Delete",
       "edited": "edited",
       "edit": "Edit the comment",
-      "inJira": "Jira"
+      "inJira": "Jira",
+      "toTelegram": "Telegram",
+      "toTelegramNote": "Sent to the assignee in Telegram",
+      "fromTelegram": "from Telegram",
+      "fromTelegramNote": "The assignee’s reply in Telegram"
     },
     "edit": {
       "cancel": "Cancel",
