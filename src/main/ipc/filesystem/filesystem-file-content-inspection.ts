@@ -1,6 +1,7 @@
 import { extname } from 'node:path'
 import { localLogFileIdentity } from '../../ai-vault/local-log-tail-reader'
 import { BINARY_PROBE_BYTES, isBinaryBuffer } from '../../../shared/binary-buffer'
+import { DOCUMENT_FILE_MIME_TYPES } from '../../../shared/document-file-extensions'
 import {
   fileTooLargeError,
   openLocalRegularFile,
@@ -38,10 +39,18 @@ export type LocalFileContent = {
 export async function readLocalFileContent(filePath: string): Promise<LocalFileContent> {
   const { handle, stats } = await openLocalRegularFile(filePath)
   try {
-    const mimeType = PREVIEWABLE_BINARY_MIME_TYPES[extname(filePath).toLowerCase()]
-    const sizeLimit = mimeType ? MAX_PREVIEWABLE_BINARY_SIZE : MAX_TEXT_FILE_SIZE
+    const extension = extname(filePath).toLowerCase()
+    const mimeType = PREVIEWABLE_BINARY_MIME_TYPES[extension]
+    const documentMimeType = DOCUMENT_FILE_MIME_TYPES[extension]
+    const sizeLimit =
+      mimeType || documentMimeType ? MAX_PREVIEWABLE_BINARY_SIZE : MAX_TEXT_FILE_SIZE
     if (stats.size > sizeLimit) {
       throw fileTooLargeError(stats.size, sizeLimit)
+    }
+    if (documentMimeType) {
+      const buffer = await readLocalFileBounded(handle, sizeLimit, stats.size)
+      // Why no `isImage`: that flag routes to the image/PDF viewer, not the document one.
+      return { content: buffer.toString('base64'), isBinary: true, mimeType: documentMimeType }
     }
     if (mimeType) {
       const buffer = await readLocalFileBounded(handle, sizeLimit, stats.size)

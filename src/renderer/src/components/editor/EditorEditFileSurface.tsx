@@ -5,9 +5,11 @@ import type { GitDiffResult } from '../../../../shared/git-diff-compare-types'
 import type { GitStatusEntry } from '../../../../shared/git-status-types'
 import { ChangesModeView } from './ChangesModeView'
 import { ConflictBanner, ConflictPlaceholderView } from './ConflictComponents'
+import { DOCX_MIME_TYPE } from '../../../../shared/document-file-extensions'
 import {
   CsvViewer,
   CsvPagedViewer,
+  DocxViewer,
   ImageViewer,
   IpynbViewer,
   MermaidViewer,
@@ -126,6 +128,10 @@ export function EditorEditFileSurface({
     )
   }
   if (fileContent.isBinary) {
+    const canOpenLocally =
+      !activeFile.externalSshTargetId &&
+      !activeFile.runtimeEnvironmentId &&
+      getConnectionIdForFile(activeFile.worktreeId, activeFile.filePath) === null
     if (fileContent.mediaUrl) {
       return (
         <MediaViewer
@@ -133,11 +139,17 @@ export function EditorEditFileSurface({
           src={fileContent.mediaUrl}
           mimeType={fileContent.mimeType ?? 'video/mp4'}
           filePath={activeFile.filePath}
-          canOpenLocally={
-            !activeFile.externalSshTargetId &&
-            !activeFile.runtimeEnvironmentId &&
-            getConnectionIdForFile(activeFile.worktreeId, activeFile.filePath) === null
-          }
+          canOpenLocally={canOpenLocally}
+        />
+      )
+    }
+    if (fileContent.mimeType === DOCX_MIME_TYPE && fileContent.content) {
+      return (
+        <DocxViewer
+          content={fileContent.content}
+          filePath={activeFile.filePath}
+          worktreeId={activeFile.worktreeId}
+          canOpenLocally={canOpenLocally}
         />
       )
     }

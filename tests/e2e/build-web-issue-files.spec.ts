@@ -1,7 +1,7 @@
 /**
  * A task's attachments against a build-web console on loopback: the task's own files on its card,
- * a comment's under that comment; Markdown and HTML open in tabs of the worktree, a log in a
- * read-only tab, and a file too large for a tab is offered in the browser.
+ * a comment's under that comment; Markdown and HTML open in tabs of the worktree, a log and a Word
+ * document in read-only tabs, and a file too large for a tab is offered in the browser.
  */
 
 import path from 'node:path'
@@ -28,7 +28,7 @@ async function openTaskCard(page: Page): Promise<void> {
   await page.evaluate(() => window.__store?.getState().openBuildWebPage())
   // Why exact: the page history's Back names the card too («Back to IS-900 · Attachments demo»).
   await page.getByRole('button', { name: 'Attachments demo', exact: true }).click()
-  await expect(page.getByText('Attachments 4')).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByText('Attachments 5')).toBeVisible({ timeout: 15_000 })
 }
 
 const fileButton = (page: Page, name: string) =>
@@ -54,7 +54,14 @@ test('task attachments: listed on the card and its comments, opened in worktree 
     expect(connected).toBe(true)
 
     await openTaskCard(orcaPage)
-    for (const name of ['notes.md', 'report.html', 'shot.png', 'call.mp4', 'run.log']) {
+    for (const name of [
+      'notes.md',
+      'report.html',
+      'shot.png',
+      'spec.docx',
+      'call.mp4',
+      'run.log'
+    ]) {
       await expect(fileButton(orcaPage, name)).toBeVisible()
     }
     // The log was said with the comment, so it sits under it, not among the task's files.
@@ -68,12 +75,23 @@ test('task attachments: listed on the card and its comments, opened in worktree 
 
     // Back returns from the file's tab to the card it was opened from.
     await orcaPage.getByRole('button', { name: 'Go back', exact: true }).click()
-    await expect(orcaPage.getByText('Attachments 4')).toBeVisible({ timeout: 15_000 })
+    await expect(orcaPage.getByText('Attachments 5')).toBeVisible({ timeout: 15_000 })
     await shot('back-to-task-card')
     await fileButton(orcaPage, 'run.log').click()
     await expect(
       orcaPage.locator('.monaco-editor .view-line').filter({ hasText: 'engine timeout' })
     ).toBeVisible({ timeout: 20_000 })
+
+    await openTaskCard(orcaPage)
+    await fileButton(orcaPage, 'spec.docx').click()
+    // Laid out as a page of the document, in a tab of the worktree, not offered in the browser.
+    const docx = orcaPage.locator('[data-orca-docx-viewer]')
+    await expect(docx.getByText('Requirements from the Word attachment')).toBeVisible({
+      timeout: 20_000
+    })
+    await expect(docx.locator('section').first()).toBeVisible()
+    await expect(docx.getByText('Word document', { exact: true })).toBeVisible()
+    await shot('docx-attachment-tab')
 
     await openTaskCard(orcaPage)
     await fileButton(orcaPage, 'report.html').click()

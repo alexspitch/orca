@@ -10,6 +10,7 @@ import {
   type BuildWebIssueDetail,
   type BuildWebIssueFile
 } from '../../../../shared/build-web-types'
+import { isDocxFilePath } from '../../../../shared/document-file-extensions'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { callBuildWeb } from './build-web-client'
@@ -37,7 +38,9 @@ export function issueFileOpenKind(
   return mime.startsWith('image/') ||
     mime === 'application/pdf' ||
     mime.startsWith('text/') ||
-    TEXT_NAME.test(file.name)
+    TEXT_NAME.test(file.name) ||
+    // Why by name: the tab picks its viewer from the extension the staged copy keeps.
+    isDocxFilePath(file.name)
     ? 'tab'
     : 'browser'
 }

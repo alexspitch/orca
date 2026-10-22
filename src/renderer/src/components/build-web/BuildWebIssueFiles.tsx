@@ -18,12 +18,12 @@ function FileIcon({ file }: { file: BuildWebIssueFile }): React.JSX.Element {
   if (/\.html?$/i.test(file.name)) {
     return <FileCode />
   }
-  return /\.(md|markdown|txt|log|pdf)$/i.test(file.name) ? <FileText /> : <File />
+  return /\.(md|markdown|txt|log|pdf|docx)$/i.test(file.name) ? <FileText /> : <File />
 }
 
 /**
- * Files of the task or of one comment. Markdown, HTML, pictures, PDF and text open in a tab of the
- * task's worktree; anything else, or anything too large, opens in the browser.
+ * Files of the task or of one comment. Markdown, HTML, pictures, PDF, Word documents and text open
+ * in a tab of the task's worktree; anything else, or anything too large, opens in the browser.
  */
 export function BuildWebIssueFiles({
   target,

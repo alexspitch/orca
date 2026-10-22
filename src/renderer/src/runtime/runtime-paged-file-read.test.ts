@@ -8,6 +8,7 @@ import {
 } from './runtime-file-client-test-harness'
 import { REMOTE_FILE_CHANGED_DURING_READ_MESSAGE } from './runtime-paged-file-read'
 import { replaceRuntimeEnvironmentRevisions } from './runtime-environment-revision'
+import { DOCX_MIME_TYPE } from '../../../shared/document-file-extensions'
 
 installRuntimeFileClientEnvironment()
 
@@ -54,13 +55,15 @@ function isChunkParams(params: unknown): params is ChunkParams {
 function serveRemoteFile(relativePath: string, file: RemoteFile): void {
   const stats = file.stats ?? [{ size: file.bytes.length, mtime: 1 }]
   const binary = /\.(pdf|png)$/.test(relativePath)
+  // A binary the host's preview table lacks: it answers with no bytes.
+  const unpreviewable = relativePath.endsWith('.docx')
   let statCalls = 0
   runtimeEnvironmentCall.mockImplementation(({ method, params }: RuntimeRpcRequest) => {
     if (file.missingMethods?.includes(method)) {
       return Promise.resolve(fail('method_not_found', `Unknown method: ${method}`))
     }
     if (method === 'files.read') {
-      if (binary) {
+      if (binary || unpreviewable) {
         return Promise.resolve(fail('runtime_error', 'binary_file'))
       }
       const truncated = file.bytes.length > READ_CAP
@@ -72,6 +75,13 @@ function serveRemoteFile(relativePath: string, file: RemoteFile): void {
           truncated,
           byteLength: Math.min(file.bytes.length, READ_CAP + 1)
         })
+      )
+    }
+    if (method === 'files.readPreview' && unpreviewable) {
+      return Promise.resolve(
+        file.bytes.length > READ_CAP
+          ? fail('runtime_error', 'file_too_large')
+          : ok({ content: '', isBinary: true })
       )
     }
     if (method === 'files.readPreview') {
@@ -179,6 +189,47 @@ describe('remote reads larger than one RPC reply', () => {
 
     expect(result).toMatchObject({ isBinary: true, isImage: true, mimeType: 'image/png' })
     expect(Buffer.from(result.content, 'base64').equals(bytes)).toBe(true)
+  })
+
+  it.each([100 * 1024, 5 * MB])(
+    'opens a %i-byte .docx the host sends no bytes for',
+    async (size) => {
+      const bytes = patternedBytes(size)
+      serveRemoteFile('spec.docx', { bytes })
+
+      const result = await readRuntimeFileContent({
+        ...remote('spec.docx'),
+        pageOversizedBinary: true
+      })
+
+      expect(result).toEqual({
+        content: bytes.toString('base64'),
+        isBinary: true,
+        mimeType: DOCX_MIME_TYPE
+      })
+      expect(methodCalls('files.readPreview')).toHaveLength(0)
+    }
+  )
+
+  it('keeps the bytes-less answer for a .docx on a host that cannot page', async () => {
+    serveRemoteFile('spec.docx', {
+      bytes: patternedBytes(100 * 1024),
+      missingMethods: ['files.readChunk']
+    })
+
+    await expect(
+      readRuntimeFileContent({ ...remote('spec.docx'), pageOversizedBinary: true })
+    ).resolves.toEqual({ content: '', isBinary: true })
+  })
+
+  it('leaves a .docx alone for readers that discard binary content', async () => {
+    serveRemoteFile('spec.docx', { bytes: patternedBytes(100 * 1024) })
+
+    await expect(readRuntimeFileContent(remote('spec.docx'))).resolves.toEqual({
+      content: '',
+      isBinary: true
+    })
+    expect(methodCalls('files.readChunk')).toHaveLength(0)
   })
 
   it('leaves a large PDF alone for readers that discard binary content', async () => {

@@ -1,5 +1,6 @@
 import { basename } from '@/lib/path'
 import { BINARY_PROBE_BYTES } from '../../../shared/binary-buffer'
+import { DOCX_MIME_TYPE, isDocxFilePath } from '../../../shared/document-file-extensions'
 import { IMAGE_FILE_MIME_TYPES } from '../../../shared/image-file-extensions'
 import type { RuntimeFilePreviewResult } from '../../../shared/runtime-types'
 import {
@@ -94,6 +95,13 @@ export async function readRemoteFilePreview(
   options: { pageOversized: boolean }
 ): Promise<RuntimeFilePreviewResult> {
   const remote = pinRemoteFileAddress(address)
+  // Why: hosts send no bytes for a .docx (it is not in their preview table), so read it whole.
+  if (options.pageOversized && isDocxFilePath(remote.relativePath)) {
+    const paged = await readRemoteFileInChunks(remote)
+    if (paged.kind === 'ok') {
+      return pagedFilePreviewResult(remote.relativePath, paged.bytes)
+    }
+  }
   try {
     return await callRuntimeRpc<RuntimeFilePreviewResult>(
       remote.target,
@@ -125,6 +133,9 @@ export function pagedFilePreviewResult(
   relativePath: string,
   bytes: Uint8Array
 ): RuntimeFilePreviewResult {
+  if (isDocxFilePath(relativePath)) {
+    return { content: bytesToBase64(bytes), isBinary: true, mimeType: DOCX_MIME_TYPE }
+  }
   const mimeType = previewableBinaryMimeType(relativePath)
   if (mimeType) {
     return { content: bytesToBase64(bytes), isBinary: true, isImage: true, mimeType }

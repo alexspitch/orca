@@ -13,16 +13,18 @@ describe('issueFileOpenKind', () => {
     expect(issueFileOpenKind(file('report.html', 'application/octet-stream'))).toBe('html')
   })
 
-  it('shows pictures, PDF and text in a tab; anything else in the browser', () => {
+  it('shows pictures, PDF, Word documents and text in a tab; anything else in the browser', () => {
     expect(issueFileOpenKind(file('shot.png', 'image/png'))).toBe('tab')
     expect(issueFileOpenKind(file('spec.pdf', 'application/pdf'))).toBe('tab')
+    expect(issueFileOpenKind(file('plan.DOCX', 'application/octet-stream'))).toBe('tab')
     expect(issueFileOpenKind(file('run.log', 'application/octet-stream'))).toBe('tab')
     expect(issueFileOpenKind(file('call.mp4', 'video/mp4'))).toBe('browser')
-    expect(issueFileOpenKind(file('plan.docx', 'application/msword'))).toBe('browser')
+    expect(issueFileOpenKind(file('old.doc', 'application/msword'))).toBe('browser')
   })
 
   it('sends a file too large for a tab to the browser', () => {
     expect(issueFileOpenKind(file('big.md', 'text/markdown', 4 * 1024 * 1024))).toBe('browser')
+    expect(issueFileOpenKind(file('big.docx', 'application/zip', 4 * 1024 * 1024))).toBe('browser')
   })
 
   it('names the console address of a file', () => {

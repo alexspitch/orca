@@ -1,9 +1,10 @@
 import type http from 'node:http'
+import { strToU8, zipSync } from 'fflate'
 
 // build-web's task list and one task's card with files: of the task (Markdown, HTML, a picture,
-// a video too large for a tab) and of a comment (a log), plus the files' own bytes. A second task
-// has a plan and two mockups — an archive of two pages and a single page — served by token under
-// `/mockups/` with the console's own sandbox, as build-web does.
+// a Word document, a video too large for a tab) and of a comment (a log), plus the files' own
+// bytes. A second task has a plan and two mockups — an archive of two pages and a single page —
+// served by token under `/mockups/` with the console's own sandbox, as build-web does.
 
 const ISSUE_ID = 'iss-files'
 const ROW = {
@@ -24,6 +25,38 @@ const PIXEL = Buffer.from(
   'base64'
 )
 
+const XML = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+const RELS = 'http://schemas.openxmlformats.org/package/2006/relationships'
+const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+/** The fewest parts Word and docx-preview need: one bold line and one plain one on an A4 page. */
+function wordDocument(): Buffer {
+  const zip = zipSync({
+    '[Content_Types].xml': strToU8(
+      `${XML}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">` +
+        '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+        '<Default Extension="xml" ContentType="application/xml"/>' +
+        '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+        '</Types>'
+    ),
+    '_rels/.rels': strToU8(
+      `${XML}<Relationships xmlns="${RELS}"><Relationship Id="rId1" ` +
+        'Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" ' +
+        'Target="word/document.xml"/></Relationships>'
+    ),
+    'word/_rels/document.xml.rels': strToU8(`${XML}<Relationships xmlns="${RELS}"/>`),
+    'word/document.xml': strToU8(
+      `${XML}<w:document xmlns:w="${W}"><w:body>` +
+        '<w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Requirements from the Word attachment</w:t></w:r></w:p>' +
+        '<w:p><w:r><w:t>The engine answers within two seconds.</w:t></w:r></w:p>' +
+        '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>' +
+        '<w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440"/></w:sectPr>' +
+        '</w:body></w:document>'
+    )
+  })
+  return Buffer.from(zip)
+}
+
 const FILES: Record<
   string,
   { name: string; mime: string; body: Buffer; comment_id: string | null }
@@ -41,6 +74,12 @@ const FILES: Record<
     comment_id: null
   },
   c3c3c3c3c3c3: { name: 'shot.png', mime: 'image/png', body: PIXEL, comment_id: null },
+  f6f6f6f6f6f6: {
+    name: 'spec.docx',
+    mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    body: wordDocument(),
+    comment_id: null
+  },
   d4d4d4d4d4d4: {
     name: 'run.log',
     mime: 'text/plain',
