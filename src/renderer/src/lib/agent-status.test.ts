@@ -152,6 +152,8 @@ describe('detectAgentStatusFromTitle', () => {
       detectAgentStatusFromTitle('"C:\\Users\\dev\\AppData\\Roaming\\npm\\claude.cmd" agents')
     ).toBeNull()
     expect(detectAgentStatusFromTitle('claude agents working')).toBe('working')
+    // Claude Code's agents view; the count is other sessions' questions.
+    expect(detectAgentStatusFromTitle('4 awaiting input · claude agents')).toBeNull()
   })
 
   it('detects Pi idle titles', () => {

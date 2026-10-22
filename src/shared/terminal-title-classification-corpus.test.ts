@@ -124,6 +124,7 @@ const PINNED_CLASSIFICATIONS: readonly PinnedRow[] = [
   ['Claude ready', 'idle', 'Claude Code', true, false, 'Claude Code', true, 'claude', 'claude'],
   ['claude agents', null, null, false, false, null, false, null, null],
   ['"/usr/local/bin/claude" agents', null, null, false, false, null, false, null, null],
+  ['4 awaiting input · claude agents', null, null, false, false, null, false, null, null],
   [
     '\u280b Claude Code',
     'working',

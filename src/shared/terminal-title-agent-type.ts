@@ -6,6 +6,7 @@ import {
   titleHasAgentName
 } from './agent-name-token-match'
 import {
+  CLAUDE_MANAGEMENT_TITLE_RE,
   containsAgentSpinnerGlyph,
   isCursorAgentTitle,
   isDshTerminalTitle
@@ -23,8 +24,6 @@ import { memoizeTitleClassification } from './terminal-title-classification-memo
 import type { TerminalAgent } from './terminal-agent'
 
 export const CLAUDE_IDLE = '\u2733' // ✳ (eight-spoked asterisk — Claude Code idle prefix)
-const CLAUDE_MANAGEMENT_TITLE_RE =
-  /^\s*(?:"(?:.*[\\/])?claude(?:\.(?:exe|cmd|bat|ps1))?"|'(?:.*[\\/])?claude(?:\.(?:exe|cmd|bat|ps1))?'|(?:.*[\\/])?claude(?:\.(?:exe|cmd|bat|ps1))?)\s+agents\s*$/i
 
 export const GEMINI_WORKING = '\u2726' // ✦
 export const GEMINI_SILENT_WORKING = '\u23F2' // ⏲

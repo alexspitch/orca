@@ -38,8 +38,11 @@ export { AGY_AGENT_NAME_RE, DROID_AGENT_NAME_RE, HERMES_AGENT_NAME_RE, titleHasA
 export type AgentStatus = 'working' | 'permission' | 'idle'
 
 const CLAUDE_COMMAND_RE = String.raw`(?:.*[\\/])?claude(?:\.(?:exe|cmd|bat|ps1))?`
+// Why: Claude Code's own agents view titles itself `4 awaiting input · claude agents`; the
+// count is OTHER sessions' questions, and its `awaiting` must not read as this pane's permission.
+const CLAUDE_AGENTS_VIEW_COUNT_RE = String.raw`(?:\d+\s+awaiting input\s+·\s+)?`
 export const CLAUDE_MANAGEMENT_TITLE_RE = new RegExp(
-  String.raw`^\s*(?:"${CLAUDE_COMMAND_RE}"|'${CLAUDE_COMMAND_RE}'|${CLAUDE_COMMAND_RE})\s+agents\s*$`,
+  String.raw`^\s*${CLAUDE_AGENTS_VIEW_COUNT_RE}(?:"${CLAUDE_COMMAND_RE}"|'${CLAUDE_COMMAND_RE}'|${CLAUDE_COMMAND_RE})\s+agents\s*$`,
   'i'
 )
 

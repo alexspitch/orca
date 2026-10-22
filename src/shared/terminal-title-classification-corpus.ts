@@ -43,6 +43,7 @@ export const TERMINAL_TITLE_CLASSIFICATION_CORPUS: readonly string[] = [
   'Claude ready',
   'claude agents',
   '"/usr/local/bin/claude" agents',
+  '4 awaiting input · claude agents',
   // Leading spinner glyphs (braille + quarter circle).
   '\u280b Claude Code',
   '\u2809 Codex \u2014 refactoring',
