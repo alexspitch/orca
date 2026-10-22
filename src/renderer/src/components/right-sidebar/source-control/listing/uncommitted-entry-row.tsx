@@ -1,6 +1,8 @@
 import React from 'react'
 import { ChevronDown, MessageSquare, Minus, Plus, Trash, Undo2 } from 'lucide-react'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { useMaterialFileIcon } from '@/lib/material-icons/use-material-file-icons'
+import { MaterialRowIcon } from '@/lib/material-icons/material-row-icon'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { cn } from '@/lib/utils'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
@@ -73,6 +75,7 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
 }): React.JSX.Element {
   const FileIcon = getFileTypeIcon(entry.path)
   const fileName = basename(entry.path)
+  const materialIcon = useMaterialFileIcon(fileName, 'file')
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
   const isUnresolvedConflict = entry.conflictStatus === 'unresolved'
@@ -157,10 +160,14 @@ export const UncommittedEntryRow = React.memo(function UncommittedEntryRow({
             )}
           />
         )}
-        {React.createElement(FileIcon, {
-          className: 'size-3.5 shrink-0',
-          style: { color: STATUS_COLORS[entry.status] }
-        })}
+        {materialIcon ? (
+          <MaterialRowIcon url={materialIcon} />
+        ) : (
+          React.createElement(FileIcon, {
+            className: 'size-3.5 shrink-0',
+            style: { color: STATUS_COLORS[entry.status] }
+          })
+        )}
         <div className="min-w-0 flex-1 text-xs">
           <span className="min-w-0 block truncate">
             <span className="text-foreground">{fileName}</span>

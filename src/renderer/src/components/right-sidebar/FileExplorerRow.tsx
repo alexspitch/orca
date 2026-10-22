@@ -12,6 +12,7 @@ import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu'
 import { cn } from '@/lib/utils'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
 import { useMaterialFileIcon } from '@/lib/material-icons/use-material-file-icons'
+import { MaterialRowIcon } from '@/lib/material-icons/material-row-icon'
 import {
   encodeWorkspaceFilePaths,
   WORKSPACE_FILE_PATH_MIME,
@@ -79,11 +80,6 @@ export type FileExplorerRowProps = {
   onDragExpandDir: (dirPath: string) => void
   onNativeDragTargetChange: (dir: string | null) => void
   onNativeDragExpandDir: (dirPath: string) => void
-}
-
-/** A Material Icon Theme icon, its own colours; 14px so it reads in a 12px row's icon slot. */
-function MaterialRowIcon({ url }: { url: string }): React.JSX.Element {
-  return <img src={url} alt="" aria-hidden draggable={false} className="size-3.5 shrink-0" />
 }
 
 /** Offsets visual indentation for a scoped tree without changing the node paths passed to file actions. */

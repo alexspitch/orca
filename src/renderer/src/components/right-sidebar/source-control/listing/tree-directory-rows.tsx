@@ -11,6 +11,9 @@ import {
   Undo2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { basename } from '@/lib/path'
+import { useMaterialFileIcon } from '@/lib/material-icons/use-material-file-icons'
+import { MaterialRowIcon } from '@/lib/material-icons/material-row-icon'
 import { translate } from '@/i18n/i18n'
 import type { DiscardAllArea } from '../commit/discard-all-sequence'
 import type {
@@ -133,6 +136,11 @@ function SourceControlTreeDirectoryHeader({
   const below = collectSourceControlTreeDirectoryKeys(node.children)
   // Why Alt: the tree convention (VS Code, JetBrains) for opening or closing a folder with all below it.
   const toggleSubtree = () => folders.setTreeDirsCollapsed([node.key, ...below], !isCollapsed)
+  // Why basename: a compacted row (`src/lib`) takes its icon from its deepest folder, as in VS Code.
+  const materialIcon = useMaterialFileIcon(
+    basename(node.name),
+    isCollapsed ? 'folder' : 'folder-open'
+  )
   return (
     <div
       className="group relative flex w-full items-center gap-1 pr-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent/40 hover:text-foreground"
@@ -149,7 +157,9 @@ function SourceControlTreeDirectoryHeader({
         <ChevronDown
           className={cn('size-3 shrink-0 transition-transform', isCollapsed && '-rotate-90')}
         />
-        {isCollapsed ? (
+        {materialIcon ? (
+          <MaterialRowIcon url={materialIcon} />
+        ) : isCollapsed ? (
           <Folder className="size-3 shrink-0" />
         ) : (
           <FolderOpen className="size-3 shrink-0" />

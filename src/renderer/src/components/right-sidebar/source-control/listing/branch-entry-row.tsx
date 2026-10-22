@@ -1,6 +1,8 @@
 import React from 'react'
 import { MessageSquare } from 'lucide-react'
 import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { useMaterialFileIcon } from '@/lib/material-icons/use-material-file-icons'
+import { MaterialRowIcon } from '@/lib/material-icons/material-row-icon'
 import { basename, dirname, joinPath } from '@/lib/path'
 import { WORKSPACE_FILE_PATH_MIME } from '@/lib/workspace-file-drag'
 import { writeWorkspaceFileDragSourceForWorkspace } from '@/lib/workspace-file-drag-source'
@@ -35,6 +37,7 @@ export function BranchEntryRow({
 }): React.JSX.Element {
   const FileIcon = getFileTypeIcon(entry.path)
   const fileName = basename(entry.path)
+  const materialIcon = useMaterialFileIcon(fileName, 'file')
   const parentDir = dirname(entry.path)
   const dirPath = parentDir === '.' ? '' : parentDir
 
@@ -63,10 +66,14 @@ export function BranchEntryRow({
         onClick={(e) => onOpen(e)}
         onDoubleClick={(e) => onOpen(toPermanentSourceControlRowOpenEvent(e))}
       >
-        {React.createElement(FileIcon, {
-          className: 'size-3.5 shrink-0',
-          style: { color: STATUS_COLORS[entry.status] }
-        })}
+        {materialIcon ? (
+          <MaterialRowIcon url={materialIcon} />
+        ) : (
+          React.createElement(FileIcon, {
+            className: 'size-3.5 shrink-0',
+            style: { color: STATUS_COLORS[entry.status] }
+          })
+        )}
         <span className="min-w-0 flex-1 truncate text-xs">
           <span className="text-foreground">{fileName}</span>
           {showPathHint && dirPath && (
