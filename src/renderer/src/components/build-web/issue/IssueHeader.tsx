@@ -1,15 +1,59 @@
-import { ChevronLeft, ExternalLink, Minimize2 } from 'lucide-react'
+import { Archive, ChevronLeft, ExternalLink, Minimize2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueDetail, BuildWebIssuePatch } from '../../../../../shared/build-web-types'
-import { productLabel, statusLabel } from '../build-web-labels'
+import { loginOf, productLabel, statusLabel } from '../build-web-labels'
 import { BuildWebToneChip, PriorityChip, ProductChip, TypeChip } from '../BuildWebToneChip'
 import { StatusPicker } from '../BuildWebRowPickers'
 import { BuildWebSessionBadge } from '../BuildWebSessionBadge'
 import { EditableTitle } from '../BuildWebIssueEditors'
 import { nextStatus } from './issue-card-facts'
 import { blockedBySubtasks } from '../BuildWebIssueSubtasks'
+import type { IssueArchiveState } from './use-issue-archive'
+
+/** An archived or deleted task still opens, from a link or a tab, and says where it is. */
+function ArchivedNote({
+  detail,
+  archive
+}: {
+  detail: BuildWebIssueDetail
+  archive: IssueArchiveState
+}): React.JSX.Element | null {
+  if (detail.deleted_at) {
+    return (
+      <p role="status" className="rounded-md border border-border bg-muted px-3 py-2 text-sm">
+        {translate(
+          'buildWeb.archive.deletedNote',
+          'The task is in the trash. It is taken back in build-web’s Archive section.'
+        )}
+      </p>
+    )
+  }
+  if (!detail.archived_at) {
+    return null
+  }
+  return (
+    <div
+      role="status"
+      className="flex items-center gap-3 rounded-md border border-border bg-muted px-3 py-2 text-sm"
+    >
+      <span className="flex-1">
+        {translate(
+          'buildWeb.archive.note',
+          'In the archive: put away by {{who}} on {{when}}. It is not in the task list, the AI queue or trains.',
+          {
+            who: loginOf(detail.archived_by ?? ''),
+            when: new Date(detail.archived_at).toLocaleString()
+          }
+        )}
+      </span>
+      <Button size="sm" variant="outline" disabled={archive.busy} onClick={archive.restore}>
+        {translate('buildWeb.archive.restore', 'Restore')}
+      </Button>
+    </div>
+  )
+}
 
 /** The full-screen card's head: where it is, what it is, and the moves out of it. */
 export function IssueHeader({
@@ -19,9 +63,12 @@ export function IssueHeader({
   onTakeToWork,
   onCollapse,
   onBackToList,
-  onOpenIssue
+  onOpenIssue,
+  archive
 }: {
   detail: BuildWebIssueDetail
+  /** «Archive» on a live task, «Restore» on the note of an archived one. */
+  archive: IssueArchiveState
   saving: boolean
   onSave: (patch: BuildWebIssuePatch) => void
   onTakeToWork: () => void
@@ -129,6 +176,13 @@ export function IssueHeader({
               })}
             </Button>
           ) : null}
+          {detail.archived_at ? null : (
+            // Why no question: «Restore» on the card undoes it, as on the console.
+            <Button variant="outline" size="sm" disabled={archive.busy} onClick={archive.archive}>
+              <Archive />
+              {translate('buildWeb.archive.archive', 'Archive')}
+            </Button>
+          )}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -144,6 +198,7 @@ export function IssueHeader({
           </Tooltip>
         </div>
       </div>
+      <ArchivedNote detail={detail} archive={archive} />
     </header>
   )
 }

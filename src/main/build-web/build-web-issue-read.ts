@@ -32,6 +32,9 @@ export function issueListQuery(query: BuildWebIssueQuery): string {
   if (query.jira) {
     params.set('jira', 'yes')
   }
+  if (query.archived) {
+    params.set('archived', '1')
+  }
   const q = query.q?.trim()
   if (q) {
     params.set('q', q)

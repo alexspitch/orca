@@ -8,7 +8,7 @@ import {
 // Per-viewer conveniences kept in localStorage (as the GitHub project column widths are): the
 // Issues page's quick filters and sort, and the side card's width. Lost storage just means defaults.
 
-export const QUICK_FILTERS = ['mine', 'ai', 'favorite', 'jira'] as const
+export const QUICK_FILTERS = ['mine', 'ai', 'favorite', 'jira', 'archived'] as const
 export type QuickFilter = (typeof QUICK_FILTERS)[number]
 
 export type IssueSortState = { sort: BuildWebIssueSort; dir: 'asc' | 'desc' }

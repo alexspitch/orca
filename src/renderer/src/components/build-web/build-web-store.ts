@@ -135,7 +135,8 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
       if (!quick.delete(filter)) {
         quick.add(filter)
       }
-      writeViewPrefs({ quick: [...quick] })
+      // Why the archive is not kept: a restart must land on the live tasks, not on put-away ones.
+      writeViewPrefs({ quick: [...quick].filter((q) => q !== 'archived') })
       return { quick, page: 0 }
     }),
   sortBy: (by) =>
@@ -224,6 +225,8 @@ export function issueQueryOf(
     ai: state.quick.has('ai'),
     favorite: state.quick.has('favorite'),
     jira: state.quick.has('jira'),
+    // Why only when on: the flag needs a host that knows it, the live list does not.
+    ...(state.quick.has('archived') ? { archived: true } : {}),
     sort: state.sort.sort,
     dir: state.sort.dir,
     limit: ISSUE_PAGE_SIZE,

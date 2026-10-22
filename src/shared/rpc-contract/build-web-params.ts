@@ -37,7 +37,9 @@ export const BuildWebIssueQueryParams = z.object({
   product: z.array(Product).max(5).optional(),
   limit: z.number().int().min(1).max(100).optional(),
   offset: z.number().int().min(0).max(100_000).optional(),
-  tree: z.boolean().optional()
+  tree: z.boolean().optional(),
+  /** The archive instead of the live tasks; an older host would drop it, so it is asked first. */
+  archived: z.boolean().optional()
 })
 
 export const BuildWebIssueId = z.object({ id: Id })

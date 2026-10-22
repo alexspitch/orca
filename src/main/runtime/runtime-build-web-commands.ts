@@ -42,6 +42,8 @@ import {
 } from '../build-web/build-web-issue-read'
 import {
   addBuildWebComment,
+  archiveBuildWebIssue,
+  restoreBuildWebIssue,
   clearBuildWebAgentSession,
   noteBuildWebProviderSession,
   setBuildWebAgentSession,
@@ -124,6 +126,14 @@ export class RuntimeBuildWebCommands {
 
   buildWebSetFavorite(args: In<typeof BuildWebFavoriteParams>) {
     return setBuildWebFavorite(args.id, args.on)
+  }
+
+  buildWebArchiveIssue(args: In<typeof BuildWebIssueId>) {
+    return archiveBuildWebIssue(args.id)
+  }
+
+  buildWebRestoreIssue(args: In<typeof BuildWebIssueId>) {
+    return restoreBuildWebIssue(args.id)
   }
 
   buildWebAddComment(args: In<typeof BuildWebCommentParams>) {

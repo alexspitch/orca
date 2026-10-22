@@ -49,7 +49,10 @@ export function viewLabel(view: BuildWebView): string {
   }
 }
 
-export function quickFilterLabel(filter: 'mine' | 'ai' | 'favorite' | 'jira'): string {
+export function quickFilterLabel(filter: 'mine' | 'ai' | 'favorite' | 'jira' | 'archived'): string {
+  if (filter === 'archived') {
+    return translate('buildWeb.view.archived', 'Archive')
+  }
   return filter === 'jira' ? translate('buildWeb.view.jira', 'Jira') : viewLabel(filter)
 }
 

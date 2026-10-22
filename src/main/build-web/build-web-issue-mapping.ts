@@ -148,6 +148,9 @@ export function issueDetailOf(baseUrl: string, value: unknown): BuildWebIssueDet
     files: Array.isArray(card.files)
       ? card.files.map(fileOf).filter((f): f is BuildWebIssueFile => f !== null)
       : [],
-    telegram_available: card.telegram_available === true
+    telegram_available: card.telegram_available === true,
+    archived_at: textOrNull(issue.archived_at),
+    archived_by: textOrNull(issue.archived_by),
+    deleted_at: textOrNull(issue.deleted_at)
   }
 }

@@ -1,4 +1,4 @@
-import { Bot, FoldVertical, Star, Ticket, UnfoldVertical, User } from 'lucide-react'
+import { Archive, Bot, FoldVertical, Star, Ticket, UnfoldVertical, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -22,7 +22,8 @@ const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
   mine: <User />,
   ai: <Bot />,
   favorite: <Star />,
-  jira: <Ticket />
+  jira: <Ticket />,
+  archived: <Archive />
 }
 const PRODUCTS: readonly BuildWebProduct[] = ['sa', 'dc', 'ap', 'storage', 'tools']
 

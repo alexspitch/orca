@@ -23,6 +23,24 @@ function withoutFavorite({
 }
 
 /** What the console's mirror to Jira did — a move or a comment; shown, never assumed. */
+/** Into the console's archive, with its subtasks; the card still opens and takes it back. */
+export function archiveBuildWebIssue(id: string): Promise<BuildWebMutationResult<true>> {
+  return buildWebMutation(async () => {
+    const credential = requireBuildWebCredential()
+    await buildWebRequest({ ...credential, method: 'DELETE', path: issuePath(id) })
+    return true as const
+  })
+}
+
+/** Out of the archive, with the subtasks that went with it; a subtask waits for its parent (409). */
+export function restoreBuildWebIssue(id: string): Promise<BuildWebMutationResult<true>> {
+  return buildWebMutation(async () => {
+    const credential = requireBuildWebCredential()
+    await buildWebRequest({ ...credential, method: 'POST', path: issuePath(id, '/restore') })
+    return true as const
+  })
+}
+
 /** The console's `{ ok, awaiting }` or `{ ok: false, error }`; null when the comment stayed in the console. */
 export function telegramOutcomeOf(value: unknown): BuildWebTelegramOutcome | null {
   const telegram = recordOf(value)

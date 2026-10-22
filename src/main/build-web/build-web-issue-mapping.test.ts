@@ -24,6 +24,13 @@ describe('issue list query', () => {
     })
   })
 
+  it('asks for the archive only when it is wanted', () => {
+    expect(
+      new URLSearchParams(issueListQuery({ view: 'all', archived: true })).get('archived')
+    ).toBe('1')
+    expect(new URLSearchParams(issueListQuery({ view: 'all' })).has('archived')).toBe(false)
+  })
+
   it('combines the quick filters and passes the sort and the page', () => {
     const params = new URLSearchParams(
       issueListQuery({
@@ -135,9 +142,21 @@ describe('issue rows', () => {
       ]
     })
     expect(detail?.telegram_available).toBe(true)
+    expect(detail?.archived_at).toBeNull()
     expect(detail?.comments.map((c) => c.channel)).toEqual(['telegram', 'telegram_reply', '', ''])
     // A console before IS-195 says nothing: no Telegram.
     expect(issueDetailOf('https://bw.test', { issue: raw })?.telegram_available).toBe(false)
+  })
+
+  it('reads where the task was put away and by whom', () => {
+    const detail = issueDetailOf('https://bw.test', {
+      issue: { ...raw, archived_at: '2026-10-20T10:00:00Z', archived_by: 'a@x', deleted_at: null }
+    })
+    expect(detail).toMatchObject({
+      archived_at: '2026-10-20T10:00:00Z',
+      archived_by: 'a@x',
+      deleted_at: null
+    })
   })
 
   it('reads the files of the task and of its comments', () => {

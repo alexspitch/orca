@@ -153,6 +153,11 @@ export type BuildWebIssueDetail = BuildWebIssueRow & {
   files: BuildWebIssueFile[]
   /** A comment may go to the assignee in Telegram: a bot, a linked assignee, and not the reader. */
   telegram_available: boolean
+  /** In the console's archive since, and by whom; null for a live task. */
+  archived_at: string | null
+  archived_by: string | null
+  /** In the console's trash: archived too, and taken back only from the console's Archive section. */
+  deleted_at: string | null
 }
 
 /** The console's own sort keys for the task list. */
@@ -177,6 +182,8 @@ export type BuildWebIssueQuery = {
   favorite?: boolean
   /** Only tasks linked to a Jira ticket. */
   jira?: boolean
+  /** The tasks put in the archive, instead of the live ones. */
+  archived?: boolean
   sort?: BuildWebIssueSort
   dir?: 'asc' | 'desc'
   q?: string

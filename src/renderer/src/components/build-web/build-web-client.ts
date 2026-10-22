@@ -2,6 +2,7 @@ import {
   BUILD_WEB_ACTIVITY_RUNTIME_CAPABILITY,
   BUILD_WEB_COMMENT_TELEGRAM_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
@@ -100,6 +101,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         )
     },
     {
+      methods: new Set<Method>(['archiveIssue', 'restoreIssue']),
+      capability: BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerArchive',
+          'This Orca server cannot archive tasks yet. Update the server.'
+        )
+    },
+    {
       methods: new Set<Method>(['trainsRolling']),
       capability: BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY,
       refusal: () =>
@@ -138,6 +148,20 @@ const NEWER_ARGUMENTS: {
       translate(
         'buildWeb.client.updateServerFavoriteSort',
         'This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column.'
+      )
+  },
+  {
+    applies: (method, arg) =>
+      method === 'listIssues' &&
+      typeof arg === 'object' &&
+      arg !== null &&
+      'archived' in arg &&
+      arg.archived === true,
+    capability: BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerArchiveList',
+        'This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.'
       )
   },
   {

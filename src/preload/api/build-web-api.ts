@@ -67,6 +67,9 @@ export type BuildWebApi = {
     patch: BuildWebIssuePatch
   }) => Promise<BuildWebMutationResult<BuildWebUpdateOutcome>>
   setFavorite: (args: { id: string; on: boolean }) => Promise<BuildWebMutationResult<boolean>>
+  /** Into the console's archive, with the subtasks; `restoreIssue` takes it back. */
+  archiveIssue: (args: { id: string }) => Promise<BuildWebMutationResult<true>>
+  restoreIssue: (args: { id: string }) => Promise<BuildWebMutationResult<true>>
   addComment: (args: {
     id: string
     body: string

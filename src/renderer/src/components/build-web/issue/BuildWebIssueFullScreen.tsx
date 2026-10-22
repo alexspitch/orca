@@ -15,6 +15,7 @@ import { useBuildWebIssueDetail } from '../use-build-web-issue-detail'
 import { BuildWebListState } from '../BuildWebListState'
 import { BuildWebIssueSubtasks } from '../BuildWebIssueSubtasks'
 import { IssueHeader } from './IssueHeader'
+import { useIssueArchive } from './use-issue-archive'
 import { IssueOverviewTab } from './IssueOverviewTab'
 import { IssueBuildTab } from './IssueBuildTab'
 import { IssueGuideTab } from './IssueGuideTab'
@@ -61,6 +62,7 @@ export function BuildWebIssueFullScreen({
     }
   }, [detail])
   const plan = useIssuePlan(target, detail)
+  const archive = useIssueArchive(target, detail, state.reload)
   if (!issueId || state.error) {
     return <BuildWebListState kind="error" error={state.error} />
   }
@@ -141,6 +143,7 @@ export function BuildWebIssueFullScreen({
         onCollapse={collapseFullScreen}
         onBackToList={() => openIssue(null)}
         onOpenIssue={(id) => openIssue(id, true)}
+        archive={archive}
       />
       <Tabs
         value={current}

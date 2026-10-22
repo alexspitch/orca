@@ -20610,7 +20610,9 @@
       "updateServerFavoriteSort": "This Orca server cannot sort tasks by favorites yet. Update the server, or sort by another column.",
       "updateServerActivity": "This Orca server does not read build-web notifications and tasks yet. Update the server.",
       "updateServerStandHealth": "This Orca server does not monitor the stands yet. Update the server.",
-      "updateServerCommentTelegram": "This Orca server cannot send a comment to Telegram yet. Update the server, or send it to the console."
+      "updateServerCommentTelegram": "This Orca server cannot send a comment to Telegram yet. Update the server, or send it to the console.",
+      "updateServerArchive": "This Orca server cannot archive tasks yet. Update the server.",
+      "updateServerArchiveList": "This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off."
     },
     "status": {
       "unknown": "Unknown",
@@ -20631,7 +20633,8 @@
       "ai": "For AI",
       "favorite": "Favorites",
       "all": "All",
-      "jira": "Jira"
+      "jira": "Jira",
+      "archived": "Archive"
     },
     "product": {
       "unknown": "Unknown"
@@ -21626,6 +21629,14 @@
     },
     "openTaskByKey": {
       "missing": "Neither build-web nor Jira has a task {{key}}."
+    },
+    "archive": {
+      "archive": "Archive",
+      "restore": "Restore",
+      "done": "{{key}} is in the archive",
+      "restored": "{{key}} is back",
+      "note": "In the archive: put away by {{who}} on {{when}}. It is not in the task list, the AI queue or trains.",
+      "deletedNote": "The task is in the trash. It is taken back in build-web’s Archive section."
     }
   },
   "gitLog": {

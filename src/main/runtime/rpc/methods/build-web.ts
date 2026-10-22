@@ -98,6 +98,18 @@ export const BUILD_WEB_METHODS = [
     handler: async (params, { runtime }) => runtime.buildWebSetFavorite(params)
   }),
   defineMethod({
+    name: 'buildWeb.archiveIssue',
+    permission: 'workspace',
+    params: BuildWebIssueId,
+    handler: async (params, { runtime }) => runtime.buildWebArchiveIssue(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.restoreIssue',
+    permission: 'workspace',
+    params: BuildWebIssueId,
+    handler: async (params, { runtime }) => runtime.buildWebRestoreIssue(params)
+  }),
+  defineMethod({
     name: 'buildWeb.addComment',
     permission: 'workspace',
     params: BuildWebCommentParams,

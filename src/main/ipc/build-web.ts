@@ -77,6 +77,8 @@ export function registerBuildWebHandlers(): void {
   handle('listVersions', BuildWebVersionsParams, (args) => commands.buildWebListVersions(args))
   handle('updateIssue', BuildWebIssueUpdateParams, (args) => commands.buildWebUpdateIssue(args))
   handle('setFavorite', BuildWebFavoriteParams, (args) => commands.buildWebSetFavorite(args))
+  handle('archiveIssue', BuildWebIssueId, (args) => commands.buildWebArchiveIssue(args))
+  handle('restoreIssue', BuildWebIssueId, (args) => commands.buildWebRestoreIssue(args))
   handle('addComment', BuildWebCommentParams, (args) => commands.buildWebAddComment(args))
   handle('setAgentSession', BuildWebAgentSessionParams, (args) =>
     commands.buildWebSetAgentSession(args)

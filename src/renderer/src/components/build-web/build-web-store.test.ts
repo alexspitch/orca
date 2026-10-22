@@ -58,6 +58,37 @@ describe('build-web store', () => {
     expect(useBuildWebStore.getState().page).toBe(1)
   })
 
+  it('lists the archive while its filter is on, and forgets the filter on a restart', () => {
+    const base = {
+      quick: new Set<QuickFilter>(['archived']),
+      sort: { sort: 'updated_at' as const, dir: 'desc' as const },
+      page: 0,
+      query: '',
+      statuses: new Set(OPEN_STATUSES),
+      product: 'all' as const
+    }
+    expect(issueQueryOf(base)).toMatchObject({ archived: true })
+    expect(issueQueryOf({ ...base, quick: new Set() })).not.toHaveProperty('archived')
+
+    const stored = new Map<string, string>()
+    const storage = {
+      getItem: (k: string) => stored.get(k) ?? null,
+      setItem: (k: string, v: string) => void stored.set(k, v)
+    }
+    Object.defineProperty(globalThis, 'window', {
+      value: { localStorage: storage },
+      configurable: true
+    })
+    try {
+      useBuildWebStore.setState({ quick: new Set<QuickFilter>(['mine']) })
+      useBuildWebStore.getState().toggleQuick('archived')
+      expect(useBuildWebStore.getState().quick.has('archived')).toBe(true)
+      expect(JSON.parse(stored.get('orca.buildWeb.viewPrefs') ?? '{}').quick).toEqual(['mine'])
+    } finally {
+      Reflect.deleteProperty(globalThis, 'window')
+    }
+  })
+
   it('starts a filter or sort change on the first page', () => {
     useBuildWebStore.setState({ page: 2 })
     useBuildWebStore.getState().toggleQuick('ai')
