@@ -13,6 +13,8 @@ import {
   installFilePathLinkClickFallback
 } from './terminal-link-handlers'
 import { createTerminalHandleLinkProvider } from './terminal-handle-links'
+import { createTaskKeyLinkProvider } from './terminal-task-key-links'
+import { openTaskByKey, taskTitleByKey } from '../build-web/open-task-by-key'
 import { installTerminalLinkifierClickPriming } from './terminal-linkifier-click-priming'
 import { installTerminalLinkPointerGesture } from './terminal-link-pointer-gesture'
 import { installHttpLinkClickFallback } from './terminal-url-link-hit-testing'
@@ -83,19 +85,32 @@ export function installTerminalPaneLinkHandling(context: PaneLinkContext): void 
       createFilePathLinkProvider(pane.id, linkDeps, pane.linkTooltip, fileOpenLinkHint)
     )
   )
-  refs.terminalHandleLinkDisposablesRef.current.set(
-    pane.id,
-    pane.terminal.registerLinkProvider(
-      createTerminalHandleLinkProvider({
-        getTerminal: () =>
-          managerRef.current?.getPanes().find((candidate) => candidate.id === pane.id)?.terminal ??
-          null,
-        getRuntimeEnvironmentId: () => linkDeps.getRuntimeEnvironmentIdForPane?.(pane.id) ?? null,
-        linkTooltip: pane.linkTooltip,
-        getLinkActionContext: () => getLinkActionContext(pane.id)
-      })
-    )
+  const getTerminal = () =>
+    managerRef.current?.getPanes().find((candidate) => candidate.id === pane.id)?.terminal ?? null
+  const handleLinks = pane.terminal.registerLinkProvider(
+    createTerminalHandleLinkProvider({
+      getTerminal,
+      getRuntimeEnvironmentId: () => linkDeps.getRuntimeEnvironmentIdForPane?.(pane.id) ?? null,
+      linkTooltip: pane.linkTooltip,
+      getLinkActionContext: () => getLinkActionContext(pane.id)
+    })
   )
+  const taskKeyLinks = pane.terminal.registerLinkProvider(
+    createTaskKeyLinkProvider({
+      getTerminal,
+      linkTooltip: pane.linkTooltip,
+      getLinkActionContext: () => getLinkActionContext(pane.id),
+      openTask: openTaskByKey,
+      describeTask: taskTitleByKey
+    })
+  )
+  // Why one entry: both read the same pane's text and go away with it.
+  refs.terminalHandleLinkDisposablesRef.current.set(pane.id, {
+    dispose: () => {
+      handleLinks.dispose()
+      taskKeyLinks.dispose()
+    }
+  })
   refs.linkifierClickPrimingDisposablesRef.current.set(
     pane.id,
     installTerminalLinkifierClickPriming(pane.terminal)

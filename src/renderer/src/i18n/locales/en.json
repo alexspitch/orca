@@ -19980,7 +19980,12 @@
       "cancel": "Cancel",
       "confirm": "Restart and end processes"
     },
-    "restartedInputNotSent": "The terminal restarted while you were typing, so some input may not have reached it. Check the new shell before typing it again."
+    "restartedInputNotSent": "The terminal restarted while you were typing, so some input may not have reached it. Check the new shell before typing it again.",
+    "taskKeyLink": {
+      "hintWithActions": "Click for actions or {{click}} to open the task",
+      "hint": "{{click}} to open the task",
+      "open": "Open task"
+    }
   },
   "fileExplorer": {
     "root": {
@@ -21603,6 +21608,9 @@
       "searchDescription": "Notify about new rows under build-web's bell, as a banner or a message inside Orca.",
       "keywordBuild": "build",
       "keywordToast": "toast"
+    },
+    "openTaskByKey": {
+      "missing": "Neither build-web nor Jira has a task {{key}}."
     }
   },
   "gitLog": {
