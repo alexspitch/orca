@@ -1,6 +1,7 @@
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import type { BuildWebImageBuild } from '../../shared/build-web-image-types'
 import type {
+  BuildWebStandGroup,
   BuildWebStandHealth,
   BuildWebStandHealthMap
 } from '../../shared/build-web-stand-types'
@@ -12,7 +13,7 @@ import { buildWebMutation, describeBuildWebError } from './build-web-request'
 import { fetchBuildWebStandGroups, fetchBuildWebStandStatus } from './build-web-stands'
 
 // Monitoring of the stands for the sidebar item and the stands table: every enabled stand the
-// viewer has not hidden, read over SSH by the console, so each answer is cached and shared.
+// viewer has not hidden, read over SSH by the console once per directory, cached and shared.
 
 const HEALTH_TTL_MS = 60_000
 // Why: each read is an SSH session on the console; don't open one per stand at once.
@@ -20,16 +21,19 @@ const STATUS_CONCURRENCY = 4
 
 type CachedHealth = { at: number; health: BuildWebStandHealth }
 
-// Why per stand: hiding or showing one stand must not read every other stand again.
-let cache: { key: string; stands: Map<string, CachedHealth> } | null = null
+// Why per instance: hiding or showing one stand must not read every other stand again, and the
+// stands over one directory (AP and SA of one box) are one compose project, read once.
+let cache: { key: string; instances: Map<string, CachedHealth> } | null = null
 const inflight = new Map<string, Promise<BuildWebStandHealthMap>>()
 
-function standsCache(key: string): Map<string, CachedHealth> {
+function instancesCache(key: string): Map<string, CachedHealth> {
   if (cache?.key !== key) {
-    cache = { key, stands: new Map() }
+    cache = { key, instances: new Map() }
   }
-  return cache.stands
+  return cache.instances
 }
+
+const instanceOf = (group: BuildWebStandGroup) => `${group.sshHost}:${group.dir}`
 
 async function readHealth(
   key: string,
@@ -40,31 +44,44 @@ async function readHealth(
   const groups = (await fetchBuildWebStandGroups(credential)).filter(
     (g) => g.enabled && !hidden.has(g.key)
   )
-  const stands = standsCache(key)
+  const byInstance = new Map<string, BuildWebStandGroup>()
+  for (const group of groups) {
+    if (!byInstance.has(instanceOf(group))) {
+      byInstance.set(instanceOf(group), group)
+    }
+  }
+  const instances = instancesCache(key)
   const now = Date.now()
-  const stale = groups.filter((g) => {
-    const known = stands.get(g.key)
+  const stale = [...byInstance].filter(([instance]) => {
+    const known = instances.get(instance)
     return refresh || !known || now - known.at >= HEALTH_TTL_MS
   })
   if (stale.length > 0) {
     // Why the catch: without access to Images only the compose drift counts as an update.
     const builds = await recentBuildWebImageBuilds().catch((): BuildWebImageBuild[] => [])
-    await mapWithConcurrency(stale, STATUS_CONCURRENCY, async (group) => {
+    await mapWithConcurrency(stale, STATUS_CONCURRENCY, async ([instance, group]) => {
       let health: BuildWebStandHealth
       try {
         const status = await fetchBuildWebStandStatus(credential, group.statusCardId)
-        health = standHealthOf(status, builds)
+        health = standHealthOf(instance, status, builds)
       } catch (error) {
-        health = { running: false, failing: 0, outdated: 0, error: describeBuildWebError(error) }
+        health = {
+          instance,
+          running: false,
+          failing: 0,
+          outdated: 0,
+          updates: [],
+          error: describeBuildWebError(error)
+        }
       }
-      stands.set(group.key, { at: Date.now(), health })
+      instances.set(instance, { at: Date.now(), health })
     })
   }
   const out: BuildWebStandHealthMap = {}
   for (const group of groups) {
-    const known = stands.get(group.key)
+    const known = instances.get(instanceOf(group))
     if (known) {
-      out[group.key] = known.health
+      out[group.key] = { ...known.health, name: group.name }
     }
   }
   return out

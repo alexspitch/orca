@@ -21404,7 +21404,8 @@
         "ok": "OK",
         "failing": "{{count}} failing",
         "outdated": "{{count}} to update",
-        "hidden": "hidden"
+        "hidden": "hidden",
+        "notApplied": "not recreated since its image changed"
       },
       "hide": "Hide from the list and stop monitoring",
       "unhide": "Show in the list and monitor again",

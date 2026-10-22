@@ -57,14 +57,34 @@ export type BuildWebStandStatus = {
   detailsError: string | null
 }
 
+/** A running service to update: the compose names another image, or the registry has a newer build. */
+export type BuildWebStandUpdate = {
+  service: string
+  /** What the compose files name. */
+  image: string
+  /** The `<ver>b<N>` tag the container runs; null when unknown. */
+  running: string | null
+  /** The newer build under the moving tag; null when the update is only the compose's change. */
+  newer: string | null
+}
+
 /** A stand's services at a glance, for the sidebar item and the stands table. */
 export type BuildWebStandHealth = {
+  /**
+   * The compose project read, `host:dir`: stands over one directory (AP and SA of one box) share
+   * it, so a total counts its services once. Absent from an older host.
+   */
+  instance?: string
+  /** The stand's name, for a list that spans stands. Absent from an older host. */
+  name?: string
   /** Some service runs; a stopped stand is not judged, its counts stay 0. */
   running: boolean
   /** Services down or unhealthy. */
   failing: number
   /** Services the compose files or the registry have moved past. */
   outdated: number
+  /** What `outdated` counts; absent from an older host. */
+  updates?: BuildWebStandUpdate[]
   /** Why the stand could not be read. */
   error: string | null
 }

@@ -8,11 +8,14 @@ import { cn } from '@/lib/utils'
 export function SidebarCountBadge({
   count,
   tone,
-  hint
+  hint,
+  wideHint
 }: {
   count: string | number
   tone: 'red' | 'amber' | 'neutral'
   hint: React.ReactNode
+  /** For a hint that lists lines too long for the usual width. */
+  wideHint?: boolean
 }): React.JSX.Element {
   return (
     <Tooltip>
@@ -29,7 +32,11 @@ export function SidebarCountBadge({
           {count}
         </span>
       </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8} className="max-w-72">
+      <TooltipContent
+        side="right"
+        sideOffset={8}
+        className={cn('max-w-72', wideHint && 'max-w-[28rem]')}
+      >
         {hint}
       </TooltipContent>
     </Tooltip>

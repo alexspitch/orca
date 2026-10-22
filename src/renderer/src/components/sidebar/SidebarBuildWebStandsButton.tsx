@@ -9,6 +9,7 @@ import { useBuildWebBadge } from './use-build-web-badge'
 import { SidebarCountBadge } from './SidebarCountBadge'
 import { readStandHealth, standHealthTotals } from '../build-web/stands/stand-health'
 import { useStandGroups } from '../build-web/stands/stand-groups-store'
+import { StandUpdatesList } from '../build-web/stands/StandUpdatesList'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { showsBuildWebStands } from '../../../../shared/sidebar-button-settings'
 
@@ -28,7 +29,7 @@ export function SidebarBuildWebStandsButton(): React.JSX.Element | null {
   if (!show) {
     return null
   }
-  const { failing, outdated } = standHealthTotals(health)
+  const { failing, outdated, updates } = standHealthTotals(health)
   const label = translate('buildWeb.sidebar.stands', 'Stands')
   const withFailing = failing
     ? translate('buildWeb.sidebar.standsFailing', '{{label}}, {{count}} services failing', {
@@ -67,10 +68,20 @@ export function SidebarBuildWebStandsButton(): React.JSX.Element | null {
             <SidebarCountBadge
               count={outdated}
               tone="amber"
-              hint={translate(
-                'buildWeb.sidebar.standsOutdatedHint',
-                'Services on running stands with a newer image to roll out'
-              )}
+              wideHint
+              hint={
+                <div className="flex flex-col gap-2">
+                  <span>
+                    {translate(
+                      'buildWeb.sidebar.standsOutdatedHint',
+                      'Services on running stands with a newer image to roll out'
+                    )}
+                  </span>
+                  {updates.map((u) => (
+                    <StandUpdatesList key={u.instance} title={u.stands} updates={u.updates} />
+                  ))}
+                </div>
+              }
             />
           ) : null}
           {failing ? (

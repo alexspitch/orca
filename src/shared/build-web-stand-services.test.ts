@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildWebImageBuild } from './build-web-image-types'
 import type { BuildWebStandService } from './build-web-stand-types'
-import { hasNewerImage, isFailingService, standHealthOf } from './build-web-stand-services'
+import { isFailingService, newerImageOf, standHealthOf } from './build-web-stand-services'
 
 const service = (over: Partial<BuildWebStandService> = {}): BuildWebStandService => ({
   service: 'sa-backend',
@@ -47,43 +47,56 @@ describe('stand monitoring', () => {
     expect(isFailingService(service({ state: 'absent' }))).toBe(false)
   })
 
-  it('sees a newer build under the moving tag the compose names', () => {
-    expect(hasNewerImage(service(), [build('3.1b11900')])).toBe(true)
-    expect(hasNewerImage(service(), [build('3.1b11830'), build('3.1b11700')])).toBe(false)
+  it('sees the newest build under the moving tag the compose names, in its own registry', () => {
+    expect(newerImageOf(service(), [build('3.1b11900'), build('3.1b11950')])).toBe('3.1b11950')
+    expect(newerImageOf(service(), [build('3.1b11830'), build('3.1b11700')])).toBeNull()
     // Not published under the moving tag: `up -d` would not pull it.
-    expect(hasNewerImage(service(), [build('3.1b11900', { pushed_main_tag: false })])).toBe(false)
+    expect(newerImageOf(service(), [build('3.1b11900', { pushed_main_tag: false })])).toBeNull()
     // Another line, another image.
-    expect(hasNewerImage(service(), [build('3.10b11900')])).toBe(false)
+    expect(newerImageOf(service(), [build('3.10b11900')])).toBeNull()
     expect(
-      hasNewerImage(service(), [
+      newerImageOf(service(), [
         build('3.1b11900', { ref: 'docker.spitch.ch/speechanalytics/sa-ui:3.1b11900' })
       ])
-    ).toBe(false)
-    expect(hasNewerImage(service({ build: null }), [build('3.1b11900')])).toBe(false)
+    ).toBeNull()
+    // AP 1.16 on rhel: redos's registry holds the same path with interleaved build numbers.
+    expect(
+      newerImageOf(service(), [
+        build('3.1b11831', {
+          dist: 'redos',
+          ref: 'docker.voice.bssys.com/speechanalytics/sa-backend:3.1b11831'
+        })
+      ])
+    ).toBeNull()
+    expect(newerImageOf(service({ build: null }), [build('3.1b11900')])).toBeNull()
   })
 
-  it('judges only a running stand', () => {
+  it('judges only a running stand, and in it only the running services', () => {
     const stopped = { services: [service({ state: 'exited' })], detailsError: null }
-    expect(standHealthOf(stopped, [])).toEqual({
+    expect(standHealthOf('h:/d', stopped, [])).toEqual({
+      instance: 'h:/d',
       running: false,
       failing: 0,
       outdated: 0,
+      updates: [],
       error: null
     })
     const running = {
       services: [
         service(),
-        service({ service: 'a', state: 'exited' }),
-        service({ service: 'b', runningImage: 'old:1' }),
+        service({ service: 'a', state: 'exited', runningImage: 'old:1', build: '3.1b100' }),
+        service({ service: 'b', runningImage: 'sha256:abc', build: null }),
         service({ service: 'c', build: '3.1b100' })
       ],
       detailsError: null
     }
-    expect(standHealthOf(running, [build('3.1b11900')])).toEqual({
-      running: true,
-      failing: 1,
-      outdated: 4,
-      error: null
-    })
+    const health = standHealthOf('h:/d', running, [build('3.1b11900')])
+    expect(health.failing).toBe(1)
+    expect(health.outdated).toBe(3)
+    expect(health.updates?.map((u) => [u.service, u.running, u.newer])).toEqual([
+      ['sa-backend', '3.1b11830', '3.1b11900'],
+      ['b', null, null],
+      ['c', '3.1b100', '3.1b11900']
+    ])
   })
 })

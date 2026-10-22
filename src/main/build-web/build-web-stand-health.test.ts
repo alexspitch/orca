@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { BuildWebStandGroup } from '../../shared/build-web-stand-types'
 
 const fetchStatus = vi.fn()
-const group = (key: string, enabled = true): BuildWebStandGroup => ({
+const group = (key: string, enabled = true, dir = `/opt/${key}`): BuildWebStandGroup => ({
   key,
   name: key,
   sshHost: 'h',
-  dir: `/opt/${key}`,
+  dir,
   branch: null,
   cards: [],
   enabled,
@@ -20,7 +20,13 @@ vi.mock('./build-web-connection', () => ({
 }))
 vi.mock('./build-web-images', () => ({ recentBuildWebImageBuilds: async () => [] }))
 vi.mock('./build-web-stands', () => ({
-  fetchBuildWebStandGroups: async () => [group('a'), group('b'), group('off', false)],
+  fetchBuildWebStandGroups: async () => [
+    group('a'),
+    group('b'),
+    group('off', false),
+    // SA over AP's directory, another branch: one compose project.
+    group('a-sa', true, '/opt/a')
+  ],
   fetchBuildWebStandStatus: (_credential: unknown, id: string) => fetchStatus(id)
 }))
 
@@ -41,17 +47,24 @@ describe('stand monitoring on the host', () => {
   })
 
   it('reads neither a hidden nor a disabled stand', async () => {
-    const result = await readBuildWebStandHealth({ hidden: ['b'] })
+    const result = await readBuildWebStandHealth({ hidden: ['b', 'a-sa'] })
     expect(fetchStatus.mock.calls).toEqual([['card-a']])
     expect(result.ok && Object.keys(result.value)).toEqual(['a'])
     expect(result.ok && result.value.a.failing).toBe(1)
+  })
+
+  it('reads the stands over one directory once and gives each the same answer', async () => {
+    const result = await readBuildWebStandHealth({ hidden: ['b'] })
+    expect(fetchStatus.mock.calls).toEqual([['card-a']])
+    expect(result.ok && result.value['a-sa']).toMatchObject({ instance: 'h:/opt/a', failing: 1 })
+    expect(result.ok && result.value['a-sa'].name).toBe('a-sa')
   })
 
   it('reads only the stand shown again, the others come from the cache', async () => {
     await readBuildWebStandHealth({ hidden: ['b'] })
     const result = await readBuildWebStandHealth({})
     expect(fetchStatus.mock.calls).toEqual([['card-a'], ['card-b']])
-    expect(result.ok && Object.keys(result.value).sort()).toEqual(['a', 'b'])
+    expect(result.ok && Object.keys(result.value).sort()).toEqual(['a', 'a-sa', 'b'])
   })
 
   it('reads every shown stand again on refresh', async () => {

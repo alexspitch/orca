@@ -31,9 +31,12 @@ export function BuildWebToneChip({
   label,
   tone,
   mono,
+  title,
   className
 }: {
   label: string
+  /** The hover text; the label by default, null for none (a richer tooltip wraps the chip). */
+  title?: string | null
   tone: ChipTone | null
   /** For a value read character by character: a release, a tag, a key. */
   mono?: boolean
@@ -41,7 +44,7 @@ export function BuildWebToneChip({
 }): React.JSX.Element {
   return (
     <span
-      title={label}
+      title={title === null ? undefined : (title ?? label)}
       className={cn(
         'inline-flex h-5 max-w-full items-center rounded-full border px-2 text-2xs whitespace-nowrap',
         mono && 'font-mono',
