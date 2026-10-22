@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792648425000",
+      "date": "2026-10-22",
+      "commit": "2d857cc6046f",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "Tab bar → «Claude — account» on a paired server's workspace now starts Claude with that account instead of System default; older servers hide these items until updated."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792645541000",
       "date": "2026-10-22",
       "commit": "b0a5a185226d",
