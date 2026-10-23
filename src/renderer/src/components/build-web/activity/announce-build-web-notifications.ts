@@ -18,7 +18,13 @@ function alertsOf(fresh: readonly BuildWebNotification[]): Alert[] {
       id: n.id,
       title: n.title,
       body: notificationSummary(n),
-      target: { kind: n.kind, issue_id: n.issue_id, run_id: n.run_id }
+      target: {
+        kind: n.kind,
+        issue_id: n.issue_id,
+        run_id: n.run_id,
+        title: n.title,
+        last_at: n.last_at
+      }
     }))
   }
   return [

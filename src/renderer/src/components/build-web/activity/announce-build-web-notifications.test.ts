@@ -44,7 +44,13 @@ describe('announcing new build-web notifications', () => {
       buildWeb: {
         title: 'Image build failed n1',
         body: 'IS-10 · dc/app — FAILURE #12',
-        target: { kind: 'build', issue_id: 'i1', run_id: 'r1' }
+        target: {
+          kind: 'build',
+          issue_id: 'i1',
+          run_id: 'r1',
+          title: 'Image build failed n1',
+          last_at: '2026-10-21T09:00:00Z'
+        }
       }
     })
     expect(mocks.toast).not.toHaveBeenCalled()
@@ -58,7 +64,13 @@ describe('announcing new build-web notifications', () => {
     const [title, options] = mocks.toast.mock.calls[0]
     expect(title).toBe('Image build failed n1')
     options.action.onClick()
-    expect(open).toHaveBeenCalledWith({ kind: 'build', issue_id: 'i1', run_id: 'r1' })
+    expect(open).toHaveBeenCalledWith({
+      kind: 'build',
+      issue_id: 'i1',
+      run_id: 'r1',
+      title: 'Image build failed n1',
+      last_at: '2026-10-21T09:00:00Z'
+    })
 
     mocks.toast.mockReset()
     announceBuildWebNotifications(

@@ -25,12 +25,15 @@ export function TrainHistory({
   target,
   train,
   reloadKey,
+  initialRun,
   onOpenIssue
 }: {
   target: RuntimeClientTarget
   train: BuildWebTrain
   /** Bumped by a departure by hand, so the history reads it at once. */
   reloadKey: number
+  /** A window a notification leads to: open from the start, though an empty one is not listed. */
+  initialRun: BuildWebTrainRun | null
   onOpenIssue: (id: string) => void
 }): React.JSX.Element {
   const [runs, setRuns] = useState<BuildWebTrainRun[]>([])
@@ -38,7 +41,7 @@ export function TrainHistory({
   const [empty, setEmpty] = useState(0)
   const [showEmpty, setShowEmpty] = useState(false)
   const [page, setPage] = useState(0)
-  const [open, setOpen] = useState<string | null>(null)
+  const [open, setOpen] = useState<string | null>(initialRun?.id ?? null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -67,7 +70,7 @@ export function TrainHistory({
   }, [load])
 
   // Why by id: the dialog follows the history's re-reads while its window is still going.
-  const openRun = runs.find((r) => r.id === open) ?? null
+  const openRun = runs.find((r) => r.id === open) ?? (initialRun?.id === open ? initialRun : null)
 
   // A window that has not ended changes on its own: its builds start and finish, it deploys.
   const going = runs.some((r) => !isWindowOver(r))

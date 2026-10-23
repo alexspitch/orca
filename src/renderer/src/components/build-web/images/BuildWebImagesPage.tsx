@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { useBuildWebStore } from '../build-web-store'
@@ -19,6 +19,14 @@ export default function BuildWebImagesPage(): React.JSX.Element {
   const error = useBuildWebStore((s) => s.error)
   const setStatus = useBuildWebStore((s) => s.setStatus)
   const [image, setImage] = useState<string | null>(null)
+  // A notification's image: its history opens, once.
+  const focus = useBuildWebStore((s) => (s.focus?.kind === 'image' ? s.focus : null))
+  useEffect(() => {
+    if (focus) {
+      setImage(focus.image)
+      useBuildWebStore.getState().setFocus(null)
+    }
+  }, [focus])
 
   useBuildWebPageEscape(() => (image ? setImage(null) : closePage()))
 

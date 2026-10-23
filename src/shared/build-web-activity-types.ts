@@ -19,8 +19,12 @@ export type BuildWebNotification = {
   unread: boolean
 }
 
-/** What a click on a row needs to open it: its task, else its run. */
-export type BuildWebNotificationRef = Pick<BuildWebNotification, 'kind' | 'issue_id' | 'run_id'>
+/**
+ * What a click on a row needs to open it: its task, else its run; a train's row names its train
+ * only in the title, and its window only by when it failed.
+ */
+export type BuildWebNotificationRef = Pick<BuildWebNotification, 'kind' | 'issue_id' | 'run_id'> &
+  Partial<Pick<BuildWebNotification, 'title' | 'last_at'>>
 
 export type BuildWebConsoleTaskStatus =
   | 'queued'

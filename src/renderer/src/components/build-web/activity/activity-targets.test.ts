@@ -58,6 +58,20 @@ describe('where a notification leads', () => {
     })
     expect(notificationTarget(note({ kind: 'runtime' }))).toBeNull()
   })
+
+  it('leads a train failure to its train by the name in its title', () => {
+    const title = 'Поезд «master rhel»: не удался шаг «сборка»'
+    expect(notificationTarget(note({ kind: 'train', title }))).toEqual({
+      kind: 'train',
+      trainName: 'master rhel',
+      at: '2026-10-21T09:00:00Z'
+    })
+    expect(notificationTarget(note({ kind: 'train', title: 'Train failed' }))).toEqual({
+      kind: 'train',
+      trainName: null,
+      at: '2026-10-21T09:00:00Z'
+    })
+  })
 })
 
 describe('where a task leads', () => {

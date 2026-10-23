@@ -10,6 +10,7 @@ import {
   type BuildWebProduct,
   type BuildWebStatus
 } from '../../../../shared/build-web-types'
+import type { BuildWebTrainRun } from '../../../../shared/build-web-train-types'
 import {
   nextSort,
   readViewPrefs,
@@ -40,6 +41,11 @@ export const TO_WORK_STATUSES: readonly BuildWebStatus[] = [
   'inprogress',
   'build_failed'
 ]
+
+/** What a page opens on when a notification leads there; the page takes it once. */
+export type BuildWebFocus =
+  | { kind: 'train'; trainId: string; run: BuildWebTrainRun | null }
+  | { kind: 'image'; image: string }
 
 export function sameStatuses(set: ReadonlySet<BuildWebStatus>, list: readonly BuildWebStatus[]) {
   return set.size === list.length && list.every((s) => set.has(s))
@@ -93,6 +99,8 @@ type BuildWebState = {
   /** Back one level: to the side card it came from, or to the list. */
   collapseFullScreen: () => void
   rememberTakeToWork: (worktreeId: string) => void
+  focus: BuildWebFocus | null
+  setFocus: (focus: BuildWebFocus | null) => void
 }
 
 const prefs = readViewPrefs()
@@ -211,7 +219,9 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
         ? { fullScreen: false, fullScreenFromDrawer: false }
         : { fullScreen: false, openIssueId: null }
     ),
-  rememberTakeToWork: (lastWorktreeId) => set({ lastWorktreeId })
+  rememberTakeToWork: (lastWorktreeId) => set({ lastWorktreeId }),
+  focus: null,
+  setFocus: (focus) => set({ focus })
 }))
 
 /** The list request for the current filters, sort and page. */

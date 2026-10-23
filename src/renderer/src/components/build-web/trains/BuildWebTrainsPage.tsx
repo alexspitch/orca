@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
-import type { BuildWebTrain } from '../../../../../shared/build-web-train-types'
+import type { BuildWebTrain, BuildWebTrainRun } from '../../../../../shared/build-web-train-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { withoutPageRecording } from '../page-history/page-history-store'
@@ -68,6 +68,18 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
   const [previewing, setPreviewing] = useState<BuildWebTrain | null>(null)
   const [starting, setStarting] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
+  // A notification's window: its train picked, the window handed to the history to open.
+  const focus = useBuildWebStore((s) => (s.focus?.kind === 'train' ? s.focus : null))
+  const [focused, setFocused] = useState<{ trainId: string; run: BuildWebTrainRun | null } | null>(
+    null
+  )
+  useEffect(() => {
+    if (focus) {
+      setSelected(focus.trainId)
+      setFocused(focus)
+      useBuildWebStore.getState().setFocus(null)
+    }
+  }, [focus])
 
   const load = useCallback(async () => {
     try {
@@ -142,6 +154,7 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
     )
   }
   const current = trains.find((t) => t.id === selected) ?? null
+  const initialRun = focused && focused.trainId === current?.id ? focused.run : null
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 px-3 pb-4 md:px-5">
       <div className="flex items-center gap-2">
@@ -273,9 +286,12 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
       </div>
       {current ? (
         <TrainHistory
+          // Why the key: a notification's window opens on a fresh history, not the one showing.
+          key={`${current.id}:${initialRun?.id ?? ''}`}
           target={target}
           train={current}
           reloadKey={reloadKey}
+          initialRun={initialRun}
           onOpenIssue={openIssue}
         />
       ) : null}
