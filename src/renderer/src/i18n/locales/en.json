@@ -20614,7 +20614,8 @@
       "updateServerCommentTelegram": "This Orca server cannot send a comment to Telegram yet. Update the server, or send it to the console.",
       "updateServerArchive": "This Orca server cannot archive tasks yet. Update the server.",
       "updateServerArchiveList": "This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.",
-      "updateServerChatPlatform": "This Orca server does not know Chat Platform yet. Update the server."
+      "updateServerChatPlatform": "This Orca server does not know Chat Platform yet. Update the server.",
+      "updateServerSavedQueries": "This Orca server does not keep saved queries yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -21645,6 +21646,41 @@
       "restored": "{{key}} is back",
       "note": "In the archive: put away by {{who}} on {{when}}. It is not in the task list, the AI queue or trains.",
       "deletedNote": "The task is in the trash. It is taken back in build-web’s Archive section."
+    },
+    "savedQueries": {
+      "field": {
+        "type": "type",
+        "version": "version",
+        "verdict": "verdict",
+        "author": "author",
+        "assignee": "assignee",
+        "stand": "stand",
+        "mode": "mode",
+        "products": "several products",
+        "noJira": "not in Jira",
+        "dates": "dates",
+        "rootOnly": "top-level only"
+      },
+      "unsupported": "Orca’s list does not narrow by: {{fields}}",
+      "sharedBy": "Shared by {{owner}}",
+      "delete": "Delete «{{name}}»",
+      "deleteTitle": "Delete «{{name}}»?",
+      "deleteShared": "It is shared: it goes for everybody, in build-web too.",
+      "deleteOwn": "It goes in build-web too.",
+      "deleteConfirm": "Delete",
+      "open": "Saved queries",
+      "loading": "Loading…",
+      "none": "No saved queries yet",
+      "saveCurrent": "Save current query…",
+      "saved": "Saved «{{name}}»",
+      "saveTitle": "Save query",
+      "saveDescription": "The quick filters, statuses, product and search of the list, kept in build-web with its saved filters.",
+      "name": "Name",
+      "replaces": "Replaces your query of the same name.",
+      "shared": "Shared",
+      "sharedHint": "Everybody sees it; only you can delete it.",
+      "cancel": "Cancel",
+      "save": "Save"
     }
   },
   "gitLog": {

@@ -25,8 +25,16 @@ import type {
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
   BuildWebProviderSessionParams,
+  BuildWebSavedQueriesParams,
+  BuildWebSavedQueryDeleteParams,
+  BuildWebSavedQuerySaveParams,
   BuildWebVersionsParams
 } from '../../shared/rpc-contract/build-web-params'
+import {
+  deleteBuildWebSavedQuery,
+  listBuildWebSavedQueries,
+  saveBuildWebSavedQuery
+} from '../build-web/build-web-saved-queries'
 import {
   connectBuildWeb,
   disconnectBuildWeb,
@@ -134,6 +142,18 @@ export class RuntimeBuildWebCommands {
 
   buildWebRestoreIssue(args: In<typeof BuildWebIssueId>) {
     return restoreBuildWebIssue(args.id)
+  }
+
+  buildWebSavedQueries(args: In<typeof BuildWebSavedQueriesParams>) {
+    return listBuildWebSavedQueries(args.products)
+  }
+
+  buildWebSaveQuery(args: In<typeof BuildWebSavedQuerySaveParams>) {
+    return saveBuildWebSavedQuery(args)
+  }
+
+  buildWebDeleteQuery(args: In<typeof BuildWebSavedQueryDeleteParams>) {
+    return deleteBuildWebSavedQuery(args.id)
   }
 
   buildWebAddComment(args: In<typeof BuildWebCommentParams>) {

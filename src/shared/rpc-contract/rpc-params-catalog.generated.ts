@@ -167,6 +167,9 @@ import {
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
   BuildWebRunParams,
+  BuildWebSavedQueriesParams,
+  BuildWebSavedQueryDeleteParams,
+  BuildWebSavedQuerySaveParams,
   BuildWebVersionBranchesParams,
   BuildWebVersionsParams
 } from './build-web-params'
@@ -930,6 +933,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.createIssueRun': BuildWebIssueRunParams,
   'buildWeb.createJiraIssue': BuildWebJiraCreateParams,
   'buildWeb.deleteComment': BuildWebCommentDeleteParams,
+  'buildWeb.deleteQuery': BuildWebSavedQueryDeleteParams,
   'buildWeb.detectBuilt': BuildWebRunId,
   'buildWeb.detectImages': BuildWebDetectParams,
   'buildWeb.disconnect': null,
@@ -979,6 +983,8 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.runFreshness': BuildWebFreshnessParams,
   'buildWeb.runTrain': BuildWebTrainParams,
   'buildWeb.saveGuide': BuildWebGuideParams,
+  'buildWeb.saveQuery': BuildWebSavedQuerySaveParams,
+  'buildWeb.savedQueries': BuildWebSavedQueriesParams,
   'buildWeb.setAgentSession': BuildWebAgentSessionParams,
   'buildWeb.setFavorite': BuildWebFavoriteParams,
   'buildWeb.setGuideTarget': BuildWebGuideTargetParams,

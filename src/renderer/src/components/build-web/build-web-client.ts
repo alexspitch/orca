@@ -8,6 +8,7 @@ import {
   BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY,
+  BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY,
   BUILD_WEB_STAND_HEALTH_RUNTIME_CAPABILITY,
   BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
   BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY,
@@ -126,6 +127,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         translate(
           'buildWeb.client.updateServerActivity',
           'This Orca server does not read build-web notifications and tasks yet. Update the server.'
+        )
+    },
+    {
+      methods: new Set<Method>(['savedQueries', 'saveQuery', 'deleteQuery']),
+      capability: BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerSavedQueries',
+          'This Orca server does not keep saved queries yet. Update the server.'
         )
     }
   ]

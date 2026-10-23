@@ -27,6 +27,9 @@ import {
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
   BuildWebProviderSessionParams,
+  BuildWebSavedQueriesParams,
+  BuildWebSavedQueryDeleteParams,
+  BuildWebSavedQuerySaveParams,
   BuildWebVersionsParams
 } from '../../shared/rpc-contract/build-web-params'
 import { RuntimeBuildWebCommands } from '../runtime/runtime-build-web-commands'
@@ -79,6 +82,11 @@ export function registerBuildWebHandlers(): void {
   handle('setFavorite', BuildWebFavoriteParams, (args) => commands.buildWebSetFavorite(args))
   handle('archiveIssue', BuildWebIssueId, (args) => commands.buildWebArchiveIssue(args))
   handle('restoreIssue', BuildWebIssueId, (args) => commands.buildWebRestoreIssue(args))
+  handle('savedQueries', BuildWebSavedQueriesParams, (args) => commands.buildWebSavedQueries(args))
+  handle('saveQuery', BuildWebSavedQuerySaveParams, (args) => commands.buildWebSaveQuery(args))
+  handle('deleteQuery', BuildWebSavedQueryDeleteParams, (args) =>
+    commands.buildWebDeleteQuery(args)
+  )
   handle('addComment', BuildWebCommentParams, (args) => commands.buildWebAddComment(args))
   handle('setAgentSession', BuildWebAgentSessionParams, (args) =>
     commands.buildWebSetAgentSession(args)

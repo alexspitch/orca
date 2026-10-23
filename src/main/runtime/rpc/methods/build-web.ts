@@ -25,6 +25,9 @@ import {
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
   BuildWebProviderSessionParams,
+  BuildWebSavedQueriesParams,
+  BuildWebSavedQueryDeleteParams,
+  BuildWebSavedQuerySaveParams,
   BuildWebVersionsParams
 } from '../../../../shared/rpc-contract/build-web-params'
 
@@ -108,6 +111,24 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebIssueId,
     handler: async (params, { runtime }) => runtime.buildWebRestoreIssue(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.savedQueries',
+    permission: 'workspace',
+    params: BuildWebSavedQueriesParams,
+    handler: async (params, { runtime }) => runtime.buildWebSavedQueries(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.saveQuery',
+    permission: 'workspace',
+    params: BuildWebSavedQuerySaveParams,
+    handler: async (params, { runtime }) => runtime.buildWebSaveQuery(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.deleteQuery',
+    permission: 'workspace',
+    params: BuildWebSavedQueryDeleteParams,
+    handler: async (params, { runtime }) => runtime.buildWebDeleteQuery(params)
   }),
   defineMethod({
     name: 'buildWeb.addComment',

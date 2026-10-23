@@ -42,6 +42,14 @@ export const TO_WORK_STATUSES: readonly BuildWebStatus[] = [
   'build_failed'
 ]
 
+/** What a tab of the list narrows by; the sort and the page are the list's own. */
+export type BuildWebListFilters = {
+  quick: readonly QuickFilter[]
+  statuses: readonly BuildWebStatus[]
+  product: BuildWebProduct | 'all'
+  query: string
+}
+
 /** What a page opens on when a notification leads there; the page takes it once. */
 export type BuildWebFocus =
   | { kind: 'train'; trainId: string; run: BuildWebTrainRun | null }
@@ -86,6 +94,14 @@ type BuildWebState = {
   toggleStatus: (status: BuildWebStatus) => void
   setStatuses: (statuses: readonly BuildWebStatus[]) => void
   setProduct: (product: BuildWebProduct | 'all') => void
+  /** The saved query whose tab the list is; null for the plain List, whose filters are kept. */
+  queryTabId: string | null
+  /** The list as one of its tabs: the plain List or a saved query's, each with its own filters. */
+  showListTab: (
+    queryTabId: string | null,
+    filters: BuildWebListFilters,
+    options?: { keepCard?: boolean }
+  ) => void
   setLoading: () => void
   setIssues: (issues: BuildWebIssueRow[], total: number) => void
   setError: (error: string) => void
@@ -109,7 +125,7 @@ export const ISSUE_PAGE_SIZE = 50
 /** The quick filters an older host knows as its single `view`. */
 const VIEW_FILTERS = ['mine', 'ai', 'favorite'] as const
 
-export const useBuildWebStore = create<BuildWebState>()((set) => ({
+export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
   contextKey: null,
   status: null,
   quick: new Set(prefs.quick),
@@ -135,7 +151,15 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
       // Why: another host's tasks must not stay on screen under this host's account.
       state.contextKey === contextKey
         ? { status }
-        : { contextKey, status, issues: [], total: 0, selected: new Set(), openIssueId: null }
+        : {
+            contextKey,
+            status,
+            issues: [],
+            total: 0,
+            selected: new Set(),
+            openIssueId: null,
+            queryTabId: null
+          }
     ),
   toggleQuick: (filter) =>
     set((state) => {
@@ -144,7 +168,9 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
         quick.add(filter)
       }
       // Why the archive is not kept: a restart must land on the live tasks, not on put-away ones.
-      writeViewPrefs({ quick: [...quick].filter((q) => q !== 'archived') })
+      if (state.queryTabId === null) {
+        writeViewPrefs({ quick: [...quick].filter((q) => q !== 'archived') })
+      }
       return { quick, page: 0 }
     }),
   sortBy: (by) =>
@@ -172,14 +198,31 @@ export const useBuildWebStore = create<BuildWebState>()((set) => ({
       if (!statuses.delete(status)) {
         statuses.add(status)
       }
-      writeViewPrefs({ statuses: [...statuses] })
+      if (state.queryTabId === null) {
+        writeViewPrefs({ statuses: [...statuses] })
+      }
       return { statuses, page: 0 }
     }),
   setStatuses: (list) => {
-    writeViewPrefs({ statuses: [...list] })
+    if (get().queryTabId === null) {
+      writeViewPrefs({ statuses: [...list] })
+    }
     set({ statuses: new Set(list), page: 0 })
   },
   setProduct: (product) => set({ product, page: 0 }),
+  queryTabId: null,
+  showListTab: (queryTabId, { quick, statuses, product, query }, options) =>
+    set({
+      queryTabId,
+      quick: new Set(quick),
+      statuses: new Set(statuses),
+      product,
+      query,
+      page: 0,
+      ...(options?.keepCard
+        ? {}
+        : { openIssueId: null, fullScreen: false, fullScreenFromDrawer: false })
+    }),
   setLoading: () => set({ loading: true }),
   setIssues: (issues, total) =>
     set((state) => {

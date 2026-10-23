@@ -34,5 +34,8 @@ export const BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY = 'build-web-issue-archi
 /** A runtime whose `buildWeb.addComment` takes `telegram`; an older one drops it and keeps the comment in the console. */
 export const BUILD_WEB_COMMENT_TELEGRAM_RUNTIME_CAPABILITY = 'build-web-comment-telegram.v1'
 
+/** A runtime that reads and keeps the Issues table's saved filters: `buildWeb.savedQueries`, `saveQuery`, `deleteQuery`. */
+export const BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY = 'build-web-saved-queries.v1'
+
 /** A runtime whose `buildWeb.listIssues` accepts `sort: 'favorite'`; an older one refuses the value. */
 export const BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY = 'build-web-issue-favorite-sort.v1'

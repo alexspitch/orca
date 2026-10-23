@@ -219,3 +219,39 @@ export const BuildWebGuideShotParams = z.object({
     .regex(/^[A-Za-z0-9._-]{1,120}$/)
     .refine(notDotSegment, 'Invalid screenshot')
 })
+
+const FilterValues = z.array(z.string().max(320)).max(100)
+export const BuildWebSavedFilterSchema = z.object({
+  q: z.string().max(500),
+  product: FilterValues,
+  type: FilterValues,
+  status: FilterValues,
+  version: FilterValues,
+  verdict: FilterValues,
+  jira: FilterValues,
+  author: FilterValues,
+  assignee: FilterValues,
+  stand: FilterValues,
+  mode: FilterValues,
+  from: z.string().max(32),
+  to: z.string().max(32),
+  rootOnly: z.boolean(),
+  favorite: z.boolean(),
+  mine: z.boolean(),
+  ai: z.boolean()
+})
+
+export const BuildWebSavedQueriesParams = z.object({
+  products: z.array(Product).min(1).max(BUILD_WEB_PRODUCTS.length)
+})
+
+export const BuildWebSavedQuerySaveParams = z.object({
+  product: Product,
+  name: required('Name the query', 200),
+  shared: z.boolean(),
+  filter: BuildWebSavedFilterSchema
+})
+
+export const BuildWebSavedQueryDeleteParams = z.object({
+  id: required('Missing query id', 128).refine(notDotSegment, 'Invalid id')
+})

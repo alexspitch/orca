@@ -42,6 +42,7 @@ export const LOCAL_STORAGE_MODULE_DISPOSITIONS: Record<string, WslMoveFieldDispo
       'src/renderer/src/components/browser-pane/annotate/use-markup-draw-hint.ts',
       'src/renderer/src/components/build-web/build-web-task-tabs.ts',
       'src/renderer/src/components/build-web/build-web-view-prefs.ts',
+      'src/renderer/src/components/build-web/saved-queries/query-tabs.ts',
       'src/renderer/src/components/build-web/stands/stand-view-prefs.ts',
       'src/renderer/src/components/build-web/testing/testing-view-prefs.ts',
       'src/renderer/src/components/feature-tips/FeatureTipsModal.tsx',

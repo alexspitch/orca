@@ -19,6 +19,10 @@ import type {
   BuildWebVersion
 } from '../../shared/build-web-types'
 import type {
+  BuildWebSavedFilter,
+  BuildWebSavedQuery
+} from '../../shared/build-web-saved-query-types'
+import type {
   BuildWebImageAdoptArgs,
   BuildWebImageAdoptResult,
   BuildWebImageHistory,
@@ -70,6 +74,15 @@ export type BuildWebApi = {
   /** Into the console's archive, with the subtasks; `restoreIssue` takes it back. */
   archiveIssue: (args: { id: string }) => Promise<BuildWebMutationResult<true>>
   restoreIssue: (args: { id: string }) => Promise<BuildWebMutationResult<true>>
+  /** The Issues table's saved filters of these products: the viewer's own and the shared ones. */
+  savedQueries: (args: { products: BuildWebProduct[] }) => Promise<BuildWebSavedQuery[]>
+  saveQuery: (args: {
+    product: BuildWebProduct
+    name: string
+    shared: boolean
+    filter: BuildWebSavedFilter
+  }) => Promise<BuildWebMutationResult<BuildWebSavedQuery>>
+  deleteQuery: (args: { id: string }) => Promise<BuildWebMutationResult<true>>
   addComment: (args: {
     id: string
     body: string
