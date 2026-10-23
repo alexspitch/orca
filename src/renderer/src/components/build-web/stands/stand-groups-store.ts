@@ -30,6 +30,8 @@ type StandGroupsState = {
   setHidden: (key: string, hidden: boolean) => void
   setShowHidden: (show: boolean) => void
   setJob: (key: string, job: BuildWebJob | null) => void
+  /** Read the monitoring again past the host's cache: an operation changed what the stands run. */
+  refreshHealth: () => void
 }
 
 let generation = 0
@@ -96,5 +98,6 @@ export const useStandGroups = create<StandGroupsState>()((set, get) => ({
     set((state) => {
       const { [key]: _previous, ...rest } = state.jobs
       return { jobs: job ? { ...rest, [key]: job } : rest }
-    })
+    }),
+  refreshHealth: () => set((s) => ({ refreshes: s.refreshes + 1 }))
 }))

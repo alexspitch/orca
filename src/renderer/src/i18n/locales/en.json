@@ -21383,7 +21383,12 @@
         "upHint": "Every service of the stand",
         "dismiss": "Hide",
         "running": "An operation is already running on the stand",
-        "upRow": "Update the stand: docker compose up -d"
+        "upRow": "Update the stand: docker compose up -d",
+        "queued": "waiting to update",
+        "updating": "updating…",
+        "updateFailed": "update {{status}}",
+        "done": "{{stand}}: the operation finished",
+        "failed": "{{stand}}: the operation ended {{status}}"
       },
       "services": {
         "count": "{{n}} services",

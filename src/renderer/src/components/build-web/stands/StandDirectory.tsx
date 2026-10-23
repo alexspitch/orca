@@ -7,6 +7,7 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type {
   BuildWebStandGroup,
+  BuildWebStandHealth,
   BuildWebStandHealthMap
 } from '../../../../../shared/build-web-stand-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
@@ -16,6 +17,7 @@ import { productsOf, StandFacts } from './StandFacts'
 import { StandHealthCell } from './StandHealthCell'
 import { StandProductChip } from './StandProductChip'
 import { useStandOp } from './use-stand-op'
+import { isJobActive, useStandJobFollow } from './use-stand-job-follow'
 
 function HideToggle({
   hidden,
@@ -49,15 +51,13 @@ function HideToggle({
   )
 }
 
-/** `docker compose up -d` of the stand, from its row; its progress is followed on the stand's own page. */
+/** `docker compose up -d` of the stand, from its row; the row's Monitoring cell follows it. */
 function StandUpButton({
   target,
-  group,
-  onStarted
+  group
 }: {
   target: RuntimeClientTarget
   group: BuildWebStandGroup
-  onStarted: () => void
 }): React.JSX.Element {
   const op = useStandOp(target, group)
   useEffect(() => {
@@ -82,7 +82,7 @@ function StandUpButton({
             disabled={!op.canOperate}
             onClick={(event) => {
               event.stopPropagation()
-              void op.run('up').then((started) => started && onStarted())
+              void op.run('up')
             }}
           >
             {op.running ? <Loader2 className="animate-spin" /> : <CircleArrowUp />}
@@ -93,6 +93,48 @@ function StandUpButton({
         {label}
       </TooltipContent>
     </Tooltip>
+  )
+}
+
+/** The Monitoring cell: the stand's operation while it goes or after it failed, then its health. */
+function StandMonitoringCell({
+  target,
+  group,
+  health
+}: {
+  target: RuntimeClientTarget
+  group: BuildWebStandGroup
+  health: BuildWebStandHealth | undefined
+}): React.JSX.Element {
+  const job = useStandJobFollow(target, group, group.enabled)
+  if (job && isJobActive(job)) {
+    return (
+      <span className="inline-flex items-center gap-1.5">
+        <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+        <BuildWebToneChip
+          label={
+            job.status === 'queued'
+              ? translate('buildWeb.stands.ops.queued', 'waiting to update')
+              : translate('buildWeb.stands.ops.updating', 'updating…')
+          }
+          tone="blue"
+        />
+      </span>
+    )
+  }
+  return (
+    <span className="flex flex-wrap items-center gap-1">
+      {job && job.status !== 'success' ? (
+        <BuildWebToneChip
+          label={translate('buildWeb.stands.ops.updateFailed', 'update {{status}}', {
+            status: job.status
+          })}
+          tone="red"
+          title={job.error ?? job.status}
+        />
+      ) : null}
+      <StandHealthCell health={health} />
+    </span>
   )
 }
 
@@ -112,12 +154,6 @@ export function StandDirectory({
   const showHidden = useStandGroups((s) => s.showHidden)
   const setHidden = useStandGroups((s) => s.setHidden)
   const setShowHidden = useStandGroups((s) => s.setShowHidden)
-  const setTab = useStandGroups((s) => s.setTab)
-  // Why open the stand: its Services tab follows the operation's log to the end.
-  const followOp = (key: string) => {
-    setTab('services')
-    onSelect(key)
-  }
   if (groups.length === 0) {
     return (
       <p className="px-3 py-10 text-center text-sm text-muted-foreground">
@@ -205,18 +241,16 @@ export function StandDirectory({
                           tone="faint"
                         />
                       ) : group.enabled ? (
-                        <StandHealthCell health={health?.[group.key]} />
+                        <StandMonitoringCell
+                          target={target}
+                          group={group}
+                          health={health?.[group.key]}
+                        />
                       ) : null}
                     </td>
                     <td className="py-1.5 pr-3">
                       <span className="flex justify-end gap-0.5">
-                        {isHidden ? null : (
-                          <StandUpButton
-                            target={target}
-                            group={group}
-                            onStarted={() => followOp(group.key)}
-                          />
-                        )}
+                        {isHidden ? null : <StandUpButton target={target} group={group} />}
                         <HideToggle
                           hidden={isHidden}
                           onToggle={() => setHidden(group.key, !isHidden)}
