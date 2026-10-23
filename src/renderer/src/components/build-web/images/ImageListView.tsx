@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Hammer, RefreshCw } from 'lucide-react'
+import { FilterX, Hammer, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { translate } from '@/i18n/i18n'
@@ -27,12 +27,12 @@ import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { productTone } from '../build-web-tones'
 import {
-  FoundCount,
-  ImagePages,
-  ImageSearch,
-  ImageTableState,
-  VersionSelect
-} from './image-view-parts'
+  NO_IMAGE_FILTERS,
+  readViewPrefs,
+  writeViewPrefs,
+  type ImageFilters
+} from '../build-web-view-prefs'
+import { FoundCount, ImagePages, ImageSearch, ImageTableState } from './image-view-parts'
 import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-build-web-images'
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'cp', 'other'] as const
@@ -57,11 +57,16 @@ export function ImageListView({
   onOpenImage: (image: string) => void
 }): React.JSX.Element {
   const [q, setQ] = useState('')
-  const [products, setProducts] = useState<string[]>([])
-  const [dists, setDists] = useState<string[]>([])
-  const [statuses, setStatuses] = useState<(typeof STATUS_FILTERS)[number][]>([])
-  const [version, setVersion] = useState('all')
+  const [filters, setFilters] = useState(() => readViewPrefs().imageFilters)
+  const { products, dists, version } = filters
+  const statuses = STATUS_FILTERS.filter((st) => filters.statuses.includes(st))
   const [page, setPage] = useState(0)
+  const narrowFilters = (patch: Partial<ImageFilters>) => {
+    const next = { ...filters, ...patch }
+    setFilters(next)
+    writeViewPrefs({ imageFilters: next })
+    setPage(0)
+  }
   const picks = useImagePicks()
   const sorting = useImageSort(() => setPage(0))
   const args = {
@@ -97,11 +102,7 @@ export function ImageListView({
   )
   const reset = () => {
     setQ('')
-    setProducts([])
-    setDists([])
-    setStatuses([])
-    setVersion('all')
-    setPage(0)
+    narrowFilters(NO_IMAGE_FILTERS)
   }
 
   return (
@@ -112,11 +113,6 @@ export function ImageListView({
           wide
           placeholder={translate('buildWeb.images.search', 'Search by image or tag')}
           onChange={(next) => (setQ(next), setPage(0))}
-        />
-        <VersionSelect
-          value={version}
-          versions={data?.versions ?? []}
-          onChange={(next) => (setVersion(next), setPage(0))}
         />
         <div className="flex-1" />
         <ImageCopyLinks builds={picks.builds} />
@@ -129,11 +125,6 @@ export function ImageListView({
             reload(true)
           )}
         />
-        {narrowed ? (
-          <Button variant="ghost" size="sm" onClick={reset}>
-            {translate('buildWeb.images.reset', 'Reset')}
-          </Button>
-        ) : null}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -145,29 +136,50 @@ export function ImageListView({
         </Button>
         <FoundCount shown={data?.total ?? 0} of={data?.of ?? 0} />
       </div>
-      <div className="flex flex-wrap gap-1.5 px-3 py-2 md:px-5">
+      <div className="flex flex-wrap items-center gap-1.5 px-3 py-2 md:px-5">
         <FilterChips
           options={PRODUCTS}
           counts={data?.counts.products ?? {}}
           selected={products}
           label={productName}
-          onToggle={(p) => (setProducts(toggled(products, p)), setPage(0))}
+          onToggle={(p) => {
+            const next = toggled(products, p)
+            // Why: versions belong to the picked products; none picked, no version filter.
+            narrowFilters(next.length ? { products: next } : { products: next, version: 'all' })
+          }}
         />
         <FilterChips
           options={DISTS}
           counts={data?.counts.dists ?? {}}
           selected={dists}
           label={(d) => d}
-          onToggle={(d) => (setDists(toggled(dists, d)), setPage(0))}
+          onToggle={(d) => narrowFilters({ dists: toggled(dists, d) })}
         />
         <FilterChips
           options={STATUS_FILTERS}
           counts={data?.counts.statuses ?? {}}
           selected={statuses}
           label={buildStatusLabel}
-          onToggle={(st) => (setStatuses(toggled(statuses, st)), setPage(0))}
+          onToggle={(st) => narrowFilters({ statuses: toggled(statuses, st) })}
         />
+        <Button variant="ghost" size="xs" onClick={reset} disabled={!narrowed}>
+          <FilterX />
+          {translate('buildWeb.images.resetFilters', 'Reset filters')}
+        </Button>
       </div>
+      {products.length ? (
+        <div className="flex flex-wrap items-center gap-1.5 px-3 pb-2 md:px-5">
+          <span className="text-xs text-muted-foreground">
+            {translate('buildWeb.images.version', 'Product version')}
+          </span>
+          <FilterChips
+            options={data?.versions ?? []}
+            selected={version === 'all' ? [] : [version]}
+            label={(v) => v}
+            onToggle={(v) => narrowFilters({ version: v === version ? 'all' : v })}
+          />
+        </div>
+      ) : null}
       <ImageBuildProgress target={target} onSettled={() => reload(true)} />
       <ImagePushProgress target={target} onSettled={() => reload(true)} />
       <ImageBuildDialog

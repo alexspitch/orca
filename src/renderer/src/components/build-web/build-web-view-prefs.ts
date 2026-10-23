@@ -37,6 +37,21 @@ type ViewPrefs = {
   folded: string[]
   /** Recaps as a month's calendar or as the list of reports. */
   recapView: RecapView
+  /** The Images list's filters; the search text and page start fresh. */
+  imageFilters: ImageFilters
+}
+
+export type ImageFilters = {
+  products: string[]
+  dists: string[]
+  statuses: string[]
+  version: string
+}
+export const NO_IMAGE_FILTERS: ImageFilters = {
+  products: [],
+  dists: [],
+  statuses: [],
+  version: 'all'
 }
 
 export const RUN_DISTS = ['all', 'rhel', 'redos'] as const
@@ -60,7 +75,24 @@ const DEFAULTS: ViewPrefs = {
   hidePending: false,
   foldAll: false,
   folded: [],
-  recapView: 'calendar'
+  recapView: 'calendar',
+  imageFilters: NO_IMAGE_FILTERS
+}
+
+const stringsOf = (raw: unknown): string[] =>
+  Array.isArray(raw) ? raw.filter((s): s is string => typeof s === 'string') : []
+
+function imageFiltersOf(raw: unknown): ImageFilters {
+  if (!raw || typeof raw !== 'object') {
+    return NO_IMAGE_FILTERS
+  }
+  const v = Object.fromEntries(Object.entries(raw))
+  return {
+    products: stringsOf(v.products),
+    dists: stringsOf(v.dists),
+    statuses: stringsOf(v.statuses),
+    version: typeof v.version === 'string' && v.version ? v.version : 'all'
+  }
 }
 
 function runFiltersOf(raw: unknown): Record<string, RunFilter> {
@@ -113,6 +145,7 @@ function prefsOf(raw: unknown): ViewPrefs {
       ? v.folded.filter((id): id is string => typeof id === 'string').slice(-FOLDED_KEPT)
       : [],
     recapView: RECAP_VIEWS.find((view) => view === v.recapView) ?? DEFAULTS.recapView,
+    imageFilters: imageFiltersOf(v.imageFilters),
     sort: sort ? { sort, dir: sortRaw.dir === 'asc' ? 'asc' : 'desc' } : DEFAULTS.sort,
     drawerWidth:
       width === null ? DEFAULTS.drawerWidth : Math.max(DRAWER_MIN_WIDTH, Math.round(width))

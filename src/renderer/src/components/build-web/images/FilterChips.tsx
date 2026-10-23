@@ -1,6 +1,7 @@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 
-/** build-web's filter chips: a toggle per value with its count; none on means no filter. */
+/** build-web's filter chips: a toggle per value with its count; none on means no filter.
+ *  Without `counts` every option shows, unnumbered. */
 export function FilterChips<T extends string>({
   options,
   counts,
@@ -9,12 +10,14 @@ export function FilterChips<T extends string>({
   onToggle
 }: {
   options: readonly T[]
-  counts: Record<string, number>
+  counts?: Record<string, number>
   selected: readonly T[]
   label: (value: T) => string
   onToggle: (value: T) => void
 }): React.JSX.Element {
-  const shown = options.filter((value) => (counts[value] ?? 0) > 0 || selected.includes(value))
+  const shown = counts
+    ? options.filter((value) => (counts[value] ?? 0) > 0 || selected.includes(value))
+    : [...options, ...selected.filter((value) => !options.includes(value))]
   return (
     <ToggleGroup
       type="multiple"
@@ -32,7 +35,7 @@ export function FilterChips<T extends string>({
     >
       {shown.map((value) => (
         <ToggleGroupItem key={value} value={value}>
-          {label(value)} · {counts[value] ?? 0}
+          {counts ? `${label(value)} · ${counts[value] ?? 0}` : label(value)}
         </ToggleGroupItem>
       ))}
     </ToggleGroup>

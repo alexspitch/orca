@@ -20661,7 +20661,7 @@
       "pick": "Pick {{image}}",
       "other": "Other",
       "search": "Search by image or tag",
-      "reset": "Reset",
+      "resetFilters": "Reset filters",
       "noneFiltered": "Nothing matches these filters.",
       "none": "No images.",
       "image": "Image",
