@@ -5,7 +5,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import type {
   BuildWebStandGroup,
-  BuildWebStandOpKind
+  BuildWebStandOpKind,
+  BuildWebStandUpdate
 } from '../../../../../shared/build-web-stand-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
@@ -21,10 +22,13 @@ import { useStandOp } from './use-stand-op'
 /** What the stand runs; restart one service or bring the whole stand up, and read a service's log. */
 export function StandServicesTab({
   target,
-  group
+  group,
+  updates
 }: {
   target: RuntimeClientTarget
   group: BuildWebStandGroup
+  /** The stands table's monitoring of this stand: the services a newer build is published for. */
+  updates: readonly BuildWebStandUpdate[]
 }): React.JSX.Element {
   const { status, error, loading, reload } = useStandStatus(target, group.statusCardId)
   const job = useStandGroups((s) => s.jobs[group.key] ?? null)
@@ -54,6 +58,7 @@ export function StandServicesTab({
   const table = (compact: boolean) => (
     <StandServicesTable
       services={services}
+      updates={updates}
       compact={compact}
       logService={logService}
       canRestart={canOperate}

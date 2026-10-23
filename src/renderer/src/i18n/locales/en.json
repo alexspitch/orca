@@ -21389,6 +21389,8 @@
         "noBuilds": "Build numbers could not be read.",
         "loading": "Reading the stand…",
         "notApplied": "not applied",
+        "newer": "→ {{tag}}",
+        "newerHint": "A newer build {{tag}} is published under this tag; pull and up -d to run it",
         "log": "Log",
         "restart": "Restart",
         "service": "Service",

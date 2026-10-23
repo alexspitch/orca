@@ -3,7 +3,10 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
-import type { BuildWebStandService } from '../../../../../shared/build-web-stand-types'
+import type {
+  BuildWebStandService,
+  BuildWebStandUpdate
+} from '../../../../../shared/build-web-stand-types'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import {
   buildNumberOf,
@@ -47,6 +50,7 @@ function RowAction({
 
 function ServiceRow({
   service,
+  newer,
   compact,
   current,
   canRestart,
@@ -54,6 +58,8 @@ function ServiceRow({
   onRestart
 }: {
   service: BuildWebStandService
+  /** A newer published build of its tag, as the monitoring column counts it. */
+  newer: string | null
   compact: boolean
   current: boolean
   canRestart: boolean
@@ -116,6 +122,18 @@ function ServiceRow({
         ) : (
           <span className="block text-xs text-muted-foreground">—</span>
         )}
+        {newer ? (
+          <BuildWebToneChip
+            className="mt-0.5"
+            label={translate('buildWeb.stands.services.newer', '→ {{tag}}', { tag: newer })}
+            tone="amber"
+            title={translate(
+              'buildWeb.stands.services.newerHint',
+              'A newer build {{tag}} is published under this tag; pull and up -d to run it',
+              { tag: newer }
+            )}
+          />
+        ) : null}
         {service.imageCreatedAt ? (
           <span
             className="mt-0.5 block truncate text-2xs text-muted-foreground"
@@ -150,9 +168,22 @@ function ServiceRow({
   )
 }
 
+/**
+ * Why the running build too: the monitoring is read each minute, the table live — right after an
+ * `up -d` the row already runs what the monitoring still calls newer.
+ */
+function newerOf(
+  updates: readonly BuildWebStandUpdate[],
+  service: BuildWebStandService
+): string | null {
+  const update = updates.find((u) => u.service === service.service)
+  return update?.newer && update.running === service.build ? update.newer : null
+}
+
 /** The stand's services as its compose names them, with what each one runs right now. */
 export function StandServicesTable({
   services,
+  updates,
   compact,
   logService,
   canRestart,
@@ -160,6 +191,7 @@ export function StandServicesTable({
   onRestart
 }: {
   services: BuildWebStandService[]
+  updates: readonly BuildWebStandUpdate[]
   /** Beside an open log: the columns that name and judge a service only. */
   compact: boolean
   logService: string | null
@@ -203,6 +235,7 @@ export function StandServicesTable({
             <ServiceRow
               key={service.service}
               service={service}
+              newer={newerOf(updates, service)}
               compact={compact}
               current={service.service === logService}
               canRestart={canRestart}

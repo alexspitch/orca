@@ -4,7 +4,10 @@ import { useAppStore } from '@/store'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { translate } from '@/i18n/i18n'
-import type { BuildWebStandGroup } from '../../../../../shared/build-web-stand-types'
+import type {
+  BuildWebStandGroup,
+  BuildWebStandUpdate
+} from '../../../../../shared/build-web-stand-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { useBuildWebStore } from '../build-web-store'
 import { useBuildWebStatus, useBuildWebTarget } from '../use-build-web-data'
@@ -20,10 +23,12 @@ import { useStandHealth } from './use-stand-health'
 
 function StandView({
   target,
-  group
+  group,
+  updates
 }: {
   target: RuntimeClientTarget
   group: BuildWebStandGroup
+  updates: readonly BuildWebStandUpdate[]
 }): React.JSX.Element {
   const tab = useStandGroups((s) => s.tab)
   const setTab = useStandGroups((s) => s.setTab)
@@ -51,7 +56,7 @@ function StandView({
         hidden={tab !== 'services'}
         className="flex min-h-0 flex-1 flex-col"
       >
-        <StandServicesTab key={group.key} target={target} group={group} />
+        <StandServicesTab key={group.key} target={target} group={group} updates={updates} />
       </TabsContent>
       <TabsContent
         value="users"
@@ -97,7 +102,12 @@ function StandsView({
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 pb-4 md:px-5">
       {group ? (
-        <StandView key={group.key} target={target} group={group} />
+        <StandView
+          key={group.key}
+          target={target}
+          group={group}
+          updates={health?.[group.key]?.updates ?? []}
+        />
       ) : (
         <StandDirectory target={target} groups={groups} health={health} onSelect={select} />
       )}
