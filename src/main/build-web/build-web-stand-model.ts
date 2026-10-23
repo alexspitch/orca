@@ -12,7 +12,7 @@ import { recordOf, recordsOf, textOf, textOrNull, textsOf } from './build-web-re
 
 const PASSWORDS: readonly BuildWebStandAccount['password'][] = ['set', 'missing', 'broken']
 // Why: the page is about the products' own stands; storage and tools cards are left out.
-const STAND_PAGE_PRODUCTS: ReadonlySet<string> = new Set(['ap', 'dc', 'sa'])
+const STAND_PAGE_PRODUCTS: ReadonlySet<string> = new Set(['ap', 'dc', 'sa', 'cp'])
 
 function lockOf(value: unknown): BuildWebStandLock | null {
   const lock = recordOf(value)
@@ -62,7 +62,7 @@ function groupName(cards: BuildWebStandCard[]): string {
 
 /**
  * One stand per host, directory and branch: the cards over it are products of one machine. Only
- * the AP, DC and SA cards count.
+ * the AP, DC, SA and Chat Platform cards count.
  */
 export function standGroupsOf(cards: BuildWebStandCard[]): BuildWebStandGroup[] {
   const byKey = new Map<string, BuildWebStandCard[]>()

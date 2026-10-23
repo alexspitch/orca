@@ -29,16 +29,17 @@ describe('stands as people mean them', () => {
     ])
   })
 
-  it('shows only the AP, DC and SA stands, and only those cards of a machine', () => {
+  it('shows only the AP, DC, SA and CP stands, and only those cards of a machine', () => {
     const groups = standGroupsOf([
       card({ id: 'dc', name: 'box dc' }),
       card({ id: 'st', name: 'box storage', product: 'storage' }),
       card({ id: 'tools', name: 'tools', dir: '/opt/tools', product: 'tools' }),
       card({ id: 'none', name: 'unset', dir: '/opt/none', product: null }),
       card({ id: 'ap', name: 'ap', dir: '/opt/ap', product: 'ap' }),
-      card({ id: 'sa', name: 'sa', dir: '/opt/sa', product: 'sa' })
+      card({ id: 'sa', name: 'sa', dir: '/opt/sa', product: 'sa' }),
+      card({ id: 'cp', name: 'cp', dir: '/opt/chat-platform/2.7', product: 'cp' })
     ])
-    expect(groups.map((g) => g.cards.map((c) => c.id))).toEqual([['ap'], ['dc'], ['sa']])
+    expect(groups.map((g) => g.cards.map((c) => c.id))).toEqual([['ap'], ['dc'], ['cp'], ['sa']])
   })
 
   it('keeps a stand apart by branch even over one directory', () => {
