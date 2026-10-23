@@ -10,6 +10,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Textarea } from '@/components/ui/textarea'
 import { WorkspaceCombobox } from '@/components/automations/WorkspaceCombobox'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
@@ -19,6 +20,7 @@ import { useBuildWebTarget } from './use-build-web-data'
 import {
   batchWorktreeName,
   buildWebBatchPrompt,
+  MAX_INSTRUCTION,
   isChatPlatformBatch,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
@@ -81,9 +83,10 @@ function TakeToWorkForm({
     )
   )
   const [auto, setAuto] = useState(false)
+  const [instruction, setInstruction] = useState('')
   // Why: the skill runs from the monorepo and makes chat-platform's worktree itself.
   const chatPlatform = isChatPlatformBatch(issues)
-  const flags = { auto, ownWorktree: chatPlatform }
+  const flags = { auto, ownWorktree: chatPlatform, instruction }
   const [picked, setMode] = useState<'existing' | 'new'>(() =>
     worktrees.length ? 'existing' : 'new'
   )
@@ -258,6 +261,19 @@ function TakeToWorkForm({
           )}
         />
       </div>
+      <label className="flex flex-col gap-1 text-sm">
+        {translate('buildWeb.take.instruction', 'Additional instruction')}
+        <Textarea
+          value={instruction}
+          maxLength={MAX_INSTRUCTION}
+          rows={3}
+          onChange={(event) => setInstruction(event.target.value)}
+          placeholder={translate(
+            'buildWeb.take.instructionHint',
+            'Optional: passed to the session after the skill call'
+          )}
+        />
+      </label>
       {held.length ? (
         <p className="text-xs text-muted-foreground">
           {translate(
@@ -270,7 +286,7 @@ function TakeToWorkForm({
         </p>
       ) : null}
       {prompt ? (
-        <code className="block rounded-md border border-border px-3 py-2 font-mono text-xs">
+        <code className="scrollbar-sleek block max-h-40 overflow-auto rounded-md border border-border px-3 py-2 font-mono text-xs whitespace-pre-wrap">
           {prompt}
         </code>
       ) : null}

@@ -8,6 +8,7 @@ import { productLabel } from './build-web-labels'
 // «Take to work»: which tasks may go together, where, and the one line the agent receives.
 
 export const MAX_BATCH = 20
+export const MAX_INSTRUCTION = 4000
 const KEY_RE = /^[A-Z][A-Z0-9]*-\d+(?:\.\d+)?$/
 
 export type BatchCheck =
@@ -94,6 +95,8 @@ export type TakeToWorkFlags = {
   auto: boolean
   /** The skill makes its own worktree: a `cp` batch, worked in chat-platform beside its clone. */
   ownWorktree?: boolean
+  /** The person's own words for this run, sent after the skill call. */
+  instruction?: string
 }
 
 /** A batch of `cp` tasks: the session stays in the monorepo, the work goes to chat-platform. */
@@ -104,13 +107,14 @@ export const isChatPlatformBatch = (issues: readonly Pick<BuildWebIssueRow, 'pro
  * The skill call — only checked keys and fixed flags, never task text. `-no-worktree` unless the
  * skill makes its own: Orca makes the worktree the session runs in when one is wanted, and for a
  * `cp` batch the skill refuses a monorepo session tree and makes chat-platform's beside its clone.
+ * The person's instruction, if any, follows on lines of its own, named as theirs.
  */
 export function buildWebBatchPrompt(keys: string[], flags: TakeToWorkFlags): string {
   const unique = [...new Set(keys)]
   if (unique.length === 0 || unique.length > MAX_BATCH || unique.some((k) => !KEY_RE.test(k))) {
     throw new Error('invalid task keys')
   }
-  return [
+  const call = [
     '/build-web-tasks batch',
     ...unique,
     flags.ownWorktree ? '' : '-no-worktree',
@@ -118,6 +122,10 @@ export function buildWebBatchPrompt(keys: string[], flags: TakeToWorkFlags): str
   ]
     .filter(Boolean)
     .join(' ')
+  const instruction = flags.instruction?.trim().slice(0, MAX_INSTRUCTION)
+  return instruction
+    ? `${call}\n\nAdditional instruction from the person who took these tasks to work:\n${instruction}`
+    : call
 }
 
 /** Git repositories of the build-web monorepo (by folder name), or every git repository if none match. */

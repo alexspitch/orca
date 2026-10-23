@@ -83,6 +83,20 @@ describe('skill call', () => {
     expect(() => buildWebBatchPrompt(['IS-1 -auto; whoami'], { auto: false })).toThrow()
   })
 
+  it('sends the person’s instruction after the skill call, on lines of its own', () => {
+    expect(
+      buildWebBatchPrompt(['IS-1'], {
+        auto: false,
+        instruction: '  Keep the API as is.\nNo new deps. '
+      })
+    ).toBe(
+      '/build-web-tasks batch IS-1 -no-worktree\n\nAdditional instruction from the person who took these tasks to work:\nKeep the API as is.\nNo new deps.'
+    )
+    expect(buildWebBatchPrompt(['IS-1'], { auto: false, instruction: '   ' })).toBe(
+      '/build-web-tasks batch IS-1 -no-worktree'
+    )
+  })
+
   it('lets the skill make chat-platform’s worktree for a batch of Chat Platform tasks', () => {
     expect(buildWebBatchPrompt(['CPDEV-12'], { auto: true, ownWorktree: true })).toBe(
       '/build-web-tasks batch CPDEV-12 -auto'

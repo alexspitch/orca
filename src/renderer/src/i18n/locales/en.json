@@ -20586,7 +20586,9 @@
       "session": "Session",
       "inThisWorktree": "The skill works in this worktree (-no-worktree) and never makes its own.",
       "pickBase": "Pick the branch the worktree starts from.",
-      "chatPlatformWorktree": "Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone."
+      "chatPlatformWorktree": "Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone.",
+      "instruction": "Additional instruction",
+      "instructionHint": "Optional: passed to the session after the skill call"
     },
     "session": {
       "label": "Agent session",
