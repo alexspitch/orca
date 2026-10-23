@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "1.4.238-custom.1792741254000",
+      "date": "2026-10-23",
+      "commit": "90f8a9f2c721",
+      "features": [
+        "Updating a stand from its row on the Stands page keeps you in the table, with progress, outcome and any error shown in the Monitoring cell.",
+        "Issues → List offers saved queries that each open in their own tab, and lets you save, share or delete your own filter sets.",
+        "Clicking a notification about a failed train or image build opens the matching train window, task or image history in Orca.",
+        "The Images page remembers its product, dist, status and version filters, offers a Reset filters button, and picks versions from chips."
+      ],
+      "settings": [],
+      "fixes": [
+        "The Stands page now shows Chat Platform stands, which were previously missing.",
+        "A stand's Services tab now marks services with a newer build available, matching the to-update count in the Stands table."
+      ]
+    },
+    {
       "version": "1.4.238-custom.1792687280000",
       "date": "2026-10-22",
       "commit": "f018081e407f",
