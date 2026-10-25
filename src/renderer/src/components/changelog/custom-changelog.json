@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.241-custom.1792924351000",
+      "date": "2026-10-25",
+      "commit": "24f51f8368e7",
+      "features": [
+        "The new-build form in Issues lists the task's release branch and each newer release its commits reach; unticking one leaves it out of that task's builds permanently.",
+        "Changing a task's release in Issues reloads its branches so new builds use the new release's branch, and the branch can also be picked by hand.",
+        "Leaving Issues and coming back reopens the task and card tab you were on."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.241-custom.1792922777000",
       "date": "2026-10-25",
       "commit": "b9061410d4b4",
