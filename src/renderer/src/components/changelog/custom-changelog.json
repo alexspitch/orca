@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.241-custom.1792926637000",
+      "date": "2026-10-25",
+      "commit": "1fc0bcc8bfd4",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "Images → Create build now opens a dialog listing the versions to build for, instead of building without showing which versions were included."
+      ]
+    },
+    {
       "version": "1.4.241-custom.1792925613000",
       "date": "2026-10-25",
       "commit": "c8ecb4203e8c",
