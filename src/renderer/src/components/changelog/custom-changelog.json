@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.241-custom.1792925613000",
+      "date": "2026-10-25",
+      "commit": "c8ecb4203e8c",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "Images: a task's build with every image removed now shows the new-build form, so you can detect images again and add them to that run."
+      ]
+    },
+    {
       "version": "1.4.241-custom.1792924351000",
       "date": "2026-10-25",
       "commit": "24f51f8368e7",
