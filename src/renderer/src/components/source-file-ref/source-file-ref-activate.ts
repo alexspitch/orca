@@ -7,6 +7,7 @@ import {
   sourceFileRefScopeOf
 } from './source-file-ref-open'
 import { offerSourceFileRefPaths } from './SourceFileRefChooser'
+import { armLinkReturn } from '@/components/link-return/link-return-arm'
 
 const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
 
@@ -28,6 +29,7 @@ export async function activateSourceFileRef(
   try {
     const paths = await findSourceFileRefPaths(scope, ref)
     if (paths.length === 1) {
+      armLinkReturn()
       await openSourceFileRefPath(scope, paths[0], ref)
     } else if (paths.length > 1) {
       offerSourceFileRefPaths({ at: { x: anchor.left, y: anchor.bottom }, scope, ref, paths })

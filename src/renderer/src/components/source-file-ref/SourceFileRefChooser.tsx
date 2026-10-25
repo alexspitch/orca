@@ -10,6 +10,7 @@ import {
 import { translate } from '@/i18n/i18n'
 import type { SourceFileRef } from './source-file-ref'
 import { openSourceFileRefPath, type SourceFileRefScope } from './source-file-ref-open'
+import { armLinkReturn } from '@/components/link-return/link-return-arm'
 
 // One chooser for every surface: a rich editor's inline code has no React element to hang a menu on.
 
@@ -54,11 +55,12 @@ export function SourceFileRefChooser(): React.JSX.Element | null {
         {choice.paths.map((path) => (
           <DropdownMenuItem
             key={path}
-            onSelect={() =>
+            onSelect={() => {
+              armLinkReturn()
               void openSourceFileRefPath(choice.scope, path, choice.ref).catch((failure: unknown) =>
                 toast.error(failure instanceof Error ? failure.message : String(failure))
               )
-            }
+            }}
           >
             <span className="truncate font-mono text-xs">{path}</span>
           </DropdownMenuItem>

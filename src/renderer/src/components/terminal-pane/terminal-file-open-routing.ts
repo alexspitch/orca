@@ -28,6 +28,7 @@ import {
   type HostWorkspaceFile
 } from './terminal-host-workspace-file'
 import { isFloatingWorkspaceId } from '../../../../shared/floating-workspace-worktree'
+import { armLinkReturn } from '@/components/link-return/link-return-arm'
 
 export {
   getTerminalFileContext,
@@ -131,6 +132,9 @@ export function openDetectedFilePath(
   )
   const requestId = ++latestOpenDetectedFilePathRequestId
   cancelPendingEditorRevealFrames()
+  if (!openWithSystemDefault) {
+    armLinkReturn()
+  }
 
   void (async () => {
     let statResult

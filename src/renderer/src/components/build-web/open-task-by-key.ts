@@ -9,6 +9,7 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { labelIssuePage, withoutPageRecording } from './page-history/page-history-store'
+import { armLinkReturn } from '@/components/link-return/link-return-arm'
 
 /** The task a number names: build-web's own number, or the Jira number of a task linked to Jira. */
 export async function findBuildWebTaskByKey(
@@ -96,6 +97,7 @@ export async function taskTitleByKey(key: string): Promise<string | null> {
  * on the Tasks page, else a note that neither knows it.
  */
 export async function openTaskByKey(key: string): Promise<void> {
+  armLinkReturn()
   const host = taskHost()
   const found = await resolveTaskByKey(host, key)
   if (found?.source === 'build-web') {

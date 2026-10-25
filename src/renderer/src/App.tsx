@@ -35,6 +35,7 @@ import { useRuntimeGraphSync } from './app-shell/use-runtime-graph-sync'
 import { useWindowVisibilityEffects } from './app-shell/use-window-visibility-effects'
 import { SpaceWindowStatePublisher } from './components/workspace-space/SpaceWindowStatePublisher'
 import { SourceFileRefChooser } from './components/source-file-ref/SourceFileRefChooser'
+import { LinkReturnSwipe } from './components/link-return/LinkReturnSwipe'
 
 function App(): React.JSX.Element {
   const layout = useAppChromeLayout()
@@ -107,6 +108,7 @@ function App(): React.JSX.Element {
         </ConfirmationDialogProvider>
         <Toaster closeButton toastOptions={{ className: 'font-sans text-sm' }} />
         <SourceFileRefChooser />
+        <LinkReturnSwipe />
       </TooltipProvider>
       <SkillFreshnessNudge />
       <WorktreeBaseFallbackDialog />
