@@ -1,4 +1,13 @@
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -209,7 +218,7 @@ function ReleaseBranchRows({
   )
 }
 
-/** The versions the build reaches, with a word on what unticking one does; nothing when there is one. */
+/** The versions the build reaches; nothing when there is only the release's own. */
 export function ReleaseBranchChoice({
   branches,
   off,
@@ -223,27 +232,61 @@ export function ReleaseBranchChoice({
     return null
   }
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xs text-muted-foreground">
-        {translate(
-          'buildWeb.newBuild.versions',
-          'Versions the images are built for: the task’s release, and each newer one its commits reach. Untick one to leave it out of this task’s builds.'
-        )}
-      </p>
-      <ReleaseBranchRows
-        branches={branches}
-        off={off}
-        onToggle={(name, on) => {
-          const next = new Set(off)
-          if (on) {
-            next.delete(name)
-          } else {
-            next.add(name)
-          }
-          onChange(next)
-        }}
-      />
-    </div>
+    <ReleaseBranchRows
+      branches={branches}
+      off={off}
+      onToggle={(name, on) => {
+        const next = new Set(off)
+        if (on) {
+          next.delete(name)
+        } else {
+          next.add(name)
+        }
+        onChange(next)
+      }}
+    />
+  )
+}
+
+/** Asked on «Create build» when the task reaches more than one version: which ones to build for. */
+export function ReleaseBranchDialog({
+  branches,
+  off,
+  onChange,
+  onCreate,
+  onCancel
+}: {
+  branches: readonly BuildWebIssueBuildBranch[]
+  off: ReadonlySet<string>
+  onChange: (off: ReadonlySet<string>) => void
+  onCreate: () => void
+  onCancel: () => void
+}): React.JSX.Element {
+  return (
+    <Dialog open onOpenChange={(open) => !open && onCancel()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {translate('buildWeb.newBuild.versionsTitle', 'Which versions to build for?')}
+          </DialogTitle>
+          <DialogDescription>
+            {translate(
+              'buildWeb.newBuild.versions',
+              'Versions the images are built for: the task’s release, and each newer one its commits reach. Untick one to leave it out of this task’s builds.'
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <ReleaseBranchChoice branches={branches} off={off} onChange={onChange} />
+        <DialogFooter>
+          <Button variant="outline" onClick={onCancel}>
+            {translate('buildWeb.newBuild.cancel', 'Cancel')}
+          </Button>
+          <Button onClick={onCreate}>
+            {translate('buildWeb.newBuild.create', 'Create build')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 

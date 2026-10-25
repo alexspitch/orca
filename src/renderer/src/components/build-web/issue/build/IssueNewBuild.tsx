@@ -22,7 +22,7 @@ import {
   BuildBranchField,
   NewBuildRows,
   ReadOnlyField,
-  ReleaseBranchChoice,
+  ReleaseBranchDialog,
   Step,
   rowKey,
   testingNote,
@@ -59,6 +59,7 @@ export function IssueNewBuild({
   // Why null: a console that cannot list them keeps adding every newer branch, as before.
   const [releaseBranches, setReleaseBranches] = useState<BuildWebIssueBuildBranch[] | null>(null)
   const [offBranches, setOffBranches] = useState<ReadonlySet<string>>(new Set())
+  const [askingVersions, setAskingVersions] = useState(false)
 
   // Why the repository: a `cp` task's images and branches are chat-platform's, not the monorepo's.
   const repo = repoField(issue.repo)
@@ -197,6 +198,18 @@ export function IssueNewBuild({
     : translate('buildWeb.newBuild.detect', 'Find images')
   return (
     <div className="flex flex-col gap-4">
+      {askingVersions && releaseBranches ? (
+        <ReleaseBranchDialog
+          branches={releaseBranches}
+          off={offBranches}
+          onChange={setOffBranches}
+          onCancel={() => setAskingVersions(false)}
+          onCreate={() => {
+            setAskingVersions(false)
+            void create()
+          }}
+        />
+      ) : null}
       {error ? (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {error}
@@ -267,7 +280,11 @@ export function IssueNewBuild({
               <Button
                 size="sm"
                 disabled={!chosen.length || busy === 'start'}
-                onClick={() => void create()}
+                onClick={() =>
+                  releaseBranches && releaseBranches.length > 1
+                    ? setAskingVersions(true)
+                    : void create()
+                }
               >
                 {busy === 'start'
                   ? translate('buildWeb.newBuild.creating', 'Creating…')
@@ -290,13 +307,6 @@ export function IssueNewBuild({
                 })
               }
             />
-            {releaseBranches ? (
-              <ReleaseBranchChoice
-                branches={releaseBranches}
-                off={offBranches}
-                onChange={setOffBranches}
-              />
-            ) : null}
             {detect.plugins_changed.length > 0 ? (
               <p className="flex items-start gap-2 rounded-md bg-chip-tone-amber/15 px-3 py-2 text-xs text-chip-tone-amber">
                 <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
