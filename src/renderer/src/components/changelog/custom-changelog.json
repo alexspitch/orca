@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.241-custom.1792910393000",
+      "date": "2026-10-25",
+      "commit": "3c6a0224a5a1",
+      "features": [
+        "File names written as inline code, optionally with line numbers, open at that line with Cmd/Ctrl+click in the rich editor and by clicking in Claude chat.",
+        "When a file reference matches several files, a menu at the click lets you pick which one to open.",
+        "The Markdown view toggle now offers Source, Rich and Preview modes."
+      ],
+      "settings": [],
+      "fixes": ["Markdown files now open in Preview by default."]
+    },
+    {
       "version": "1.4.241-custom.1792908606000",
       "date": "2026-10-25",
       "commit": "59a614b5848d",
