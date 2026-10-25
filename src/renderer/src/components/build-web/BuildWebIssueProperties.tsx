@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -43,16 +43,24 @@ function InlineSelect({
   value,
   options,
   disabled,
-  onChange
+  onChange,
+  onOpen
 }: {
   label: string
   value: string
   options: Option[]
   disabled: boolean
   onChange: (value: string) => void
+  /** Read the list again: what build-web adds while the card is open shows on the next open. */
+  onOpen?: () => void
 }): React.JSX.Element {
   return (
-    <Select value={value} disabled={disabled} onValueChange={onChange}>
+    <Select
+      value={value}
+      disabled={disabled}
+      onValueChange={onChange}
+      onOpenChange={(open) => open && onOpen?.()}
+    >
       <SelectTrigger size="sm" aria-label={label} className="w-full min-w-0">
         <SelectValue />
       </SelectTrigger>
@@ -107,22 +115,35 @@ export function BuildWebIssueProperties({
   onOpenParent?: (id: string) => void
 }): React.JSX.Element {
   const child = Boolean(detail.parent_id)
-  const [stands, setStands] = useState<BuildWebTmsStand[]>([])
+  const [stands, setStands] = useState<{ product: string; list: BuildWebTmsStand[] } | null>(null)
+  // Why its own copy: the card's list is read with the task, before a release added since.
+  const [releases, setReleases] = useState<{ product: string; list: BuildWebVersion[] } | null>(
+    null
+  )
   const [reading, setReading] = useState(false)
-  useEffect(() => {
-    if (child || detail.product === 'unknown') {
-      setStands([])
+  const product = child ? 'unknown' : detail.product
+  const loadStands = useCallback(() => {
+    if (product === 'unknown') {
       return
     }
-    let alive = true
-    void callBuildWeb(target, 'tmsStands', { product: detail.product }).then(
-      (list) => alive && setStands(list),
-      () => alive && setStands([])
+    void callBuildWeb(target, 'tmsStands', { product }).then(
+      (list) => setStands({ product, list }),
+      () => undefined
     )
-    return () => {
-      alive = false
+  }, [product, target])
+  const loadReleases = useCallback(() => {
+    if (product === 'unknown') {
+      return
     }
-  }, [child, detail.product, target])
+    void callBuildWeb(target, 'listVersions', { product }).then(
+      (list) => setReleases({ product, list }),
+      () => undefined
+    )
+  }, [product, target])
+  useEffect(loadStands, [loadStands])
+  // Why keyed by product: a late answer for the product just left must not be offered here.
+  const standList = stands?.product === product ? stands.list : []
+  const versionList = releases?.product === product ? releases.list : versions
   const busy = disabled || reading
 
   /** Another stand is another build and another mode: both are read off it and frozen again. */
@@ -171,8 +192,8 @@ export function BuildWebIssueProperties({
   ]
   const standOptions: Option[] = [
     { value: NONE, label: translate('buildWeb.props.noStand', 'Not set') },
-    ...stands.map((s) => ({ value: s.id, label: s.name })),
-    ...(detail.stand_id && !stands.some((s) => s.id === detail.stand_id)
+    ...standList.map((s) => ({ value: s.id, label: s.name })),
+    ...(detail.stand_id && !standList.some((s) => s.id === detail.stand_id)
       ? [{ value: detail.stand_id, label: detail.stand_name ?? detail.stand_id }]
       : [])
   ]
@@ -236,6 +257,7 @@ export function BuildWebIssueProperties({
                 value={detail.stand_id ?? NONE}
                 disabled={busy}
                 onChange={(v) => void chooseStand(v === NONE ? null : v)}
+                onOpen={loadStands}
                 options={standOptions}
               />
               {detail.stand_id ? (
@@ -268,9 +290,18 @@ export function BuildWebIssueProperties({
                 value={detail.version_id ?? NONE}
                 disabled={busy}
                 onChange={(v) => void onSave({ version_id: v === NONE ? null : v })}
+                onOpen={loadReleases}
                 options={[
                   { value: NONE, label: translate('buildWeb.props.noVersionSet', 'Not set') },
-                  ...versions.map((v) => ({ value: v.id, label: v.name }))
+                  ...versionList.map((v) => ({ value: v.id, label: v.name })),
+                  ...(detail.version_id && !versionList.some((v) => v.id === detail.version_id)
+                    ? [
+                        {
+                          value: detail.version_id,
+                          label: detail.version_name ?? detail.version_id
+                        }
+                      ]
+                    : [])
                 ]}
               />
             </Row>
