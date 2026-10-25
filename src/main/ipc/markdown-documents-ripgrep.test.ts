@@ -90,9 +90,16 @@ describe('Markdown document ripgrep lifecycle', () => {
     }
   )
 
-  it('rejects an unreadable subtree even after receiving valid documents', async () => {
+  it('keeps the readable documents when a subtree cannot be read', async () => {
     const result = listMarkdownDocuments(root)
     child.stdout.write('./README.md\0')
+    child.stderr.write('rg: ./logs: Permission denied (os error 13)')
+    child.emit('close', 2, null)
+    expect((await result).map((doc) => doc.basename)).toEqual(['README.md'])
+  })
+
+  it('rejects an error that left no documents at all', async () => {
+    const result = listMarkdownDocuments(root)
     child.stderr.write('Permission denied')
     child.emit('close', 2, null)
     await expect(result).rejects.toThrow('Permission denied')

@@ -13,6 +13,9 @@ import { sourceFileRefMatches, type SourceFileRef } from './source-file-ref'
 
 // Opening a plan's file reference in the worktree the work happens in, as Quick Open would.
 
+// The most a host's `files.searchPaths` answers in one call.
+const SEARCH_PATHS_MAX_LIMIT = 32
+
 export type SourceFileRefScope = { worktreeId: string; root: string }
 
 /** The named worktree, else the one in front: a plan file often lives outside any worktree. */
@@ -48,7 +51,7 @@ export async function findSourceFileRefPaths(
       : (
           await searchRuntimeFilePaths(context, {
             query: ref.path,
-            limit: 50,
+            limit: SEARCH_PATHS_MAX_LIMIT,
             includeIgnored: false,
             allowLegacyIncludeIgnored: true
           })

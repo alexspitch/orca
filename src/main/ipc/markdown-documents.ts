@@ -24,6 +24,8 @@ export async function listMarkdownDocuments(
     stdio: ['ignore', 'pipe', 'pipe']
   })
   return collectMarkdownDocuments(child, rootPath, Boolean(distro), options.signal, {
+    // Why: one unreadable folder (a container's log volume) must not leave the workspace with no documents.
+    allowPartialListing: true,
     stopProcess: () => stopBundledRipgrep(child, Boolean(distro))
   })
 }
