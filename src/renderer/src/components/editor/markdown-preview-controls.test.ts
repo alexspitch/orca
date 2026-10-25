@@ -8,13 +8,13 @@ import {
 } from './markdown-preview-controls'
 
 describe('getMarkdownViewModes', () => {
-  it('offers source and rich for markdown edit tabs', () => {
+  it('offers source, rich and preview for markdown edit tabs', () => {
     expect(
       getMarkdownViewModes({
         language: 'markdown',
         mode: 'edit'
       })
-    ).toEqual(['source', 'rich'])
+    ).toEqual(['source', 'rich', 'preview'])
   })
 
   it('offers source and rich for single-file markdown diffs', () => {
@@ -47,13 +47,13 @@ describe('getMarkdownViewModes', () => {
 })
 
 describe('markdown preview helpers', () => {
-  it('defaults markdown edit tabs to rich mode', () => {
+  it('defaults markdown edit tabs to preview mode', () => {
     expect(
       getDefaultMarkdownViewMode({
         language: 'markdown',
         mode: 'edit'
       })
-    ).toBe('rich')
+    ).toBe('preview')
   })
 
   it('defaults markdown diffs to source mode', () => {

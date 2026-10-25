@@ -17,6 +17,7 @@ import {
 } from './markdown-internal-links'
 import { scrollToAnchorInEditor } from './markdown-anchor-scroll'
 import { getRichMarkdownCommentAtPos } from './rich-markdown-review-annotations'
+import { openRichMarkdownSourceFileRef } from './rich-markdown-source-file-ref-click'
 import type { DiffComment } from '../../../../shared/diff-comment-types'
 import {
   LOCAL_EXECUTION_HOST_ID,
@@ -122,7 +123,7 @@ export function handleRichMarkdownEditorClick({
     return true
   }
   if (!href) {
-    return false
+    return openRichMarkdownSourceFileRef(view, pos, worktreeId)
   }
   if (href.startsWith('#')) {
     scrollToAnchorInEditor(rootRef.current, href.slice(1))

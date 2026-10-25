@@ -1,4 +1,12 @@
-import { useContext, useEffect, useMemo, useRef, useSyncExternalStore, type ReactNode } from 'react'
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  type ReactNode
+} from 'react'
 import { useAppStore } from '@/store'
 import { getConnectionIdFromState } from '@/lib/connection-context'
 import {
@@ -6,6 +14,7 @@ import {
   onRuntimeEnvironmentRevisionsChanged
 } from '@/runtime/runtime-environment-revision'
 import type { FileLinkExists } from '@/components/sidebar/comment-markdown-native-chat-file-links'
+import { SourceFileRefWorktreeContext } from '@/components/source-file-ref/SourceFileRefCode'
 import { useNativeChatFileLinkContext } from './use-native-chat-file-link-context'
 import {
   createNativeChatFileLinkExistence,
@@ -113,9 +122,13 @@ export function NativeChatFileLinkExistenceProvider({
     [connectionId, runtimeEnvironmentId, worktreeId, worktreePath]
   )
   useRecheckWhenHostReturns(existence, useFileLinkHostEpoch(connectionId, runtimeEnvironmentId))
+  // Why: a bare `name.py:12` is not a path from the cwd, so it is found in the worktree on click.
+  const sourceRefWorktreeId = useCallback(() => worktreeId, [worktreeId])
   return (
     <NativeChatFileLinkExistenceContext.Provider value={existence}>
-      {children}
+      <SourceFileRefWorktreeContext.Provider value={sourceRefWorktreeId}>
+        {children}
+      </SourceFileRefWorktreeContext.Provider>
     </NativeChatFileLinkExistenceContext.Provider>
   )
 }

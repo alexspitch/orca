@@ -6,7 +6,12 @@ type MarkdownPreviewTarget = Pick<OpenFile, 'mode' | 'diffSource'> & {
   language: string
 }
 
-const MARKDOWN_EDIT_VIEW_MODES = ['source', 'rich'] as const satisfies readonly MarkdownViewMode[]
+// Why preview here too: a plan or note is read far more often than edited, so it opens rendered.
+const MARKDOWN_EDIT_VIEW_MODES = [
+  'source',
+  'rich',
+  'preview'
+] as const satisfies readonly MarkdownViewMode[]
 const MARKDOWN_DIFF_VIEW_MODES = ['source', 'rich'] as const satisfies readonly MarkdownViewMode[]
 const MERMAID_VIEW_MODES = ['source', 'rich'] as const satisfies readonly MarkdownViewMode[]
 const CSV_VIEW_MODES = ['source', 'rich'] as const satisfies readonly MarkdownViewMode[]
@@ -73,6 +78,9 @@ export function getDefaultMarkdownViewMode(target: MarkdownPreviewTarget): Markd
     return 'source'
   }
   const modes = getMarkdownViewModes(target)
+  if (target.language === 'markdown' && modes.includes('preview')) {
+    return 'preview'
+  }
   return modes.includes('rich') ? 'rich' : 'source'
 }
 
