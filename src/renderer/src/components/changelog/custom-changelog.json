@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "1.4.241-custom.1792914623000",
+      "date": "2026-10-25",
+      "commit": "99b94d69b30c",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "Clicking a file reference in a remote worktree now opens the file instead of failing with an error.",
+        "The Markdown document listing now shows the documents it could read when one folder is unreadable, instead of failing entirely."
+      ]
+    },
+    {
       "version": "1.4.241-custom.1792910393000",
       "date": "2026-10-25",
       "commit": "3c6a0224a5a1",
