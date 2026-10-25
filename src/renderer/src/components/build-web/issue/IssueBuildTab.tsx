@@ -78,7 +78,9 @@ export function IssueBuildTab({
       />
     )
   }
-  if (run === null) {
+  // Why an empty run too: with every image removed there is nothing to detect from, so it starts
+  // over as the form; what it creates is added to that run.
+  if (run === null || run.builds.length === 0) {
     if (!canWrite) {
       return (
         <p className="text-sm text-muted-foreground">
