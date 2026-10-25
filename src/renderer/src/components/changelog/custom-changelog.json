@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "1.4.241-custom.1792908606000",
+      "date": "2026-10-25",
+      "commit": "59a614b5848d",
+      "features": [
+        "Source file references in a plan tab or Markdown preview, such as a file name with a line number, are links that open the file at that line, offering a list when several files match.",
+        "The Take to work dialog has an optional instruction field whose text is added to the new session's first message."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.238-custom.1792741254000",
       "date": "2026-10-23",
       "commit": "90f8a9f2c721",
