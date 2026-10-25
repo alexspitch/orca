@@ -54,6 +54,7 @@ export const buildWebApi = {
   adoptBuilt: (args) => ipcRenderer.invoke('buildWeb:adoptBuilt', args),
   detectImages: (args) => ipcRenderer.invoke('buildWeb:detectImages', args),
   createIssueRun: (args) => ipcRenderer.invoke('buildWeb:createIssueRun', args),
+  issueBuildBranches: (args) => ipcRenderer.invoke('buildWeb:issueBuildBranches', args),
   imageNames: (args) => ipcRenderer.invoke('buildWeb:imageNames', args),
   branches: (args) => ipcRenderer.invoke('buildWeb:branches', args),
   fetchRepo: (args) => ipcRenderer.invoke('buildWeb:fetchRepo', args),

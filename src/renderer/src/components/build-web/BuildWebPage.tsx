@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
+import { rememberIssuesPlace, restoreIssuesPlace } from './issues-page-place'
 import { useBuildWebIssueList, useBuildWebStatus, useBuildWebTarget } from './use-build-web-data'
 import { useBuildWebPageEscape } from './use-build-web-page-escape'
 import { BuildWebConnect } from './BuildWebConnect'
@@ -62,17 +63,19 @@ export default function BuildWebPage(): React.JSX.Element {
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const { taking, takeToWork, closeTaking } = useTakeToWork()
 
-  // Why on leaving: coming back to Issues shows the list, not the card that was open before — unless
-  // the page history is showing a card elsewhere. Why the view check: StrictMode's rehearsed unmount
-  // runs this while Issues is still the page, and must not close a card a link just opened.
-  useEffect(
-    () => () => {
+  // Why on leaving: the card is dropped, since the Testing page shows the same store's card as a
+  // dialog; the place is kept and shown again on coming back. Why the view check: StrictMode's
+  // rehearsed unmount runs this while Issues is still the page, and must not close a card a link
+  // just opened.
+  useEffect(() => {
+    restoreIssuesPlace()
+    return () => {
       if (useAppStore.getState().activeView !== 'build-web' && !isPageHistoryRestoring()) {
+        rememberIssuesPlace()
         useBuildWebStore.getState().openIssue(null)
       }
-    },
-    []
-  )
+    }
+  }, [])
 
   // Why here, not in openIssue: every way a card fills this page (a row, a link, Back) makes a tab,
   // while the Testing page's dialog shows the same card without one.

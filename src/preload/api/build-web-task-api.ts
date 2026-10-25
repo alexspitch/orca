@@ -27,6 +27,7 @@ import type {
   BuildWebCombo,
   BuildWebDetect,
   BuildWebFreshness,
+  BuildWebIssueBuildBranch,
   BuildWebIssueRunArgs,
   BuildWebLastBuilt,
   BuildWebPushAfter,
@@ -81,6 +82,8 @@ export type BuildWebTaskApi = {
   createIssueRun: (
     args: BuildWebIssueRunArgs
   ) => Promise<BuildWebMutationResult<{ id: string; existing: boolean }>>
+  /** Null from a console that cannot list them. */
+  issueBuildBranches: (args: { id: string }) => Promise<BuildWebIssueBuildBranch[] | null>
   /** Without `repo`, the monorepo's: what every client before chat-platform asked for. */
   imageNames: (args?: { repo?: 'chat-platform' }) => Promise<string[]>
   branches: (args?: { repo?: 'chat-platform' }) => Promise<BuildWebBranch[]>

@@ -47,7 +47,8 @@ export const BuildWebIssueRunParams = z.object({
   extra: z.array(Combo).max(500),
   testingStatus: Testing,
   // Why: the console's own detect answer, sent back as it came; the console reads it, not Orca.
-  detected: z.record(z.string(), z.unknown()).nullable()
+  detected: z.record(z.string(), z.unknown()).nullable(),
+  excludeBranches: z.array(Branch).max(100).optional()
 })
 export const BuildWebGuideStartParams = z.object({
   runId: Id,

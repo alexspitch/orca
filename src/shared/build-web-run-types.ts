@@ -154,4 +154,19 @@ export type BuildWebIssueRunArgs = {
   extra: BuildWebCombo[]
   testingStatus: BuildWebTestingStatus
   detected: Record<string, unknown> | null
+  /** Newer release branches to leave out; absent keeps the run's earlier choice. */
+  excludeBranches?: string[]
+}
+
+/** A branch a task's build reaches: its release's own, then each newer one and master. */
+export type BuildWebIssueBuildBranch = {
+  branch: string
+  /** The release's own branch: always built. */
+  primary: boolean
+  /** The task's commits are on it; else its images are added when they arrive. */
+  has_commits: boolean
+  /** The run already builds on it. */
+  on_run: boolean
+  /** Left out by an earlier choice. */
+  excluded: boolean
 }

@@ -17,6 +17,8 @@ const CARD_FIELDS = [
   'stand_id',
   'stand_mode',
   'version',
+  // Why: the release decides the task's branches, which the Build tab builds from.
+  'version_id',
   'description',
   'steps'
 ] as const

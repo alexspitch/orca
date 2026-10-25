@@ -11,13 +11,23 @@ import {
 import { translate } from '@/i18n/i18n'
 import type {
   BuildWebDetect,
+  BuildWebIssueBuildBranch,
   BuildWebTestingStatus
 } from '../../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
 import { ImagePicker } from './ImagePicker'
 import { repoField, type BuildWebRepo } from '../../../../../../shared/build-web-repos'
-import { NewBuildRows, ReadOnlyField, Step, rowKey, testingNote, type Row } from './NewBuildParts'
+import {
+  BuildBranchField,
+  NewBuildRows,
+  ReadOnlyField,
+  ReleaseBranchChoice,
+  Step,
+  rowKey,
+  testingNote,
+  type Row
+} from './NewBuildParts'
 
 // A task's first build, after build-web's IssueNewBuild: the release branch is the task's, the
 // console finds the images its commits touch, more can be added, and «Create» makes the run.
@@ -33,7 +43,10 @@ export function IssueNewBuild({
   testing: BuildWebTestingStatus
   onStarted: () => void
 }): React.JSX.Element {
-  const branch = issue.branch
+  const releaseBranch = issue.branch
+  // Why by hand too: a fix may need building from a branch other than its release's.
+  const [picked, setPicked] = useState<string | null>(null)
+  const branch = picked ?? releaseBranch
   const [detect, setDetect] = useState<BuildWebDetect | null>(null)
   const [off, setOff] = useState<ReadonlySet<string>>(new Set())
   const [manual, setManual] = useState<{ image: string; branch: string }[]>([])
@@ -43,6 +56,9 @@ export function IssueNewBuild({
   const [addBranch, setAddBranch] = useState(branch)
   const [busy, setBusy] = useState<'fetch' | 'detect' | 'start' | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Why null: a console that cannot list them keeps adding every newer branch, as before.
+  const [releaseBranches, setReleaseBranches] = useState<BuildWebIssueBuildBranch[] | null>(null)
+  const [offBranches, setOffBranches] = useState<ReadonlySet<string>>(new Set())
 
   // Why the repository: a `cp` task's images and branches are chat-platform's, not the monorepo's.
   const repo = repoField(issue.repo)
@@ -55,6 +71,17 @@ export function IssueNewBuild({
       () => setBranches([])
     )
   }, [repoKey, target])
+
+  const issueId = issue.id
+  useEffect(() => {
+    void callBuildWeb(target, 'issueBuildBranches', { id: issueId }).then(
+      (list) => {
+        setReleaseBranches(list)
+        setOffBranches(new Set(list?.filter((b) => b.excluded).map((b) => b.branch)))
+      },
+      () => setReleaseBranches(null)
+    )
+  }, [issueId, target])
 
   const rows: Row[] = useMemo(() => {
     if (!detect) {
@@ -88,7 +115,7 @@ export function IssueNewBuild({
   const extras = allImages.filter(
     (i) => !rows.some((r) => rowKey(r) === rowKey({ image: i, branch: addBranch }))
   )
-  const branchOptions = branches.includes(branch) ? branches : [branch, ...branches]
+  const branchOptions = [...new Set([releaseBranch, branch, ...branches])]
   const messageOf = (failure: unknown) =>
     failure instanceof Error ? failure.message : String(failure)
 
@@ -135,15 +162,23 @@ export function IssueNewBuild({
         issueId: issue.id,
         ticket: issue.key,
         branch,
-        images: chosen.filter((r) => r.branch === branch).map((r) => r.image),
+        // Why the release branch: the console builds `images` there whatever branch is named.
+        images: chosen.filter((r) => r.branch === releaseBranch).map((r) => r.image),
         // Every build covers both distributions, so an image on another branch is two combos.
         extra: chosen
-          .filter((r) => r.branch !== branch)
+          .filter((r) => r.branch !== releaseBranch)
           .flatMap((r) =>
             ['rhel', 'redos'].map((dist) => ({ image: r.image, dist, branch: r.branch }))
           ),
         testingStatus: testing,
-        detected: detect?.raw ?? null
+        detected: detect?.raw ?? null,
+        ...(releaseBranches
+          ? {
+              excludeBranches: releaseBranches
+                .filter((b) => !b.primary && offBranches.has(b.branch))
+                .map((b) => b.branch)
+            }
+          : {})
       })
       if (result.ok) {
         onStarted()
@@ -170,19 +205,18 @@ export function IssueNewBuild({
       <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
         <Step n={1} on title={translate('buildWeb.newBuild.from', 'Where to build from')} />
         <div className="flex flex-wrap items-end gap-3">
-          <div className="min-w-64 flex-[2]">
-            <ReadOnlyField
-              label={
-                <>
-                  {translate('buildWeb.newBuild.branch', 'Branch')}{' '}
-                  <span className="text-primary">
-                    · {translate('buildWeb.newBuild.fromRelease', 'from the task’s release')}
-                  </span>
-                </>
-              }
-              value={branch}
-            />
-          </div>
+          <BuildBranchField
+            branch={branch}
+            releaseBranch={releaseBranch}
+            options={branchOptions}
+            onChange={(next) => {
+              setPicked(next === releaseBranch ? null : next)
+              // Why: what was found belongs to the branch it was found on.
+              setDetect(null)
+              setManual([])
+              setAddBranch(next)
+            }}
+          />
           <div className="w-36">
             <ReadOnlyField label={translate('buildWeb.newBuild.task', 'Task')} value={issue.key} />
           </div>
@@ -256,6 +290,13 @@ export function IssueNewBuild({
                 })
               }
             />
+            {releaseBranches ? (
+              <ReleaseBranchChoice
+                branches={releaseBranches}
+                off={offBranches}
+                onChange={setOffBranches}
+              />
+            ) : null}
             {detect.plugins_changed.length > 0 ? (
               <p className="flex items-start gap-2 rounded-md bg-chip-tone-amber/15 px-3 py-2 text-xs text-chip-tone-amber">
                 <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />

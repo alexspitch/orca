@@ -9,7 +9,10 @@ import {
   useBuildWebTaskTabs
 } from '@/components/build-web/build-web-task-tabs'
 import { activeTabIdOf, armedLink, disarmLink, taskTabIds, type Origin } from './link-return-arm'
-import { isPageHistoryView } from '@/components/build-web/page-history/page-history-store'
+import {
+  isPageHistoryView,
+  setPageHistoryRestoring
+} from '@/components/build-web/page-history/page-history-store'
 
 // A file or task opened by a link is a detour: going back closes it and shows where the link was.
 
@@ -51,8 +54,14 @@ function isShown(target: Target): boolean {
 function restore(origin: Origin): void {
   const app = useAppStore.getState()
   if (isPageHistoryView(origin.view)) {
-    useBuildWebStore.setState(origin.card)
-    app.setActiveView(origin.view)
+    // Why restoring: the page shows the card as it was, not the place Issues remembers.
+    setPageHistoryRestoring(true)
+    try {
+      useBuildWebStore.setState(origin.card)
+      app.setActiveView(origin.view)
+    } finally {
+      setTimeout(() => setPageHistoryRestoring(false), 0)
+    }
     return
   }
   if (origin.view === 'terminal' && origin.worktreeId) {

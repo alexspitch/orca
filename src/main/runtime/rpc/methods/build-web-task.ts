@@ -99,6 +99,12 @@ export const BUILD_WEB_TASK_METHODS = [
     handler: async (params, { runtime }) => runtime.buildWebCreateIssueRun(params)
   }),
   defineMethod({
+    name: 'buildWeb.issueBuildBranches',
+    permission: 'workspace',
+    params: BuildWebIssueId,
+    handler: async (params, { runtime }) => runtime.buildWebIssueBuildBranches(params)
+  }),
+  defineMethod({
     name: 'buildWeb.imageNames',
     permission: 'workspace',
     params: BuildWebRepoParams,

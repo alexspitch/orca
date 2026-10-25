@@ -48,6 +48,7 @@ import {
   adoptBuildWebBuilt,
   buildWebImageTestSources,
   createBuildWebIssueRun,
+  listBuildWebIssueBuildBranches,
   detectBuildWebImages,
   fetchBuildWebRepo,
   listBuildWebBranches,
@@ -145,6 +146,10 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebCreateIssueRun(args: In<typeof BuildWebIssueRunParams>) {
     return createBuildWebIssueRun(args)
+  }
+
+  buildWebIssueBuildBranches(args: In<typeof BuildWebIssueId>) {
+    return listBuildWebIssueBuildBranches(args.id)
   }
 
   buildWebImageNames(args?: In<typeof BuildWebRepoParams>) {

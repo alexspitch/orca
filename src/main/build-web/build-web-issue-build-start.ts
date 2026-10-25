@@ -3,12 +3,13 @@ import type {
   BuildWebAdoptResult,
   BuildWebBranch,
   BuildWebDetect,
+  BuildWebIssueBuildBranch,
   BuildWebIssueRunArgs,
   BuildWebTestingStatus
 } from '../../shared/build-web-run-types'
 import { BUILD_WEB_LONG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { requireBuildWebCredential } from './build-web-connection'
-import { buildWebMutation, buildWebRequest } from './build-web-request'
+import { BuildWebApiError, buildWebMutation, buildWebRequest } from './build-web-request'
 import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 import { runOf } from './build-web-runs'
 import { repoField, type BuildWebRepo } from '../../shared/build-web-repos'
@@ -82,6 +83,38 @@ export async function detectBuildWebImages(
   }
 }
 
+/** The branches a build of the task reaches; null from a console that cannot say. */
+export async function listBuildWebIssueBuildBranches(
+  issueId: string
+): Promise<BuildWebIssueBuildBranch[] | null> {
+  const credential = requireBuildWebCredential()
+  try {
+    const answer = recordOf(
+      await buildWebRequest({
+        ...credential,
+        path: `/api/tms/issues/${encodeURIComponent(issueId)}/build-branches`,
+        timeoutMs: BUILD_WEB_LONG_TIMEOUT_MS
+      })
+    )
+    const rows = Array.isArray(answer?.branches) ? answer.branches : []
+    return rows
+      .map((row) => recordOf(row))
+      .filter((row): row is Record<string, unknown> => row !== null && Boolean(textOf(row.branch)))
+      .map((row) => ({
+        branch: textOf(row.branch),
+        primary: row.primary === true,
+        has_commits: row.has_commits === true,
+        on_run: row.on_run === true,
+        excluded: row.excluded === true
+      }))
+  } catch (error) {
+    if (error instanceof BuildWebApiError && error.routeMissing) {
+      return null
+    }
+    throw error
+  }
+}
+
 /** Make the task's run. Nothing builds yet: the Build tab starts the builds. */
 export function createBuildWebIssueRun(
   args: BuildWebIssueRunArgs
@@ -103,7 +136,8 @@ export function createBuildWebIssueRun(
           pushToRepo: false,
           testingStatus: args.testingStatus,
           detected: args.detected,
-          issueId: args.issueId
+          issueId: args.issueId,
+          ...(args.excludeBranches ? { excludeBranches: args.excludeBranches } : {})
         }
       })
     )

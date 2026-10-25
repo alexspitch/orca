@@ -106,6 +106,8 @@ export function IssueBuildTab({
           </p>
         ) : null}
         <IssueNewBuild
+          // Why the branch: another release starts the form over, from its own branch.
+          key={`${detail.id}|${detail.branches[0] ?? 'master'}`}
           target={target}
           issue={{
             id: detail.id,

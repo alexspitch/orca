@@ -948,6 +948,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.imageNames': BuildWebRepoParams,
   'buildWeb.imageSummary': null,
   'buildWeb.imageTestSources': null,
+  'buildWeb.issueBuildBranches': BuildWebIssueId,
   'buildWeb.issueCommits': BuildWebCommitsParams,
   'buildWeb.issueFile': BuildWebIssueFileParams,
   'buildWeb.issueMockupView': BuildWebIssueFileParams,
