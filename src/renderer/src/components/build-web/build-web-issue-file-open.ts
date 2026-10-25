@@ -55,7 +55,7 @@ export function issueFileConsoleUrl(baseUrl: string, issueId: string, fileId: st
 }
 
 /** The task's own worktree when its session is open here, else the one in front. */
-function issueWorktreeId(detail: BuildWebIssueDetail): string | null {
+export function issueWorktreeId(detail: BuildWebIssueDetail): string | null {
   const session = detail.agent_session ? findBuildWebSessionWorktree(detail.agent_session) : null
   return session?.worktreeId ?? useAppStore.getState().activeWorktreeId ?? null
 }

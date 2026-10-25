@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Loader2 } from 'lucide-react'
 import type { Components } from 'react-markdown'
 import { MarkdownPreviewBody } from '@/components/editor/MarkdownPreviewBody'
@@ -11,25 +12,43 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { translate } from '@/i18n/i18n'
+import { SourceFileRefCode } from '@/components/source-file-ref/SourceFileRefCode'
+import { sourceFileRefOfCode } from '@/components/source-file-ref/source-file-ref'
+import type { BuildWebIssueDetail } from '../../../../../../shared/build-web-types'
 import { loginOf } from '../../build-web-labels'
+import { issueWorktreeId } from '../../build-web-issue-file-open'
 import { planProgress } from './issue-file-roles'
 import type { IssuePlan } from './use-issue-plan'
 
-// A link of the plan opens in the browser; the card itself never navigates.
-const PLAN_COMPONENTS: Components = {
-  a: ({ href, children }) => (
-    <a
-      href={href}
-      onClick={(event) => {
-        event.preventDefault()
-        if (href && /^https?:\/\//i.test(href)) {
-          void window.api.shell.openUrl(href)
-        }
-      }}
-    >
-      {children}
-    </a>
-  )
+// A link of the plan opens in the browser; a file it names opens in the task's worktree.
+function planComponents(detail: BuildWebIssueDetail): Components {
+  return {
+    a: ({ href, children }) => (
+      <a
+        href={href}
+        onClick={(event) => {
+          event.preventDefault()
+          if (href && /^https?:\/\//i.test(href)) {
+            void window.api.shell.openUrl(href)
+          }
+        }}
+      >
+        {children}
+      </a>
+    ),
+    code: ({ className, children }) => {
+      const sourceRef = sourceFileRefOfCode(className, children)
+      return sourceRef ? (
+        <SourceFileRefCode
+          text={sourceRef.text}
+          sourceRef={sourceRef.ref}
+          worktreeId={() => issueWorktreeId(detail)}
+        />
+      ) : (
+        <code className={className}>{children}</code>
+      )
+    }
+  }
 }
 
 /** How to attach what an empty tab is for, as build-web says it. */
@@ -47,19 +66,20 @@ export function AttachHint({ text, command }: { text: string; command: string })
  * agent's `.claude/plans/` and is attached again after each change.
  */
 export function IssuePlanTab({
-  issueKey,
+  detail,
   plan
 }: {
-  issueKey: string
+  detail: BuildWebIssueDetail
   plan: IssuePlan
 }): React.JSX.Element {
   const { plans, shown, text, error } = plan
+  const components = useMemo(() => planComponents(detail), [detail])
   const isDark = useDocumentDarkTheme()
   if (!shown) {
     return (
       <AttachHint
         text={translate('buildWeb.plan.none', 'The task has no plan. Attach one with')}
-        command={`bw.sh attach ${issueKey} <plan.md> --plan`}
+        command={`bw.sh attach ${detail.key} <plan.md> --plan`}
       />
     )
   }
@@ -107,7 +127,7 @@ export function IssuePlanTab({
         // The look of a Markdown file's preview: a plan's steps read as checkboxes, not bullets.
         <div className={isDark ? 'markdown-dark' : 'markdown-light'}>
           <div className="markdown-body">
-            <MarkdownPreviewBody content={text} components={PLAN_COMPONENTS} />
+            <MarkdownPreviewBody content={text} components={components} />
           </div>
         </div>
       ) : null}

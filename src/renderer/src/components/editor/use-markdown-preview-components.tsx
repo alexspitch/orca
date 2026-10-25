@@ -24,6 +24,8 @@ import { useLocalImageSrc } from './useLocalImageSrc'
 import { documentResourceAccess } from '@/lib/local-file-access'
 import { MarkdownGitHubCallout } from '@/components/markdown-github-callout'
 import { readGitHubCalloutKind } from '@/lib/remark-github-callouts'
+import { SourceFileRefCode } from '@/components/source-file-ref/SourceFileRefCode'
+import { sourceFileRefOfCode } from '@/components/source-file-ref/source-file-ref'
 
 export function useMarkdownPreviewComponents({
   foundation,
@@ -166,6 +168,17 @@ export function useMarkdownPreviewComponents({
         if (/language-mermaid/.test(className || '')) {
           return (
             <MermaidBlock content={String(children).trimEnd()} isDark={isDark} htmlLabels={false} />
+          )
+        }
+        const sourceRef = sourceFileRefOfCode(className, children)
+        if (sourceRef) {
+          // Why the tab's worktree: a plan often sits outside the worktree its files are in.
+          return (
+            <SourceFileRefCode
+              text={sourceRef.text}
+              sourceRef={sourceRef.ref}
+              worktreeId={() => sourceRoutingWorktreeId}
+            />
           )
         }
         return (

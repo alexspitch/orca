@@ -173,7 +173,7 @@ export function BuildWebIssueFullScreen({
           </TabsContent>
           {visited.has('plan') ? (
             <TabsContent value="plan" forceMount hidden={current !== 'plan'}>
-              <IssuePlanTab issueKey={detail.key} plan={plan} />
+              <IssuePlanTab detail={detail} plan={plan} />
             </TabsContent>
           ) : null}
           {visited.has('mockups') ? (
