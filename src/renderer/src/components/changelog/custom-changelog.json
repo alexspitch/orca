@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.241-custom.1792922777000",
+      "date": "2026-10-25",
+      "commit": "b9061410d4b4",
+      "features": [
+        "A file or task opened from a link in a chat, terminal or source reference now closes on a two-finger swipe back, returning you to where you clicked."
+      ],
+      "settings": [],
+      "fixes": [
+        "Task card → Stand and Version lists now show stands and releases added in build-web since the card opened, and a missing release still shows by name."
+      ]
+    },
+    {
       "version": "1.4.241-custom.1792914623000",
       "date": "2026-10-25",
       "commit": "99b94d69b30c",
