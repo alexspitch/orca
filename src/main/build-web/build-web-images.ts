@@ -12,7 +12,12 @@ import type {
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
 import { getBuildWebCredentialGeneration, getStoredBuildWebMetadata } from './credential-store'
-import { buildWebMutation, buildWebRequest, type BuildWebResponseLimit } from './build-web-request'
+import {
+  BuildWebApiError,
+  buildWebMutation,
+  buildWebRequest,
+  type BuildWebResponseLimit
+} from './build-web-request'
 import { BUILD_WEB_CATALOG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { consoleUrlOf, numberOf, recordOf, textOf, textOrNull } from './build-web-response-fields'
 import {
@@ -134,7 +139,25 @@ async function catalog(
   return promise
 }
 
+// Why: once a console answers without the summary route, ask it the old way for the session.
+let summaryRouteMissing = false
+
+/** The sidebar's numbers; a console older than its summary route has them counted from the catalog. */
 export async function buildWebImageSummary(): Promise<BuildWebImageSummary> {
+  if (!summaryRouteMissing) {
+    const credential = requireBuildWebCredential({ background: true })
+    try {
+      const answer = recordOf(
+        await buildWebRequest({ ...credential, path: '/api/image-builds/summary' })
+      )
+      return { running: numberOf(answer?.running), failed: numberOf(answer?.failed) }
+    } catch (error) {
+      if (!(error instanceof BuildWebApiError && error.routeMissing)) {
+        throw error
+      }
+      summaryRouteMissing = true
+    }
+  }
   const images = await catalog({ maxAgeMs: SUMMARY_TTL_MS, background: true })
   return { running: runningImageCount(images), failed: failedImageCount(images) }
 }

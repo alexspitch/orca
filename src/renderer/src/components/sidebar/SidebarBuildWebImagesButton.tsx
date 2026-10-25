@@ -13,6 +13,8 @@ import type { BuildWebImageSummary } from '../../../../shared/build-web-image-ty
 
 const readSummary = (target: RuntimeClientTarget): Promise<BuildWebImageSummary> =>
   callBuildWeb(target, 'imageSummary')
+// Why shorter than other items: builds start and end within minutes, and the console answers this cheaply.
+const SUMMARY_POLL_MS = 15_000
 
 /** «Images»: build-web's images, with how many are building now and how many failed last. */
 export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
@@ -20,7 +22,7 @@ export function SidebarBuildWebImagesButton(): React.JSX.Element | null {
   const active = useAppStore((s) => s.activeView === 'build-web-images')
   const openPage = useAppStore((s) => s.openBuildWebImagesPage)
   const updateSettings = useAppStore((s) => s.updateSettings)
-  const summary = useBuildWebBadge(show, readSummary)
+  const summary = useBuildWebBadge(show, readSummary, SUMMARY_POLL_MS)
   if (!show) {
     return null
   }
