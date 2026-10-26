@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "1.4.242-custom.1793024966000",
+      "date": "2026-10-26",
+      "commit": "f1549d7ba41f",
+      "features": [
+        "Dev services whose code changed since they started now show a badge with a tooltip listing changed workspaces, unbuilt packages and files.",
+        "A changed dev service's badge offers «Rebuild and Restart» to rebuild and restart just that service."
+      ],
+      "settings": [],
+      "fixes": [
+        "The dev services status no longer loses the information about what changed since each service started.",
+        "A failed dev services build now shows which targets failed with their last output line, and which services did not respond."
+      ]
+    },
+    {
       "version": "1.4.242-custom.1793023918000",
       "date": "2026-10-26",
       "commit": "6d4f75e97dc7",
