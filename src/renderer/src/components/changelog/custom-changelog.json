@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.242-custom.1793014764000",
+      "date": "2026-10-26",
+      "commit": "bbacc35962a7",
+      "features": [
+        "«Take to work» now shows a loading toast while it creates a new worktree and starts the session, so you can see progress after the dialog closes."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.241-custom.1792939043000",
       "date": "2026-10-25",
       "commit": "a1bf3ae66070",
