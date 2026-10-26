@@ -3,11 +3,15 @@ import { Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
-import type { BuildWebPushProgress } from '../../../../../shared/build-web-image-types'
+import type {
+  BuildWebImageBuild,
+  BuildWebPushProgress
+} from '../../../../../shared/build-web-image-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { isPushOver, useImagePushes, type TrackedImagePush } from './image-push-runs'
+import { RegistryCell } from './image-build-cells'
 
 const POLL_MS = 1500
 
@@ -112,6 +116,66 @@ function PushCard({
       {progress?.error ? <p className="text-xs text-destructive">{progress.error}</p> : null}
     </section>
   )
+}
+
+// Why ten seconds at most: the table's registry and status must follow a push while it goes.
+const TABLE_REFRESH_MS = 8_000
+
+/** A row's place in a push still going: its own outcome once known, else pushing; null outside one. */
+export function useRowPushProgress(key: string): BuildWebPushProgress | null {
+  return useImagePushes((s) => {
+    for (const push of s.pushes) {
+      const progress = s.progress[push.runId]
+      if (push.keys.includes(key) && !isPushOver(progress)) {
+        return progress ?? null
+      }
+    }
+    return null
+  })
+}
+
+/** The row's registry: what a push going does to it while it goes, else what the registry holds. */
+export function RowRegistryCell({
+  rowKey,
+  build
+}: {
+  rowKey: string
+  build: BuildWebImageBuild
+}): React.JSX.Element {
+  const going = useImagePushes((s) =>
+    s.pushes.some((p) => p.keys.includes(rowKey) && !isPushOver(s.progress[p.runId]))
+  )
+  const progress = useRowPushProgress(rowKey)
+  return going ? imageChip(rowKey, progress ?? undefined) : <RegistryCell build={build} />
+}
+
+/**
+ * Re-reads the table while any push goes: every few seconds, and at once when an image of it ends,
+ * so a row's registry and status follow the push instead of waiting for the whole of it.
+ */
+export function useTableFollowsPushes(reload: () => void): void {
+  const going = useImagePushes((s) => s.pushes.some((p) => !isPushOver(s.progress[p.runId])))
+  const finished = useImagePushes((s) =>
+    s.pushes.reduce(
+      (n, p) =>
+        n + (s.progress[p.runId]?.ok.length ?? 0) + (s.progress[p.runId]?.failed.length ?? 0),
+      0
+    )
+  )
+  const reloadRef = useRef(reload)
+  reloadRef.current = reload
+  useEffect(() => {
+    if (going && finished > 0) {
+      reloadRef.current()
+    }
+  }, [finished, going])
+  useEffect(() => {
+    if (!going) {
+      return
+    }
+    const timer = window.setInterval(() => reloadRef.current(), TABLE_REFRESH_MS)
+    return () => window.clearInterval(timer)
+  }, [going])
 }
 
 /**

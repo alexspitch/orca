@@ -6,13 +6,7 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import { isPushable } from '../../../../../shared/build-web-image-push'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
-import {
-  BuildStatusCell,
-  LogCell,
-  RegistryCell,
-  buildStatusLabel,
-  formatBuildTime
-} from './image-build-cells'
+import { BuildStatusCell, LogCell, buildStatusLabel, formatBuildTime } from './image-build-cells'
 import { FilterChips } from './FilterChips'
 import { ImagePushMenu } from './ImagePushMenu'
 import { ImageCopyLinks } from './ImageCopyLinks'
@@ -21,7 +15,7 @@ import { useImagePicks } from './use-image-picks'
 import { ImageBuildDialog } from './ImageBuildDialog'
 import { ImageGroupBuildButton, type ImageBuildChoice } from './ImageGroupBuildButton'
 import { ImageBuildProgress } from './ImageBuildProgress'
-import { ImagePushProgress } from './ImagePushProgress'
+import { ImagePushProgress, RowRegistryCell, useTableFollowsPushes } from './ImagePushProgress'
 import { SettleFailedStatus } from './SettleFailedStatus'
 import { FreshnessCell, useImageFreshness } from './image-freshness'
 import { useBuildWebStore } from '../build-web-store'
@@ -89,6 +83,7 @@ export function ImageListView({
   const fresh = useImageFreshness(target, rows, version === 'all' ? null : version, refreshes)
   const canBuild = useBuildWebStore((s) => s.status?.perms.includes('build') === true)
   const [building, setBuilding] = useState<ImageBuildChoice | null>(null)
+  useTableFollowsPushes(() => reload(true))
   const anyRunning = rows.some((r) => r.last?.status === 'running')
   // Why: builds going on the console show their outcome without a manual refresh.
   useEffect(() => {
@@ -362,7 +357,7 @@ export function ImageListView({
                     ) : null}
                     <td className="py-2">{row.last ? <LogCell build={row.last} /> : null}</td>
                     <td className="py-2 pr-3 md:pr-5">
-                      {row.last ? <RegistryCell build={row.last} /> : null}
+                      {row.last ? <RowRegistryCell rowKey={rowKey} build={row.last} /> : null}
                     </td>
                   </tr>
                 )
