@@ -180,8 +180,7 @@ export const BuildWebBuildLogParams = z.object({
   offset: z.number().int().min(0)
 })
 export const BuildWebVersionBranchesParams = z.object({ product: ShortText })
-export const BuildWebImageBuildParams = z.object({
-  image: required('Missing image', 300),
+const ImageBuildChoice = {
   branch: required('Pick a version', 200),
   dist: z.enum(['both', 'rhel', 'redos']),
   ticket: z
@@ -190,6 +189,14 @@ export const BuildWebImageBuildParams = z.object({
     .regex(/^([A-Z][A-Z0-9_]*-\d+)?$/, 'A ticket looks like SDAP-1234')
     .optional(),
   skipTests: z.boolean().optional()
+}
+export const BuildWebImageBuildParams = z.object({
+  image: required('Missing image', 300),
+  ...ImageBuildChoice
+})
+export const BuildWebImageGroupBuildParams = z.object({
+  images: z.array(required('Missing image', 300)).min(1).max(100),
+  ...ImageBuildChoice
 })
 export const BuildWebPushRunParams = z.object({ runId: Id, moveMainTag: z.boolean() })
 export const BuildWebGuideParams = z.object({ runId: Id, guide: z.string().max(200_000) })

@@ -32,16 +32,16 @@ function distLabel(dist: BuildWebImageBuildArgs['dist']): string {
   return dist === 'both' ? translate('buildWeb.imageBuild.both', 'rhel and redos') : dist
 }
 
-/** One image to a new build on a version (a branch) of its product, as build-web's «Собрать…». */
+/** Images to a new build on a version (a branch) of their product, as build-web's «Собрать…». */
 function BuildForm({
   target,
-  image,
+  images,
   product,
   initialBranch,
   onClose
 }: {
   target: RuntimeClientTarget
-  image: string
+  images: string[]
   product: string
   initialBranch?: string
   onClose: () => void
@@ -102,20 +102,31 @@ function BuildForm({
     setBusy(true)
     setError(null)
     try {
-      const result = await callBuildWeb(target, 'startImageBuild', {
-        image,
+      const choice = {
         branch,
         dist,
         ...(ticket.trim() ? { ticket: ticket.trim() } : {}),
         ...(tests.skipTests ? { skipTests: true } : {})
-      })
+      }
+      // Why one image the old way: a server without group builds still builds a single image.
+      const result =
+        images.length === 1
+          ? await callBuildWeb(target, 'startImageBuild', { ...choice, image: images[0] })
+          : await callBuildWeb(target, 'startImageGroupBuild', { ...choice, images })
       if (!result.ok) {
         setError(result.error)
         return
       }
-      track({ runId: result.value.runId, image, startedAt: Date.now() })
+      track({ runId: result.value.runId, images, startedAt: Date.now() })
       toast.success(
-        translate('buildWeb.imageBuild.started', 'Build of {{image}} started.', { image })
+        translate('buildWeb.imageBuild.started', 'Build of {{image}} started.', {
+          image:
+            images.length === 1
+              ? images[0]
+              : translate('buildWeb.imageBuild.images', '{{count}} images', {
+                  count: images.length
+                })
+        })
       )
       onClose()
     } catch (failure) {
@@ -128,9 +139,19 @@ function BuildForm({
   return (
     <>
       <DialogHeader>
-        <DialogTitle>{translate('buildWeb.imageBuild.title', 'Build the image')}</DialogTitle>
-        <DialogDescription>
-          <span className="font-mono">{image}</span>
+        <DialogTitle>
+          {images.length === 1
+            ? translate('buildWeb.imageBuild.title', 'Build the image')
+            : translate('buildWeb.imageBuild.titleMany', 'Build {{count}} images', {
+                count: images.length
+              })}
+        </DialogTitle>
+        <DialogDescription asChild>
+          <div className="scrollbar-sleek flex max-h-32 flex-col overflow-y-auto font-mono">
+            {images.map((image) => (
+              <span key={image}>{image}</span>
+            ))}
+          </div>
         </DialogDescription>
       </DialogHeader>
       <div className="flex flex-col gap-4">
@@ -245,7 +266,8 @@ export function ImageBuildDialog({
   open: boolean
   onOpenChange: (open: boolean) => void
   target: RuntimeClientTarget
-  image: string
+  /** One image, or several of one product built together. */
+  images: string[]
   product: string
   /** The version to start from — the last build's branch when building it again. */
   initialBranch?: string

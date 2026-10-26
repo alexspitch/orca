@@ -177,7 +177,7 @@ export function ImageHistoryView({
         open={building}
         onOpenChange={setBuilding}
         target={target}
-        image={image}
+        images={[image]}
         product={product}
       />
       <ImageTableState

@@ -42,3 +42,6 @@ export const BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY = 'build-web-issue
 
 /** A runtime that says whether a product version's images hold its branch's changes: `buildWeb.imageFreshness`. */
 export const BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY = 'build-web-image-freshness.v1'
+
+/** A runtime that builds several images in one run: `buildWeb.startImageGroupBuild`. */
+export const BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY = 'build-web-image-group-build.v1'

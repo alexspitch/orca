@@ -11,6 +11,7 @@ import type {
   BuildWebImageHistoryParams,
   BuildWebImagePageParams,
   BuildWebImageBuildParams,
+  BuildWebImageGroupBuildParams,
   BuildWebImageAdoptParams,
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
@@ -85,7 +86,8 @@ import {
   getBuildWebRun,
   listBuildWebVersionBranches,
   readBuildWebBuildLog,
-  startBuildWebImageBuild
+  startBuildWebImageBuild,
+  startBuildWebImageGroupBuild
 } from '../build-web/build-web-image-builds'
 
 type In<T extends z.ZodTypeAny> = z.infer<T>
@@ -206,6 +208,10 @@ export class RuntimeBuildWebCommands {
 
   buildWebStartImageBuild(args: In<typeof BuildWebImageBuildParams>) {
     return startBuildWebImageBuild(args)
+  }
+
+  buildWebStartImageGroupBuild(args: In<typeof BuildWebImageGroupBuildParams>) {
+    return startBuildWebImageGroupBuild(args)
   }
 
   buildWebGetRun(args: In<typeof BuildWebRunParams>) {

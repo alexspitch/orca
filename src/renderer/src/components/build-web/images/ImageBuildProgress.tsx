@@ -31,7 +31,11 @@ function RunProgress({
   const [answer, setAnswer] = useState<BuildWebRun | null | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const settled = useRef(false)
-  const builds = (answer?.builds ?? []).filter((b) => b.image === run.image)
+  const builds = (answer?.builds ?? []).filter((b) => run.images.includes(b.image))
+  const several = run.images.length > 1
+  const name = several
+    ? translate('buildWeb.imageBuild.images', '{{count}} images', { count: run.images.length })
+    : run.images[0]
   const going =
     answer === undefined || builds.length === 0 || builds.some((b) => isBuildGoing(b.status))
 
@@ -70,9 +74,9 @@ function RunProgress({
         {going ? <Loader2 className="size-3.5 animate-spin text-muted-foreground" /> : null}
         <span className="font-medium">
           {going
-            ? translate('buildWeb.imageBuild.going', 'Building {{image}}…', { image: run.image })
+            ? translate('buildWeb.imageBuild.going', 'Building {{image}}…', { image: name })
             : translate('buildWeb.imageBuild.finished', 'Build of {{image}} finished', {
-                image: run.image
+                image: name
               })}
         </span>
         <span className="text-xs text-muted-foreground">
@@ -94,7 +98,11 @@ function RunProgress({
         </p>
       ) : null}
       {builds.map((b) => (
-        <div key={`${b.dist}|${b.branch}`} className="flex flex-wrap items-center gap-2 text-xs">
+        <div
+          key={`${b.image}|${b.dist}|${b.branch}`}
+          className="flex flex-wrap items-center gap-2 text-xs"
+        >
+          {several ? <span className="min-w-0 truncate font-mono">{b.image}</span> : null}
           <span className="w-12">{b.dist}</span>
           <BuildWebToneChip label={versionOfBranch(b.branch)} tone={null} mono />
           <span className="inline-flex items-center gap-1">
@@ -134,7 +142,10 @@ export function ImageBuildProgress({
   onSettled: () => void
 }): React.JSX.Element | null {
   const all = useImageBuildRuns((s) => s.runs)
-  const runs = useMemo(() => (image ? all.filter((r) => r.image === image) : all), [all, image])
+  const runs = useMemo(
+    () => (image ? all.filter((r) => r.images.includes(image)) : all),
+    [all, image]
+  )
   if (runs.length === 0) {
     return null
   }

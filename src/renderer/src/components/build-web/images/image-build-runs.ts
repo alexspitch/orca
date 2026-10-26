@@ -3,7 +3,8 @@ import { create } from 'zustand'
 // Builds started from Images in this window, followed until they finish. Kept outside the views so
 // going back to the list and into the image again does not lose a build that is still going.
 
-export type TrackedImageBuild = { runId: string; image: string; startedAt: number }
+/** A run started from Images: one image, or several built together. */
+export type TrackedImageBuild = { runId: string; images: string[]; startedAt: number }
 
 type ImageBuildRuns = {
   runs: TrackedImageBuild[]

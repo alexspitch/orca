@@ -22,7 +22,8 @@ const {
   getBuildWebRun,
   listBuildWebVersionBranches,
   readBuildWebBuildLog,
-  startBuildWebImageBuild
+  startBuildWebImageBuild,
+  startBuildWebImageGroupBuild
 } = await import('./build-web-image-builds')
 
 beforeEach(() => {
@@ -153,5 +154,44 @@ describe('image builds', () => {
     expect(mocks.request.mock.calls[0][0].path).toBe('/api/tests/runs/r1/jobs/j1/log?offset=0')
     mocks.request.mockResolvedValueOnce({ offset: 1500, size: 1500, text: 'end' })
     expect(await readBuildWebBuildLog(url, 1024)).toEqual({ text: 'end', next: 1500, done: true })
+  })
+})
+
+describe('a group build from Images', () => {
+  it('builds the picked images as one run on the chosen version, each for both dists', async () => {
+    mocks.request.mockResolvedValueOnce({ id: 'run-1' }).mockResolvedValueOnce({})
+    const result = await startBuildWebImageGroupBuild({
+      images: ['ap/ui', 'ap/oauth', 'ap/ui'],
+      branch: 'ap-release-1.16',
+      dist: 'both'
+    })
+    expect(result).toEqual({ ok: true, value: { runId: 'run-1' } })
+    const [made, started] = mocks.request.mock.calls.map(([r]) => r)
+    expect(made).toMatchObject({
+      path: '/api/runs',
+      body: { branch: 'ap-release-1.16', images: ['ap/ui', 'ap/oauth'], distType: 'both' }
+    })
+    expect(started).toMatchObject({
+      path: '/api/runs/run-1/builds',
+      body: {
+        combos: [
+          { image: 'ap/ui', dist: 'rhel', branch: 'ap-release-1.16' },
+          { image: 'ap/ui', dist: 'redos', branch: 'ap-release-1.16' },
+          { image: 'ap/oauth', dist: 'rhel', branch: 'ap-release-1.16' },
+          { image: 'ap/oauth', dist: 'redos', branch: 'ap-release-1.16' }
+        ]
+      }
+    })
+    expect(mocks.invalidate).toHaveBeenCalledOnce()
+  })
+
+  it('refuses the monorepo’s and Chat Platform’s images together, asking nothing', async () => {
+    const result = await startBuildWebImageGroupBuild({
+      images: ['ap/ui', 'chatplatform/gateway'],
+      branch: 'master',
+      dist: 'rhel'
+    })
+    expect(result.ok).toBe(false)
+    expect(mocks.request).not.toHaveBeenCalled()
   })
 })

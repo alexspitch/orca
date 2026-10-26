@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import { translate } from '@/i18n/i18n'
 import type {
   BuildWebImageFreshness,
@@ -85,17 +86,8 @@ export function useImageFreshness(
         byScope: { ...(current.targetKey === targetKey ? current.byScope : {}), [key]: scan }
       }))
     for (const [key, scope] of scopesRef.current) {
-      setScans((current) =>
-        current.targetKey === targetKey && current.byScope[key]
-          ? current
-          : {
-              targetKey,
-              byScope: {
-                ...(current.targetKey === targetKey ? current.byScope : {}),
-                [key]: { state: 'loading' }
-              }
-            }
-      )
+      // Why every time: a rescan replaces the flag, so the old one must not read as the answer.
+      put(key, { state: 'loading' })
       void callBuildWeb(target, 'imageFreshness', { ...scope, version, force }).then(
         (value) => put(key, { state: 'done', value }),
         () => put(key, { state: 'failed' })
@@ -116,7 +108,7 @@ export function useImageFreshness(
   }
 }
 
-/** The row's flag: to rebuild, with what changed; current; or never built on the version. */
+/** The row's flag: to rebuild for its own code or for packages only; current; or never built on the version. */
 export function FreshnessCell({
   row,
   scan
@@ -125,25 +117,39 @@ export function FreshnessCell({
   scan: Scan | null
 }): React.JSX.Element | null {
   if (scan?.state === 'loading') {
-    return <span className="text-xs text-muted-foreground">…</span>
+    return (
+      <Loader2
+        className="size-3.5 animate-spin text-muted-foreground"
+        aria-label={translate('buildWeb.images.freshnessLoading', 'Checking for changes…')}
+      />
+    )
   }
   if (scan?.state !== 'done' || !scan.value) {
     return null
   }
   const { rebuild, current, neverBuilt, branch } = scan.value
   if (Object.hasOwn(rebuild, row.image)) {
-    const changed = rebuild[row.image]
-    return (
+    const { kind, changed } = rebuild[row.image]
+    const what = changed.join(', ') || translate('buildWeb.images.rebuildSources', 'its sources')
+    // Why two flags: its own code changed is a sure rebuild; a shared package may not reach it.
+    return kind === 'app' ? (
       <BuildWebToneChip
         label={translate('buildWeb.images.rebuild', 'rebuild')}
         tone="amber"
         title={translate(
           'buildWeb.images.rebuildTip',
-          'Changed on {{branch}} since its last build: {{what}}',
-          {
-            branch,
-            what: changed.join(', ') || translate('buildWeb.images.rebuildSources', 'its sources')
-          }
+          'Its own code changed on {{branch}} since its last build: {{what}}',
+          { branch, what }
+        )}
+      />
+    ) : (
+      <BuildWebToneChip
+        label={translate('buildWeb.images.rebuildPackages', 'packages')}
+        tone="sky"
+        title={translate(
+          'buildWeb.images.rebuildPackagesTip',
+          'Only shared packages it is built with changed on {{branch}} since its last build: {{what}}',
+          { branch, what }
         )}
       />
     )

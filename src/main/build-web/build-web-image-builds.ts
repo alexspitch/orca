@@ -1,4 +1,7 @@
-import type { BuildWebImageBuildArgs } from '../../shared/build-web-image-types'
+import type {
+  BuildWebImageBuildArgs,
+  BuildWebImageGroupBuildArgs
+} from '../../shared/build-web-image-types'
 import type { BuildWebLogPiece, BuildWebRun } from '../../shared/build-web-run-types'
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
@@ -8,8 +11,8 @@ import { numberOf, recordOf, textOf, textsOf } from './build-web-response-fields
 import { runOf } from './build-web-runs'
 import { repoField, repoOfImage } from '../../shared/build-web-repos'
 
-// Building one image from Images, after build-web's ImageBuildDialog: a run for the image on the
-// chosen branch, then its builds started at once (build-web leaves that to its Progress page).
+// Building images from Images, after build-web's ImageBuildDialog: a run for the images on the
+// chosen branch, then their builds started at once (build-web leaves that to its Progress page).
 
 const PRODUCTS_WITH_RELEASES = new Set(['sa', 'dc', 'ap', 'storage', 'cp', 'tools'])
 const enc = encodeURIComponent
@@ -36,7 +39,23 @@ export async function listBuildWebVersionBranches(product: string): Promise<stri
 export function startBuildWebImageBuild(
   args: BuildWebImageBuildArgs
 ): Promise<BuildWebMutationResult<{ runId: string }>> {
+  const { image, ...choice } = args
+  return startBuildWebImageGroupBuild({ ...choice, images: [image] })
+}
+
+/** One run for the images on the chosen version, its builds started at once. */
+export function startBuildWebImageGroupBuild(
+  args: BuildWebImageGroupBuildArgs
+): Promise<BuildWebMutationResult<{ runId: string }>> {
   return buildWebMutation(async () => {
+    const images = [...new Set(args.images)]
+    const repos = new Set(images.map(repoOfImage))
+    // Why: a run's branch belongs to one repository; chat-platform's master is not the monorepo's.
+    if (repos.size !== 1) {
+      throw new Error(
+        'Build the monorepo’s images and Chat Platform’s apart: a run is of one repository'
+      )
+    }
     const credential = requireBuildWebCredential()
     const made = recordOf(
       await buildWebRequest({
@@ -46,9 +65,8 @@ export function startBuildWebImageBuild(
         body: {
           branch: args.branch,
           ticket: args.ticket || null,
-          images: [args.image],
-          // Why: the run's branch belongs to the image's repository; chat-platform has its own master.
-          ...repoField(repoOfImage(args.image)),
+          images,
+          ...repoField(repoOfImage(images[0])),
           distType: args.dist,
           pushToRepo: false,
           detected: null
@@ -65,11 +83,13 @@ export function startBuildWebImageBuild(
       method: 'POST',
       path: `/api/runs/${enc(runId)}/builds`,
       body: {
-        combos: dists.map((dist) => ({ image: args.image, dist, branch: args.branch })),
+        combos: images.flatMap((image) =>
+          dists.map((dist) => ({ image, dist, branch: args.branch }))
+        ),
         ...(args.skipTests ? { skipTests: true } : {})
       }
     })
-    // Why: the catalog behind Images and the badge must show the new build as running.
+    // Why: the catalog behind Images and the badge must show the new builds as running.
     invalidateBuildWebImageCatalog()
     return { runId }
   })

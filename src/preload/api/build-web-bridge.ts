@@ -30,6 +30,7 @@ export const buildWebApi = {
   adoptImageSuccess: (args) => ipcRenderer.invoke('buildWeb:adoptImageSuccess', args),
   versionBranches: (args) => ipcRenderer.invoke('buildWeb:versionBranches', args),
   startImageBuild: (args) => ipcRenderer.invoke('buildWeb:startImageBuild', args),
+  startImageGroupBuild: (args) => ipcRenderer.invoke('buildWeb:startImageGroupBuild', args),
   getRun: (args) => ipcRenderer.invoke('buildWeb:getRun', args),
   buildLog: (args) => ipcRenderer.invoke('buildWeb:buildLog', args),
   getIssueRun: (args) => ipcRenderer.invoke('buildWeb:getIssueRun', args),

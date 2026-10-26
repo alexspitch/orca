@@ -20620,7 +20620,8 @@
       "updateServerArchiveList": "This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.",
       "updateServerChatPlatform": "This Orca server does not know Chat Platform yet. Update the server.",
       "updateServerSavedQueries": "This Orca server does not keep saved queries yet. Update the server.",
-      "updateServerImageFreshness": "This Orca server cannot tell which images need a rebuild yet. Update the server."
+      "updateServerImageFreshness": "This Orca server cannot tell which images need a rebuild yet. Update the server.",
+      "updateServerImageGroupBuild": "This Orca server cannot build several images at once yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -20705,12 +20706,15 @@
       "settleHint": "{{status}} — use the last successful build #{{to}} instead, without building",
       "freshness": "Freshness",
       "rebuild": "rebuild",
-      "rebuildTip": "Changed on {{branch}} since its last build: {{what}}",
+      "rebuildTip": "Its own code changed on {{branch}} since its last build: {{what}}",
       "rebuildSources": "its sources",
       "current": "current",
       "currentTip": "Nothing it is built from changed on {{branch}} since its last build",
       "neverBuilt": "not built",
-      "neverBuiltTip": "No build of this version on {{branch}} yet"
+      "neverBuiltTip": "No build of this version on {{branch}} yet",
+      "freshnessLoading": "Checking for changes…",
+      "rebuildPackages": "packages",
+      "rebuildPackagesTip": "Only shared packages it is built with changed on {{branch}} since its last build: {{what}}"
     },
     "card": {
       "overview": "Overview",
@@ -20933,7 +20937,11 @@
       "buildImage": "Build {{image}}",
       "again": "Start a build",
       "ticketPlaceholder": "SDAP-1234",
-      "testsOff": "unticked, the build goes without the offline suites"
+      "testsOff": "unticked, the build goes without the offline suites",
+      "images": "{{count}} images",
+      "titleMany": "Build {{count}} images",
+      "oneProduct": "Pick images of one product to build them together",
+      "buildPicked": "Build {{count}}"
     },
     "log": {
       "finished": "The build is over.",

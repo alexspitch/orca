@@ -97,12 +97,18 @@ export type BuildWebImageHistory = {
   versions: string[]
 }
 
+/**
+ * Why an image is to rebuild: its own code changed (`app` — its application or plugin directory),
+ * or only shared packages it is built with (`packages`), whose change may not touch it at all.
+ */
+export type BuildWebImageChange = { kind: 'app' | 'packages'; changed: string[] }
+
 /** Whether a product version's images hold its branch's latest changes, for one distribution. */
 export type BuildWebImageFreshness = {
   /** The version's branch the scan answered about. */
   branch: string
-  /** Images whose sources, or a shared package they use, changed since their last build: what changed. */
-  rebuild: Record<string, string[]>
+  /** Images to rebuild: what changed since their last build, and whether any of it is their own code. */
+  rebuild: Record<string, BuildWebImageChange>
   /** Checked and unchanged since their last build. */
   current: string[]
   /** Buildable on the branch with no build of its version yet. */
@@ -125,6 +131,11 @@ export type BuildWebImageBuildArgs = {
   ticket?: string
   /** Build without the offline suites; only a build from the tree may, Jenkins always runs them. */
   skipTests?: boolean
+}
+
+/** Several images built together on one version, as one run: the same repository's images only. */
+export type BuildWebImageGroupBuildArgs = Omit<BuildWebImageBuildArgs, 'image'> & {
+  images: string[]
 }
 
 /** Settle failed build `number` with successful build `to`: the console rewrites the runs, nothing is built. */

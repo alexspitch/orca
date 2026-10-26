@@ -7,6 +7,7 @@ import type {
   BuildWebImagePage,
   BuildWebImagePageArgs,
   BuildWebImagePushArgs,
+  BuildWebImageChange,
   BuildWebImageFreshness,
   BuildWebImageSummary
 } from '../../shared/build-web-image-types'
@@ -183,6 +184,18 @@ export async function buildWebImageSummary(): Promise<BuildWebImageSummary> {
 
 const RELEASE_BRANCH = /-release-\d+\.\d+$|^version-\d+\.\d+(\.\d+)?$/
 
+/** Shared code as the console's detect names it: the monorepo's packages, chat-platform's extensions. */
+const SHARED_SOURCE = /^(packages|extensions)\//
+
+/**
+ * What kind of change makes an image stale. The console names an image's own directories when any
+ * changed, and only then the shared packages it depends on — so all-shared means packages only.
+ */
+export function changeOf(changed: string[]): BuildWebImageChange {
+  const packagesOnly = changed.length > 0 && changed.every((source) => SHARED_SOURCE.test(source))
+  return { kind: packagesOnly ? 'packages' : 'app', changed }
+}
+
 /**
  * The branch a product version is built from: its release branch, else master when master carries
  * that version. Read off the builds, which name both; a task branch never answers.
@@ -259,7 +272,7 @@ export async function scanBuildWebImageFreshness(args: {
         rebuild: Object.fromEntries(
           textsOf(record?.images).map((image) => [
             image,
-            Object.hasOwn(sources, image) ? sources[image] : []
+            changeOf(Object.hasOwn(sources, image) ? sources[image] : [])
           ])
         ),
         current: textsOf(record?.up_to_date),

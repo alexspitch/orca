@@ -77,8 +77,8 @@ describe('whether a version’s images hold its latest changes', () => {
     mocks.request.mockImplementation(async (request) =>
       request?.path === '/api/sync-scan'
         ? {
-            images: ['ap/ui', 'constructor'],
-            image_sources: { 'ap/ui': ['applications/ap-ui'] },
+            images: ['ap/ui', 'ap/api', 'constructor'],
+            image_sources: { 'ap/ui': ['applications/ap-ui'], 'ap/api': ['packages/theme'] },
             up_to_date: ['ap/oauth'],
             never_built: ['ap/new']
           }
@@ -87,7 +87,11 @@ describe('whether a version’s images hold its latest changes', () => {
     const args = { product: 'ap', version: '1.16', dist: 'rhel' as const }
     expect(await scanBuildWebImageFreshness(args)).toEqual({
       branch: 'ap-release-1.16',
-      rebuild: { 'ap/ui': ['applications/ap-ui'], constructor: [] },
+      rebuild: {
+        'ap/ui': { kind: 'app', changed: ['applications/ap-ui'] },
+        'ap/api': { kind: 'packages', changed: ['packages/theme'] },
+        constructor: { kind: 'app', changed: [] }
+      },
       current: ['ap/oauth'],
       neverBuilt: ['ap/new']
     })
@@ -99,5 +103,15 @@ describe('whether a version’s images hold its latest changes', () => {
     invalidateBuildWebImageCatalog()
     await scanBuildWebImageFreshness(args)
     expect(scans()).toHaveLength(3)
+  })
+})
+
+describe('the kind of change behind a rebuild', () => {
+  it('is packages only when every source is shared code, else the image’s own', async () => {
+    const { changeOf } = await import('./build-web-images')
+    expect(changeOf(['packages/theme', 'extensions/auth']).kind).toBe('packages')
+    expect(changeOf(['applications/ap-ui', 'packages/theme']).kind).toBe('app')
+    expect(changeOf(['plugins/sa-plugin-x']).kind).toBe('app')
+    expect(changeOf([]).kind).toBe('app')
   })
 })

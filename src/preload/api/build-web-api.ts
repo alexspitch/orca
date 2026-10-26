@@ -29,6 +29,7 @@ import type {
   BuildWebImageHistoryArgs,
   BuildWebImagePage,
   BuildWebImageBuildArgs,
+  BuildWebImageGroupBuildArgs,
   BuildWebImagePageArgs,
   BuildWebImagePushArgs,
   BuildWebImageSummary
@@ -115,6 +116,10 @@ export type BuildWebApi = {
   versionBranches: (args: { product: string }) => Promise<string[]>
   startImageBuild: (
     args: BuildWebImageBuildArgs
+  ) => Promise<BuildWebMutationResult<{ runId: string }>>
+  /** Several images of one repository built together on one version: one run. */
+  startImageGroupBuild: (
+    args: BuildWebImageGroupBuildArgs
   ) => Promise<BuildWebMutationResult<{ runId: string }>>
   getRun: (args: { runId: string }) => Promise<BuildWebRun | null>
   buildLog: (args: { url: string; offset: number }) => Promise<BuildWebLogPiece>

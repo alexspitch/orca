@@ -19,6 +19,7 @@ import { ImageCopyLinks } from './ImageCopyLinks'
 import { imageRefOf } from './image-links'
 import { useImagePicks } from './use-image-picks'
 import { ImageBuildDialog } from './ImageBuildDialog'
+import { ImageGroupBuildButton, type ImageBuildChoice } from './ImageGroupBuildButton'
 import { ImageBuildProgress } from './ImageBuildProgress'
 import { ImagePushProgress } from './ImagePushProgress'
 import { SettleFailedStatus } from './SettleFailedStatus'
@@ -87,11 +88,7 @@ export function ImageListView({
   const [refreshes, setRefreshes] = useState(0)
   const fresh = useImageFreshness(target, rows, version === 'all' ? null : version, refreshes)
   const canBuild = useBuildWebStore((s) => s.status?.perms.includes('build') === true)
-  const [building, setBuilding] = useState<{
-    image: string
-    product: string
-    branch?: string
-  } | null>(null)
+  const [building, setBuilding] = useState<ImageBuildChoice | null>(null)
   const anyRunning = rows.some((r) => r.last?.status === 'running')
   // Why: builds going on the console show their outcome without a manual refresh.
   useEffect(() => {
@@ -120,6 +117,7 @@ export function ImageListView({
         />
         <div className="flex-1" />
         <ImageCopyLinks builds={picks.builds} />
+        {canBuild ? <ImageGroupBuildButton builds={picks.builds} onBuild={setBuilding} /> : null}
         <ImagePushMenu
           target={target}
           builds={picks.pushable}
@@ -190,7 +188,7 @@ export function ImageListView({
         open={building !== null}
         onOpenChange={(open) => !open && setBuilding(null)}
         target={target}
-        image={building?.image ?? ''}
+        images={building?.images ?? []}
         product={building?.product ?? ''}
         initialBranch={building?.branch}
       />
@@ -326,7 +324,7 @@ export function ImageListView({
                             size="icon-xs"
                             onClick={() =>
                               setBuilding({
-                                image: row.image,
+                                images: [row.image],
                                 product: row.product,
                                 branch: row.last?.branch || undefined
                               })
