@@ -6,18 +6,20 @@ import {
   writeManagedScript,
   type HooksConfig
 } from '../agent-hooks/installer-utils'
-import { quotePosixShellString } from '../agent-hooks/posix-hook-command'
+import { quotePosixShell } from '../../shared/shell-argument-quoting'
 import {
-  applyManagedStatusLine,
-  getStatusLineCommand,
   getStatusLineInstallMarkerPath,
   getStatusLineScriptBaseName,
   getStatusLineScriptFileName,
   getStatusLineScriptPath,
   getStatusLineSlotState,
-  removeManagedStatusLine,
   type ClaudeCompatibleHookSettings
 } from './hook-settings'
+import {
+  applyWrappedStatusLine,
+  getStatusLineCommand,
+  removeManagedStatusLineRestoring
+} from './statusline-slot'
 import { getManagedStatusLineCommand, getManagedStatusLineScript } from './statusline-script'
 
 // Why the settings entry carries it: each Claude folder keeps its own status line, and a profile's
@@ -28,7 +30,7 @@ const USER_COMMAND_PREFIX = new RegExp(
 )
 
 export function wrapUserStatusLineCommand(managedCommand: string, userCommand: string): string {
-  return `${USER_COMMAND_VAR}=${quotePosixShellString(userCommand)}; export ${USER_COMMAND_VAR}; ${managedCommand}`
+  return `${USER_COMMAND_VAR}=${quotePosixShell(userCommand)}; export ${USER_COMMAND_VAR}; ${managedCommand}`
 }
 
 export function readWrappedUserStatusLineCommand(command: string | null): string | null {
@@ -69,7 +71,7 @@ export function installManagedStatusLine(
   writeManagedScript(statusLineScriptPath, getManagedStatusLineScript('local'))
   const managedCommand = getManagedStatusLineCommand(statusLineScriptPath)
   // Why: a user status line hides the feed, so it runs from the managed script and keeps its output.
-  const next = applyManagedStatusLine(
+  const next = applyWrappedStatusLine(
     config,
     userCommand ? wrapUserStatusLineCommand(managedCommand, userCommand) : managedCommand
   )
@@ -86,7 +88,7 @@ export function uninstallManagedStatusLine(
   config: HooksConfig,
   settings: ClaudeCompatibleHookSettings
 ): { config: HooksConfig; changed: boolean } {
-  return removeManagedStatusLine(
+  return removeManagedStatusLineRestoring(
     config,
     getStatusLineScriptFileName(settings),
     readWrappedUserStatusLineCommand(getStatusLineCommand(config))

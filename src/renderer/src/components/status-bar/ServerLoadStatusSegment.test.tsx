@@ -34,7 +34,7 @@ function render(iconOnly = false): string {
       TooltipProvider,
       null,
       React.createElement(ServerLoadStatusSegment, {
-        hosts: [
+        servers: [
           { id: 'dev', label: 'dev' },
           { id: 'swiss', label: 'swiss' },
           { id: 'down', label: 'down' }

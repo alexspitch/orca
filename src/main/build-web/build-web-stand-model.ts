@@ -48,7 +48,7 @@ function commonName(names: string[]): string {
     }
     head = head.slice(0, i)
   }
-  const trimmed = head.replace(/[\s\-_·:/|,(]+$/u, '')
+  const trimmed = head.replace(/[\s\-_\u00b7:/|,(]+$/u, '')
   return trimmed.length >= 3 ? trimmed : ''
 }
 

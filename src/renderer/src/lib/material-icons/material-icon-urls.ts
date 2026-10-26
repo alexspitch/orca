@@ -1,8 +1,9 @@
-// Why URLs, not inline SVG: 1,251 icons stay files the browser loads as rows show them.
+// Why URLs, not inline SVG: 1,251 icons stay files the browser loads as rows show them;
+// `?no-inline` keeps Vite from turning the small ones into a 2 MB chunk of data URLs.
 const urls = import.meta.glob<string>(
   '../../../../../node_modules/material-icon-theme/icons/*.svg',
   {
-    query: '?url',
+    query: '?no-inline',
     import: 'default',
     eager: true
   }

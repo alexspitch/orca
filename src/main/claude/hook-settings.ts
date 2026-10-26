@@ -47,6 +47,9 @@ export const OPENCLAUDE_HOOK_SETTINGS: ClaudeCompatibleHookSettings = {
   usesWindowsCompatLauncher: false
 }
 
+/** Exec form (`args`) is only valid for Claude versions that support it. */
+export type NativeHookFormOptions = { execForm?: boolean }
+
 export function getConfigPath(settings = CLAUDE_HOOK_SETTINGS, configDir?: string): string {
   return join(configDir ?? join(homedir(), settings.configDirName), 'settings.json')
 }
@@ -104,10 +107,11 @@ export function getManagedEventHook(
   eventName: string,
   scriptPath: string,
   settings = CLAUDE_HOOK_SETTINGS,
-  nativeHookPath: string | null = null
+  nativeHookPath: string | null = null,
+  options: NativeHookFormOptions = {}
 ): HookCommandConfig {
   return process.platform === 'win32'
-    ? getManagedLifecycleHook(scriptPath, settings, nativeHookPath)
+    ? getManagedLifecycleHook(scriptPath, settings, nativeHookPath, options)
     : buildManagedCommandHook(getRemoteManagedEventCommand(eventName, scriptPath))
 }
 
@@ -118,23 +122,32 @@ export function getRemoteManagedEventCommand(eventName: string, scriptPath: stri
     : getRemoteManagedCommand(scriptPath)
 }
 
-/** `nativeHookPath` is the installed orca-agent-hook.exe, or null to keep the `.cmd` form. */
 export function getManagedLifecycleHook(
   scriptPath: string,
   settings = CLAUDE_HOOK_SETTINGS,
-  nativeHookPath: string | null = null
+  nativeHookPath: string | null = null,
+  options: NativeHookFormOptions = {}
 ): HookCommandConfig {
   if (process.platform !== 'win32' || !settings.usesWindowsCompatLauncher) {
     return buildManagedCommandHook(getManagedCommand(scriptPath, { neutralJsonWhenMissing: true }))
   }
-  // Why a bare exe path plus a plain word: Git Bash, PowerShell and CreateProcess all start
-  // `<exe> claude` the same way, without cmd.exe.
+  // Native exe plus agent name launches consistently across Git Bash, PowerShell and CreateProcess.
   const nativeCommand = nativeHookPath ? wrapWindowsDirectCmdHookCommand(nativeHookPath) : null
   if (nativeCommand) {
     const agent = getWindowsNativeHookAgent(scriptPath)
     return {
       type: 'command',
       command: `${nativeCommand} ${agent}`,
+      timeout: MANAGED_HOOK_TIMEOUT_SECONDS
+    }
+  }
+  // Git Bash needs a spaced path quoted, which the no-Git-Bash PowerShell host cannot parse.
+  if (nativeHookPath && options.execForm) {
+    return {
+      type: 'command',
+      command: nativeHookPath,
+      // The exe ignores argv[2]; the script path lets builds without exec-form support replace this entry.
+      args: [getWindowsNativeHookAgent(scriptPath), scriptPath],
       timeout: MANAGED_HOOK_TIMEOUT_SECONDS
     }
   }
@@ -185,7 +198,7 @@ export function hasSameManagedHookInvocation(
   )
 }
 
-/** Per planned event, the index of the first of `formsFor(event)` it carries; unmatched are missing. */
+/** Report the first matching invocation form per event, or list the event as missing. */
 export function findManagedEventHookForms(
   config: HooksConfig,
   eventNames: string[],
@@ -251,57 +264,47 @@ export function applyManagedHooks(
 
 export type StatusLineSlotState = 'managed' | 'user' | 'empty'
 
-export function getStatusLineCommand(config: HooksConfig): string | null {
-  const current = config.statusLine
-  return isPlainObject(current) && typeof current.command === 'string' && current.command
-    ? current.command
-    : null
-}
-
-// Why: install policy needs "user owns the slot" vs "slot is empty" vs "ours" — an empty slot
-// after a prior install means the user deleted the managed entry, which install must respect.
+// An empty slot after a prior install is a user opt-out, distinct from a fresh empty slot.
 export function getStatusLineSlotState(
   config: HooksConfig,
   scriptFileName = getStatusLineScriptFileName()
 ): StatusLineSlotState {
   const isManagedCommand = createManagedCommandMatcher(scriptFileName)
-  const currentCommand = getStatusLineCommand(config)
+  const current = config.statusLine
+  const currentCommand =
+    isPlainObject(current) && typeof current.command === 'string' ? current.command : null
   if (!currentCommand) {
     return 'empty'
   }
   return isManagedCommand(currentCommand) ? 'managed' : 'user'
 }
 
-// Why: records that the managed statusline was installed once, so a later empty slot reads as user opt-out.
 export function getStatusLineInstallMarkerPath(settings = CLAUDE_HOOK_SETTINGS): string {
   return getSharedManagedScriptPath(`${getStatusLineScriptBaseName(settings)}.installed`)
 }
 
-// Why: statusLine is a single settings slot, not a hooks array — callers replace a user-owned
-// one only after saving its command for the managed script to run (statusline-install.ts).
-export function applyManagedStatusLine(config: HooksConfig, command: string): HooksConfig {
-  // Why: sibling fields such as padding belong to a wrapped user status line.
-  const current = isPlainObject(config.statusLine) ? config.statusLine : {}
-  return { ...config, statusLine: { ...current, type: 'command', command } }
+// A user-owned status line takes precedence over Orca's usage feed.
+export function applyManagedStatusLine(
+  config: HooksConfig,
+  command: string,
+  scriptFileName = getStatusLineScriptFileName()
+): HooksConfig {
+  if (getStatusLineSlotState(config, scriptFileName) === 'user') {
+    return config
+  }
+  return { ...config, statusLine: { type: 'command', command } }
 }
 
-/** `restoreCommand` is the wrapped user command to put back; without one the slot is cleared. */
 export function removeManagedStatusLine(
   config: HooksConfig,
-  scriptFileName = getStatusLineScriptFileName(),
-  restoreCommand: string | null = null
+  scriptFileName = getStatusLineScriptFileName()
 ): { config: HooksConfig; changed: boolean } {
   const isManagedCommand = createManagedCommandMatcher(scriptFileName)
   const current = config.statusLine
-  const currentCommand = getStatusLineCommand(config)
-  if (!isPlainObject(current) || !currentCommand || !isManagedCommand(currentCommand)) {
+  const currentCommand =
+    isPlainObject(current) && typeof current.command === 'string' ? current.command : null
+  if (!currentCommand || !isManagedCommand(currentCommand)) {
     return { config, changed: false }
-  }
-  if (restoreCommand) {
-    return {
-      config: { ...config, statusLine: { ...current, command: restoreCommand } },
-      changed: true
-    }
   }
   const next = { ...config }
   delete next.statusLine

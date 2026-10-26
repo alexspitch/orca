@@ -122,8 +122,9 @@ export function runCustomBuild(
     { env, stdio: 'inherit' }
   )
   if (platform === 'mac') {
+    // Why plain `pnpm`: the mac build runs only on macOS.
     execFile(
-      process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
+      'pnpm',
       [
         'exec',
         'electron-builder',

@@ -1,10 +1,4 @@
-/**
- * Desktop delivery policy for dispatched notifications.
- *
- * Lifted out of the `notifications:dispatch` IPC closure so the ordering that matters —
- * tray attention before the gates, mobile fan-out before the desktop early returns — is
- * expressed once against injected collaborators instead of ambient Electron singletons.
- */
+// Set tray attention before gates and fan out to phones before desktop early returns.
 import type { BrowserWindow } from 'electron'
 import type {
   NotificationDispatchRequest,
@@ -19,15 +13,14 @@ import {
   isNotificationSourceAllowed,
   passesAgentNeedsInputOnly
 } from '../../shared/notification-eligibility'
+import { toHostSessionPaneKey } from '../../shared/terminal-surface-id'
 
 export type NotificationDeliveryDependencies = {
   readNotificationSettings: () => NotificationSettings
-  /** The window the user would see the banner on, or null when none is open. */
   findActiveWindow: () => BrowserWindow | null
   isWindowVisible: (window: BrowserWindow | null) => boolean
   setTrayAttention: (attention: boolean) => void
   isNotificationSupported: () => boolean
-  /** Null when no runtime is paired, so mobile fan-out is skipped entirely. */
   dispatchMobileNotification: OrcaRuntimeService['dispatchMobileNotification'] | null
   readAuthorizationStatus: () => Promise<
     'authorized' | 'denied' | 'not-determined' | 'unknown' | null
@@ -40,7 +33,7 @@ export type NotificationDeliveryDependencies = {
   ) => NotificationDispatchResult | Promise<NotificationDispatchResult>
   platform: NodeJS.Platform
   now: () => number
-  /** Told once per path that actually announced the request: a desktop banner shown, or a mobile alert sent. */
+  /** Called for each actual desktop banner or mobile alert. */
   recordAnnounced?: (request: NotificationDispatchRequest) => void
 }
 
@@ -98,8 +91,7 @@ export function createNotificationDeliveryService(
 
       const notificationOptions = buildNotificationOptions(request, translateMain)
 
-      // Why: desktop focus only means this computer sees the worktree; the paired phone may still need the alert.
-      // The execution host pushed its own phones and retires them itself on acknowledgement.
+      // Desktop focus need not silence phones; execution hosts retire their own delivered alerts.
       // Why not build-web: phones predate the source, and the console reaches people on Slack itself.
       if (
         !request.mobileDeliveredByHost &&
@@ -127,10 +119,11 @@ export function createNotificationDeliveryService(
             title: notificationOptions.title,
             body: notificationOptions.body,
             worktreeId: request.worktreeId,
+            // The phone asks the execution host for tabs, which never name this window's mirror tabs.
+            ...(request.paneKey ? { paneKey: toHostSessionPaneKey(request.paneKey) } : {}),
             ...(request.executionHost ? { executionHost: request.executionHost } : {}),
             ...(request.notificationId ? { notificationId: request.notificationId } : {}),
-            // Why: background push needs the agent's real state to pick "needs input"
-            // vs "finished" — and to stay silent while the agent is still working.
+            // Push needs real agent state to distinguish input/completion and silence running agents.
             ...(request.agentState ? { agentState: request.agentState } : {}),
             ...(request.attentionKey ? { attentionKey: request.attentionKey } : {}),
             ...(request.structuredOrigin ? { structuredOrigin: request.structuredOrigin } : {})
@@ -156,9 +149,9 @@ export function createNotificationDeliveryService(
         return { delivered: false, reason: 'suppressed-focus' }
       }
 
-      // Why: the Settings test button is an explicit, often-repeated user action, so it bypasses burst dedupe.
+      // Explicit Settings tests bypass burst deduplication.
       if (request.source !== 'test') {
-        // Dedupe by worktree, not source — agent-finish and terminal-bell often fire in one chunk; surface only the first.
+        // Collapse unkeyed worktree events across sources; attention keys isolate their own repeats.
         if (
           !reserveNotificationCooldown(
             recentDesktopNotifications,
@@ -177,7 +170,7 @@ export function createNotificationDeliveryService(
       if (deps.platform !== 'darwin') {
         return deliverNativeAndRecord(request, notificationOptions, settings)
       }
-      // Why: macOS silently swallows notifications while permission is denied/undecided (verified macOS 26); skip so the renderer can show a fallback.
+      // macOS swallows denied/undecided notifications; allow the renderer fallback instead.
       return deps.readAuthorizationStatus().then((authorization) => {
         if (authorization === 'denied' || authorization === 'not-determined') {
           deps.recordDeliveryOutcome('failed')

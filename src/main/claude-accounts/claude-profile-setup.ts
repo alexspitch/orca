@@ -1,7 +1,12 @@
+import { existsSync } from 'node:fs'
 import type { AgentHookInstallStatus } from '../../shared/agent-hook-types'
 import { resolveExternalClaudeConfigDir } from './claude-external-config-dir'
 import { shareClaudeProfileHistory } from './claude-profile-history'
-import { prepareClaudeProfileDirectory, type ClaudeProfileDescriptor } from './claude-profile-paths'
+import {
+  claudeProfileMarkerPath,
+  prepareClaudeProfileDirectory,
+  type ClaudeProfileDescriptor
+} from './claude-profile-paths'
 import { provisionClaudeProfile } from './claude-profile-provisioning'
 import {
   ClaudeProfileSurfaceError,
@@ -11,16 +16,16 @@ import {
   type ClaudeProfileReport
 } from './claude-profile-report'
 
-/** `refused`: the profile failed its ownership gate and no surface was touched. */
+/** `refused` means ownership validation failed before any writes. */
 export type ClaudeProfileSetupReport = ClaudeProfileReport & { outcome: 'refused' | 'prepared' }
 
 type ClaudeProfileSetupArgs = {
   dataRoot: string
   profile: ClaudeProfileDescriptor
   userHome: string
-  /** The user's own CLAUDE_CONFIG_DIR (see readUserClaudeConfigDir); `~/.claude` when unset. */
+  /** The user's own CLAUDE_CONFIG_DIR; defaults to `~/.claude`. */
   userConfigDir?: string
-  /** Null when Orca's Claude hooks are turned off. Runs after the settings copy so its entries survive it. */
+  /** Runs after settings are copied so hook entries survive; null disables installation. */
   installHooks: ((target: { configDir: string }) => AgentHookInstallStatus) | null
   platform?: NodeJS.Platform
 }
@@ -37,6 +42,7 @@ export async function provisionClaudeAccountProfile(
   }
   const platform = args.platform ?? process.platform
   const report = createClaudeProfileReport()
+  const firstSetup = !existsSync(claudeProfileMarkerPath(args.profile))
   let markSetUp: () => void
   try {
     if (args.profile.target.runtime === 'wsl' && platform === 'win32') {
@@ -57,7 +63,7 @@ export async function provisionClaudeAccountProfile(
   const shared = { profileHome: home, userHome: args.userHome, userConfigDir: args.userConfigDir }
   for (const step of [
     () => shareClaudeProfileHistory({ ...shared, platform }),
-    () => provisionClaudeProfile({ ...shared, platform })
+    () => provisionClaudeProfile({ ...shared, platform, firstSetup })
   ]) {
     try {
       const part = await step()

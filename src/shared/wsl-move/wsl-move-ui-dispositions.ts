@@ -72,7 +72,6 @@ export const UI_STATE_DISPOSITIONS = {
   taskResumeState: notApplicableDisposition(38)
 } as const satisfies Partial<Record<keyof PersistedUIState, WslMoveFieldDisposition>>
 
-/** UI fields with no repo, worktree, pane or path in them. */
 export const UI_STATE_GLOBAL_FIELDS = [
   'activeView',
   'sidebarWidth',
@@ -147,6 +146,7 @@ export const UI_STATE_GLOBAL_FIELDS = [
   'browserDefaultSearchEngine',
   'browserDefaultZoomLevel',
   'browserKagiSessionLink',
+  'browserDevToolsDock',
   'windowBounds',
   'windowMaximized',
   'dashboardPopoutBounds',
@@ -169,7 +169,6 @@ export const UI_STATE_GLOBAL_FIELDS = [
   'contextualToursSeenIds',
   'contextualToursAutoEligible',
   'osc52ClipboardDefaultOnNoticePending',
-  // One-shot migration flags.
   '_antigravityStatusBarDefaultAdded',
   '_cursorStatusBarDefaultAdded',
   '_expandedWorktreeCardPropertiesDefaulted',
@@ -190,7 +189,7 @@ export const UI_STATE_GLOBAL_FIELDS = [
   '_zcodeStatusBarDefaultAdded'
 ] as const satisfies readonly (keyof PersistedUIState)[]
 
-// Why: an unclassified UI field is exactly the kind of per-worktree state a move would strand.
+// Exhaustiveness prevents moves stranding newly added workspace state.
 type UnclassifiedUiField = Exclude<
   keyof PersistedUIState,
   keyof typeof UI_STATE_DISPOSITIONS | (typeof UI_STATE_GLOBAL_FIELDS)[number]

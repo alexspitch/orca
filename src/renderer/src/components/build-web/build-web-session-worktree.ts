@@ -1,4 +1,4 @@
-import { findStructuredAgentSessionTab } from '@/lib/structured-agent-session-tab-activation'
+import { findStructuredAgentSessionTab } from '@/lib/agent-session/structured-agent-session-tab-activation'
 import { useAppStore } from '@/store'
 import type { BuildWebAgentSession } from '../../../../shared/build-web-types'
 

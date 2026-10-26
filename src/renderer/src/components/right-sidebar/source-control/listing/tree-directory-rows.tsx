@@ -179,10 +179,7 @@ function SourceControlTreeDirectoryHeader({
   )
 }
 
-/**
- * Working-tree directory row. `actionPaths` must already be scoped to the currently visible
- * descendants, and bulk actions only render when that scope is non-empty.
- */
+/** Require visible-descendant actionPaths; hide bulk actions when that scope is empty. */
 export function SourceControlTreeDirectoryRow({
   node,
   actionPaths,
@@ -206,7 +203,7 @@ export function SourceControlTreeDirectoryRow({
   onStagePaths: (paths: readonly string[]) => Promise<void>
   onUnstagePaths: (paths: readonly string[]) => Promise<void>
 }): React.JSX.Element {
-  // Why: filtered tree nodes only contain visible descendants, so folder-wide bulk labels would overpromise on the subset.
+  // Filtered descendants represent only a subset; avoid promising whole-folder actions.
   const canStage = !hideBulkActions && actionPaths.stagePaths.length > 0
   const canUnstage = !hideBulkActions && actionPaths.unstagePaths.length > 0
   const canDiscard = !hideBulkActions && actionPaths.discardPaths.length > 0

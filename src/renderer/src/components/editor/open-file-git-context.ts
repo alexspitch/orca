@@ -2,6 +2,7 @@ import { useAppStore } from '@/store'
 import { getConnectionId } from '@/lib/connection-context'
 import { getRuntimeTargetForFileOwner } from '@/lib/file-owner-runtime-target'
 import { findWorktreeById } from '@/store/slices/worktree-helpers'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import type { RuntimeGitContext } from '@/runtime/runtime-git-client-context'
 
 export type OpenFileGitContext = RuntimeGitContext & {
@@ -16,7 +17,7 @@ export function resolveOpenFileGitContext(filePath: string): OpenFileGitContext 
   if (!file) {
     return null
   }
-  const worktree = findWorktreeById(state.worktreesByRepo, file.worktreeId)
+  const worktree = findWorktreeById(selectWorktreesByRepo(state), file.worktreeId)
   const target = getRuntimeTargetForFileOwner(state, file.worktreeId, file.runtimeEnvironmentId)
   if (!worktree || !target) {
     return null

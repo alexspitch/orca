@@ -7,7 +7,7 @@ import {
   removeExternalClaudeProfileHooks,
   savedExternalClaudeConfigDir
 } from './claude-external-config-dir'
-import { isDirectory, listClaudeProfileHomes } from './claude-profile-installed-router'
+import { isDirectory, listClaudeProfileHomes } from './claude-profile-homes'
 import { describeClaudeProfile, type ClaudeProfileDescriptor } from './claude-profile-paths'
 
 /** Where a host account's launches run: its own folder under dataRoot, or the user's saved one. */

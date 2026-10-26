@@ -4,7 +4,7 @@ import { translate } from '@/i18n/i18n'
 import { detectLanguage } from '@/lib/language-detect'
 import { isPairedWebClientWindow } from '@/lib/desktop-window-chrome'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
-import { openHtmlFileInBrowser } from '@/components/terminal-pane/terminal-file-open-routing'
+import { openFileInBrowserTab } from '@/lib/file-preview'
 import {
   BUILD_WEB_ISSUE_FILE_OPEN_MAX_BYTES,
   type BuildWebIssueDetail,
@@ -113,7 +113,8 @@ export async function openBuildWebIssueFile(args: {
   }
   recordBuildWebCardVisit()
   if (kind === 'html') {
-    openHtmlFileInBrowser(filePath, worktreeId, true)
+    activateAndRevealWorktree(worktreeId, { providesInitialSurface: true })
+    openFileInBrowserTab({ filePath, worktreeId, clientLocal: true })
     return
   }
   revealWorktree(worktreeId)

@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { WorkspaceCombobox } from '@/components/automations/WorkspaceCombobox'
 import { useAppStore } from '@/store'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
@@ -69,7 +70,7 @@ function TakeToWorkForm({
 }): React.JSX.Element {
   const { target } = useBuildWebTarget()
   const repos = useAppStore((s) => s.repos)
-  const worktreesByRepo = useAppStore((s) => s.worktreesByRepo)
+  const worktreesByRepo = useAppStore(selectWorktreesByRepo)
   const baseUrl = useBuildWebStore((s) => s.status?.baseUrl ?? null)
   const remember = useBuildWebStore((s) => s.rememberTakeToWork)
   const { worktrees, matchedRepo } = useMemo(

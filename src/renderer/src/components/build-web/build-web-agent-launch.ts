@@ -3,7 +3,7 @@ import { focusTerminalTabSurface } from '@/lib/focus-terminal-tab-surface'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
 import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 import { adoptAgentSessionLaunchVerdict } from '@/lib/agent-session-launch-plan'
-import { findStructuredAgentSessionTab } from '@/lib/structured-agent-session-tab-activation'
+import { findStructuredAgentSessionTab } from '@/lib/agent-session/structured-agent-session-tab-activation'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
@@ -129,7 +129,7 @@ export async function launchBuildWebBatch(args: {
   const sessionName = taskSessionName(issues)
   // Why the defaults too: launch arguments replace the user's own Claude arguments, not add to them.
   const agentArgs = claudeNameArgs(
-    resolveTuiAgentLaunchArgs('claude', useAppStore.getState().settings?.agentDefaultArgs),
+    resolveTuiAgentLaunchArgs('claude', useAppStore.getState().settings),
     sessionName
   )
   let revealFailed = false

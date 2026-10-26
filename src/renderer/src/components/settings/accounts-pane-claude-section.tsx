@@ -12,15 +12,21 @@ import {
   getProviderAccountRuntime,
   providerAccountIsActiveInView
 } from './provider-account-visibility'
-import { formatAccountTimestamp, getClaudeAccountRuntimeLabel } from './accounts-pane-runtime'
+import { getClaudeAccountRuntimeLabel } from './accounts-pane-runtime'
 import type { AccountsPaneSectionModel } from './accounts-pane-types'
-import { ClaudeAccountNamePopover } from './claude-account-name-popover'
-import { ClaudeFolderAccountPopover } from './claude-folder-account-popover'
+import { ClaudeFolderAction, ClaudeNameAction, claudeAccountDetail } from './claude-section-extras'
 import {
   canOfferClaudeSignInLink,
   ClaudeSignInLinkMenu,
   withCopiedClaudeLink
 } from './claude-sign-in-link-menu'
+import { addClaudeAccountOnHost } from '@/runtime/runtime-host-account-sign-in-client'
+import { HostAccountSignInPrompt } from './HostAccountSignInPrompt'
+import {
+  accountAdditionShownInPrompt,
+  cancelAccountAddition,
+  trackAccountAddition
+} from './account-add-cancel-target'
 
 export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): React.JSX.Element {
   const {
@@ -41,10 +47,10 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
     visibleClaudeAccounts,
     wslCapabilitiesLoading
   } = model
-  // Why host only: the host reads its own System default, never a WSL distro's.
+  // System default belongs to the host home, never a WSL distro.
   const systemDefaultEmail =
     accountRuntime.runtime === 'host' ? claudeAccounts.systemDefaultEmail : undefined
-  // Why the copy evidence: saving your own login as an account too is normal and needs no warning.
+  // Warn only with copy evidence; saving one’s own login as an account is normal.
   const systemDefaultIsSaved =
     !!systemDefaultEmail &&
     claudeAccounts.systemDefaultMayBeCopied === true &&
@@ -52,22 +58,21 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
     claudeAccounts.accounts.some(
       (account) => account.email.toLowerCase() === systemDefaultEmail.toLowerCase()
     )
-  // Why: interactive `claude login` needs a desktop browser and
-  // would authenticate against this device, not the server.
-  const addDisabled =
-    isRemoteAccountScope ||
-    claudeAction !== 'idle' ||
-    wslCapabilitiesLoading ||
-    accountRuntimeUnavailable
+  const addDisabled = claudeAction !== 'idle' || wslCapabilitiesLoading || accountRuntimeUnavailable
+  // Remote additions must run login on the account owner rather than this device.
   const addClaudeAccount = (copyLink: boolean): Promise<void> =>
     runClaudeAccountAction('adding', () =>
-      withCopiedClaudeLink(
-        copyLink,
-        window.api.claudeAccounts.add({
-          runtime: accountRuntime.runtime,
-          wslDistro: accountRuntime.wslDistro,
-          copyLink
-        })
+      trackAccountAddition('claude', accountOwner, () =>
+        accountOwner.kind === 'environment'
+          ? addClaudeAccountOnHost(accountOwner)
+          : withCopiedClaudeLink(
+              copyLink,
+              window.api.claudeAccounts.add({
+                runtime: accountRuntime.runtime,
+                wslDistro: accountRuntime.wslDistro,
+                copyLink
+              })
+            )
       )
     )
   return (
@@ -102,8 +107,8 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
             <p className="text-xs text-muted-foreground">
               {isRemoteAccountScope
                 ? translate(
-                    'auto.components.settings.AccountsPane.remoteScopeAccounts',
-                    'Showing accounts managed by {{value0}}. Add or re-authenticate accounts on that server.',
+                    'accounts.remoteScopeAccountsAddHere',
+                    'Showing accounts managed by {{value0}}. New accounts sign in there; you finish in this device’s browser.',
                     { value0: accountRuntimeSentenceLabel }
                   )
                 : translate(
@@ -129,7 +134,7 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                 )}
                 {translate('auto.components.settings.AccountsPane.b0e948a4f9', 'Add Account')}
               </Button>
-              {canOfferClaudeSignInLink(accountRuntime.runtime) ? (
+              {!isRemoteAccountScope && canOfferClaudeSignInLink(accountRuntime.runtime) ? (
                 <ClaudeSignInLinkMenu
                   variant="outline"
                   disabled={addDisabled}
@@ -137,24 +142,17 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                 />
               ) : null}
             </ButtonGroup>
-            {/* Why also on a server: the folder is named on that host, so no local browser is needed. */}
-            <ClaudeFolderAccountPopover
-              owner={accountOwner}
-              hostLabel={accountRuntimeSentenceLabel}
-              disabled={
-                claudeAction !== 'idle' ||
-                wslCapabilitiesLoading ||
-                accountRuntimeUnavailable ||
-                accountRuntime.runtime !== 'host'
-              }
-              busy={claudeAction === 'adding-folder'}
-              runClaudeAccountAction={runClaudeAccountAction}
-            />
-            {claudeAction === 'adding' ? (
+            <ClaudeFolderAction model={model} />
+            {/* Follow the running addition; hide Cancel only when its server prompt already offers it. */}
+            {claudeAction === 'adding' && !accountAdditionShownInPrompt('claude', accountOwner) ? (
               <Button
                 variant="ghost"
                 size="xs"
-                onClick={() => void window.api.claudeAccounts.cancelPendingLogin()}
+                onClick={() =>
+                  void cancelAccountAddition('claude', () =>
+                    window.api.claudeAccounts.cancelPendingLogin()
+                  )
+                }
                 className="gap-1.5 text-muted-foreground hover:text-foreground"
               >
                 <X className="size-3" />
@@ -164,6 +162,13 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
           </div>
         </div>
         {remoteAccountScopeNotice}
+        {isRemoteAccountScope ? (
+          <HostAccountSignInPrompt
+            owner={accountOwner}
+            provider="claude"
+            hostLabel={accountRuntimeSentenceLabel}
+          />
+        ) : null}
 
         <div className="space-y-2">
           <button
@@ -326,14 +331,7 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                               'accounts.claude.signInRequired',
                               'Sign in again to use this account'
                             )
-                          : [
-                              account.label ? account.email : null,
-                              account.organizationName,
-                              account.externalConfigDir,
-                              formatAccountTimestamp(account.lastAuthenticatedAt)
-                            ]
-                              .filter(Boolean)
-                              .join(' · ')}
+                          : claudeAccountDetail(account)}
                       </span>
                     </button>
                     <div className="flex shrink-0 items-center justify-end gap-1 max-md:w-full max-md:flex-wrap">
@@ -363,13 +361,7 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                           />
                         ) : null}
                       </ButtonGroup>
-                      <ClaudeAccountNamePopover
-                        owner={accountOwner}
-                        account={account}
-                        disabled={isBusy}
-                        busy={claudeAction === `rename:${account.id}`}
-                        runClaudeAccountAction={runClaudeAccountAction}
-                      />
+                      <ClaudeNameAction model={model} account={account} disabled={isBusy} />
                       <Button
                         variant="ghost"
                         size="xs"

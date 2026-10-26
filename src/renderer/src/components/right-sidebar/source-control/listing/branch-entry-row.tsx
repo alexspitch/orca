@@ -1,6 +1,6 @@
 import React from 'react'
 import { MessageSquare } from 'lucide-react'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { useMaterialFileIcon } from '@/lib/material-icons/use-material-file-icons'
 import { MaterialRowIcon } from '@/lib/material-icons/material-row-icon'
 import { basename, dirname, joinPath } from '@/lib/path'
@@ -35,7 +35,6 @@ export function BranchEntryRow({
   commentCount: number
   showPathHint?: boolean
 }): React.JSX.Element {
-  const FileIcon = getFileTypeIcon(entry.path)
   const fileName = basename(entry.path)
   const materialIcon = useMaterialFileIcon(fileName, 'file')
   const parentDir = dirname(entry.path)
@@ -69,7 +68,8 @@ export function BranchEntryRow({
         {materialIcon ? (
           <MaterialRowIcon url={materialIcon} />
         ) : (
-          React.createElement(FileIcon, {
+          React.createElement(FileTypeIcon, {
+            filePath: entry.path,
             className: 'size-3.5 shrink-0',
             style: { color: STATUS_COLORS[entry.status] }
           })

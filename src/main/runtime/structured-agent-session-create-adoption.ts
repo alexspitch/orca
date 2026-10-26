@@ -9,7 +9,10 @@ import type { StructuredAgentSessionResumeSource } from '../../shared/structured
 import type { StructuredAgentCliSourceEvidence } from '../native-chat/structured-agent-cli-source'
 import type { AgentSessionAccountHome } from '../../shared/agent-session-account-home'
 import type { AgentSessionExecutionLocation } from '../../shared/agent-session-record'
-import type { StructuredAgentId } from '../../shared/agent-session-provider-handle'
+import type {
+  AgentSessionProviderHandle,
+  StructuredAgentId
+} from '../../shared/agent-session-provider-handle'
 import { agentSessionExecutionLocationsEqual } from '../../shared/agent-session-record'
 import type { AgentSessionAttachParams } from '../native-chat/agent-session-wire/structured-agent-session-attach'
 import type { StructuredAgentSessionHost } from '../native-chat/agent-session-wire/structured-agent-session-host'
@@ -110,8 +113,7 @@ export async function resolveStructuredAgentSessionAdoptionForCreate(input: {
   try {
     const transcriptPath = input.resolveTranscriptPath?.()
     const candidates = input.transcriptImport.accountHomeCandidates(input)
-    // Each account's store is resolved once, so the hook path, the lookup and its re-admission
-    // all judge the same place even if the environment changes mid-create.
+    // Resolve each account store once so lookup, hook path and re-admission agree despite environment changes.
     const stores = new Map<AgentSessionAccountHome, string | null>()
     const storeOf = (accountHome: AgentSessionAccountHome): string | null => {
       if (!stores.has(accountHome)) {
@@ -206,5 +208,27 @@ export async function resolveStructuredAgentSessionAdoptionForCreate(input: {
       { reason: 'transcriptUnreadable' },
       error instanceof Error ? error.message : String(error)
     )
+  }
+}
+
+/** Only adopt seeds the handle chain; ensure already passes providerHandle without adopting. */
+export function structuredAgentSessionAdoptAttach(input: {
+  definition: {
+    handleTransport: AgentSessionProviderHandle['transport']
+    agent: AgentSessionProviderHandle['agent']
+  }
+  handleNamesTranscript: boolean | undefined
+  transcriptPath: string
+  providerSessionId: string
+  workspaceCwd: string
+}): NonNullable<AgentSessionAttachParams['adopt']> {
+  return {
+    providerHandle: {
+      transport: input.definition.handleTransport,
+      agent: input.definition.agent,
+      nativeId: input.handleNamesTranscript ? input.transcriptPath : input.providerSessionId
+    },
+    transcriptPath: input.transcriptPath,
+    source: { providerSessionId: input.providerSessionId, workspaceCwd: input.workspaceCwd }
   }
 }

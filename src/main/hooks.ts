@@ -7,23 +7,17 @@ import { getHookRuntimeTarget, getHookWslContext } from './hook-runtime-target'
 import { getSetupEnvVars } from './setup-hook-env-vars'
 import { iterateLfScriptLines } from './setup-runner-script-text'
 import { runOrcaYamlCommand } from './orca-yaml-command-runner'
+import { windowsFsPath } from './wsl/wsl-unc-drive-fs-path'
 import type { HookRuntimeTarget } from './hook-runtime-target'
 import type { OrcaHooks } from '../shared/orca-yaml-hook-types'
 import type { Repo } from '../shared/repo-types'
 import type { ProjectExecutionRuntimeResolution } from '../shared/project-execution-runtime'
 
-const HOOK_TIMEOUT = 120_000 // 2 minutes
+const HOOK_TIMEOUT = 120_000
 
 type HookProcessOutcome = { success: boolean; output: string; exitCode?: number }
 
-/**
- * Turn a finished process into a hook verdict.
- *
- * Why `timedOut` decides before `code` (#19334): a hook that traps SIGTERM and exits 0 reports a
- * zero exit for a run we cut off mid-archive. The exit code of something we stopped is not
- * evidence it finished, so a timeout withholds the code and the removal gate reads that as
- * `unverifiable` rather than as a pass.
- */
+/** Timed-out hooks cannot prove completion, even if their SIGTERM handler exits 0 (#19334). */
 function classifyHookProcessResult(
   result: { code: number | null; stdout: string; stderr: string; timedOut: boolean },
   context: { hookName: string; cwd: string; timeoutMs: number }
@@ -35,8 +29,7 @@ function classifyHookProcessResult(
     return { success: false, output: `${streams}\n${message}`.trim() }
   }
   if (result.code !== 0) {
-    // `null` means signalled: there is no exit code, and saying "exit code null" reads as a
-    // reporting glitch rather than the `unverifiable` verdict the gate is about to give it.
+    // A signaled exit has no code for the removal gate to verify.
     const message =
       result.code === null
         ? 'Command was terminated without reporting an exit code.'
@@ -76,7 +69,6 @@ function hookProcessError(
   }
 }
 
-/** A hook that never started reported no exit, so the code stays withheld. */
 function hookSpawnFailure(
   error: unknown,
   context: { hookName: string; cwd: string }
@@ -88,11 +80,13 @@ function hookSpawnFailure(
 
 export { parseOrcaYaml }
 
-/**
- * Load hooks from orca.yaml in the given repo root.
- */
+// A UNC drive-mount repo's file opens only through its drive path.
+function orcaYamlPath(repoPath: string): string {
+  return windowsFsPath(join(repoPath, 'orca.yaml'))
+}
+
 export function loadHooks(repoPath: string): OrcaHooks | null {
-  const yamlPath = join(repoPath, 'orca.yaml')
+  const yamlPath = orcaYamlPath(repoPath)
   if (!existsSync(yamlPath)) {
     return null
   }
@@ -105,14 +99,11 @@ export function loadHooks(repoPath: string): OrcaHooks | null {
   }
 }
 
-/**
- * Check whether an orca.yaml exists for a repo.
- */
 export function hasHooksFile(repoPath: string): boolean {
-  return existsSync(join(repoPath, 'orca.yaml'))
+  return existsSync(orcaYamlPath(repoPath))
 }
 
-// Why: detect unrecognised keys so the UI can suggest an update instead of showing a "could not be parsed" error.
+// Unknown keys suggest a newer config format; let the UI offer an update.
 const RECOGNIZED_ORCA_YAML_KEYS = new Set([
   'scripts',
   'setupAgentStartupPolicy',
@@ -123,12 +114,11 @@ const RECOGNIZED_ORCA_YAML_KEYS = new Set([
   'services'
 ])
 
-/** True when `orca.yaml` has a top-level key this version of Orca does not handle. */
 export function hasUnrecognizedOrcaYamlKeys(repoPath: string): boolean {
   try {
-    const content = readFileSync(join(repoPath, 'orca.yaml'), 'utf-8')
+    const content = readFileSync(orcaYamlPath(repoPath), 'utf-8')
     for (const line of iterateLfScriptLines(content)) {
-      // Why: match bare `key:` at end-of-line too, since a mapping with a block value on the next line is valid YAML.
+      // A bare key: is valid YAML when its block value follows on the next line.
       const m = line.match(/^([A-Za-z][A-Za-z0-9_-]*):(\s|$)/)
       if (m != null && !RECOGNIZED_ORCA_YAML_KEYS.has(m[1])) {
         return true
@@ -173,19 +163,14 @@ export function getSetupCommandSource(
   return null
 }
 
-/**
- * Run a named hook script in the given working directory.
- */
 export function runHook(
   hookName: 'setup' | 'archive',
   cwd: string,
   repo: Repo,
   hooksPath?: string,
   projectRuntime?: ProjectExecutionRuntimeResolution | HookRuntimeTarget,
-  /** Deadline override. Production uses HOOK_TIMEOUT; tests use it to exercise the timeout path. */
   timeoutMs: number = HOOK_TIMEOUT
-  // Why (#19334): an absent exitCode means no exit was ever observed. The archive-hook removal
-  // gate reads that as `unverifiable` rather than folding it into a zero.
+  // Failed hooks without an observed exit are unverifiable to the removal gate (#19334).
 ): Promise<{ success: boolean; output: string; exitCode?: number }> {
   const hooks = getEffectiveHooks(repo, hooksPath)
   const script = hooks?.scripts[hookName]

@@ -1,3 +1,4 @@
+import { getClaudeAgentViewService } from '../claude/agent-view-service'
 import { getAppEnvironment } from '../../shared/app-environment'
 import { startCodexHooks } from '../codex/codex-hook-reconcile'
 import { adoptLoginShellAgentHomes } from '../agent-hooks/agent-home-login-shell'
@@ -14,18 +15,17 @@ import type { AgentHookServer } from '../agent-hooks/server'
 import { listenForClaudeUserConfigDirs } from '../claude/claude-user-config-dirs'
 import { claudeHookService } from '../claude/hook-service'
 
-/**
- * Keeps this host's hook server and its agents' hook configs true to its settings. The startup
- * reconcile is the desktop's: without it a freshly managed SSH host only got hooks when its hook
- * settings changed, so its agents never reported status.
- */
+/** Reconcile hooks at startup as well as setting changes so newly managed hosts report status immediately. */
 export function startOrcadManagedAgentHooks(
   store: Pick<ProfilePreferences, 'getSettings' | 'onSettingsChanged'>,
   hookServer: Pick<AgentHookServer, 'setStatusHooksEnabled' | 'setClaudeConfigDirListener'>,
   registerCleanup: (cleanup: OrcadRuntimeCleanup) => void
 ): void {
   let stopping = false
+  const agentView = getClaudeAgentViewService()
+  void agentView.reconcile(store.getSettings())
   const removeSettingsListener = store.onSettingsChanged((updates, settings) => {
+    void agentView.reconcile(settings)
     if ('agentStatusHooksEnabled' in updates) {
       hookServer.setStatusHooksEnabled(isAgentStatusHooksEnabled(settings))
     }
@@ -40,7 +40,6 @@ export function startOrcadManagedAgentHooks(
   startCodexHooks({
     pathReady: shouldHydrateShellPath ? hydrateAgentCliShellPath() : Promise.resolve(),
     isEnabled: () => isAgentStatusHooksEnabledForAgent(getSettings(), 'codex'),
-    // Why null: orcad launches Codex on ~/.codex; Orca-managed account homes are a desktop flow.
     resolveLaunchHome: () => null
   })
   void adoptLoginShellAgentHomes().then(() =>

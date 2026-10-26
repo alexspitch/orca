@@ -49,8 +49,7 @@ export function installMonacoPeekReferencesPreviewOptions(
 
   const originalFillBody = prototype._fillBody
   const originalRevealReference = prototype._revealReference
-  // Why: these are private Monaco members with no stability guarantee; if an
-  // upgrade removes either, skip patching so Peek keeps Monaco's defaults.
+  // Private Monaco members can disappear on upgrade; keep defaults if patching is unsupported.
   if (typeof originalFillBody !== 'function' || typeof originalRevealReference !== 'function') {
     return
   }

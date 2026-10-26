@@ -10,25 +10,26 @@ export type ServerLoadHost = { id: string; label: string }
 
 /** Each connected server's CPU and memory; its bullet turns red when either runs high. */
 export function ServerLoadStatusSegment({
-  hosts,
+  servers,
   compact,
   iconOnly
 }: {
-  hosts: readonly ServerLoadHost[]
+  /** Connected Orca servers only, a handful; never the SSH config's host list. */
+  servers: readonly ServerLoadHost[]
   compact: boolean
   iconOnly: boolean
 }): React.JSX.Element | null {
-  const results = useServerLoad(hosts.map((host) => host.id))
-  if (hosts.length === 0) {
+  const results = useServerLoad(servers.map((server) => server.id))
+  if (servers.length === 0) {
     return null
   }
   return (
     <>
-      {hosts.map((host) => (
+      {servers.map((server) => (
         <ServerLoadChip
-          key={host.id}
-          label={host.label}
-          result={results[host.id]}
+          key={server.id}
+          label={server.label}
+          result={results[server.id]}
           compact={compact}
           iconOnly={iconOnly}
         />

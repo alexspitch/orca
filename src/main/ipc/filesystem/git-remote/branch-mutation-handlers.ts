@@ -10,7 +10,7 @@ import {
 import { validateGitPushTarget } from '../../../git/push-target-validation'
 import { resolveRegisteredWorktreePath } from '../../registered-worktree-roots-cache'
 import { getLocalGitOptionsForRegisteredWorktree } from '../../local-worktree-runtime-options'
-import { materializeWorktreePushTargetRemote } from '../../worktree-remote'
+import { ipcGitWorktreeTarget, materializeWorktreePushTargetRemote } from '../../worktree-remote'
 import type { FilesystemHandlerContext } from '../filesystem-handler-context'
 import { requireReachableGitRoute } from '../../../providers/execution-host-provider-dispatch'
 import { getConnectionExecutionHostId } from '../../../../shared/execution-host'
@@ -31,7 +31,7 @@ export function registerGitRemoteBranchMutationHandlers(context: FilesystemHandl
         pushTarget?: GitPushTarget
       }
     ): Promise<void> => {
-      // Why: coerce to strict boolean so a malformed payload (e.g. string 'false') can't enable --set-upstream; mirror in src/relay/git-handler.ts.
+      // Require literal true so malformed values such as string false cannot enable --set-upstream.
       const publish = args.publish === true
       requireReachableGitRoute(getConnectionExecutionHostId(args.connectionId))
       const worktreePath = await resolveRegisteredWorktreePath(args.worktreePath, store)
@@ -47,7 +47,7 @@ export function registerGitRemoteBranchMutationHandlers(context: FilesystemHandl
             store,
             undefined,
             gitOptions,
-            args.worktreeId
+            ipcGitWorktreeTarget(args)
           )
         : undefined
       if (materializedPushTarget) {
@@ -89,7 +89,7 @@ export function registerGitRemoteBranchMutationHandlers(context: FilesystemHandl
             store,
             undefined,
             gitOptions,
-            args.worktreeId
+            ipcGitWorktreeTarget(args)
           )
         : undefined
       if (materializedPushTarget) {
@@ -130,7 +130,7 @@ export function registerGitRemoteBranchMutationHandlers(context: FilesystemHandl
             store,
             undefined,
             gitOptions,
-            args.worktreeId
+            ipcGitWorktreeTarget(args)
           )
         : undefined
       if (materializedPushTarget) {

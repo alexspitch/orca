@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAppStore } from '@/store'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import { useActiveWorktree, useRepos } from '@/store/selectors'
 import { ipcOrRuntimeTargetForHostId } from '@/runtime/runtime-client-target'
 import type { RuntimeGitContext } from '@/runtime/runtime-git-client-context'
@@ -31,7 +32,7 @@ let sessionPick: GitLogPick = { repoId: null, worktreeId: null }
 
 export function useGitLogSelection(): GitLogSelectionState {
   const allRepos = useRepos()
-  const worktreesByRepo = useAppStore((s) => s.worktreesByRepo)
+  const worktreesByRepo = useAppStore(selectWorktreesByRepo)
   const defaultRepoId = useAppStore((s) => s.settings?.gitLogDefaultRepoId ?? null)
   const activeWorktree = useActiveWorktree()
   // Why read once: the page opens on the default project; later picks only feed the next opening.

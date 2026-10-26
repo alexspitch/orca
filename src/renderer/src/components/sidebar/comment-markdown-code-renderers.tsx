@@ -53,7 +53,7 @@ export function CommentMarkdownDocumentPre({
   const language = React.isValidElement<{ className?: string; children?: React.ReactNode }>(child)
     ? child.props.className?.match(/(?:^|\s)language-([^\s]+)/)?.[1]
     : undefined
-  // An element, not a call, so the renderer's hooks stay out of this early-returning component.
+  // Render as a component so its hooks cannot join this early-returning component’s hook order.
   const CodeBlock = renderCodeBlock
   const code = CodeBlock ? (
     <CodeBlock

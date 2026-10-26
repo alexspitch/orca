@@ -4,6 +4,15 @@
  */
 export const CLAUDE_LAUNCH_ACCOUNT_ENV = 'ORCA_CLAUDE_LAUNCH_ACCOUNT'
 
+/** Claude's launch env naming `accountId`; other agents and unnamed launches keep theirs. */
+export function withClaudeLaunchAccount<Env extends Record<string, string> | undefined>(
+  env: Env,
+  agent: string,
+  accountId: string | undefined
+): Env | Record<string, string> {
+  return agent === 'claude' && accountId ? { ...env, [CLAUDE_LAUNCH_ACCOUNT_ENV]: accountId } : env
+}
+
 /** The account a launch's env names, as `accountEnv` for a host-built agent session; none, none. */
 export function claudeLaunchAccountEnv(env: Readonly<Record<string, string>> | undefined): {
   accountEnv?: Record<string, string>

@@ -42,8 +42,7 @@ export function useRightSidebarActivityItems({
   const portsShortcut = useShortcutLabel('sidebar.ports.toggle')
   const servicesShortcut = useShortcutLabel('sidebar.services.toggle')
   const activeWorktreeId = useAppStore((s) => (rightSidebarOpen ? s.activeWorktreeId : null))
-  // Why: source control and checks are meaningless for non-git folders.
-  // Hide those tabs so the activity bar only shows relevant actions.
+  // Hide Git-only tabs for folder workspaces.
   const activeWorktree = useAppStore((s) =>
     activeWorktreeId ? (s.getKnownWorktreeById(activeWorktreeId) ?? null) : null
   )

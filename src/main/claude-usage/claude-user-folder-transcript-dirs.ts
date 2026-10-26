@@ -1,8 +1,6 @@
 import { join } from 'node:path'
-import {
-  getClaudeProfileRouter,
-  isDirectory
-} from '../claude-accounts/claude-profile-installed-router'
+import { isDirectory } from '../claude-accounts/claude-profile-homes'
+import { getClaudeProfileRouter } from '../claude-accounts/claude-profile-installed-router'
 import { readClaudeUserConfigDirs } from '../claude/claude-user-config-dir-registry'
 
 /**

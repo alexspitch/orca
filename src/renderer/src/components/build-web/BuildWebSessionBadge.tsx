@@ -1,7 +1,7 @@
 import { Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { activateTabAndFocusPane } from '@/lib/activate-tab-and-focus-pane'
-import { activateStructuredAgentSessionById } from '@/lib/structured-agent-session-tab-activation'
+import { activateStructuredAgentSessionById } from '@/lib/agent-session/structured-agent-session-tab-activation'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'

@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import type * as TimerPromises from 'node:timers/promises'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import type { DaemonEndpointIdentity } from './daemon-hello-protocol'
+import { DAEMON_V8_FLAGS } from './daemon-launched-child-spawn'
 import type { ProcessResult, ProcessSpec } from '@orca/process-host/process-spec'
 
 const { state, runProcessMock, materializeMock, ensureWithinMock, disconnectMock, recoverMock } =
@@ -80,7 +81,6 @@ const missing = {
   code: 113,
   stderr: 'Could not find service "x" in domain for user gui: 501'
 }
-// `lsof +D` over an unused copy prints nothing and exits 1.
 const lsofUnused = { ...ok, code: 1 }
 
 type Launchctl = { bootstrap: ProcessResult; bootout: ProcessResult; print: ProcessResult[] }
@@ -118,7 +118,6 @@ function beginRetirementClock(): number {
   return startedAt
 }
 
-/** Lets connection attempts and poll waits share the readiness deadline. */
 function elapseOnEachConnectAttempt(stepMs: number): () => number {
   const startedAt = beginRetirementClock()
   ensureWithinMock.mockImplementation(async () => {
@@ -177,13 +176,11 @@ beforeEach(async () => {
     if (spec.program === '/bin/launchctl') {
       const verb = spec.args?.[0]
       if (verb === 'print') {
-        // The last configured state repeats once the earlier ones are used up.
         return (
           (launchctl.print.length > 1 ? launchctl.print.shift() : launchctl.print[0]) ?? missing
         )
       }
       if (verb === 'bootout' && launchctl.bootout.code === 0) {
-        // A successful bootout leaves nothing for later prints to find.
         launchctl.print = [missing]
       }
       return verb === 'bootstrap' ? launchctl.bootstrap : launchctl.bootout
@@ -221,8 +218,8 @@ it('launches the copied helper on plain Node and leaves no inherited credentials
   expect(job).toMatchObject({
     Label: macDaemonJobLabel(state.root),
     KeepAlive: false,
-    // Local Network access for a plist-launched job resolves through its associated app.
     AssociatedBundleIdentifiers: ['com.stablyai.orca'],
+    MaterializeDatalessFiles: true,
     EnvironmentVariables: { ORCA_TEST_SECRET: 'test-value' }
   })
   expect(JSON.stringify(job)).not.toContain('NODE_CHANNEL_FD')
@@ -234,11 +231,16 @@ it('launches the copied helper on plain Node and leaves no inherited credentials
     Array.isArray(job.ProgramArguments)
       ? job.ProgramArguments.map(String)
       : []
-  expect(args.slice(0, 4)).toEqual([helperExec(), helperEntry(), '--socket', options.socketPath])
-  // The replacement preflight compares the installed entry, never the private copy's.
+  expect(args.slice(0, 5)).toEqual([
+    helperExec(),
+    ...DAEMON_V8_FLAGS,
+    helperEntry(),
+    '--socket',
+    options.socketPath
+  ])
+  // Replacement preflight compares the installed entry, not the private helper copy.
   expect(args[args.indexOf('--entry-path') + 1]).toBe(options.entryPath)
   expect(args[args.indexOf('--spawner-exec-path') + 1]).toBe(helperExec())
-  // The job file is gone and the published copy holds nothing else.
   expect(await readdir(copyDir)).toEqual([])
   expect(handle?.releaseAdoptionLease).toBeTypeOf('function')
   await handle?.shutdown()
@@ -253,7 +255,9 @@ it('uses one launchd label per profile and protocol', () => {
   expect(macDaemonJobLabel('/Users/a/Library/Application Support/orca')).not.toBe(
     macDaemonJobLabel('/Users/a/Library/Application Support/orca-dev')
   )
-  expect(macDaemonJobLabel('/p')).toMatch(/^com\.stablyai\.orca\.terminal\.[0-9a-f]{16}\.v49$/)
+  expect(macDaemonJobLabel('/p')).toMatch(
+    new RegExp(`^com\\.stablyai\\.orca\\.terminal\\.[0-9a-f]{16}\\.v${PROTOCOL_VERSION}$`)
+  )
 })
 
 it.each(['13.4.1', '12.7.6'])(
@@ -309,7 +313,7 @@ it.each([
   ['unverifiable', { ...ok, code: 1, stderr: 'Operation not permitted' }]
 ])('never starts beside an earlier job that reads %s', async (_state, print) => {
   launchctl.print = [print]
-  // No retirement wait may consume the time reserved for bootstrap and readiness.
+  // Keep retirement inside its budget so bootstrap and readiness still fit.
   const error = await launchFailure(Date.now() + 20_000)
   expect(error).toBeInstanceOf(Error)
   expect(launchctlCalls('bootstrap')).toHaveLength(0)

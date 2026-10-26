@@ -64,6 +64,7 @@ export const CLAUDE_USAGE_MERGE_OPS: UsageMergeOps<ClaudeUsageSnapshot> = {
       cacheWriteTokens: 0,
       cacheReuseRate: null,
       estimatedCostUsd: null,
+      hasUnpricedModels: false,
       topModel: null,
       topProject: null,
       hasAnyClaudeData: false
@@ -79,6 +80,7 @@ export const CLAUDE_USAGE_MERGE_OPS: UsageMergeOps<ClaudeUsageSnapshot> = {
     turns: left.turns + right.turns,
     zeroCacheReadTurns: left.zeroCacheReadTurns + right.zeroCacheReadTurns,
     estimatedCostUsd: sumNullable(left.estimatedCostUsd, right.estimatedCostUsd),
+    hasUnpricedModels: left.hasUnpricedModels || right.hasUnpricedModels,
     hasAnyClaudeData: left.hasAnyClaudeData || right.hasAnyClaudeData
   }),
   addDaily: addClaudeTokens,

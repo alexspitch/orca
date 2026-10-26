@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import type { SourceControlPanelFoundation } from '../panel/use-panel-foundation'
 import { useSourceControlCreatePrIntentCommitMessage } from '../review/use-create-pr-intent-commit-message'
 import { useSourceControlConflictAbort } from '../sync/use-conflict-abort'
@@ -5,10 +6,6 @@ import { useSourceControlRemoteActionRunner } from '../sync/use-remote-action-ru
 import { useSourceControlCommitAction } from './use-commit-action'
 import { useSourceControlCommitMessageGeneration } from './use-commit-message-generation'
 
-/**
- * Everything that writes to the local branch: the commit itself, the message it gets, the remote
- * ops that follow it, and the escape hatch out of a conflicted merge or rebase.
- */
 export function useSourceControlCommitFlows(foundation: SourceControlPanelFoundation) {
   const {
     activeRepo,
@@ -98,6 +95,18 @@ export function useSourceControlCommitFlows(foundation: SourceControlPanelFounda
     updateCommitMessageGenerationRecord,
     worktreePath
   })
+  const { handleCommit: commitStagedChanges } = commitAction
+  const { handleCancelGenerate } = commitMessageGeneration
+  // Cancel box generation when committing its draft so a late reply cannot refill it; Create PR has its own target.
+  const handleCommit = useCallback<typeof commitStagedChanges>(
+    (messageOverride, options) => {
+      if (!options?.target) {
+        handleCancelGenerate()
+      }
+      return commitStagedChanges(messageOverride, options)
+    },
+    [commitStagedChanges, handleCancelGenerate]
+  )
   const createPrIntentCommitMessage = useSourceControlCreatePrIntentCommitMessage({
     activeRepo,
     generateInFlightRef,
@@ -116,7 +125,7 @@ export function useSourceControlCommitFlows(foundation: SourceControlPanelFounda
     fastForwardBranch,
     fetchBranch,
     grouped,
-    handleCommit: commitAction.handleCommit,
+    handleCommit,
     pullBranch,
     pushBranch,
     rebaseFromBase,
@@ -145,7 +154,7 @@ export function useSourceControlCommitFlows(foundation: SourceControlPanelFounda
   })
 
   return {
-    ...commitAction,
+    handleCommit,
     ...commitMessageGeneration,
     ...createPrIntentCommitMessage,
     ...remoteActionRunner,

@@ -1,4 +1,3 @@
-/* oxlint-disable react-doctor/no-adjust-state-on-prop-change -- Why: selection annotations are synchronized from Monaco editor selection and layout APIs, not derived React props. */
 import React, { useRef, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import Editor from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
@@ -27,6 +26,7 @@ import { snapshotMonacoViewState } from './monaco-view-state-persistence'
 import { MonacoMarkdownAnnotationOverlay } from './MonacoMarkdownAnnotationOverlay'
 import { useCodeNavigationEditorBinding } from './use-code-navigation-editor-binding'
 import { GitBlameColumn } from './git-blame/GitBlameColumn'
+import { useEditorModelRekeyCarry } from './editor-model-rekey-carry'
 
 type MonacoEditorProps = {
   fileId: string
@@ -47,6 +47,8 @@ type MonacoEditorProps = {
   markdownAnnotationsEnabled?: boolean
   conflictDecorationsEnabled?: boolean
   readOnly?: boolean
+  // Why: shows another tab's record read-only; never moves its cursor line or takes its reveals.
+  passiveMirror?: boolean
   liveTail?: boolean
   autoHeight?: boolean
   /** TS/JS/Python edit tabs: a definition source/target with Back/Forward input. */
@@ -71,6 +73,7 @@ export default function MonacoEditor({
   markdownAnnotationsEnabled = false,
   conflictDecorationsEnabled = false,
   readOnly = false,
+  passiveMirror = false,
   liveTail = false,
   autoHeight = false,
   codeNavigationEnabled = false
@@ -83,10 +86,10 @@ export default function MonacoEditor({
   languageRef.current = language
   const unregisterFileSearchSelectionRef = useRef<(() => void) | null>(null)
   const { setupCopy, toastNode } = useContextualCopySetup()
-  // Why: hold the throttle timer in a ref so unmount cleanup can cancel a pending write before snapshotting the final scroll position.
+  // Cancel pending throttled writes before snapshotting final scroll on unmount.
   const scrollThrottleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const propsRef = useRef({ relativePath, language, onSave, onContentChange })
-  // Why: assign during render so the ref is current before any handler reads it (a useEffect would leave a one-render stale window).
+  // Refresh during render so event handlers cannot read one-render-stale props.
   propsRef.current = { relativePath, language, onSave, onContentChange }
   const readOnlyRef = useRef(readOnly)
   readOnlyRef.current = readOnly
@@ -113,6 +116,7 @@ export default function MonacoEditor({
     () => toEditorModelUri(filePath, modelOwnerKey),
     [filePath, modelOwnerKey]
   )
+  useEditorModelRekeyCarry(fileId, modelUri)
   const estimatedAutoHeight = useMemo(() => {
     if (!autoHeight) {
       return null
@@ -125,11 +129,9 @@ export default function MonacoEditor({
   const autoHeightLineHeight = Math.ceil(editorFontSize * 1.45)
   const autoHeightUsesInternalScroll =
     autoHeight && isMonacoAutoHeightCapped(renderedEditorHeight, autoHeightLineHeight)
-  // Why: @monaco-editor/react skips its value→model sync on the first post-remount render, so retained models need an explicit sync or they show stale text.
-  // Invariant: the mount path must read `contentRef.current` (guaranteed latest), never `lastSyncedContentRef.current` (may be stale pre-mount).
+  // The React wrapper skips first post-remount value sync; reconcile retained models from live contentRef, never the possibly stale lastSyncedContentRef.
   const contentRef = useRef(content)
   contentRef.current = content
-  // Gutter context menu state
   const [gutterMenuOpen, setGutterMenuOpen] = useState(false)
   const [gutterMenuPoint, setGutterMenuPoint] = useState({ x: 0, y: 0 })
   const [gutterMenuLine, setGutterMenuLine] = useState(1)
@@ -143,6 +145,7 @@ export default function MonacoEditor({
     contentRef,
     contentSyncModeRef,
     modelKey: modelUri,
+    fileId,
     onContentChange
   })
   const annotations = useMonacoMarkdownAnnotations({
@@ -155,10 +158,10 @@ export default function MonacoEditor({
     markdownAnnotationsEnabled
   })
 
-  // Why useLayoutEffect: cleanup runs before @monaco-editor/react disposes the editor, so getScrollTop() still reads valid state on unmount.
+  // Layout cleanup precedes the wrapper’s editor disposal, keeping final scroll readable.
   useLayoutEffect(() => {
     return () => {
-      // Why: cancel the pending throttled write so it can't fire after this snapshot and overwrite the final position with a stale value.
+      // Cancel throttled writes so stale positions cannot overwrite the final snapshot.
       if (scrollThrottleTimerRef.current !== null) {
         clearTimeout(scrollThrottleTimerRef.current)
         scrollThrottleTimerRef.current = null
@@ -171,7 +174,6 @@ export default function MonacoEditor({
     }
   }, [cancelScheduledReveal, clearTransientRevealHighlight, modelUri, viewStateKey])
 
-  // Update editor options when settings change
   useEffect(() => {
     if (!editorRef.current) {
       return
@@ -180,8 +182,6 @@ export default function MonacoEditor({
       fontSize: editorFontSize,
       fontFamily: editorFontFamily,
       ...buildFileEditorWordWrapOptions(editorWordWrap),
-      // Keep a retained Monaco instance aligned when a tab changes between
-      // a read-only surface and a normal editable file.
       readOnly
     })
   }, [editorFontFamily, editorFontSize, editorWordWrap, readOnly])
@@ -209,6 +209,7 @@ export default function MonacoEditor({
     modelOwnerKey,
     viewStateKey,
     viewStateId,
+    passiveMirror,
     worktreeId,
     autoHeight,
     autoHeightLineHeight,
@@ -230,7 +231,6 @@ export default function MonacoEditor({
     gutterMenu: { setGutterMenuOpen, setGutterMenuPoint, setGutterMenuLine }
   })
 
-  // Navigate to line and highlight match when requested (for already-mounted editor)
   useEffect(() => {
     if (!revealLine || !editorRef.current) {
       return

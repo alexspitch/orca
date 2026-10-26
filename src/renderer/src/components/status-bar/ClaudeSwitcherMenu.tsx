@@ -48,8 +48,7 @@ import { ProviderDetailsMenu } from './ProviderDetailsMenu'
 import { getClaudeAccountSyncKey } from './provider-account-sync-key'
 import { signInToClaudeAccount } from '@/lib/claude-account-sign-in'
 
-// Exported so its account-switch/reset logic is preserved for row drill-in even
-// though the footer now opens the consolidated UsageRosterPanel first.
+// Retain account switch/reset drill-in even though the footer now opens UsageRosterPanel.
 export function ClaudeSwitcherMenu({
   claude,
   compact,

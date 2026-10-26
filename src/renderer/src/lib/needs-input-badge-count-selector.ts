@@ -1,5 +1,6 @@
 import type { AppState } from '@/store/types'
 import { getIndexedAllWorktrees } from '@/store/worktree-repo-index'
+import { selectFolderWorkspaces, selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../shared/constants'
 import { buildAttentionByWorktree } from '../../../shared/sidebar-list/smart-attention'
 import { folderWorkspaceKey } from '../../../shared/workspace-scope'
@@ -22,30 +23,34 @@ export type NeedsInputBadgeCountState = UnreadBadgeCountState &
     | 'terminalLayoutsByTabId'
   >
 
-const COUNT_INPUTS = [
-  'worktreesByRepo',
-  'folderWorkspaces',
-  'projectGroups',
-  'repos',
-  'settings',
-  'workspaceHostScope',
-  'visibleWorkspaceHostIds',
-  'hideWorkspacesFromOtherDevices',
-  'runtimeEnvironments',
-  'runtimeStatusByEnvironmentId',
-  'tabsByWorktree',
-  'agentStatusByPaneKey',
-  'runtimePaneTitlesByTabId',
-  'ptyIdsByTabId',
-  'migrationUnsupportedByPtyId',
-  'terminalLayoutsByTabId'
-] as const satisfies readonly (keyof NeedsInputBadgeCountState)[]
+// Why reads, not a key list: string keys of layout fields read as layout writes to the ratchet.
+function countInputs(state: NeedsInputBadgeCountState): readonly unknown[] {
+  return [
+    selectWorktreesByRepo(state),
+    selectFolderWorkspaces(state),
+    state.projectGroups,
+    state.repos,
+    state.settings,
+    state.workspaceHostScope,
+    state.visibleWorkspaceHostIds,
+    state.hideWorkspacesFromOtherDevices,
+    state.runtimeEnvironments,
+    state.runtimeStatusByEnvironmentId,
+    state.tabsByWorktree,
+    state.agentStatusByPaneKey,
+    state.runtimePaneTitlesByTabId,
+    state.ptyIdsByTabId,
+    state.migrationUnsupportedByPtyId,
+    state.terminalLayoutsByTabId
+  ]
+}
 
 function sameCountInputs(
   previous: NeedsInputBadgeCountState,
   next: NeedsInputBadgeCountState
 ): boolean {
-  return COUNT_INPUTS.every((key) => previous[key] === next[key])
+  const nextInputs = countInputs(next)
+  return countInputs(previous).every((value, index) => value === nextInputs[index])
 }
 
 /** Workspaces the sidebar's Smart order puts in "Needs you"; a folder is listed by its workspace key. */
@@ -54,8 +59,8 @@ export function getNeedsInputWorkspaceIds(
   now: number
 ): Set<string> {
   const workspaces = [
-    ...getIndexedAllWorktrees(state.worktreesByRepo),
-    ...state.folderWorkspaces.map((folder) => ({
+    ...getIndexedAllWorktrees(selectWorktreesByRepo(state)),
+    ...selectFolderWorkspaces(state).map((folder) => ({
       id: folderWorkspaceKey(folder.id),
       lastActivityAt: folder.lastActivityAt
     })),

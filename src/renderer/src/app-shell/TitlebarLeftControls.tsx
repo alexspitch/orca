@@ -21,11 +21,7 @@ import { usePageHistory } from '@/components/build-web/page-history/page-history
 import { TitlebarBuildWebActivity } from '@/components/build-web/activity/TitlebarBuildWebActivity'
 import type { AppChromeLayout } from './use-app-chrome-layout'
 
-/**
- * The titlebar's left cluster: window chrome padding, app name, sidebar toggle, and the
- * worktree back/forward pair. Shared by the full-width titlebar and the sidebar-width left
- * header so the agent badge popover isn't duplicated.
- */
+/** Reuse left chrome across full-width and sidebar-width headers so controls/popovers stay consistent. */
 export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): React.JSX.Element {
   const toggleSidebar = useAppStore((s) => s.toggleSidebar)
   const updateSettings = useAppStore((s) => s.updateSettings)
@@ -38,8 +34,7 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
   const hasPageHistory = usePageHistory((s) => s.entries.length > 0)
 
   return (
-    // Why: measure the ENTIRE row so TabGroupPanel's collapse spacer reserves enough width; measuring only the inner cluster left back/forward over the first tab.
-    // Why: collapsed mode floats in a w-0 wrapper; w-max stops Windows Chromium from shrinking the app name to one glyph.
+    // Measure the whole row for tab-strip spacing. w-max prevents the collapsed w-0 wrapper shrinking Windows text to one glyph.
     <div
       ref={layout.titlebarLeftControlsRef}
       className={`flex h-full shrink-0 items-center${
@@ -50,7 +45,7 @@ export function TitlebarLeftControls({ layout }: { layout: AppChromeLayout }): R
         {hasMacTrafficLights && !layout.isFullScreen ? (
           <div className="titlebar-traffic-light-pad" />
         ) : hasCustomTitleBar ? (
-          /* Why: Windows/Linux remove the native title bar, so render the logo plus a ··· button that pops the application menu (as Alt does). */
+          /* Replace native Windows/Linux chrome with logo and application-menu access. */
           <>
             <img src={logo} alt="" aria-hidden className="titlebar-logo" />
             <Tooltip>

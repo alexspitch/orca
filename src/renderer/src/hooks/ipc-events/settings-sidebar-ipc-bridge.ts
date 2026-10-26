@@ -57,8 +57,7 @@ export function registerSettingsAndSidebarIpcBridge(unsubs: (() => void)[]): voi
     }) ?? (() => {})
   )
 
-  // Why: a phone stuck in a silent 4001 auth loop (lost device registry) reads as
-  // "phone won't connect" with no clue on either end; main throttles to once per session.
+  // Lost-registry auth loops need a visible remedy on either end; main throttles this notice once per session.
   unsubs.push(
     subscribeToUnpairedDeviceAuthNotification(window.api.mobile, () => {
       toast.warning(
@@ -93,11 +92,14 @@ export function registerSettingsAndSidebarIpcBridge(unsubs: (() => void)[]): voi
     })
   )
 
-  unsubs.push(
-    window.api.ui.onOpenChangelog(() => {
-      useAppStore.getState().openModal('changelog')
-    })
-  )
+  // Custom build: upstream's IPC test doubles of window.api.ui predate the changelog menu item.
+  if ('onOpenChangelog' in window.api.ui) {
+    unsubs.push(
+      window.api.ui.onOpenChangelog(() => {
+        useAppStore.getState().openModal('changelog')
+      })
+    )
+  }
 
   // Why: View > Appearance toggles settings in main and broadcasts; merge into the store for an immediate re-render.
   unsubs.push(

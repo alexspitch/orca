@@ -7,7 +7,7 @@ import {
   toSourceControlRowOpenEvent,
   type SourceControlRowOpenEvent
 } from '../listing/split-open'
-import { getFileTypeIcon } from '@/lib/file-type-icons'
+import { FileTypeIcon } from '@/components/FileTypeIcon'
 import { useMaterialFileIcon } from '@/lib/material-icons/use-material-file-icons'
 import { MaterialRowIcon } from '@/lib/material-icons/material-row-icon'
 import { basename, dirname } from '@/lib/path'
@@ -16,8 +16,6 @@ import { formatGitHistoryTimestamp } from './git-history-format'
 import type { GitBranchChangeEntry } from '../../../../../../shared/git-diff-compare-types'
 import type { GitFileStatus } from '../../../../../../shared/git-status-types'
 
-// State for a single commit's lazily-loaded file list. Owned by GitHistoryPanel,
-// populated through the onLoadCommitFiles loader supplied by SourceControl.
 export type GitHistoryCommitFilesState =
   | { status: 'loading' }
   | { status: 'error'; error: string }
@@ -31,7 +29,6 @@ function CommitFileRow({
   onOpen: (entry: GitBranchChangeEntry, event: SourceControlRowOpenEvent) => void
 }): React.JSX.Element {
   const status = entry.status as GitFileStatus
-  const FileIcon = getFileTypeIcon(entry.path)
   const fileName = basename(entry.path)
   const materialIcon = useMaterialFileIcon(fileName, 'file')
   const parentDir = dirname(entry.path)
@@ -49,7 +46,8 @@ function CommitFileRow({
       {materialIcon ? (
         <MaterialRowIcon url={materialIcon} />
       ) : (
-        createElement(FileIcon, {
+        createElement(FileTypeIcon, {
+          filePath: entry.path,
           className: 'size-3.5 shrink-0',
           style: { color: STATUS_COLORS[status] }
         })
@@ -147,7 +145,6 @@ export function GitHistoryCommitFiles({
   onOpenFile: (entry: GitBranchChangeEntry, event: SourceControlRowOpenEvent) => void
   onOpenAll?: () => void
 }): React.JSX.Element {
-  // Author and date move off the dense commit row and surface here on expand.
   const meta = [author, formatGitHistoryTimestamp(timestamp)].filter(Boolean).join(' · ')
   return (
     <div className="border-l border-border/60 bg-muted/20">

@@ -28,6 +28,7 @@ export function gitLogRepos(repos: readonly Repo[]): Repo[] {
  * that project, the last one picked for it, its main checkout, the first.
  */
 export function resolveGitLogSelection(input: GitLogSelectionInput): GitLogSelection {
+  const { worktreesByRepo } = input
   const repos = gitLogRepos(input.repos)
   const repoById = (id: string | null | undefined): Repo | undefined =>
     id ? repos.find((repo) => repo.id === id) : undefined
@@ -40,7 +41,7 @@ export function resolveGitLogSelection(input: GitLogSelectionInput): GitLogSelec
   if (!repo) {
     return { repo: null, worktree: null }
   }
-  const worktrees = input.worktreesByRepo[repo.id] ?? []
+  const worktrees = worktreesByRepo[repo.id] ?? []
   const worktreeById = (id: string | null | undefined): Worktree | undefined =>
     id ? worktrees.find((worktree) => worktree.id === id) : undefined
   const activeHere = input.activeWorktree?.repoId === repo.id ? input.activeWorktree.id : null
