@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.242-custom.1793028101000",
+      "date": "2026-10-26",
+      "commit": "0aaaa9551d9e",
+      "features": [
+        "Images page rows now show each image's push state in the Registry column (pushing, pushed or failed) and refresh as each image finishes."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.242-custom.1793024966000",
       "date": "2026-10-26",
       "commit": "f1549d7ba41f",
