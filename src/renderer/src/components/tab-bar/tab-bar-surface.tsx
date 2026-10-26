@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ProjectedAgentMenuItems } from './QuickLaunchButton'
+import { claudeAccountItemsAfterRow } from './ClaudeAccountLaunchItems'
 import TabBarCreateEntry from './TabBarCreateEntry'
 import { TabStripScrollIndicator } from './TabStripScrollIndicator'
 import { TabStripTooltipProvider } from './TabStripTooltipProvider'
@@ -86,6 +87,7 @@ export function renderTabBarSurface({
     launchAgentFromNewTabEntry,
     runPendingNewTabMenuFocusAfterClose,
     queueNewActiveTerminalFocusAfterNewTabMenuClose,
+    queueTerminalTabFocusAfterNewTabMenuClose,
     queueFocusAfterNewTabMenuClose,
     showStaticCreateMenuItems
   } = createMenu
@@ -277,7 +279,16 @@ export function renderTabBarSurface({
           {showStaticCreateMenuItems && showAgentLaunchItems ? (
             <>
               <DropdownMenuSeparator />
-              <ProjectedAgentMenuItems model={agentMenu} runLaunch={launchAgentRow} />
+              <ProjectedAgentMenuItems
+                model={agentMenu}
+                runLaunch={launchAgentRow}
+                renderAfterRow={claudeAccountItemsAfterRow({
+                  worktreeId,
+                  groupId: resolvedGroupId,
+                  launchSource: 'tab_bar_quick_launch',
+                  onFocusTerminal: queueTerminalTabFocusAfterNewTabMenuClose
+                })}
+              />
             </>
           ) : null}
         </DropdownMenuContent>

@@ -5,8 +5,41 @@ import { adoptAgentSessionLaunchVerdict } from '@/lib/agent-session-launch-plan'
 import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
 import { translate } from '@/i18n/i18n'
+import type { NewTabAgentMenuRow } from '@/lib/new-tab-agent-menu-rows'
 import type { LaunchSource } from '../../../../shared/telemetry-events'
 import { useClaudeLaunchAccounts } from './use-claude-launch-accounts'
+
+type ClaudeAccountLaunchItemsProps = {
+  worktreeId: string
+  groupId: string
+  launchSource?: LaunchSource
+  disabled: boolean
+  onFocusTerminal: (tabId: string) => void
+}
+
+/** Custom build: the account items under the Claude row of a new-tab agent menu. */
+export function claudeAccountItemsAfterRow({
+  prompt,
+  disabled = false,
+  launchSource,
+  ...items
+}: Omit<ClaudeAccountLaunchItemsProps, 'disabled'> & {
+  disabled?: boolean
+  prompt?: string
+}): (row: NewTabAgentMenuRow) => React.ReactNode {
+  return (row) =>
+    // Why only without a prompt: a prompt may launch through the host, which drops the account.
+    // Why not under an unavailable chat: the same agent's terminal row follows it.
+    row.agent === 'claude' && row.kind !== 'chat-unavailable' && prompt === undefined ? (
+      <ClaudeAccountLaunchItems
+        worktreeId={items.worktreeId}
+        groupId={items.groupId}
+        disabled={disabled}
+        onFocusTerminal={items.onFocusTerminal}
+        {...(launchSource !== undefined ? { launchSource } : {})}
+      />
+    ) : null
+}
 
 /**
  * One item per other Claude account of the workspace's host: a terminal running `claude` in that
@@ -18,13 +51,7 @@ export function ClaudeAccountLaunchItems({
   launchSource,
   disabled,
   onFocusTerminal
-}: {
-  worktreeId: string
-  groupId: string
-  launchSource?: LaunchSource
-  disabled: boolean
-  onFocusTerminal: (tabId: string) => void
-}): React.JSX.Element[] {
+}: ClaudeAccountLaunchItemsProps): React.JSX.Element[] {
   const accounts = useClaudeLaunchAccounts(worktreeId, true)
 
   const launch = (accountId: string, label: string): void => {

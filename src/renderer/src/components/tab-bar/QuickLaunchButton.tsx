@@ -23,7 +23,7 @@ import type { NewTabAgentMenuRow } from '@/lib/new-tab-agent-menu-rows'
 import { useNewTabAgentMenuRows, type NewTabAgentMenuModel } from './use-new-tab-agent-menu-rows'
 import { useAgentDetectionTargetForWorktree } from '@/hooks/useAgentDetectionTarget'
 import { chatUnavailableLabel, rowTitle, rowLabel, rowId } from './tab-agent-row-presentation'
-import { ClaudeAccountLaunchItems } from './ClaudeAccountLaunchItems'
+import { claudeAccountItemsAfterRow } from './ClaudeAccountLaunchItems'
 
 export type QuickLaunchAgentMenuItemsProps = {
   worktreeId: string
@@ -163,18 +163,7 @@ function QuickLaunchAgentMenuItemsInner(props: QuickLaunchAgentMenuItemsProps): 
       {...props}
       model={model}
       runLaunch={runLaunch}
-      renderAfterRow={(row) =>
-        // Why only terminal rows without a prompt: a prompt may launch through the host, which drops the account.
-        row.kind !== 'chat' && row.agent === 'claude' && props.prompt === undefined ? (
-          <ClaudeAccountLaunchItems
-            worktreeId={props.worktreeId}
-            groupId={props.groupId}
-            disabled={props.disabled ?? false}
-            onFocusTerminal={props.onFocusTerminal}
-            {...(props.launchSource !== undefined ? { launchSource: props.launchSource } : {})}
-          />
-        ) : null
-      }
+      renderAfterRow={claudeAccountItemsAfterRow(props)}
     />
   )
 }
