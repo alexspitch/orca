@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.242-custom.1793023918000",
+      "date": "2026-10-26",
+      "commit": "6d4f75e97dc7",
+      "features": [
+        "Images now shows a Freshness column for a picked product version, telling you which images need a rebuild, which are current, or were never built.",
+        "Freshness on the Images page distinguishes «rebuild» when an image's own code changed from «packages» when only its shared packages did, with a spinner while scanning.",
+        "The Images toolbar has a «Build N» button that builds several picked images of one product together and follows them as a single card."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.242-custom.1793014764000",
       "date": "2026-10-26",
       "commit": "bbacc35962a7",
