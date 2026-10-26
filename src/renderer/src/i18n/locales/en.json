@@ -20583,6 +20583,8 @@
       "newHint": "Orca creates the worktree, then the session works in it (-no-worktree).",
       "noRepoFound": "The repository is not available.",
       "createFailed": "Could not create the worktree: {{error}}",
+      "creating": "Creating the worktree {{name}}…",
+      "starting": "Starting the session in {{name}}…",
       "session": "Session",
       "inThisWorktree": "The skill works in this worktree (-no-worktree) and never makes its own.",
       "pickBase": "Pick the branch the worktree starts from.",

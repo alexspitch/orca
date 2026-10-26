@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -131,19 +132,32 @@ function TakeToWorkForm({
       if (!draft.repoId || !draft.name.trim() || !draft.baseBranch.trim()) {
         return
       }
+      const name = draft.name.trim()
       onClose()
       void (async () => {
-        const created = await createBatchWorktree({ ...draft, name: draft.name.trim() })
-        if (created) {
-          remember(created.id)
-          await launchBuildWebBatch({
-            target,
-            baseUrl,
-            worktree: created,
-            issues,
-            flags,
-            ...account
-          })
+        // Why a toast: the dialog is gone, and creating plus the setup script can take a while.
+        const pending = toast.loading(
+          translate('buildWeb.take.creating', 'Creating the worktree {{name}}…', { name })
+        )
+        try {
+          const created = await createBatchWorktree({ ...draft, name })
+          if (created) {
+            toast.loading(
+              translate('buildWeb.take.starting', 'Starting the session in {{name}}…', { name }),
+              { id: pending }
+            )
+            remember(created.id)
+            await launchBuildWebBatch({
+              target,
+              baseUrl,
+              worktree: created,
+              issues,
+              flags,
+              ...account
+            })
+          }
+        } finally {
+          toast.dismiss(pending)
         }
       })()
       return
