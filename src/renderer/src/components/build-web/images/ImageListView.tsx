@@ -22,6 +22,7 @@ import { ImageBuildDialog } from './ImageBuildDialog'
 import { ImageBuildProgress } from './ImageBuildProgress'
 import { ImagePushProgress } from './ImagePushProgress'
 import { SettleFailedStatus } from './SettleFailedStatus'
+import { FreshnessCell, useImageFreshness } from './image-freshness'
 import { useBuildWebStore } from '../build-web-store'
 import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip } from '../BuildWebToneChip'
@@ -82,6 +83,9 @@ export function ImageListView({
   }
   const { data, loading, error, reload } = useImagePage(target, true, args)
   const rows = data?.rows ?? []
+  // Why its own count: Refresh asks the freshness scans past main's two-minute copy too.
+  const [refreshes, setRefreshes] = useState(0)
+  const fresh = useImageFreshness(target, rows, version === 'all' ? null : version, refreshes)
   const canBuild = useBuildWebStore((s) => s.status?.perms.includes('build') === true)
   const [building, setBuilding] = useState<{
     image: string
@@ -128,7 +132,7 @@ export function ImageListView({
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={() => reload(true)}
+          onClick={() => (reload(true), setRefreshes((n) => n + 1))}
           disabled={loading}
           aria-label={translate('buildWeb.page.refresh', 'Refresh')}
         >
@@ -203,7 +207,13 @@ export function ImageListView({
       />
       {error || rows.length === 0 ? null : (
         <div className="scrollbar-sleek min-h-0 flex-1 overflow-auto">
-          <table className="w-full min-w-[900px] table-fixed border-collapse">
+          <table
+            className={cn(
+              'w-full min-w-[900px] table-fixed border-collapse',
+              // Why: the Image column, the one that flexes, keeps its room beside Freshness.
+              fresh.shown && 'min-w-[1000px]'
+            )}
+          >
             <thead className="sticky top-0 z-10 bg-background">
               <tr className="border-b border-border text-left text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
                 <th className="w-10 py-2 pl-3 md:pl-5">
@@ -246,6 +256,11 @@ export function ImageListView({
                   label={translate('buildWeb.images.status', 'Status')}
                   className="w-24"
                 />
+                {fresh.shown ? (
+                  <th className="w-24 py-2">
+                    {translate('buildWeb.images.freshness', 'Freshness')}
+                  </th>
+                ) : null}
                 <th className="w-20 py-2">{translate('buildWeb.images.log', 'Log')}</th>
                 <BuildWebSortHeader
                   {...sorting}
@@ -342,6 +357,11 @@ export function ImageListView({
                         <BuildStatusCell build={row.last} />
                       ) : null}
                     </td>
+                    {fresh.shown ? (
+                      <td className="py-2">
+                        <FreshnessCell row={row} scan={fresh.of(row)} />
+                      </td>
+                    ) : null}
                     <td className="py-2">{row.last ? <LogCell build={row.last} /> : null}</td>
                     <td className="py-2 pr-3 md:pr-5">
                       {row.last ? <RegistryCell build={row.last} /> : null}

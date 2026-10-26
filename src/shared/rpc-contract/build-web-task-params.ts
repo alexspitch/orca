@@ -34,6 +34,13 @@ export const BuildWebAdoptParams = z.object({ id: Id, testingStatus: Testing })
 const Repo = z.literal('chat-platform').optional()
 /** The repository a branch list, image list or fetch is of; absent is the monorepo. */
 export const BuildWebRepoParams = z.object({ repo: Repo }).optional()
+export const BuildWebImageFreshnessParams = z.object({
+  product: z.string().trim().min(1).max(20),
+  version: z.string().trim().min(1).max(40),
+  dist: z.enum(['rhel', 'redos']),
+  // Why: Refresh asks the console again rather than the copy main keeps for two minutes.
+  force: z.boolean().optional()
+})
 export const BuildWebDetectParams = z.object({
   branch: Branch,
   ticket: z.string().regex(/^[A-Za-z][A-Za-z0-9_]*-[\d.]+$/, 'Missing task number'),

@@ -6,6 +6,7 @@ import {
   BuildWebIssueId
 } from '../../shared/rpc-contract/build-web-params'
 import {
+  BuildWebImageFreshnessParams,
   BuildWebAdoptParams,
   BuildWebComboParams,
   BuildWebCombosParams,
@@ -65,6 +66,9 @@ export function registerBuildWebTaskHandlers(): void {
   handle('detectImages', BuildWebDetectParams, (args) => commands.buildWebDetectImages(args))
   handle('createIssueRun', BuildWebIssueRunParams, (args) => commands.buildWebCreateIssueRun(args))
   handle('issueBuildBranches', BuildWebIssueId, (args) => commands.buildWebIssueBuildBranches(args))
+  handle('imageFreshness', BuildWebImageFreshnessParams, (args) =>
+    commands.buildWebImageFreshness(args)
+  )
   handle('imageNames', BuildWebRepoParams, (args) => commands.buildWebImageNames(args))
   handle('branches', BuildWebRepoParams, (args) => commands.buildWebBranches(args))
   handle('fetchRepo', BuildWebRepoParams, (args) => commands.buildWebFetchRepo(args))

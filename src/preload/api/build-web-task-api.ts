@@ -1,5 +1,8 @@
 import type { BuildWebJiraOutcome, BuildWebMutationResult } from '../../shared/build-web-types'
-import type { BuildWebPushProgress } from '../../shared/build-web-image-types'
+import type {
+  BuildWebImageFreshness,
+  BuildWebPushProgress
+} from '../../shared/build-web-image-types'
 import type {
   BuildWebTrain,
   BuildWebTrainAction,
@@ -84,6 +87,13 @@ export type BuildWebTaskApi = {
   ) => Promise<BuildWebMutationResult<{ id: string; existing: boolean }>>
   /** Null from a console that cannot list them. */
   issueBuildBranches: (args: { id: string }) => Promise<BuildWebIssueBuildBranch[] | null>
+  /** Which of a product version's images miss its branch's latest changes; null when no build names the branch. */
+  imageFreshness: (args: {
+    product: string
+    version: string
+    dist: 'rhel' | 'redos'
+    force?: boolean
+  }) => Promise<BuildWebImageFreshness | null>
   /** Without `repo`, the monorepo's: what every client before chat-platform asked for. */
   imageNames: (args?: { repo?: 'chat-platform' }) => Promise<string[]>
   branches: (args?: { repo?: 'chat-platform' }) => Promise<BuildWebBranch[]>

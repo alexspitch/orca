@@ -20619,7 +20619,8 @@
       "updateServerArchive": "This Orca server cannot archive tasks yet. Update the server.",
       "updateServerArchiveList": "This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.",
       "updateServerChatPlatform": "This Orca server does not know Chat Platform yet. Update the server.",
-      "updateServerSavedQueries": "This Orca server does not keep saved queries yet. Update the server."
+      "updateServerSavedQueries": "This Orca server does not keep saved queries yet. Update the server.",
+      "updateServerImageFreshness": "This Orca server cannot tell which images need a rebuild yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -20701,7 +20702,15 @@
       "settle": "Use #{{to}}",
       "settleUnsupported": "This build-web console cannot do that yet. Update the console.",
       "settled": "{{image}} on {{dist}} now names build #{{to}}.",
-      "settleHint": "{{status}} — use the last successful build #{{to}} instead, without building"
+      "settleHint": "{{status}} — use the last successful build #{{to}} instead, without building",
+      "freshness": "Freshness",
+      "rebuild": "rebuild",
+      "rebuildTip": "Changed on {{branch}} since its last build: {{what}}",
+      "rebuildSources": "its sources",
+      "current": "current",
+      "currentTip": "Nothing it is built from changed on {{branch}} since its last build",
+      "neverBuilt": "not built",
+      "neverBuiltTip": "No build of this version on {{branch}} yet"
     },
     "card": {
       "overview": "Overview",
@@ -21126,7 +21135,14 @@
       "add": "Add",
       "notYet": "No images found yet",
       "explain": "The console compares the task’s commits with the branch and offers the images they touch. Any other image can be added by hand.",
-      "fetch": "Fetch"
+      "fetch": "Fetch",
+      "releaseBranch": "task’s release",
+      "noCommitsYet": "no commits yet — added when they arrive",
+      "onRun": "already built",
+      "versionsTitle": "Which versions to build for?",
+      "versions": "Versions the images are built for: the task’s release, and each newer one its commits reach. Untick one to leave it out of this task’s builds.",
+      "cancel": "Cancel",
+      "byHand": "chosen by hand"
     },
     "jira": {
       "changing": "Changing…",
@@ -22046,5 +22062,11 @@
       "title": "Launch Claude as {{account}} in a new terminal",
       "launchFailed": "Could not start Claude as {{account}}."
     }
+  },
+  "sourceFileRef": {
+    "choose": "{{count}} files match",
+    "open": "Open {{path}} in the worktree",
+    "noWorktree": "Open a worktree to find {{path}} in",
+    "notFound": "No {{path}} in {{root}}"
   }
 }

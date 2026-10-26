@@ -10,7 +10,14 @@ import type {
 import { BUILD_WEB_LONG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
 import { requireBuildWebCredential } from './build-web-connection'
 import { BuildWebApiError, buildWebMutation, buildWebRequest } from './build-web-request'
-import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
+import {
+  numberOf,
+  recordOf,
+  sourcesOf,
+  textOf,
+  textOrNull,
+  textsOf
+} from './build-web-response-fields'
 import { runOf } from './build-web-runs'
 import { repoField, type BuildWebRepo } from '../../shared/build-web-repos'
 
@@ -19,11 +26,6 @@ import { repoField, type BuildWebRepo } from '../../shared/build-web-repos'
 
 const enc = encodeURIComponent
 const repoQuery = (repo: BuildWebRepo) => (repo === 'products' ? '' : `?repo=${enc(repo)}`)
-
-function sourcesOf(value: unknown): Record<string, string[]> {
-  const v = recordOf(value) ?? {}
-  return Object.fromEntries(Object.entries(v).map(([image, why]) => [image, textsOf(why)]))
-}
 
 function branchesOf(value: unknown): BuildWebBranch[] {
   return (Array.isArray(value) ? value : [])

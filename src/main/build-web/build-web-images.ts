@@ -7,6 +7,7 @@ import type {
   BuildWebImagePage,
   BuildWebImagePageArgs,
   BuildWebImagePushArgs,
+  BuildWebImageFreshness,
   BuildWebImageSummary
 } from '../../shared/build-web-image-types'
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
@@ -18,8 +19,20 @@ import {
   buildWebRequest,
   type BuildWebResponseLimit
 } from './build-web-request'
-import { BUILD_WEB_CATALOG_TIMEOUT_MS } from '../../shared/build-web-timeouts'
-import { consoleUrlOf, numberOf, recordOf, textOf, textOrNull } from './build-web-response-fields'
+import {
+  BUILD_WEB_CATALOG_TIMEOUT_MS,
+  BUILD_WEB_LONG_TIMEOUT_MS
+} from '../../shared/build-web-timeouts'
+import {
+  consoleUrlOf,
+  numberOf,
+  recordOf,
+  textOf,
+  sourcesOf,
+  textOrNull,
+  textsOf
+} from './build-web-response-fields'
+import { repoField, repoOfProduct } from '../../shared/build-web-repos'
 import {
   failedImageCount,
   imageHistory,
@@ -41,6 +54,10 @@ const CATALOG_LIMIT: BuildWebResponseLimit = {
 
 // Why keyed by token generation: another token may not be allowed what this one read.
 let cached: { key: string; at: number; catalog: ImageCatalog } | null = null
+// Why a cache: the console fetches and walks every image's tags; flipping filters asks again.
+const FRESHNESS_TTL_MS = 2 * 60_000
+type FreshnessEntry = { at: number; value: Promise<BuildWebImageFreshness | null> }
+const freshness = new Map<string, FreshnessEntry>()
 let inflight: { key: string; epoch: number; promise: Promise<ImageCatalog> } | null = null
 /** Bumped by a push, so a fetch that started before it never caches the old catalog. */
 let epoch = 0
@@ -50,6 +67,8 @@ export function invalidateBuildWebImageCatalog(): void {
   epoch++
   cached = null
   inflight = null
+  // Why: what changed the catalog — a build, a push — is what the freshness scans answer about.
+  freshness.clear()
 }
 
 const STATUSES: readonly BuildWebImageBuild['status'][] = ['success', 'failed', 'running']
@@ -160,6 +179,103 @@ export async function buildWebImageSummary(): Promise<BuildWebImageSummary> {
   }
   const images = await catalog({ maxAgeMs: SUMMARY_TTL_MS, background: true })
   return { running: runningImageCount(images), failed: failedImageCount(images) }
+}
+
+const RELEASE_BRANCH = /-release-\d+\.\d+$|^version-\d+\.\d+(\.\d+)?$/
+
+/**
+ * The branch a product version is built from: its release branch, else master when master carries
+ * that version. Read off the builds, which name both; a task branch never answers.
+ */
+export function versionBranchOf(
+  builds: readonly Pick<BuildWebImageBuild, 'branch' | 'product' | 'product_version'>[],
+  product: string,
+  version: string
+): string | null {
+  const counts = new Map<string, number>()
+  for (const b of builds) {
+    const branch = b.branch.replace(/^origin\//, '')
+    if (b.product === product && b.product_version === version) {
+      if (RELEASE_BRANCH.test(branch) || branch === 'master') {
+        counts.set(branch, (counts.get(branch) ?? 0) + 1)
+      }
+    }
+  }
+  const ranked = [...counts].sort(
+    ([a, n], [b, m]) => Number(RELEASE_BRANCH.test(b)) - Number(RELEASE_BRANCH.test(a)) || m - n
+  )
+  return ranked[0]?.[0] ?? null
+}
+
+/**
+ * Which images of a product version miss its branch's latest changes, from the console's sync
+ * scan: an image is to rebuild when its sources, or a shared package it uses, changed since its
+ * last build. Null when no build names the version's branch.
+ */
+export async function scanBuildWebImageFreshness(args: {
+  product: string
+  version: string
+  dist: 'rhel' | 'redos'
+  force?: boolean
+}): Promise<BuildWebImageFreshness | null> {
+  const credential = requireBuildWebCredential()
+  const branch = versionBranchOf((await catalog()).builds, args.product, args.version)
+  if (!branch) {
+    return null
+  }
+  const repo = repoField(repoOfProduct(args.product))
+  const key = JSON.stringify([
+    credential.baseUrl,
+    credential.generation,
+    repo.repo,
+    branch,
+    args.dist
+  ])
+  const now = Date.now()
+  for (const [k, entry] of freshness) {
+    if (now - entry.at > FRESHNESS_TTL_MS) {
+      freshness.delete(k)
+    }
+  }
+  const cached = freshness.get(key)
+  if (cached && !args.force) {
+    return cached.value
+  }
+  const entry: FreshnessEntry = { at: now, value: Promise.resolve(null) }
+  entry.value = buildWebRequest({
+    ...credential,
+    method: 'POST',
+    path: '/api/sync-scan',
+    body: { branch, dist: args.dist, ...repo },
+    timeoutMs: BUILD_WEB_LONG_TIMEOUT_MS
+  }).then(
+    (answer) => {
+      // Why now: a scan that took a minute is fresh from its answer, not from its question.
+      entry.at = Date.now()
+      const record = recordOf(answer)
+      const sources = sourcesOf(record?.image_sources)
+      return {
+        branch,
+        rebuild: Object.fromEntries(
+          textsOf(record?.images).map((image) => [
+            image,
+            Object.hasOwn(sources, image) ? sources[image] : []
+          ])
+        ),
+        current: textsOf(record?.up_to_date),
+        neverBuilt: textsOf(record?.never_built)
+      }
+    },
+    (error: unknown) => {
+      // Why: a failed scan is asked again next time, not served for two minutes.
+      if (freshness.get(key) === entry) {
+        freshness.delete(key)
+      }
+      throw error
+    }
+  )
+  freshness.set(key, entry)
+  return entry.value
 }
 
 /** Every build the console recorded, newest first; an older copy will do. */

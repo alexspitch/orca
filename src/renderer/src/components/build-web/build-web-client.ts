@@ -2,6 +2,7 @@ import {
   BUILD_WEB_ACTIVITY_RUNTIME_CAPABILITY,
   BUILD_WEB_COMMENT_TELEGRAM_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
+  BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
@@ -91,6 +92,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         translate(
           'buildWeb.client.updateServerImageAdopt',
           'This Orca server cannot settle a failed image with an earlier build yet. Update the server.'
+        )
+    },
+    {
+      methods: new Set<Method>(['imageFreshness']),
+      capability: BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerImageFreshness',
+          'This Orca server cannot tell which images need a rebuild yet. Update the server.'
         )
     },
     {

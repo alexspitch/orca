@@ -15,6 +15,7 @@ import type {
   BuildWebGuideStartParams,
   BuildWebGuideStreamParams,
   BuildWebGuideTargetParams,
+  BuildWebImageFreshnessParams,
   BuildWebIssueRunParams,
   BuildWebJiraCreateParams,
   BuildWebJiraKeyParams,
@@ -65,6 +66,7 @@ import {
   runBuildWebTrainNow
 } from '../build-web/build-web-trains'
 import { checkBuildWebWatch, getBuildWebWatch } from '../build-web/build-web-watch'
+import { scanBuildWebImageFreshness } from '../build-web/build-web-images'
 import { listBuildWebRecaps, readBuildWebRecapReport } from '../build-web/build-web-recaps'
 import {
   clearBuildWebNotifications,
@@ -146,6 +148,10 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebCreateIssueRun(args: In<typeof BuildWebIssueRunParams>) {
     return createBuildWebIssueRun(args)
+  }
+
+  buildWebImageFreshness(args: In<typeof BuildWebImageFreshnessParams>) {
+    return scanBuildWebImageFreshness(args)
   }
 
   buildWebIssueBuildBranches(args: In<typeof BuildWebIssueId>) {

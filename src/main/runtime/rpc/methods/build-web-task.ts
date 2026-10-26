@@ -5,6 +5,7 @@ import {
   BuildWebIssueId
 } from '../../../../shared/rpc-contract/build-web-params'
 import {
+  BuildWebImageFreshnessParams,
   BuildWebAdoptParams,
   BuildWebComboParams,
   BuildWebCombosParams,
@@ -97,6 +98,12 @@ export const BUILD_WEB_TASK_METHODS = [
     permission: 'workspace',
     params: BuildWebIssueRunParams,
     handler: async (params, { runtime }) => runtime.buildWebCreateIssueRun(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.imageFreshness',
+    permission: 'workspace',
+    params: BuildWebImageFreshnessParams,
+    handler: async (params, { runtime }) => runtime.buildWebImageFreshness(params)
   }),
   defineMethod({
     name: 'buildWeb.issueBuildBranches',

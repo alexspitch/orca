@@ -44,3 +44,9 @@ export function consoleUrlOf(url: string | null, baseUrl: string): string | null
     return null
   }
 }
+
+/** `{ image: [what, …] }` as the console's detect and sync scan name an image's changed sources. */
+export function sourcesOf(value: unknown): Record<string, string[]> {
+  const v = recordOf(value) ?? {}
+  return Object.fromEntries(Object.entries(v).map(([image, why]) => [image, textsOf(why)]))
+}

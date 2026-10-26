@@ -30,7 +30,9 @@ export const BUILD_WEB_LONG_METHODS: ReadonlySet<string> = new Set([
   // Every enabled stand's status, a few at a time.
   'standHealth',
   // A watcher pass asks Jira about every watched ticket.
-  'watchCheck'
+  'watchCheck',
+  // The console fetches, then walks every image's build tags on the branch.
+  'imageFreshness'
 ])
 
 /** The host's own wait for one `buildWeb.*` call, so a client never cuts a healthy answer off. */

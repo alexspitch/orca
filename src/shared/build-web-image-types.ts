@@ -97,6 +97,18 @@ export type BuildWebImageHistory = {
   versions: string[]
 }
 
+/** Whether a product version's images hold its branch's latest changes, for one distribution. */
+export type BuildWebImageFreshness = {
+  /** The version's branch the scan answered about. */
+  branch: string
+  /** Images whose sources, or a shared package they use, changed since their last build: what changed. */
+  rebuild: Record<string, string[]>
+  /** Checked and unchanged since their last build. */
+  current: string[]
+  /** Buildable on the branch with no build of its version yet. */
+  neverBuilt: string[]
+}
+
 /** What the sidebar badges show: images building right now, and those whose newest build failed. */
 export type BuildWebImageSummary = {
   running: number
