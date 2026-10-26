@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.242-custom.1793047280000",
+      "date": "2026-10-26",
+      "commit": "2bebc23efdaf",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "The new-tab \"+\" menu in the tab bar shows the \"Claude — account\" launch rows again, without duplicating them under unavailable chats."
+      ]
+    },
+    {
       "version": "1.4.242-custom.1793041500000",
       "date": "2026-10-26",
       "commit": "e72ba4679c21",
