@@ -24,14 +24,35 @@ export function devServicesActionKey(verb: string, args: readonly string[]): str
   return [verb, ...args].join('\u0000')
 }
 
+/** What a failed build printed last, per target: its errors are at the end of the output. */
+export function buildFailureLines(failed: readonly { target: string; output: string }[]): string[] {
+  return failed.map((entry) => {
+    const last = entry.output
+      .split('\n')
+      .map((line) => line.trim())
+      .findLast(Boolean)
+    return last ? `${entry.target}: ${last.slice(0, 240)}` : entry.target
+  })
+}
+
 function reportOutcome(label: string, response: DevServicesRunResponse): void {
   if (response.kind === 'done') {
-    if (response.outcome.ok) {
-      toast.success(response.outcome.message || label)
-    } else {
-      toast.error(label, {
-        description: response.outcome.error?.message ?? response.outcome.message
+    const { outcome } = response
+    if (outcome.ok) {
+      toast.success(outcome.message || label)
+    } else if (outcome.error?.code === 'build' && outcome.failed?.length) {
+      const late = outcome.pending?.length
+        ? [
+            translate('devServices.actions.noAnswer', 'No answer from {{value0}}', {
+              value0: outcome.pending.join(', ')
+            })
+          ]
+        : []
+      toast.error(outcome.error.message || label, {
+        description: [...buildFailureLines(outcome.failed), ...late].join(' · ')
       })
+    } else {
+      toast.error(label, { description: outcome.error?.message ?? outcome.message })
     }
     return
   }

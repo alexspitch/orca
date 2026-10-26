@@ -29,6 +29,23 @@ const DevServicesServiceStateSchema = z
   .or(z.literal('unknown'))
   .catch('unknown')
 
+// Why sliced, not refused: a long list of changed files must not drop the whole status.
+const DevServicesNamesSchema = z
+  .array(z.string())
+  .default([])
+  .transform((names) => names.slice(0, MAX_ENTRIES))
+  .catch([])
+
+/** Code on disk newer than what the service runs: it needs a restart, some of it a build first. */
+const DevServicesChangedSchema = z.object({
+  /** Epoch seconds of the oldest change the running service does not have. */
+  since: z.number().nullable().optional().catch(undefined),
+  files: DevServicesNamesSchema,
+  workspaces: DevServicesNamesSchema,
+  /** Workspaces whose build output is older than their source: a restart alone runs stale code. */
+  unbuilt: DevServicesNamesSchema
+})
+
 const DevServicesServiceSchema = z.object({
   id: z.string().min(1),
   title: z.string().optional(),
@@ -39,7 +56,9 @@ const DevServicesServiceSchema = z.object({
   exit: z.number().nullable().optional(),
   detail: z.string().optional(),
   ports: z.array(DevServicesPortSchema).max(MAX_ENTRIES).default([]),
-  console: z.string().optional()
+  console: z.string().optional(),
+  // Why `catch`: a shape this build does not know drops the badge, not the service.
+  changed: DevServicesChangedSchema.optional().catch(undefined)
 })
 
 const DevServicesProfileSchema = z.object({
@@ -105,7 +124,15 @@ export const DevServicesRunOutcomeSchema = z.object({
   api: z.number(),
   ok: z.boolean(),
   error: DevServicesErrorSchema.optional(),
-  message: z.string().optional()
+  message: z.string().optional(),
+  /** With `error.code: 'build'`: each target that did not build, and what the build printed. */
+  failed: z
+    .array(z.object({ target: z.string(), output: z.string().default('') }))
+    .max(MAX_ENTRIES)
+    .optional()
+    .catch(undefined),
+  /** Services a rebuild asked to restart that did not answer in time. */
+  pending: z.array(z.string()).max(MAX_ENTRIES).optional().catch(undefined)
 })
 
 export type DevServicesStatus = z.infer<typeof DevServicesStatusSchema>

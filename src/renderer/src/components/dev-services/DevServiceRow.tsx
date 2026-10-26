@@ -1,5 +1,5 @@
 import React from 'react'
-import { Copy, ExternalLink, Play, RotateCw, Square, SquareTerminal } from 'lucide-react'
+import { Copy, ExternalLink, Hammer, Play, RotateCw, Square, SquareTerminal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import {
@@ -13,6 +13,7 @@ import {
 import type { DevServicesService } from '../../../../shared/dev-services-contract'
 import { DevServiceStateDot } from './DevServiceStateDot'
 import { DevServiceIconAction } from './DevServiceIconAction'
+import { DevServiceChangedBadge } from './DevServiceChangedBadge'
 import {
   formatDevServiceElapsed,
   isDevServiceActionable,
@@ -92,7 +93,7 @@ export function DevServiceRow({
   const detail = stateDetail(service)
   const busy = (verb: string): boolean =>
     actions.pending.has(devServicesActionKey(verb, [service.id]))
-  const runVerb = (verb: 'start' | 'stop' | 'restart', label: string): void =>
+  const runVerb = (verb: 'start' | 'stop' | 'restart' | 'rebuild', label: string): void =>
     actions.run({ verb, args: [service.id], label: `${label} ${title}` })
 
   const labels = {
@@ -101,8 +102,11 @@ export function DevServiceRow({
     console: translate('devServices.row.console', 'Open Console'),
     restart: translate('devServices.row.restart', 'Restart'),
     stop: translate('devServices.row.stop', 'Stop'),
-    start: translate('devServices.row.start', 'Start')
+    start: translate('devServices.row.start', 'Start'),
+    rebuild: translate('devServices.row.rebuild', 'Rebuild and Restart')
   }
+  // Why on a marked service only: `rebuild <id>` builds what its change touches, then restarts it.
+  const rebuildable = Boolean(service.changed)
   const consoleCommand = service.console
   const openConsole = consoleCommand ? () => actions.openConsole(consoleCommand, title) : undefined
 
@@ -139,6 +143,7 @@ export function DevServiceRow({
                     +{extraPorts.length}
                   </span>
                 )}
+                {service.changed && <DevServiceChangedBadge changed={service.changed} />}
               </div>
               {detail && (
                 <div
@@ -167,6 +172,14 @@ export function DevServiceRow({
                 label={labels.console}
                 icon={<SquareTerminal />}
                 onClick={openConsole}
+              />
+            )}
+            {rebuildable && (
+              <DevServiceIconAction
+                label={labels.rebuild}
+                icon={<Hammer />}
+                busy={busy('rebuild')}
+                onClick={() => runVerb('rebuild', labels.rebuild)}
               />
             )}
             {running && (
@@ -218,6 +231,12 @@ export function DevServiceRow({
         {actionable && (
           <>
             <ContextMenuSeparator />
+            {rebuildable && (
+              <ContextMenuItem onSelect={() => runVerb('rebuild', labels.rebuild)}>
+                <Hammer />
+                {labels.rebuild}
+              </ContextMenuItem>
+            )}
             {running ? (
               <>
                 <ContextMenuItem onSelect={() => runVerb('restart', labels.restart)}>

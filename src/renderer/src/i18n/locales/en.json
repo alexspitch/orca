@@ -21996,7 +21996,8 @@
   "devServices": {
     "actions": {
       "openFailed": "Failed to open the address",
-      "unverifiable": "Couldn't confirm: {{value0}}"
+      "unverifiable": "Couldn't confirm: {{value0}}",
+      "noAnswer": "No answer from {{value0}}"
     },
     "detail": {
       "crashedAgo": "Crashed {{value0}} ago",
@@ -22034,7 +22035,8 @@
       "open": "Open in Browser",
       "restart": "Restart",
       "start": "Start",
-      "stop": "Stop"
+      "stop": "Stop",
+      "rebuild": "Rebuild and Restart"
     },
     "state": {
       "absent": "Not in this branch",
@@ -22050,7 +22052,16 @@
     "title": "Services",
     "trust": "Review and Trust",
     "trustPrompt": "This project lists its services with a command from orca.yaml. Orca runs it on the workspace host:",
-    "unsupported": "Services are not supported on this host."
+    "unsupported": "Services are not supported on this host.",
+    "changed": {
+      "headSince": "Code on disk is newer than the running service ({{value0}})",
+      "head": "Code on disk is newer than the running service",
+      "workspaces": "Workspaces: {{value0}}",
+      "unbuilt": "Not built: {{value0}}",
+      "files": "Files: {{value0}}",
+      "moreFiles": "+{{value0}} more",
+      "label": "Needs restart: code changed"
+    }
   },
   "statusBar": {
     "serverLoad": {

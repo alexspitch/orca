@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DevServicesStatusSchema } from './dev-services-contract'
+import { DevServicesRunOutcomeSchema, DevServicesStatusSchema } from './dev-services-contract'
 
 describe('DevServicesStatusSchema', () => {
   it('fills the lists a minimal status leaves out', () => {
@@ -57,5 +57,54 @@ describe('DevServicesStatusSchema', () => {
         actions: [{ id: 'bad', label: 'Bad', verb: 'start; rm -rf /', args: [] }]
       }).success
     ).toBe(false)
+  })
+})
+
+describe('a service whose code changed under it', () => {
+  const service = (changed: unknown) =>
+    DevServicesStatusSchema.parse({
+      api: 1,
+      ok: true,
+      services: [{ id: 'dc-backend', state: 'ready', changed }]
+    }).services[0]
+
+  it('keeps what changed, and fills the lists it leaves out', () => {
+    expect(
+      service({
+        since: 1_700_000_000,
+        files: ['a.ts'],
+        workspaces: ['@sp/api'],
+        unbuilt: ['@sp/ui']
+      }).changed
+    ).toEqual({
+      since: 1_700_000_000,
+      files: ['a.ts'],
+      workspaces: ['@sp/api'],
+      unbuilt: ['@sp/ui']
+    })
+    expect(service({}).changed).toEqual({ files: [], workspaces: [], unbuilt: [] })
+  })
+
+  it('drops a shape it does not know, not the service', () => {
+    const odd = service('yes')
+    expect(odd.id).toBe('dc-backend')
+    expect(odd.changed).toBeUndefined()
+    expect(service({ files: 'a.ts' }).changed).toEqual({ files: [], workspaces: [], unbuilt: [] })
+  })
+})
+
+describe('a rebuild that did not build', () => {
+  it('names each target that failed with its output', () => {
+    expect(
+      DevServicesRunOutcomeSchema.parse({
+        api: 1,
+        ok: false,
+        error: { code: 'build', message: 'Build failed' },
+        failed: [{ target: '@sp/api', output: 'error TS2322' }, { target: '@sp/ui' }]
+      }).failed
+    ).toEqual([
+      { target: '@sp/api', output: 'error TS2322' },
+      { target: '@sp/ui', output: '' }
+    ])
   })
 })
