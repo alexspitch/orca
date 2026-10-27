@@ -1,4 +1,5 @@
 import type { BuildWebRepo } from './build-web-repos'
+import type { BuildWebRedosTwin } from './build-web-redos-twin'
 
 // A task's build in build-web, and its guide and commits, as Orca's full-screen card shows them.
 
@@ -25,6 +26,12 @@ export type BuildWebRunBuild = {
   started_at: string | null
   tests_skipped: boolean
   error: string | null
+  /** IS-230: a redos row the console made for a published rhel row; null on every other row. */
+  twin: BuildWebRedosTwin | null
+  /** The rhel build number a twin was made for. */
+  twin_of: number | null
+  /** On a rhel row: why it has no redos twin. */
+  redos_note: string | null
 }
 
 export type BuildWebRun = {
@@ -156,6 +163,8 @@ export type BuildWebIssueRunArgs = {
   detected: Record<string, unknown> | null
   /** Newer release branches to leave out; absent keeps the run's earlier choice. */
   excludeBranches?: string[]
+  /** IS-230: `rhel` for the monorepo; absent (an older client) asks for both. */
+  distType?: 'rhel' | 'both'
 }
 
 /** A branch a task's build reaches: its release's own, then each newer one and master. */

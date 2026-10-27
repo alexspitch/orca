@@ -58,6 +58,7 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.refreshGuideImages',
   'buildWeb.refreshIssueVersion',
   'buildWeb.removeRunImages',
+  'buildWeb.retryRedosTwin',
   'buildWeb.resolveStand',
   'buildWeb.restoreIssue',
   'buildWeb.runFreshness',

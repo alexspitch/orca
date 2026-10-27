@@ -92,6 +92,7 @@ const BUILD_WEB_OPERATIONS = {
   refreshGuideImages: buildWebOperation('buildWeb.refreshGuideImages'),
   refreshIssueVersion: buildWebOperation('buildWeb.refreshIssueVersion'),
   removeRunImages: buildWebOperation('buildWeb.removeRunImages'),
+  retryRedosTwin: buildWebOperation('buildWeb.retryRedosTwin'),
   resolveStand: buildWebOperation('buildWeb.resolveStand'),
   restoreIssue: buildWebOperation('buildWeb.restoreIssue'),
   runFreshness: buildWebOperation('buildWeb.runFreshness'),

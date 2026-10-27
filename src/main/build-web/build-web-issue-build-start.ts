@@ -120,7 +120,7 @@ export async function listBuildWebIssueBuildBranches(
 /** Make the task's run. Nothing builds yet: the Build tab starts the builds. */
 export function createBuildWebIssueRun(
   args: BuildWebIssueRunArgs
-): Promise<BuildWebMutationResult<{ id: string; existing: boolean }>> {
+): Promise<BuildWebMutationResult<{ id: string; existing: boolean; note?: string }>> {
   return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
     const answer = recordOf(
@@ -133,8 +133,8 @@ export function createBuildWebIssueRun(
           ticket: args.ticket,
           images: args.images,
           extra: args.extra,
-          // Why: a task's build covers both distributions, as build-web's own form makes it.
-          distType: 'both',
+          // Why: the console finds the repository by the task; the monorepo builds rhel only (IS-230).
+          distType: args.distType ?? 'both',
           pushToRepo: false,
           testingStatus: args.testingStatus,
           detected: args.detected,
@@ -147,7 +147,8 @@ export function createBuildWebIssueRun(
     if (!id) {
       throw new Error('build-web made no run for the task')
     }
-    return { id, existing: answer?.existing === true }
+    const note = textOrNull(answer?.note)
+    return { id, existing: answer?.existing === true, ...(note ? { note } : {}) }
   })
 }
 

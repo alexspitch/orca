@@ -88,6 +88,26 @@ export function cancelBuildWebBuild(
   })
 }
 
+/** IS-230: derive the redos twin of a published rhel row again; the console publishes its build tag. */
+export function retryBuildWebRedosTwin(
+  runId: string,
+  image: string,
+  branch: string
+): Promise<BuildWebMutationResult<true>> {
+  return buildWebMutation(async () => {
+    const credential = requireBuildWebCredential()
+    await buildWebRequest({
+      ...credential,
+      method: 'POST',
+      path: runPath(runId, '/redos-twin'),
+      body: { image, branch },
+      timeoutMs: BUILD_WEB_LONG_TIMEOUT_MS
+    })
+    invalidateBuildWebImageCatalog()
+    return true as const
+  })
+}
+
 /** Add images to the run as pending; nothing builds until it is started. */
 export function addBuildWebRunImages(runId: string, combos: BuildWebCombo[]) {
   return runMutation(runPath(runId, '/images'), { combos })

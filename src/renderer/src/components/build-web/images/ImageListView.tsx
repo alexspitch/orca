@@ -32,9 +32,9 @@ import { FoundCount, ImagePages, ImageSearch, ImageTableState } from './image-vi
 import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-build-web-images'
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'cp', 'other'] as const
-const DISTS = ['rhel', 'redos'] as const
 // In progress first: the quick filter for what is building now.
 const STATUS_FILTERS = ['running', 'failed'] as const
+const DISTS = ['rhel', 'redos'] as const
 const RUNNING_REFRESH_MS = 20_000
 const productName = (p: string) =>
   p === 'other'
@@ -54,7 +54,10 @@ export function ImageListView({
 }): React.JSX.Element {
   const [q, setQ] = useState('')
   const [filters, setFilters] = useState(() => readViewPrefs().imageFilters)
-  const { products, dists, version } = filters
+  const { products, version } = filters
+  // Why only Chat Platform: the monorepo builds rhel, its redos images are twins of those (IS-230).
+  const withDist = products.length === 1 && products[0] === 'cp'
+  const dists = withDist ? filters.dists : []
   const statuses = STATUS_FILTERS.filter((st) => filters.statuses.includes(st))
   const [page, setPage] = useState(0)
   const narrowFilters = (patch: Partial<ImageFilters>) => {
@@ -145,13 +148,15 @@ export function ImageListView({
             narrowFilters(next.length ? { products: next } : { products: next, version: 'all' })
           }}
         />
-        <FilterChips
-          options={DISTS}
-          counts={data?.counts.dists ?? {}}
-          selected={dists}
-          label={(d) => d}
-          onToggle={(d) => narrowFilters({ dists: toggled(dists, d) })}
-        />
+        {withDist ? (
+          <FilterChips
+            options={DISTS}
+            counts={data?.counts.dists ?? {}}
+            selected={dists}
+            label={(d) => d}
+            onToggle={(d) => narrowFilters({ dists: toggled(dists, d) })}
+          />
+        ) : null}
         <FilterChips
           options={STATUS_FILTERS}
           counts={data?.counts.statuses ?? {}}

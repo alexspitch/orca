@@ -210,6 +210,14 @@ export function RegistryChip({
       ? cell.skippedTags.map((s) => `${s.ref} — ${s.reason}`).join('\n')
       : 'Published under the build tag only — the moving tag was left pointing at a newer image already in the registry.'
     : 'Tap to choose what to publish'
+  // Why: the console publishes a redos twin along with its rhel row; it is never pushed by hand.
+  if (cell.twin) {
+    return cell.pushed ? (
+      <TipChip label={label} tone="amber" tip={tip} />
+    ) : (
+      <BuildWebToneChip label={label} tone="amber" />
+    )
+  }
   return (
     <TipChip
       label={label}

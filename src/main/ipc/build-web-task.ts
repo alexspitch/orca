@@ -9,6 +9,7 @@ import {
   BuildWebImageFreshnessParams,
   BuildWebAdoptParams,
   BuildWebComboParams,
+  BuildWebRedosTwinParams,
   BuildWebCombosParams,
   BuildWebDetectParams,
   BuildWebRepoParams,
@@ -52,6 +53,7 @@ function handle<S extends ZodTypeAny>(
 export function registerBuildWebTaskHandlers(): void {
   handle('buildCombos', BuildWebCombosParams, (args) => commands.buildWebBuildCombos(args))
   handle('cancelBuild', BuildWebComboParams, (args) => commands.buildWebCancelBuild(args))
+  handle('retryRedosTwin', BuildWebRedosTwinParams, (args) => commands.buildWebRetryRedosTwin(args))
   handle('addRunImages', BuildWebRunCombosParams, (args) => commands.buildWebAddRunImages(args))
   handle('removeRunImages', BuildWebRunCombosParams, (args) =>
     commands.buildWebRemoveRunImages(args)

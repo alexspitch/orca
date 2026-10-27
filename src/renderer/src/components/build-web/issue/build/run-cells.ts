@@ -3,6 +3,12 @@ import type {
   BuildWebCombo,
   BuildWebRunBuild
 } from '../../../../../../shared/build-web-run-types'
+import {
+  isTwin,
+  twinOf,
+  withoutTwins,
+  type BuildWebRedosTwin
+} from '../../../../../../shared/build-web-redos-twin'
 
 // The Build tab's rows, after build-web's build-cells.ts, bulk-actions.ts, image-links.ts and
 // build-tests.ts: one row per image, distribution and branch, reconciled from the stored run.
@@ -24,6 +30,10 @@ export type Cell = {
   skippedTags: { ref: string; reason: string }[]
   startedAt: string | null
   testsSkipped: boolean
+  /** IS-230: a redos twin of a rhel row — shown, never counted as work. */
+  twin: BuildWebRedosTwin | null
+  /** A twin's reason to wait or its failure; on a rhel row, why it has no twin. */
+  note: string | null
 }
 
 export const cellKey = (c: { image: string; dist: string; branch: string }): string =>
@@ -53,7 +63,9 @@ export function cellsOf(builds: BuildWebRunBuild[]): Record<string, Cell> {
       mainTagSkipped: b.main_tag_skipped,
       skippedTags: b.skipped_tags,
       startedAt: b.started_at,
-      testsSkipped: b.tests_skipped
+      testsSkipped: b.tests_skipped,
+      twin: twinOf(b.twin),
+      note: b.redos_note ?? (twinOf(b.twin) ? b.error : null)
     }
   }
   return out
@@ -62,7 +74,8 @@ export function cellsOf(builds: BuildWebRunBuild[]): Record<string, Cell> {
 /**
  * A fresh read laid over the rows on screen, keeping whichever version of a row got further.
  * A row the read lacks was just added here; a live status for a row shown finished is a new
- * attempt (a rebuild), which is news rather than a step back.
+ * attempt (a rebuild), which is news rather than a step back. A twin is the console's own: its
+ * read is the truth, so one dropped or sent back to waiting does not linger.
  */
 export function mergeCells(
   shown: Record<string, Cell>,
@@ -71,6 +84,9 @@ export function mergeCells(
   const out: Record<string, Cell> = { ...fetched }
   for (const [key, cell] of Object.entries(shown)) {
     const fresh = out[key]
+    if (isTwin(cell)) {
+      continue
+    }
     if (!fresh) {
       out[key] = cell
       continue
@@ -130,6 +146,27 @@ export const FAILED_STATUSES: ReadonlySet<string> = new Set([
 /** A row a bulk action can act on: a finished build, whatever it finished as. */
 export const isSelectable = (c: Cell): boolean => c.state === 'done'
 
+/** A finished row a rebuild or a push may take: a twin is the console's, not the person's. */
+const isWork = (c: Cell): boolean => isSelectable(c) && !isTwin(c)
+
+/** How long a sent Retry holds its row: a few polls, until the console shows the twin going. */
+export const RETRY_HOLD_MS = 15_000
+
+/** A twin whose Retry was just sent and still reads finished — a second tap waits. */
+export function isRetrying(c: Cell, retrying: ReadonlyMap<string, number>, now: number): boolean {
+  const at = retrying.get(cellKey(c))
+  return at !== undefined && now - at < RETRY_HOLD_MS && c.state === 'done'
+}
+
+/** A twin the console is deriving or building: the run reads finished, yet the row still moves. */
+export const hasLiveTwin = (cells: Cell[]): boolean =>
+  cells.some((c) => isTwin(c) && (c.state === 'queued' || c.state === 'building'))
+
+/** Rows still to build — what «Build all» starts; a twin waiting for a person is not one. */
+export function pendingCells(cells: Cell[]): Cell[] {
+  return withoutTwins(cells).filter((c) => c.state === 'pending')
+}
+
 export const comboOf = (c: Cell): BuildWebCombo => ({
   image: c.image,
   dist: c.dist,
@@ -146,19 +183,17 @@ export function staleCells(
   freshness: Record<string, BuildWebBuildFreshness>
 ): Cell[] {
   return cells.filter(
-    (c) => isSelectable(c) && c.status === 'SUCCESS' && freshness[cellKey(c)]?.state === 'stale'
+    (c) => isWork(c) && c.status === 'SUCCESS' && freshness[cellKey(c)]?.state === 'stale'
   )
 }
 
 export function failedCells(cells: Cell[]): Cell[] {
-  return cells.filter((c) => isSelectable(c) && FAILED_STATUSES.has(c.status ?? ''))
+  return cells.filter((c) => isWork(c) && FAILED_STATUSES.has(c.status ?? ''))
 }
 
 /** Rows built and never published — badged «not pushed». */
 export function unpushedCells(cells: Cell[]): Cell[] {
-  return cells.filter(
-    (c) => isSelectable(c) && c.status === 'SUCCESS' && c.tags.length > 0 && !c.pushed
-  )
+  return cells.filter((c) => isWork(c) && c.status === 'SUCCESS' && c.tags.length > 0 && !c.pushed)
 }
 
 /** The image references of the ticked rows, in row order, each once. */

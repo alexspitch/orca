@@ -19,7 +19,7 @@ const AFTER_PUSH_MS = 180_000
 const messageOf = (failure: unknown) =>
   failure instanceof Error ? failure.message : String(failure)
 
-/** What the Build tab does to its run: build, cancel, push, add, remove, detect. */
+/** What the Build tab does to its run: build, cancel, retry a twin, push, add, remove, detect. */
 export function useRunActions(args: {
   target: RuntimeClientTarget
   runId: string
@@ -34,6 +34,7 @@ export function useRunActions(args: {
   const [detecting, setDetecting] = useState(false)
   const [pushingKeys, setPushingKeys] = useState<ReadonlySet<string>>(new Set())
   const [cancelling, setCancelling] = useState<ReadonlySet<string>>(new Set())
+  const [retrying, setRetrying] = useState<ReadonlyMap<string, number>>(new Map())
 
   /** One write; a refusal goes to the tab's error line. */
   const write = useCallback(
@@ -87,6 +88,24 @@ export function useRunActions(args: {
     [runId, target, watch, write]
   )
 
+  /** IS-230: derive a failed redos twin again; the console publishes its build tag. */
+  const retryTwin = useCallback(
+    async (cell: Cell) => {
+      const key = cellKey(cell)
+      setRetrying((m) => new Map([...m, [key, Date.now()]]))
+      const done = await write(() =>
+        callBuildWeb(target, 'retryRedosTwin', { runId, image: cell.image, branch: cell.branch })
+      )
+      if (done) {
+        setRetrying((m) => new Map([...m, [key, Date.now()]]))
+        watch(AFTER_PUSH_MS)
+      } else {
+        setRetrying((m) => new Map([...m].filter(([k]) => k !== key)))
+      }
+    },
+    [runId, target, watch, write]
+  )
+
   const push = useCallback(
     async (cells: Cell[], moveMainTag: boolean) => {
       if (cells.length === 0) {
@@ -134,7 +153,9 @@ export function useRunActions(args: {
               mainTagSkipped: false,
               skippedTags: [],
               startedAt: null,
-              testsSkipped: false
+              testsSkipped: false,
+              twin: null,
+              note: null
             }
           }
           return next
@@ -185,8 +206,10 @@ export function useRunActions(args: {
     detecting,
     pushingKeys,
     cancelling,
+    retrying,
     trigger,
     cancel,
+    retryTwin,
     push,
     add,
     remove,

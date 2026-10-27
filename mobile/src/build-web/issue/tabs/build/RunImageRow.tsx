@@ -23,6 +23,7 @@ import {
   RegistryChip,
   TipChip
 } from './RunChips'
+import { RunTwinChip } from './RunTwinChip'
 
 export type RunRowContext = {
   runBranch: string
@@ -35,6 +36,7 @@ export type RunRowContext = {
   onOpenBuild: (combos: BuildWebCombo[]) => void
   onOpenPush: (cells: Cell[]) => void
   onCancel: (cell: Cell) => void
+  onRetryTwin: (cell: Cell) => void
   onRemove: (combo: BuildWebCombo) => void
   onOpenLog: (url: string, title: string) => void
 }
@@ -45,6 +47,7 @@ function RunImageRowView({
   onPick,
   pushing,
   cancelling,
+  retrying,
   lastBuilt,
   freshness,
   ctx
@@ -54,11 +57,15 @@ function RunImageRowView({
   onPick: (cell: Cell) => void
   pushing: boolean
   cancelling: boolean
+  /** A Retry of this twin is on its way. */
+  retrying: boolean
   lastBuilt: BuildWebLastBuilt | undefined
   freshness: BuildWebBuildFreshness | undefined
   ctx: RunRowContext
 }) {
   const live = c.state === 'queued' || c.state === 'building'
+  // Why: the console derives this row from its rhel one — a rebuild here would rebuild rhel.
+  const derived = c.twin === 'derive'
   const testDirs = ctx.testDirs[c.image] ?? []
   const meta = [c.number !== null ? `#${c.number}` : null, formatAt(c.startedAt)]
     .filter(Boolean)
@@ -98,6 +105,7 @@ function RunImageRowView({
         {c.state === 'done' && c.status === 'SUCCESS' && freshness ? (
           <FreshnessChip freshness={freshness} ticket={ctx.ticket} />
         ) : null}
+        <RunTwinChip cell={c} disabled={ctx.busy || retrying} onRetry={ctx.onRetryTwin} />
         <RegistryChip
           cell={c}
           pushing={pushing}
@@ -141,7 +149,7 @@ function RunImageRowView({
           </Text>
         ) : null}
         <View style={styles.grow} />
-        {live ? (
+        {live && !derived ? (
           <BuildTabButton
             variant="ghost"
             icon={CircleStop}
@@ -150,7 +158,7 @@ function RunImageRowView({
             onPress={() => ctx.onCancel(c)}
           />
         ) : null}
-        {c.state === 'pending' ? (
+        {c.state === 'pending' && !derived ? (
           <BuildTabButton
             variant="ghost"
             icon={Play}
@@ -159,7 +167,7 @@ function RunImageRowView({
             onPress={() => ctx.onOpenBuild([comboOf(c)])}
           />
         ) : null}
-        {c.state === 'done' ? (
+        {c.state === 'done' && !derived ? (
           <BuildTabButton
             variant="ghost"
             icon={RotateCw}
@@ -168,7 +176,7 @@ function RunImageRowView({
             onPress={() => ctx.onOpenBuild([comboOf(c)])}
           />
         ) : null}
-        {c.state === 'pending' || c.state === 'done' ? (
+        {(c.state === 'pending' || c.state === 'done') && !derived ? (
           <BuildTabButton
             variant="ghost"
             icon={Trash2}

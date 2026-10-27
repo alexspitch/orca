@@ -1,4 +1,6 @@
 import type { BuildWebPushProgress } from './build-web-image-types'
+import type { BuildWebRunBuild } from './build-web-run-types'
+import { withoutTwins } from './build-web-redos-twin'
 
 // Builds and pushes started from Images, followed until the console reports their end: what the
 // desktop's stores and the phone's screen both keep.
@@ -13,6 +15,12 @@ export const isBuildGoing = (status: string): boolean =>
 /** The version a branch builds: `3.1` for `dc-release-3.1`, `2.6` for chat-platform's `version-2.6`, master as itself. */
 export const versionOfBranch = (branch: string): string =>
   /(?:-release-|^version-)(\d+(?:\.\d+)*)$/.exec(branch)?.[1] ?? branch
+
+/** The run's builds of the tracked images; a redos twin comes with a publication, not with this build. */
+export const trackedBuildsOf = (
+  run: TrackedImageBuild,
+  builds: readonly BuildWebRunBuild[]
+): BuildWebRunBuild[] => withoutTwins(builds.filter((b) => run.images.includes(b.image)))
 
 export const withTrackedBuild = (
   runs: readonly TrackedImageBuild[],

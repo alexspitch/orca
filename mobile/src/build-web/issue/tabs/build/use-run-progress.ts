@@ -2,12 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { BuildWebRun } from '../../../../../../src/shared/build-web-run-types'
 import {
   cellsOf,
+  hasLiveTwin,
   mergeCells,
   type Cell
 } from '../../../../../../src/renderer/src/components/build-web/issue/build/run-cells'
 import { useCardTabActive } from '../../../build-web-card-tabs'
 import { useBuildWebScreen } from '../../../build-web-screen-context'
 import { useBuildTabCall } from './build-tab-call'
+import { withoutTwins } from '../../../../../../src/shared/build-web-redos-twin'
 
 const POLL_MS = 5000
 const ENDED = new Set(['success', 'failed', 'partial'])
@@ -52,9 +54,11 @@ export function useRunProgress(
     setStatus(fresh.status)
     onStatusRef.current(fresh.status)
     if (before === 'building' && ENDED.has(fresh.status)) {
-      const ok = fresh.builds.filter((b) => b.status === 'SUCCESS').length
+      // Why without twins: the console's run status leaves them out too.
+      const own = withoutTwins(fresh.builds)
+      const ok = own.filter((b) => b.status === 'SUCCESS').length
       notifyRef.current(
-        `Build ${fresh.status} — ${fresh.ticket ?? fresh.branch}: ${ok} / ${fresh.builds.length} image builds succeeded`,
+        `Build ${fresh.status} — ${fresh.ticket ?? fresh.branch}: ${ok} / ${own.length} image builds succeeded`,
         fresh.status === 'success' ? 'success' : fresh.status === 'failed' ? 'error' : 'info'
       )
     }
@@ -62,7 +66,9 @@ export function useRunProgress(
 
   const active = useCardTabActive()
   const watching = watchUntil > now
-  const polling = active && (status === 'building' || watching)
+  // Why the twins too: the console leaves them out of the run's status while they go.
+  const twinGoing = hasLiveTwin(Object.values(cells))
+  const polling = active && (status === 'building' || watching || twinGoing)
   useEffect(() => {
     if (!polling) {
       return

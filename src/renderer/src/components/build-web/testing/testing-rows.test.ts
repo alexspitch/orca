@@ -131,6 +131,8 @@ describe('workCells', () => {
     skippedTags: [],
     startedAt: null,
     testsSkipped: false,
+    twin: null,
+    note: null,
     ...patch
   })
   const cells = [
@@ -139,7 +141,11 @@ describe('workCells', () => {
     cell('dc/tag', { pushed: true, mainTagSkipped: true }),
     cell('dc/going', { state: 'building', status: null }),
     cell('dc/out', { pushed: true }),
-    cell('dc/broken', { status: 'FAILURE' })
+    cell('dc/broken', { status: 'FAILURE' }),
+    // IS-230: twins are the console's: a push of their rhel row publishes them.
+    cell('dc/twin-wait', { dist: 'redos', twin: 'full', state: 'pending', status: null }),
+    cell('dc/twin-out', { dist: 'redos', twin: 'derive' }),
+    cell('dc/twin-tag', { dist: 'redos', twin: 'derive', pushed: true, mainTagSkipped: true })
   ]
   const images = (kind: Parameters<typeof workCells>[1]) =>
     workCells(cells, kind).map((c) => c.image)

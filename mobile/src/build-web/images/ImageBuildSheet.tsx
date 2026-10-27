@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import type { BuildWebImageBuildArgs } from '../../../../src/shared/build-web-image-types'
 import { versionOfBranch } from '../../../../src/shared/build-web-image-tracking'
+import { choosesDist, repoOfImage } from '../../../../src/shared/build-web-repos'
 import { testsChoice } from '../../../../src/renderer/src/components/build-web/issue/build/run-cells'
 import { BottomDrawer } from '../../components/BottomDrawer'
 import { MobileSegmentedControl } from '../../components/MobileSegmentedControl'
@@ -90,6 +91,8 @@ function BuildForm({ choice, onClose }: { choice: ImageBuildChoice; onClose: () 
     }
   }, [call, initialBranch, product])
   const tests = testsChoice(branch ? [branch] : [], treeBranches, runTests)
+  // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
+  const choosing = images.length > 0 && choosesDist(repoOfImage(images[0] ?? ''))
 
   const start = async (): Promise<void> => {
     setBusy(true)
@@ -97,7 +100,7 @@ function BuildForm({ choice, onClose }: { choice: ImageBuildChoice; onClose: () 
     try {
       const args = {
         branch,
-        dist,
+        dist: choosing ? dist : 'rhel',
         ...(ticket.trim() ? { ticket: ticket.trim() } : {}),
         ...(tests.skipTests ? { skipTests: true } : {})
       }
@@ -112,10 +115,9 @@ function BuildForm({ choice, onClose }: { choice: ImageBuildChoice; onClose: () 
         return
       }
       trackBuild({ runId: result.value.runId, images, startedAt: Date.now() })
-      notify(
-        `Build of ${images.length === 1 ? only : `${images.length} images`} started.`,
-        'success'
-      )
+      // Why one notice: the phone shows one at a time, so the console's note rides along.
+      const started = `Build of ${images.length === 1 ? only : `${images.length} images`} started.`
+      notify(result.value.note ? `${started} ${result.value.note}` : started, 'success')
       onClose()
     } catch (failure) {
       setError(buildWebErrorMessage(failure))
@@ -149,10 +151,12 @@ function BuildForm({ choice, onClose }: { choice: ImageBuildChoice; onClose: () 
         />
         {branch ? <Text style={ui.muted}>Branch {branch}</Text> : null}
       </View>
-      <View style={styles.field}>
-        <Text style={ui.muted}>Distribution</Text>
-        <MobileSegmentedControl segments={DISTS} selected={dist} onSelect={setDist} fill />
-      </View>
+      {choosing ? (
+        <View style={styles.field}>
+          <Text style={ui.muted}>Distribution</Text>
+          <MobileSegmentedControl segments={DISTS} selected={dist} onSelect={setDist} fill />
+        </View>
+      ) : null}
       <View style={styles.field}>
         <Text style={ui.muted}>Ticket (optional)</Text>
         <TextInput

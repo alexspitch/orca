@@ -25,6 +25,7 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import { callBuildWeb } from '../build-web-client'
 import { useImageBuildRuns, versionOfBranch } from './image-build-runs'
 import { testsChoice } from '../issue/build/run-cells'
+import { choosesDist, repoOfImage } from '../../../../../shared/build-web-repos'
 
 const DISTS: BuildWebImageBuildArgs['dist'][] = ['both', 'rhel', 'redos']
 
@@ -97,6 +98,8 @@ function BuildForm({
     }
   }, [target])
   const tests = testsChoice(branch ? [branch] : [], treeBranches, runTests)
+  // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
+  const choosing = images.length > 0 && choosesDist(repoOfImage(images[0]))
 
   const start = async (): Promise<void> => {
     setBusy(true)
@@ -104,7 +107,7 @@ function BuildForm({
     try {
       const choice = {
         branch,
-        dist,
+        dist: choosing ? dist : 'rhel',
         ...(ticket.trim() ? { ticket: ticket.trim() } : {}),
         ...(tests.skipTests ? { skipTests: true } : {})
       }
@@ -128,6 +131,9 @@ function BuildForm({
                 })
         })
       )
+      if (result.value.note) {
+        toast.message(result.value.note)
+      }
       onClose()
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : String(failure))
@@ -183,26 +189,28 @@ function BuildForm({
             </p>
           ) : null}
         </div>
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="image-build-dist">
-            {translate('buildWeb.imageBuild.dist', 'Distribution')}
-          </Label>
-          <Select
-            value={dist}
-            onValueChange={(next) => setDist(DISTS.find((d) => d === next) ?? 'both')}
-          >
-            <SelectTrigger id="image-build-dist" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DISTS.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {distLabel(d)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {choosing ? (
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="image-build-dist">
+              {translate('buildWeb.imageBuild.dist', 'Distribution')}
+            </Label>
+            <Select
+              value={dist}
+              onValueChange={(next) => setDist(DISTS.find((d) => d === next) ?? 'both')}
+            >
+              <SelectTrigger id="image-build-dist" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DISTS.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {distLabel(d)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="image-build-ticket">
             {translate('buildWeb.imageBuild.ticket', 'Ticket (optional)')}

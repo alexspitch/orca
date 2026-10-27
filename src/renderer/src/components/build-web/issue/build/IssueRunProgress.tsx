@@ -1,13 +1,8 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Loader2, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
-import type {
-  BuildWebBranch,
-  BuildWebCombo,
-  BuildWebRun
-} from '../../../../../../shared/build-web-run-types'
+import type { BuildWebBranch, BuildWebRun } from '../../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
 import { useBuildWebStore } from '../../build-web-store'
@@ -25,7 +20,9 @@ import {
   comboOf,
   failedCells,
   imageLinks,
+  isRetrying,
   isSelectable,
+  pendingCells,
   pickedCells,
   productOfImage,
   staleCells,
@@ -34,9 +31,11 @@ import {
 import { useRunProgress } from './use-run-progress'
 import { useRunScan } from './use-run-scan'
 import { useRunActions } from './use-run-actions'
+import { useRunListEdits } from './use-run-list-edits'
 import { RUN_ROW_GRID, RunImageRow, type RunRowContext } from './RunImageRow'
 import { RunAddImage, RunFilters, RunRefBar, RunSelectionBar } from './RunBars'
-import { repoField } from '../../../../../../shared/build-web-repos'
+import { choosesDist, repoField } from '../../../../../../shared/build-web-repos'
+import { withoutTwins } from '../../../../../../shared/build-web-redos-twin'
 import { BuildMenu } from './RunMenus'
 
 /** A task's run, after build-web's Progress: its images, what to build, what to publish. */
@@ -51,7 +50,6 @@ export function IssueRunProgress({
   canWrite: boolean
   onStatus: (status: string) => void
 }): React.JSX.Element {
-  const confirm = useConfirmationDialog()
   const baseUrl = useBuildWebStore((s) => s.status?.baseUrl ?? null)
   const [error, setError] = useState<string | null>(null)
   // Freshness again whenever a build ends: its own date is what the rows are compared by.
@@ -94,24 +92,26 @@ export function IssueRunProgress({
   }, [runRepo, target])
 
   const list = useMemo(() => Object.values(cells), [cells])
+  const withDist = choosesDist(run.repo)
   const building = status === 'building'
   const visible = useMemo(
     () =>
       list.filter(
         (c) =>
-          (filter.dist === 'all' || c.dist === filter.dist) &&
+          (!withDist || filter.dist === 'all' || c.dist === filter.dist) &&
           (filter.product === 'all' || productOfImage(c.image) === filter.product) &&
           !(hidePending && c.state === 'pending')
       ),
-    [filter, hidePending, list]
+    [filter, hidePending, list, withDist]
   )
-  const hasPending = list.some((c) => c.state === 'pending')
-  const hasLost = list.some((c) => c.status === 'poll-failed')
-  const hasStuck = !building && list.some((c) => c.state === 'queued' || c.state === 'building')
+  const own = withoutTwins(list)
+  const hasPending = pendingCells(own).length > 0
+  const hasLost = own.some((c) => c.status === 'poll-failed')
+  const hasStuck = !building && own.some((c) => c.state === 'queued' || c.state === 'building')
   const selectable = visible.filter(isSelectable)
   const pickedRows = pickedCells(visible, picked)
   const links = imageLinks(visible, picked)
-  const pendingCombos = visible.filter((c) => c.state === 'pending').map(comboOf)
+  const pendingCombos = pendingCells(visible).map(comboOf)
   const treeBranches = useMemo(
     () => new Set(branches.filter((b) => b.fromTree).map((b) => b.name)),
     [branches]
@@ -123,9 +123,11 @@ export function IssueRunProgress({
     if (run.status === 'building') {
       return
     }
-    const pending = run.builds.some((b) => b.status === 'pending')
-    const lost = run.builds.some((b) => b.status === 'poll-failed')
-    const stuck = run.builds.some((b) => b.status === 'queued' || b.status === 'building')
+    // Why without twins: the console derives them on its own, so they ask nothing of it.
+    const builds = withoutTwins(run.builds)
+    const pending = builds.some((b) => b.status === 'pending')
+    const lost = builds.some((b) => b.status === 'poll-failed')
+    const stuck = builds.some((b) => b.status === 'queued' || b.status === 'building')
     // Why after the first paint: the rows show at once, and the console is asked once they do.
     const timer = window.setTimeout(() => {
       void rescan(false)
@@ -144,44 +146,7 @@ export function IssueRunProgress({
     [...actions.pushingKeys].filter((k) => watching && cells[k] && !cells[k].pushed)
   )
 
-  const remove = useCallback(
-    async (combo: BuildWebCombo) => {
-      const accepted = await confirm({
-        title: translate('buildWeb.run.removeTitle', 'Remove image from the list?'),
-        description: translate(
-          'buildWeb.run.removeBody',
-          'Remove {{image}} ({{dist}}) from this run? This only drops it from the list; already-built images on the server are not affected.',
-          { image: combo.image, dist: combo.dist }
-        ),
-        confirmLabel: translate('buildWeb.run.remove', 'Remove'),
-        confirmVariant: 'destructive'
-      })
-      if (accepted) {
-        await actions.remove(combo)
-      }
-    },
-    [actions, confirm]
-  )
-
-  const add = async (image: string, dist: string, branch: string): Promise<boolean> => {
-    const want = dist === 'both' ? ['rhel', 'redos'] : [dist]
-    const missing = want.filter((d) => !cells[cellKey({ image, dist: d, branch })])
-    if (missing.length === 0) {
-      setError(
-        translate(
-          'buildWeb.run.alreadyListed',
-          '{{image}} ({{dist}}) on {{branch}} is already in the list.',
-          {
-            image,
-            dist,
-            branch
-          }
-        )
-      )
-      return false
-    }
-    return actions.add(missing.map((d) => ({ image, dist: d, branch })))
-  }
+  const { add, remove } = useRunListEdits(cells, actions, setError)
 
   const copyLinks = async (): Promise<boolean> => {
     try {
@@ -206,6 +171,7 @@ export function IssueRunProgress({
     onBuild: (combos, pushAfter, skipTests) => void actions.trigger(combos, pushAfter, skipTests),
     onPush: (rows, moveMainTag) => void actions.push(rows, moveMainTag),
     onCancel: (cell) => void actions.cancel(cell),
+    onRetryTwin: (cell) => void actions.retryTwin(cell),
     onRemove: (combo) => void remove(combo)
   }
 
@@ -297,6 +263,7 @@ export function IssueRunProgress({
       {list.length > 1 ? (
         <RunFilters
           filter={filter}
+          withDist={withDist}
           onFilter={(next) => {
             setFilter(next)
             writeRunFilter(run.id, next)
@@ -376,6 +343,7 @@ export function IssueRunProgress({
                   }
                   pushing={pushingKeys.has(key)}
                   cancelling={actions.cancelling.has(key)}
+                  retrying={isRetrying(c, actions.retrying, now)}
                   lastBuilt={scan.lastBuilt[key]}
                   freshness={scan.freshness[key]}
                   ctx={ctx}
@@ -390,6 +358,7 @@ export function IssueRunProgress({
           images={images}
           branches={branches.map((b) => b.name)}
           runBranch={run.branch}
+          repo={run.repo}
           defaultDist={run.dist_type}
           disabled={building || actions.busy}
           onAdd={add}

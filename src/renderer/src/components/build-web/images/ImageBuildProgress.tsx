@@ -10,6 +10,7 @@ import { runStatusTone } from '../build-web-tones'
 import { useBuildLogViewer } from './build-log-viewer'
 import {
   isBuildGoing,
+  trackedBuildsOf,
   useImageBuildRuns,
   versionOfBranch,
   type TrackedImageBuild
@@ -31,7 +32,7 @@ function RunProgress({
   const [answer, setAnswer] = useState<BuildWebRun | null | undefined>(undefined)
   const [error, setError] = useState<string | null>(null)
   const settled = useRef(false)
-  const builds = (answer?.builds ?? []).filter((b) => run.images.includes(b.image))
+  const builds = trackedBuildsOf(run, answer?.builds ?? [])
   const several = run.images.length > 1
   const name = several
     ? translate('buildWeb.imageBuild.images', '{{count}} images', { count: run.images.length })

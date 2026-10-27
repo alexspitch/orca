@@ -4,7 +4,8 @@ import { translate } from '@/i18n/i18n'
 import type { BuildWebRun } from '../../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
-import { cellsOf, mergeCells, type Cell } from './run-cells'
+import { cellsOf, hasLiveTwin, mergeCells, type Cell } from './run-cells'
+import { withoutTwins } from '../../../../../../shared/build-web-redos-twin'
 
 const POLL_MS = 5000
 const ENDED = new Set(['success', 'failed', 'partial'])
@@ -47,7 +48,9 @@ export function useRunProgress(
     setStatus(fresh.status)
     onStatusRef.current(fresh.status)
     if (before === 'building' && ENDED.has(fresh.status)) {
-      const ok = fresh.builds.filter((b) => b.status === 'SUCCESS').length
+      // Why without twins: the console's run status leaves them out too.
+      const own = withoutTwins(fresh.builds)
+      const ok = own.filter((b) => b.status === 'SUCCESS').length
       toast.message(
         translate('buildWeb.run.ended', 'Build {{status}} — {{key}}', {
           status: fresh.status,
@@ -59,7 +62,7 @@ export function useRunProgress(
             '{{ok}} / {{total}} image builds succeeded',
             {
               ok,
-              total: fresh.builds.length
+              total: own.length
             }
           )
         }
@@ -68,7 +71,9 @@ export function useRunProgress(
   }, [])
 
   const watching = watchUntil > now
-  const polling = status === 'building' || watching
+  // Why the twins too: the console leaves them out of the run's status while they go.
+  const twinGoing = hasLiveTwin(Object.values(cells))
+  const polling = status === 'building' || watching || twinGoing
   useEffect(() => {
     if (!polling) {
       return

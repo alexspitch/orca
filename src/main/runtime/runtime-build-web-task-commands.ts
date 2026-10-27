@@ -8,6 +8,7 @@ import { deleteBuildWebComment, editBuildWebComment } from '../build-web/build-w
 import type {
   BuildWebAdoptParams,
   BuildWebComboParams,
+  BuildWebRedosTwinParams,
   BuildWebCombosParams,
   BuildWebDetectParams,
   BuildWebRepoParams,
@@ -40,6 +41,7 @@ import {
   buildBuildWebCombos,
   buildWebRunFreshness,
   cancelBuildWebBuild,
+  retryBuildWebRedosTwin,
   detectBuildWebBuilt,
   lastBuildWebBuilt,
   removeBuildWebRunImages,
@@ -112,6 +114,10 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebCancelBuild(args: In<typeof BuildWebComboParams>) {
     return cancelBuildWebBuild(args.runId, args.combo)
+  }
+
+  buildWebRetryRedosTwin(args: In<typeof BuildWebRedosTwinParams>) {
+    return retryBuildWebRedosTwin(args.runId, args.image, args.branch)
   }
 
   buildWebAddRunImages(args: In<typeof BuildWebRunCombosParams>) {

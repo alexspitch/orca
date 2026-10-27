@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2, RefreshCw, Search, TriangleAlert } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -17,7 +18,12 @@ import type {
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
 import { ImagePicker } from './ImagePicker'
-import { repoField, type BuildWebRepo } from '../../../../../../shared/build-web-repos'
+import {
+  distOf,
+  distsOf,
+  repoField,
+  type BuildWebRepo
+} from '../../../../../../shared/build-web-repos'
 import {
   BuildBranchField,
   NewBuildRows,
@@ -64,6 +70,7 @@ export function IssueNewBuild({
   // Why the repository: a `cp` task's images and branches are chat-platform's, not the monorepo's.
   const repo = repoField(issue.repo)
   const repoKey = issue.repo
+  const dists = distsOf(issue.repo)
   useEffect(() => {
     const args = repoField(repoKey)
     void callBuildWeb(target, 'imageNames', args).then(setAllImages, () => setAllImages([]))
@@ -165,13 +172,12 @@ export function IssueNewBuild({
         branch,
         // Why the release branch: the console builds `images` there whatever branch is named.
         images: chosen.filter((r) => r.branch === releaseBranch).map((r) => r.image),
-        // Every build covers both distributions, so an image on another branch is two combos.
+        // Why per repository: the monorepo builds rhel only, chat-platform both (IS-230).
         extra: chosen
           .filter((r) => r.branch !== releaseBranch)
-          .flatMap((r) =>
-            ['rhel', 'redos'].map((dist) => ({ image: r.image, dist, branch: r.branch }))
-          ),
+          .flatMap((r) => dists.map((dist) => ({ image: r.image, dist, branch: r.branch }))),
         testingStatus: testing,
+        distType: distOf(issue.repo),
         detected: detect?.raw ?? null,
         ...(releaseBranches
           ? {
@@ -182,6 +188,9 @@ export function IssueNewBuild({
           : {})
       })
       if (result.ok) {
+        if (result.value.note) {
+          toast.message(result.value.note)
+        }
         onStarted()
       } else {
         setError(result.error)
@@ -271,9 +280,13 @@ export function IssueNewBuild({
               <p className="flex-1 text-xs text-muted-foreground">
                 {chosen.length
                   ? translate(
-                      'buildWeb.newBuild.chosen',
-                      'Images chosen: {{n}} · rhel and redos — {{builds}} builds. Builds do not start by themselves: they are started on the next step.',
-                      { n: String(chosen.length), builds: String(chosen.length * 2) }
+                      'buildWeb.newBuild.chosenDists',
+                      'Images chosen: {{n}} · {{dists}} — {{builds}} builds. Builds do not start by themselves: they are started on the next step.',
+                      {
+                        n: String(chosen.length),
+                        dists: dists.join(' + '),
+                        builds: String(chosen.length * dists.length)
+                      }
                     )
                   : translate('buildWeb.newBuild.pick', 'Tick images or add one by hand.')}
               </p>

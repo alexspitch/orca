@@ -33,6 +33,7 @@ import {
   VersionSelect
 } from './image-view-parts'
 import { IMAGE_PAGE_SIZE, toggled, useImageHistory, useImageSort } from './use-build-web-images'
+import { repoOfImage } from '../../../../../shared/build-web-repos'
 
 const DISTS = ['rhel', 'redos'] as const
 const PUSHED = ['yes', 'no'] as const
@@ -52,6 +53,8 @@ export function ImageHistoryView({
   onBack: () => void
 }): React.JSX.Element {
   const [q, setQ] = useState('')
+  // Why only Chat Platform: a monorepo image's redos builds are twins of its rhel ones (IS-230).
+  const withDist = repoOfImage(image) === 'chat-platform'
   const [dists, setDists] = useState<(typeof DISTS)[number][]>([])
   const [pushed, setPushed] = useState<(typeof PUSHED)[number][]>([])
   const [statuses, setStatuses] = useState<(typeof STATUSES)[number][]>([])
@@ -140,16 +143,18 @@ export function ImageHistoryView({
         <FoundCount shown={data?.total ?? 0} of={data?.of ?? 0} />
       </div>
       <div className="flex flex-wrap gap-1.5 px-3 py-2 md:px-5">
-        <FilterChips
-          options={DISTS}
-          counts={data?.counts.dists ?? {}}
-          selected={dists}
-          label={(d) => d}
-          onToggle={(d) => {
-            setDists(toggled(dists, d))
-            setPage(0)
-          }}
-        />
+        {withDist ? (
+          <FilterChips
+            options={DISTS}
+            counts={data?.counts.dists ?? {}}
+            selected={dists}
+            label={(d) => d}
+            onToggle={(d) => {
+              setDists(toggled(dists, d))
+              setPage(0)
+            }}
+          />
+        ) : null}
         <FilterChips
           options={PUSHED}
           counts={data?.counts.pushed ?? {}}

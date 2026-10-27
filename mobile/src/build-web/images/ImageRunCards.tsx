@@ -5,6 +5,7 @@ import type { BuildWebRun } from '../../../../src/shared/build-web-run-types'
 import type { BuildWebPushProgress } from '../../../../src/shared/build-web-image-types'
 import {
   isBuildGoing,
+  trackedBuildsOf,
   isPushOver,
   versionOfBranch,
   type TrackedImageBuild,
@@ -74,7 +75,7 @@ function BuildCard({
   const settled = useRef(false)
   const onSettledRef = useRef(onSettled)
   onSettledRef.current = onSettled
-  const builds = (answer?.builds ?? []).filter((b) => run.images.includes(b.image))
+  const builds = trackedBuildsOf(run, answer?.builds ?? [])
   const several = run.images.length > 1
   const name = several ? `${run.images.length} images` : run.images[0]
   const going =

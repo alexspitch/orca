@@ -22,6 +22,7 @@ import { TrainHistory } from './TrainHistory'
 import { TrainPreviewDialog } from './TrainPreviewDialog'
 import { trainStandLabel } from './train-stand-label'
 import { trainRunTone } from './train-tones'
+import { builtDistOf } from '../../../../../shared/build-web-repos'
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : '—')
 const GRID =
@@ -209,7 +210,8 @@ function TrainsView({ target, canRun }: { target: RuntimeClientTarget; canRun: b
               </button>
               <span className="flex min-w-0 items-center gap-1.5">
                 <span className="truncate font-mono text-xs">{t.branch}</span>
-                <BuildWebToneChip label={t.dist} tone={null} />
+                {/* Why: a monorepo train builds rhel only, whatever its stored dist (IS-230). */}
+                <BuildWebToneChip label={builtDistOf(t.repo, t.dist)} tone={null} />
                 {/* Why: both repositories have a master; the chat-platform one says so. */}
                 {t.repo === 'chat-platform' ? <ProductChip product="cp" /> : null}
               </span>

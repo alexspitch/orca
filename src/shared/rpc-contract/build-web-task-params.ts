@@ -26,6 +26,11 @@ export const BuildWebCombosParams = z.object({
   skipTests: z.boolean()
 })
 export const BuildWebComboParams = z.object({ runId: Id, combo: Combo })
+export const BuildWebRedosTwinParams = z.object({
+  runId: Id,
+  image: Combo.shape.image,
+  branch: Branch
+})
 export const BuildWebRunCombosParams = z.object({ runId: Id, combos: Combos })
 export const BuildWebFreshnessParams = z.object({ runId: Id, fetch: z.boolean() })
 export const BuildWebTestingParams = z.object({ runId: Id, testingStatus: Testing })
@@ -55,7 +60,8 @@ export const BuildWebIssueRunParams = z.object({
   testingStatus: Testing,
   // Why: the console's own detect answer, sent back as it came; the console reads it, not Orca.
   detected: z.record(z.string(), z.unknown()).nullable(),
-  excludeBranches: z.array(Branch).max(100).optional()
+  excludeBranches: z.array(Branch).max(100).optional(),
+  distType: z.enum(['rhel', 'both']).optional()
 })
 export const BuildWebGuideStartParams = z.object({
   runId: Id,

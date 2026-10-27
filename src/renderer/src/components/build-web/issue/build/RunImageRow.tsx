@@ -21,6 +21,7 @@ import {
   formatAt
 } from './RunCellChips'
 import { BuildMenu } from './RunMenus'
+import { RunTwinChip } from './RunTwinChip'
 
 /** The columns: pick, image, dist, state, freshness, registry, actions. */
 export const RUN_ROW_GRID =
@@ -40,6 +41,7 @@ export type RunRowContext = {
   onBuild: (combos: BuildWebCombo[], pushAfter: BuildWebPushAfter, skipTests: boolean) => void
   onPush: (cells: Cell[], moveMainTag: boolean) => void
   onCancel: (cell: Cell) => void
+  onRetryTwin: (cell: Cell) => void
   onRemove: (combo: BuildWebCombo) => void
 }
 
@@ -66,6 +68,7 @@ export function RunImageRow({
   onPick,
   pushing,
   cancelling,
+  retrying,
   lastBuilt,
   freshness,
   ctx
@@ -75,11 +78,15 @@ export function RunImageRow({
   onPick: () => void
   pushing: boolean
   cancelling: boolean
+  /** A Retry of this twin is on its way. */
+  retrying: boolean
   lastBuilt: BuildWebLastBuilt | undefined
   freshness: BuildWebBuildFreshness | undefined
   ctx: RunRowContext
 }): React.JSX.Element {
   const live = c.state === 'queued' || c.state === 'building'
+  // Why: the console derives this row from its rhel one — a rebuild here would rebuild rhel.
+  const derived = c.twin === 'derive'
   const testDirs = ctx.testDirs[c.image] ?? []
   const meta = [c.number !== null ? `#${c.number}` : null, formatAt(c.startedAt)]
     .filter(Boolean)
@@ -138,6 +145,7 @@ export function RunImageRow({
         {c.state === 'done' && c.status === 'SUCCESS' && freshness ? (
           <FreshnessChip freshness={freshness} ticket={ctx.ticket} />
         ) : null}
+        <RunTwinChip cell={c} disabled={ctx.busy || retrying} onRetry={ctx.onRetryTwin} />
       </div>
       <div className="min-w-0">
         <RegistryChip
@@ -195,7 +203,7 @@ export function RunImageRow({
             />
           </button>
         ) : null}
-        {live ? (
+        {live && !derived ? (
           <IconAction
             label={translate('buildWeb.run.cancel', 'Cancel this build')}
             disabled={cancelling}
@@ -204,19 +212,19 @@ export function RunImageRow({
             <CircleStop />
           </IconAction>
         ) : null}
-        {c.state === 'pending'
+        {c.state === 'pending' && !derived
           ? buildTrigger(
               <Play className="text-primary" />,
               translate('buildWeb.run.buildOne', 'Build this image — and choose what it publishes')
             )
           : null}
-        {c.state === 'done'
+        {c.state === 'done' && !derived
           ? buildTrigger(
               <RotateCw />,
               translate('buildWeb.run.rebuildOne', 'Rebuild — and choose what it publishes')
             )
           : null}
-        {c.state === 'pending' || c.state === 'done' ? (
+        {(c.state === 'pending' || c.state === 'done') && !derived ? (
           <IconAction
             label={translate('buildWeb.run.removeOne', 'Remove from list')}
             disabled={ctx.building || ctx.busy}

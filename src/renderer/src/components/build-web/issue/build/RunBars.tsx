@@ -17,6 +17,7 @@ import type {
   BuildWebPushAfter
 } from '../../../../../../shared/build-web-run-types'
 import { RUN_DISTS, RUN_PRODUCT_FILTERS, type RunFilter } from '../../build-web-view-prefs'
+import { choosesDist, type BuildWebRepo } from '../../../../../../shared/build-web-repos'
 import { comboOf, type Cell } from './run-cells'
 import { formatAt } from './RunCellChips'
 import { BuildMenu, PushMenu } from './RunMenus'
@@ -82,6 +83,7 @@ export function RunRefBar({
 
 export function RunFilters({
   filter,
+  withDist,
   onFilter,
   hidePending,
   onHidePending,
@@ -89,6 +91,8 @@ export function RunFilters({
   total
 }: {
   filter: RunFilter
+  /** Only chat-platform builds both distributions; a monorepo run's redos are twins (IS-230). */
+  withDist: boolean
   onFilter: (filter: RunFilter) => void
   hidePending: boolean
   onHidePending: (on: boolean) => void
@@ -97,25 +101,29 @@ export function RunFilters({
 }): React.JSX.Element {
   return (
     <div className="flex flex-wrap items-center gap-3 text-xs">
-      <span className="text-muted-foreground">{translate('buildWeb.run.dist', 'dist')}</span>
-      <ToggleGroup
-        type="single"
-        variant="outline"
-        size="sm"
-        value={filter.dist}
-        onValueChange={(v) => {
-          const dist = RUN_DISTS.find((d) => d === v)
-          if (dist) {
-            onFilter({ ...filter, dist })
-          }
-        }}
-      >
-        {RUN_DISTS.map((d) => (
-          <ToggleGroupItem key={d} value={d}>
-            {d}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      {withDist ? (
+        <>
+          <span className="text-muted-foreground">{translate('buildWeb.run.dist', 'dist')}</span>
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={filter.dist}
+            onValueChange={(v) => {
+              const dist = RUN_DISTS.find((d) => d === v)
+              if (dist) {
+                onFilter({ ...filter, dist })
+              }
+            }}
+          >
+            {RUN_DISTS.map((d) => (
+              <ToggleGroupItem key={d} value={d}>
+                {d}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+        </>
+      ) : null}
       <span className="text-muted-foreground">{translate('buildWeb.run.product', 'product')}</span>
       <ToggleGroup
         type="single"
@@ -276,6 +284,7 @@ export function RunAddImage({
   images,
   branches,
   runBranch,
+  repo,
   defaultDist,
   disabled,
   onAdd
@@ -283,14 +292,18 @@ export function RunAddImage({
   images: string[]
   branches: string[]
   runBranch: string
+  repo: BuildWebRepo
   defaultDist: string
   disabled: boolean
   onAdd: (image: string, dist: string, branch: string) => Promise<boolean>
 }): React.JSX.Element {
   const [image, setImage] = useState<string | null>(null)
-  const [dist, setDist] = useState(
+  const [chosen, setDist] = useState(
     defaultDist === 'rhel' || defaultDist === 'redos' ? defaultDist : 'both'
   )
+  // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
+  const choosing = choosesDist(repo)
+  const dist = choosing ? chosen : 'rhel'
   // The branch last used: the common case is a series of images on one branch.
   const [branch, setBranch] = useState(runBranch)
   const offered = branches.includes(runBranch) ? branches : [runBranch, ...branches]
@@ -302,20 +315,22 @@ export function RunAddImage({
         onChange={setImage}
         className="w-[min(380px,100%)] flex-1"
       />
-      <ToggleGroup
-        type="single"
-        variant="outline"
-        size="sm"
-        value={dist}
-        disabled={disabled}
-        onValueChange={(v) => v && setDist(v)}
-      >
-        {['rhel', 'redos', 'both'].map((d) => (
-          <ToggleGroupItem key={d} value={d}>
-            {d}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      {choosing ? (
+        <ToggleGroup
+          type="single"
+          variant="outline"
+          size="sm"
+          value={dist}
+          disabled={disabled}
+          onValueChange={(v) => v && setDist(v)}
+        >
+          {['rhel', 'redos', 'both'].map((d) => (
+            <ToggleGroupItem key={d} value={d}>
+              {d}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      ) : null}
       <Select value={branch} onValueChange={setBranch} disabled={disabled}>
         <SelectTrigger size="sm" className="w-56">
           <SelectValue />

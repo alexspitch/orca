@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { Play } from 'lucide-react-native'
-import { repoField } from '../../../../../../src/shared/build-web-repos'
+import { choosesDist, repoField } from '../../../../../../src/shared/build-web-repos'
+import { withoutTwins } from '../../../../../../src/shared/build-web-redos-twin'
 import type {
   BuildWebBranch,
   BuildWebCombo,
@@ -20,7 +21,9 @@ import {
   comboOf,
   failedCells,
   imageLinks,
+  isRetrying,
   isSelectable,
+  pendingCells,
   pickedCells,
   productOfImage,
   staleCells,
@@ -90,24 +93,26 @@ export function IssueRunProgress({
   }, [call, runRepo])
 
   const list = useMemo(() => Object.values(cells), [cells])
+  const withDist = choosesDist(run.repo)
   const building = status === 'building'
   const visible = useMemo(
     () =>
       list.filter(
         (c) =>
-          (filter.dist === 'all' || c.dist === filter.dist) &&
+          (!withDist || filter.dist === 'all' || c.dist === filter.dist) &&
           (filter.product === 'all' || productOfImage(c.image) === filter.product) &&
           !(hidePending && c.state === 'pending')
       ),
-    [filter, hidePending, list]
+    [filter, hidePending, list, withDist]
   )
-  const hasPending = list.some((c) => c.state === 'pending')
-  const hasLost = list.some((c) => c.status === 'poll-failed')
-  const hasStuck = !building && list.some((c) => c.state === 'queued' || c.state === 'building')
+  const own = withoutTwins(list)
+  const hasPending = pendingCells(own).length > 0
+  const hasLost = own.some((c) => c.status === 'poll-failed')
+  const hasStuck = !building && own.some((c) => c.state === 'queued' || c.state === 'building')
   const selectable = visible.filter(isSelectable)
   const pickedRows = pickedCells(visible, picked)
   const links = imageLinks(visible, picked)
-  const pendingCombos = visible.filter((c) => c.state === 'pending').map(comboOf)
+  const pendingCombos = pendingCells(visible).map(comboOf)
   const treeBranches = useMemo(
     () => new Set(branches.filter((b) => b.fromTree).map((b) => b.name)),
     [branches]
@@ -119,9 +124,11 @@ export function IssueRunProgress({
     if (run.status === 'building') {
       return
     }
-    const pending = run.builds.some((b) => b.status === 'pending')
-    const lost = run.builds.some((b) => b.status === 'poll-failed')
-    const stuck = run.builds.some((b) => b.status === 'queued' || b.status === 'building')
+    // Why without twins: the console derives them on its own, so they ask nothing of it.
+    const builds = withoutTwins(run.builds)
+    const pending = builds.some((b) => b.status === 'pending')
+    const lost = builds.some((b) => b.status === 'poll-failed')
+    const stuck = builds.some((b) => b.status === 'queued' || b.status === 'building')
     const timer = setTimeout(() => {
       void rescan(false)
       if ((run.ticket && pending) || lost || stuck) {
@@ -195,6 +202,7 @@ export function IssueRunProgress({
     onOpenBuild: (combos) => setMenu({ kind: 'build', combos }),
     onOpenPush: (rows) => setMenu({ kind: 'push', cells: rows }),
     onCancel: (cell) => void actions.cancel(cell),
+    onRetryTwin: (cell) => void actions.retryTwin(cell),
     onRemove: (combo) => void remove(combo),
     onOpenLog: (url, title) => setLog({ url, title })
   }
@@ -250,6 +258,7 @@ export function IssueRunProgress({
       {list.length > 1 ? (
         <RunFilters
           filter={filter}
+          withDist={withDist}
           onFilter={(next) => {
             setFilter(next)
             writeRunFilter(run.id, next)
@@ -305,6 +314,7 @@ export function IssueRunProgress({
               onPick={togglePick}
               pushing={pushingKeys.has(key)}
               cancelling={actions.cancelling.has(key)}
+              retrying={isRetrying(c, actions.retrying, now)}
               lastBuilt={scan.lastBuilt[key]}
               freshness={scan.freshness[key]}
               ctx={ctx}
@@ -317,6 +327,7 @@ export function IssueRunProgress({
           images={images}
           branches={branches.map((b) => b.name)}
           runBranch={run.branch}
+          repo={run.repo}
           defaultDist={run.dist_type}
           disabled={building || actions.busy}
           onAdd={add}

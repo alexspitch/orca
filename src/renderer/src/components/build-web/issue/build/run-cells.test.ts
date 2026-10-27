@@ -6,7 +6,10 @@ import {
   elapsedLabel,
   failedCells,
   imageLinks,
+  hasLiveTwin,
+  isRetrying,
   mergeCells,
+  pendingCells,
   productOfImage,
   staleCells,
   testsChoice,
@@ -34,6 +37,9 @@ function rec(status: string, extra: Partial<BuildWebRunBuild> = {}): BuildWebRun
     started_at: null,
     tests_skipped: false,
     error: null,
+    twin: null,
+    twin_of: null,
+    redos_note: null,
     ...extra
   }
 }
@@ -123,6 +129,56 @@ describe('what each bulk button takes', () => {
   it('copies each reference once, in row order', () => {
     const picked = new Set(['dc/a|rhel|master', 'dc/b|rhel|master'])
     expect(imageLinks(rows, picked)).toEqual(['r/dc/a:1', 'r/dc/a:1b2', 'r/dc/b:1'])
+  })
+})
+
+describe('redos twins (IS-230)', () => {
+  const twin = (status: string, extra: Partial<BuildWebRunBuild> = {}) =>
+    rec(status, { dist: 'redos', twin: 'derive', twin_of: 7, ...extra })
+  const rows = Object.values(
+    cellsOf([
+      rec('pending', { image: 'dc/a' }),
+      twin('pending', { image: 'dc/a', twin: 'full', error: 'branch moved' }),
+      twin('FAILURE', { image: 'dc/b', error: 'derive failed' }),
+      twin('SUCCESS', { image: 'dc/c', tags: ['r/dc/c:1b7'] }),
+      rec('SUCCESS', { image: 'dc/d', redos_note: 'no redos on this branch' })
+    ])
+  )
+
+  it('carries the console’s reason: a twin’s error, a rhel row’s note', () => {
+    const byKey = cellsOf([twin('FAILURE', { error: 'derive failed' }), rec('SUCCESS')])
+    expect(byKey['dc/ib-script-engine|redos|master']).toMatchObject({
+      twin: 'derive',
+      note: 'derive failed'
+    })
+    expect(cellsOf([rec('FAILURE', { error: 'boom' })])[KEY].note).toBeNull()
+  })
+
+  it('leaves them out of Build all, Rebuild failed and Publish', () => {
+    expect(pendingCells(rows).map((c) => `${c.image}|${c.dist}`)).toEqual(['dc/a|rhel'])
+    expect(failedCells(rows)).toEqual([])
+    expect(unpushedCells(rows)).toEqual([])
+  })
+
+  it('takes the console’s word on a twin: one dropped or sent back to waiting does not linger', () => {
+    const shown = cellsOf([twin('building', { number: 7 })])
+    expect(mergeCells(shown, {})).toEqual({})
+    const back = mergeCells(shown, cellsOf([twin('pending', { twin: 'full', error: 'moved' })]))
+    expect(back['dc/ib-script-engine|redos|master']).toMatchObject({ state: 'pending' })
+  })
+
+  it('keeps the run followed while a twin goes, and holds a Retry for a few polls', () => {
+    expect(hasLiveTwin(Object.values(cellsOf([twin('building')])))).toBe(true)
+    expect(hasLiveTwin(Object.values(cellsOf([rec('building')])))).toBe(false)
+    const failed = cellsOf([twin('FAILURE')])['dc/ib-script-engine|redos|master']
+    const sent = new Map([['dc/ib-script-engine|redos|master', 1000]])
+    expect(isRetrying(failed, sent, 5000)).toBe(true)
+    expect(isRetrying(failed, sent, 20_000)).toBe(false)
+    expect(isRetrying({ ...failed, state: 'building' }, sent, 5000)).toBe(false)
+  })
+
+  it('still copies a twin’s references', () => {
+    expect(imageLinks(rows, new Set(['dc/c|redos|master']))).toEqual(['r/dc/c:1b7'])
   })
 })
 

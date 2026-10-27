@@ -46,6 +46,7 @@ export const buildWebApi = {
   stageIssueFile: (args) => ipcRenderer.invoke('buildWeb:stageIssueFile', args),
   buildCombos: (args) => ipcRenderer.invoke('buildWeb:buildCombos', args),
   cancelBuild: (args) => ipcRenderer.invoke('buildWeb:cancelBuild', args),
+  retryRedosTwin: (args) => ipcRenderer.invoke('buildWeb:retryRedosTwin', args),
   addRunImages: (args) => ipcRenderer.invoke('buildWeb:addRunImages', args),
   removeRunImages: (args) => ipcRenderer.invoke('buildWeb:removeRunImages', args),
   detectBuilt: (args) => ipcRenderer.invoke('buildWeb:detectBuilt', args),

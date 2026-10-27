@@ -86,7 +86,10 @@ export function ImageListView({
   const tracking = useImageTracking()
   const [q, setQ] = useState('')
   const [filters, setFilters] = useState<ImageFilters>(NO_IMAGE_FILTERS)
-  const { products, dists, version } = filters
+  const { products, version } = filters
+  // Why only Chat Platform: the monorepo builds rhel, its redos images are twins of those (IS-230).
+  const withDist = products.length === 1 && products[0] === 'cp'
+  const dists = withDist ? filters.dists : []
   const statuses = STATUS_FILTERS.filter((st) => filters.statuses.includes(st))
   const [page, setPage] = useState(0)
   const narrowFilters = (patch: Partial<ImageFilters>) => {
@@ -220,13 +223,15 @@ export function ImageListView({
             narrowFilters(next.length ? { products: next } : { products: next, version: 'all' })
           }}
         />
-        <ImageFilterChips
-          options={DISTS}
-          counts={data?.counts.dists ?? {}}
-          selected={dists}
-          label={(d) => d}
-          onToggle={(d) => narrowFilters({ dists: toggled(dists, d) })}
-        />
+        {withDist ? (
+          <ImageFilterChips
+            options={DISTS}
+            counts={data?.counts.dists ?? {}}
+            selected={dists}
+            label={(d) => d}
+            onToggle={(d) => narrowFilters({ dists: toggled(dists, d) })}
+          />
+        ) : null}
         <View style={styles.statusRow}>
           <View style={styles.grow}>
             <ImageFilterChips

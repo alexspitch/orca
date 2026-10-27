@@ -65,6 +65,11 @@ export type BuildWebTaskApi = {
     runId: string
     combo: BuildWebCombo
   }) => Promise<BuildWebMutationResult<true>>
+  retryRedosTwin: (args: {
+    runId: string
+    image: string
+    branch: string
+  }) => Promise<BuildWebMutationResult<true>>
   addRunImages: (args: { runId: string; combos: BuildWebCombo[] }) => RunWrite
   removeRunImages: (args: { runId: string; combos: BuildWebCombo[] }) => RunWrite
   detectBuilt: (args: { runId: string }) => RunWrite
@@ -84,7 +89,7 @@ export type BuildWebTaskApi = {
   }) => Promise<BuildWebDetect>
   createIssueRun: (
     args: BuildWebIssueRunArgs
-  ) => Promise<BuildWebMutationResult<{ id: string; existing: boolean }>>
+  ) => Promise<BuildWebMutationResult<{ id: string; existing: boolean; note?: string }>>
   /** Null from a console that cannot list them. */
   issueBuildBranches: (args: { id: string }) => Promise<BuildWebIssueBuildBranch[] | null>
   /** Which of a product version's images miss its branch's latest changes; null when no build names the branch. */

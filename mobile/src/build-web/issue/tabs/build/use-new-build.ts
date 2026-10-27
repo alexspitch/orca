@@ -4,7 +4,13 @@ import type {
   BuildWebIssueBuildBranch,
   BuildWebTestingStatus
 } from '../../../../../../src/shared/build-web-run-types'
-import { repoField, type BuildWebRepo } from '../../../../../../src/shared/build-web-repos'
+import {
+  distOf,
+  distsOf,
+  repoField,
+  type BuildWebRepo
+} from '../../../../../../src/shared/build-web-repos'
+import { useBuildWebScreen } from '../../../build-web-screen-context'
 import { messageOf, useBuildTabCall } from './build-tab-call'
 import { rowKey, type Row } from './NewBuildParts'
 
@@ -20,6 +26,8 @@ export function useNewBuild(
   onStarted: () => void
 ) {
   const { call } = useBuildTabCall()
+  const { notify } = useBuildWebScreen()
+  const dists = distsOf(issue.repo)
   const releaseBranch = issue.branch
   // Why by hand too: a fix may need building from a branch other than its release's.
   const [picked, setPicked] = useState<string | null>(null)
@@ -140,13 +148,12 @@ export function useNewBuild(
         branch,
         // Why the release branch: the console builds `images` there whatever branch is named.
         images: chosen.filter((r) => r.branch === releaseBranch).map((r) => r.image),
-        // Every build covers both distributions, so an image on another branch is two combos.
+        // Why per repository: the monorepo builds rhel only, chat-platform both (IS-230).
         extra: chosen
           .filter((r) => r.branch !== releaseBranch)
-          .flatMap((r) =>
-            ['rhel', 'redos'].map((dist) => ({ image: r.image, dist, branch: r.branch }))
-          ),
+          .flatMap((r) => dists.map((dist) => ({ image: r.image, dist, branch: r.branch }))),
         testingStatus: testing,
+        distType: distOf(issue.repo),
         detected: detect?.raw ?? null,
         ...(releaseBranches
           ? {
@@ -157,6 +164,9 @@ export function useNewBuild(
           : {})
       })
       if (result.ok) {
+        if (result.value.note) {
+          notify(result.value.note)
+        }
         onStarted()
       } else {
         setError(result.error)
@@ -194,6 +204,7 @@ export function useNewBuild(
         return next
       }),
     chosen,
+    dists,
     extras,
     branchOptions,
     choice,

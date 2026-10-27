@@ -252,6 +252,14 @@ export function RegistryChip({
   const label = cell.pushed
     ? translate('buildWeb.run.pushedBuildTagOnly', 'pushed (build tag only)')
     : translate('buildWeb.images.notPushed', 'not pushed')
+  // Why: the console publishes a redos twin along with its rhel row; it is never pushed by hand.
+  if (cell.twin) {
+    return cell.pushed ? (
+      <TipChip label={label} tone="amber" tip={tip} />
+    ) : (
+      <BuildWebToneChip label={label} tone="amber" />
+    )
+  }
   return (
     <Tooltip>
       <TooltipTrigger asChild>

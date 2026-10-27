@@ -9,6 +9,7 @@ import {
 
 export {
   isBuildGoing,
+  trackedBuildsOf,
   versionOfBranch,
   type TrackedImageBuild
 } from '../../../../../shared/build-web-image-tracking'

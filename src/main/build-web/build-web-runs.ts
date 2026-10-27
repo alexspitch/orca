@@ -18,6 +18,7 @@ import {
   buildWebRequest,
   type BuildWebResponseLimit
 } from './build-web-request'
+import { twinOf } from '../../shared/build-web-redos-twin'
 import { consoleUrlOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 
 const DIFF_MAX_CHARS = 512 * 1024
@@ -50,7 +51,10 @@ function buildOf(value: unknown, baseUrl: string): BuildWebRunBuild | null {
       .map((t) => ({ ref: textOf(t.ref), reason: textOf(t.reason) })),
     started_at: textOrNull(v.started_at),
     tests_skipped: v.tests_skipped === true,
-    error: textOrNull(v.error)
+    error: textOrNull(v.error),
+    twin: twinOf(v.twin),
+    twin_of: typeof v.twin_of === 'number' ? v.twin_of : null,
+    redos_note: textOrNull(v.redos_note)
   }
 }
 

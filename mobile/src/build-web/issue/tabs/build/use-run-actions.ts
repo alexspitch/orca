@@ -32,6 +32,7 @@ export function useRunActions(args: {
   const [detecting, setDetecting] = useState(false)
   const [pushingKeys, setPushingKeys] = useState<ReadonlySet<string>>(new Set())
   const [cancelling, setCancelling] = useState<ReadonlySet<string>>(new Set())
+  const [retrying, setRetrying] = useState<ReadonlyMap<string, number>>(new Map())
 
   /** One write; a refusal goes to the tab's error line. */
   const write = useCallback(
@@ -75,6 +76,24 @@ export function useRunActions(args: {
         watch(AFTER_BUILD_MS)
       } else {
         setCancelling((s) => new Set([...s].filter((k) => k !== key)))
+      }
+    },
+    [call, runId, watch, write]
+  )
+
+  /** IS-230: derive a failed redos twin again; the console publishes its build tag. */
+  const retryTwin = useCallback(
+    async (cell: Cell) => {
+      const key = cellKey(cell)
+      setRetrying((m) => new Map([...m, [key, Date.now()]]))
+      const done = await write(() =>
+        call('retryRedosTwin', { runId, image: cell.image, branch: cell.branch })
+      )
+      if (done) {
+        setRetrying((m) => new Map([...m, [key, Date.now()]]))
+        watch(AFTER_PUSH_MS)
+      } else {
+        setRetrying((m) => new Map([...m].filter(([k]) => k !== key)))
       }
     },
     [call, runId, watch, write]
@@ -125,7 +144,9 @@ export function useRunActions(args: {
               mainTagSkipped: false,
               skippedTags: [],
               startedAt: null,
-              testsSkipped: false
+              testsSkipped: false,
+              twin: null,
+              note: null
             }
           }
           return next
@@ -169,7 +190,20 @@ export function useRunActions(args: {
     [apply, call, onError, runId]
   )
 
-  return { busy, detecting, pushingKeys, cancelling, trigger, cancel, push, add, remove, detect }
+  return {
+    busy,
+    detecting,
+    pushingKeys,
+    cancelling,
+    retrying,
+    trigger,
+    cancel,
+    retryTwin,
+    push,
+    add,
+    remove,
+    detect
+  }
 }
 
 export type RunActions = ReturnType<typeof useRunActions>

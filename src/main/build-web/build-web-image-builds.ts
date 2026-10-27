@@ -7,9 +7,9 @@ import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
 import { invalidateBuildWebImageCatalog } from './build-web-images'
 import { buildWebMutation, buildWebRequest } from './build-web-request'
-import { numberOf, recordOf, textOf, textsOf } from './build-web-response-fields'
+import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 import { runOf } from './build-web-runs'
-import { repoField, repoOfImage } from '../../shared/build-web-repos'
+import { choosesDist, repoField, repoOfImage } from '../../shared/build-web-repos'
 
 // Building images from Images, after build-web's ImageBuildDialog: a run for the images on the
 // chosen branch, then their builds started at once (build-web leaves that to its Progress page).
@@ -38,7 +38,7 @@ export async function listBuildWebVersionBranches(product: string): Promise<stri
 
 export function startBuildWebImageBuild(
   args: BuildWebImageBuildArgs
-): Promise<BuildWebMutationResult<{ runId: string }>> {
+): Promise<BuildWebMutationResult<{ runId: string; note?: string }>> {
   const { image, ...choice } = args
   return startBuildWebImageGroupBuild({ ...choice, images: [image] })
 }
@@ -46,7 +46,7 @@ export function startBuildWebImageBuild(
 /** One run for the images on the chosen version, its builds started at once. */
 export function startBuildWebImageGroupBuild(
   args: BuildWebImageGroupBuildArgs
-): Promise<BuildWebMutationResult<{ runId: string }>> {
+): Promise<BuildWebMutationResult<{ runId: string; note?: string }>> {
   return buildWebMutation(async () => {
     const images = [...new Set(args.images)]
     const repos = new Set(images.map(repoOfImage))
@@ -56,6 +56,9 @@ export function startBuildWebImageGroupBuild(
         'Build the monorepo’s images and Chat Platform’s apart: a run is of one repository'
       )
     }
+    const repo = repoOfImage(images[0])
+    // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
+    const dist = choosesDist(repo) ? args.dist : 'rhel'
     const credential = requireBuildWebCredential()
     const made = recordOf(
       await buildWebRequest({
@@ -66,8 +69,8 @@ export function startBuildWebImageGroupBuild(
           branch: args.branch,
           ticket: args.ticket || null,
           images,
-          ...repoField(repoOfImage(images[0])),
-          distType: args.dist,
+          ...repoField(repo),
+          distType: dist,
           pushToRepo: false,
           detected: null
         }
@@ -77,7 +80,7 @@ export function startBuildWebImageGroupBuild(
     if (!runId) {
       throw new Error('build-web made no run for the build')
     }
-    const dists = args.dist === 'both' ? ['rhel', 'redos'] : [args.dist]
+    const dists = dist === 'both' ? ['rhel', 'redos'] : [dist]
     await buildWebRequest({
       ...credential,
       method: 'POST',
@@ -91,7 +94,8 @@ export function startBuildWebImageGroupBuild(
     })
     // Why: the catalog behind Images and the badge must show the new builds as running.
     invalidateBuildWebImageCatalog()
-    return { runId }
+    const note = textOrNull(made?.note)
+    return { runId, ...(note ? { note } : {}) }
   })
 }
 

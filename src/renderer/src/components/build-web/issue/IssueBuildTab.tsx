@@ -10,7 +10,7 @@ import { BuildWebListState } from '../BuildWebListState'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { loginOf } from '../build-web-labels'
 import { IssueNewBuild } from './build/IssueNewBuild'
-import { repoOfProduct } from '../../../../../shared/build-web-repos'
+import { builtDistOf, repoOfProduct } from '../../../../../shared/build-web-repos'
 import { IssueRunProgress } from './build/IssueRunProgress'
 
 const SETTLED = new Set(['success', 'failed', 'partial', 'pending'])
@@ -123,17 +123,15 @@ export function IssueBuildTab({
       </div>
     )
   }
+  // Why: an older monorepo run still stores `both`; it builds rhel, its redos comes with publication.
+  const dist = builtDistOf(run.repo, run.dist_type)
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="text-base font-semibold">{translate('buildWeb.card.build', 'Build')}</h2>
         <BuildWebToneChip label={run.branch} tone={null} mono />
         <BuildWebToneChip
-          label={
-            run.dist_type === 'both'
-              ? translate('buildWeb.build.bothDists', 'rhel + redos')
-              : run.dist_type
-          }
+          label={dist === 'both' ? translate('buildWeb.build.bothDists', 'rhel + redos') : dist}
           tone={null}
         />
         <span className="text-xs text-muted-foreground">

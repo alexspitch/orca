@@ -21581,7 +21581,8 @@
       "updateServerChatPlatform": "This Orca server does not know Chat Platform yet. Update the server.",
       "updateServerSavedQueries": "This Orca server does not keep saved queries yet. Update the server.",
       "updateServerImageFreshness": "This Orca server cannot tell which images need a rebuild yet. Update the server.",
-      "updateServerImageGroupBuild": "This Orca server cannot build several images at once yet. Update the server."
+      "updateServerImageGroupBuild": "This Orca server cannot build several images at once yet. Update the server.",
+      "updateServerRedosTwin": "This Orca server cannot derive a redos image again yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -22043,7 +22044,13 @@
       "ended": "Build {{status}} — {{key}}",
       "endedTally": "{{ok}} / {{total}} image builds succeeded",
       "registryUnknown": "Registry state unknown — {{error}}",
-      "dist": "dist"
+      "dist": "dist",
+      "twinDeriving": "building redos",
+      "twinFullBuild": "full redos build",
+      "twinWaiting": "redos awaits a decision",
+      "twinFailed": "redos not built",
+      "twinRetry": "Retry",
+      "noRedos": "no redos"
     },
     "overview": {
       "noImages": "no images",
@@ -22090,7 +22097,7 @@
       "task": "Task",
       "images": "Images",
       "commits": "{{key}} · {{n}} commit(s) in {{branch}}",
-      "chosen": "Images chosen: {{n}} · rhel and redos — {{builds}} builds. Builds do not start by themselves: they are started on the next step.",
+      "chosenDists": "Images chosen: {{n}} · {{dists}} — {{builds}} builds. Builds do not start by themselves: they are started on the next step.",
       "pick": "Tick images or add one by hand.",
       "creating": "Creating…",
       "create": "Create build",

@@ -83,7 +83,7 @@ export function IssueNewBuild({
           <>
             <Text style={buildTabText.muted}>
               {form.chosen.length
-                ? `Images chosen: ${form.chosen.length} · rhel and redos — ${form.chosen.length * 2} builds. Builds do not start by themselves: they are started on the next step.`
+                ? `Images chosen: ${form.chosen.length} · ${form.dists.join(' + ')} — ${form.chosen.length * form.dists.length} builds. Builds do not start by themselves: they are started on the next step.`
                 : 'Tick images or add one by hand.'}
             </Text>
             <BuildTabButton
