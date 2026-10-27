@@ -1,26 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
+import { cleanLogPiece } from '../../../../../shared/build-log-clean'
 import { callBuildWeb } from '../build-web-client'
 
 const IDLE_POLL_MS = 1500
 // Why a cap: a long Jenkins log would otherwise grow the page without end; the tail is what is read.
 const KEEP_CHARS = 1_500_000
-// eslint-disable-next-line no-control-regex -- the escape character is exactly what is matched.
-const ANSI = /\u001b\[[0-9;?]*[ -/]*[@-~]/g
-// eslint-disable-next-line no-control-regex -- an escape with no final byte yet, at the very end.
-const PARTIAL_ESCAPE = /\u001b(\[[0-9;?]*[ -/]*)?$/
-
-/** A piece without colour codes; a code cut at its end is carried into the next piece. */
-export function cleanLogPiece(
-  carry: string,
-  text: string,
-  done: boolean
-): { text: string; carry: string } {
-  const raw = carry + text
-  const cut = done ? null : PARTIAL_ESCAPE.exec(raw)
-  const kept = cut ? raw.slice(0, cut.index) : raw
-  return { text: kept.replace(ANSI, ''), carry: cut ? cut[0] : '' }
-}
 
 type LogState = { text: string; done: boolean; trimmed: boolean; error: string | null }
 const EMPTY: LogState = { text: '', done: false, trimmed: false, error: null }

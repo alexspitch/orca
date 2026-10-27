@@ -14,15 +14,15 @@ import {
   readShellCsp
 } from './preview/mobile-web-app-render-harness.mjs'
 
-// Wide sidebar pushes Tasks through useRouteHandoff; local navigation inherits opener grants and silently refuses copy actions.
+// Wide sidebar pushes Issues through useRouteHandoff; local navigation inherits opener grants and silently refuses copy actions.
 // Browser check proves control is present/reachable and shell handoff leaves document in place.
 
 const HOST_ROUTE = '/h/render-check-host'
 const FILES_ROUTE = '/h/render-check-host/files/wt-1'
 const HOST_PATTERN = '/h/[hostId]'
-const TASKS_PATTERN = '/h/[hostId]/tasks'
+const ISSUES_PATTERN = '/h/[hostId]/issues'
 /** The bundle key for the target route, so its chunk can be named rather than inferred. */
-const TASKS_ROUTE_KEY = './h/[hostId]/tasks.tsx'
+const ISSUES_ROUTE_KEY = './h/[hostId]/issues.tsx'
 const FILES_PATTERN = '/h/[hostId]/files/[worktreeId]'
 const SHELL_SESSION_ID = 'render-check-session'
 const SHELL_BUILD_ID = 'render-check-build'
@@ -37,7 +37,7 @@ const PAGE_ROUTE_GRANTS = [
   { pathname: HOST_PATTERN, grants: ['navigate', 'storage', 'externalLink', 'haptics'] },
   { pathname: FILES_PATTERN, grants: ['navigate', 'storage', 'externalLink', 'haptics'] },
   {
-    pathname: TASKS_PATTERN,
+    pathname: ISSUES_PATTERN,
     grants: ['navigate', 'storage', 'externalLink', 'haptics', 'native.clipboard.write']
   }
 ]
@@ -56,7 +56,7 @@ let cspHeader = null
 let bridgeVersion = null
 let faultGrant = null
 // Resolve target chunk from build; content-hash URLs cannot identify routes by name.
-let tasksChunk = null
+let issuesChunk = null
 
 beforeAll(async () => {
   if (!bundles) {
@@ -67,9 +67,9 @@ beforeAll(async () => {
   faultGrant = await readBridgeFaultGrant()
   scratch = await mkdtemp(join(tmpdir(), 'orca-mobile-web-app-handoff-'))
   const built = await buildMobileWebAppBundle({ outDir: join(scratch, 'bundle') })
-  tasksChunk = built.routeChunks[TASKS_ROUTE_KEY]
+  issuesChunk = built.routeChunks[ISSUES_ROUTE_KEY]
   // Require resolvable target chunk or every absence assertion could pass on a typo.
-  expect(tasksChunk, `no chunk for ${TASKS_ROUTE_KEY}`).toBeTruthy()
+  expect(issuesChunk, `no chunk for ${ISSUES_ROUTE_KEY}`).toBeTruthy()
   const served = await createBundleServer({ outDir: built.outDir, cspHeader })
   server = served.server
   origin = served.origin
@@ -104,7 +104,7 @@ async function openHostRoute({
     storage: {},
     faultGrant,
     grants,
-    pageRoutes: [HOST_PATTERN, FILES_PATTERN, TASKS_PATTERN],
+    pageRoutes: [HOST_PATTERN, FILES_PATTERN, ISSUES_PATTERN],
     pageRouteGrants,
     ownsHostArea
   })
@@ -144,9 +144,9 @@ function navigates(page) {
 }
 
 // Race navigation wait with page errors; React Navigation throws once blanked document and hid behind a bare 30s timeout.
-async function waitForTasksRoute(page, opened, clickedAt) {
+async function waitForIssuesRoute(page, opened, clickedAt) {
   try {
-    await page.waitForFunction(() => location.pathname.endsWith('/tasks'), {
+    await page.waitForFunction(() => location.pathname.endsWith('/issues'), {
       timeout: 30_000,
       polling: 250
     })
@@ -157,7 +157,7 @@ async function waitForTasksRoute(page, opened, clickedAt) {
     }))
     throw new Error(
       [
-        `the document never reached /tasks; pathname is ${seen.pathname}`,
+        `the document never reached /issues; pathname is ${seen.pathname}`,
         `page errors: ${JSON.stringify(opened.errors)}`,
         `navigate notifies: ${JSON.stringify(await navigates(page))}`,
         `body text: ${JSON.stringify(seen.text)}`,
@@ -168,31 +168,31 @@ async function waitForTasksRoute(page, opened, clickedAt) {
   }
 }
 
-describeRender('the sidebar hop to tasks, under the session it was opened with', () => {
-  it('hands the hop to the shell when the session cannot cover tasks', async () => {
+describeRender('the sidebar hop to issues, under the session it was opened with', () => {
+  it('hands the hop to the shell when the session cannot cover issues', async () => {
     const opened = await openHostRoute({
       viewport: WIDE,
       grants: [faultGrant, 'navigate', 'storage', 'haptics']
     })
     const { page, errors, jsResponses } = opened
     // The header's own control, by the name a user reads; it is the sidebar's on a wide layout.
-    await page.getByLabel('Tasks').first().click()
+    await page.getByLabel('Issues').first().click()
     await expect
       .poll(() => navigates(page))
       .toEqual([
-        { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/tasks` }
+        { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/issues` }
       ])
     expect(await navigates(page)).toEqual([
-      { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/tasks` }
+      { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/issues` }
     ])
     // Require original route and no target-chunk request at any status; opener chunks can still arrive after click and must not count as target navigation.
     expect(await page.evaluate(() => location.pathname)).toBe(HOST_ROUTE)
-    expect(jsResponses.filter(({ path }) => path.endsWith(tasksChunk))).toEqual([])
+    expect(jsResponses.filter(({ path }) => path.endsWith(issuesChunk))).toEqual([])
     expect(errors).toEqual([])
     await page.close()
   }, 60_000)
 
-  it('keeps the hop in the document when the session covers tasks', async () => {
+  it('keeps the hop in the document when the session covers issues', async () => {
     // Grant-positive control proves the same tap can navigate; absence alone could pass on an inert page.
     const opened = await openHostRoute({
       viewport: WIDE,
@@ -207,34 +207,34 @@ describeRender('the sidebar hop to tasks, under the session it was opened with',
     })
     const { page, errors } = opened
     const clickedAt = opened.jsResponses.length
-    await page.getByLabel('Tasks').first().click()
-    await waitForTasksRoute(page, opened, clickedAt)
+    await page.getByLabel('Issues').first().click()
+    await waitForIssuesRoute(page, opened, clickedAt)
     expect(await navigates(page)).toEqual([])
     expect(errors).toEqual([])
     await page.close()
   }, 60_000)
 
   it('hands the hop over from the narrow header too, whose control C2.10 named', async () => {
-    // Narrow layout has no sidebar; aim at C2.10 Tasks toolbar sibling and enforce same handoff rule.
+    // Narrow layout has no sidebar; aim at C2.10 Issues toolbar sibling and enforce same handoff rule.
     const opened = await openHostRoute({
       viewport: NARROW,
       grants: [faultGrant, 'navigate', 'storage', 'haptics']
     })
     const { page, errors, jsResponses } = opened
-    const tasks = page.getByLabel('Tasks')
+    const issues = page.getByLabel('Issues')
     // Require one narrow toolbar control or selecting among duplicates could hide a stray wide header.
-    expect(await tasks.count()).toBe(1)
-    await tasks.click()
+    expect(await issues.count()).toBe(1)
+    await issues.click()
     await expect
       .poll(() => navigates(page))
       .toEqual([
-        { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/tasks` }
+        { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/issues` }
       ])
     expect(await navigates(page)).toEqual([
-      { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/tasks` }
+      { v: bridgeVersion, type: 'notify', name: 'navigate', href: `${HOST_ROUTE}/issues` }
     ])
     expect(await page.evaluate(() => location.pathname)).toBe(HOST_ROUTE)
-    expect(jsResponses.filter(({ path }) => path.endsWith(tasksChunk))).toEqual([])
+    expect(jsResponses.filter(({ path }) => path.endsWith(issuesChunk))).toEqual([])
     expect(errors).toEqual([])
     await page.close()
   }, 60_000)
@@ -248,8 +248,8 @@ describeRender('the sidebar hop to tasks, under the session it was opened with',
     })
     const { page, errors } = opened
     const clickedAt = opened.jsResponses.length
-    await page.getByLabel('Tasks').first().click()
-    await waitForTasksRoute(page, opened, clickedAt)
+    await page.getByLabel('Issues').first().click()
+    await waitForIssuesRoute(page, opened, clickedAt)
     expect(await navigates(page)).toEqual([])
     expect(errors).toEqual([])
     await page.close()
@@ -268,7 +268,7 @@ describeRender('the sidebar hop to tasks, under the session it was opened with',
     expect(
       await page.evaluate((name) => document.body.innerText.includes(name), SHELL_HOST.name)
     ).toBe(false)
-    expect(await page.getByLabel('Tasks').count()).toBe(0)
+    expect(await page.getByLabel('Issues').count()).toBe(0)
     expect(errors).toEqual([])
     await page.close()
   }, 60_000)

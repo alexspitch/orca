@@ -61,6 +61,9 @@ export function agentLaunchExistingParams(args: {
   paneKey?: string
   sessionId?: string
   placement?: AgentLaunchPlacement
+  accountEnv?: Record<string, string>
+  agentArgs?: string
+  surface?: RpcSendParams<'agent.launchReplay'>['surface']
 }): RpcSendParams<'agent.launchReplay'> {
   return {
     agent: args.agent,
@@ -70,7 +73,10 @@ export function agentLaunchExistingParams(args: {
     ...(args.launchSource ? { launchSource: args.launchSource } : {}),
     ...(args.paneKey ? { paneKey: args.paneKey } : {}),
     ...(args.sessionId ? { sessionId: args.sessionId } : {}),
-    ...(args.placement ? { placement: args.placement } : {})
+    ...(args.placement ? { placement: args.placement } : {}),
+    ...(args.accountEnv ? { accountEnv: args.accountEnv } : {}),
+    ...(args.agentArgs !== undefined ? { agentArgs: args.agentArgs } : {}),
+    ...(args.surface ? { surface: args.surface } : {})
   }
 }
 

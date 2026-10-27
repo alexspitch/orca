@@ -86,3 +86,19 @@ export const typography = {
   metaSize: 12,
   monoFamily: 'monospace' as const
 } as const
+
+// Desktop's dark `--chip-tone-*` hues: build-web's status, product and priority chips.
+export const chipTones = {
+  neutral: '#a3a3a3',
+  faint: '#737373',
+  blue: '#93c5fd',
+  purple: '#c4b5fd',
+  cyan: '#67e8f9',
+  sky: '#38bdf8',
+  green: '#4ade80',
+  amber: '#fcd34d',
+  ochre: '#eab308',
+  orange: '#fdba74',
+  red: '#f87171',
+  crimson: '#fda4af'
+} as const

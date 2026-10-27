@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { BuildWebStandLogTail } from '../../../../../shared/build-web-stand-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
+import { cleanLogPiece } from '../../../../../shared/build-log-clean'
 import { callBuildWeb } from '../build-web-client'
-import { cleanLogPiece } from '../images/use-build-log'
 import { EMPTY_LOG_LINES, appendLogText, type LogLines } from '../log-viewer/log-lines'
 
 const BUSY_POLL_MS = 150

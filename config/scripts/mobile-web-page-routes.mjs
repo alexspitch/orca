@@ -18,6 +18,13 @@ export const MOBILE_WEB_PAGE_ROUTES = [
     pathname: '/h/[hostId]/tasks',
     grants: ['navigate', 'storage', 'externalLink', 'haptics', 'native.clipboard.write']
   },
+  // Issues (build-web) needs navigate for session hops, storage for its view prefs, externalLink for build-web links and clipboard for image references.
+  {
+    pathname: '/h/[hostId]/issues',
+    grants: ['navigate', 'storage', 'externalLink', 'haptics', 'native.clipboard.write'],
+    // Optional as on the session: an older shell keeps an attached HTML artifact on the page with its links inert.
+    optionalGrants: ['externalNavigation']
+  },
   // Accounts needs navigate/storage/externalLink for Back/shared layout wall; haptics census requires seam grant.
   {
     pathname: '/h/[hostId]/accounts',

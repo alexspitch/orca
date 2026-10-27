@@ -61,7 +61,7 @@ describeClosure(
         }
       }
       // Require nonempty route census; file-preview route has no HTML-preview closure and intentionally stays absent.
-      expect(asking).toEqual(['/h/[hostId]/session/[worktreeId]'])
+      expect(asking).toEqual(['/h/[hostId]/issues', '/h/[hostId]/session/[worktreeId]'])
       expect([...routesDeclaring(externalNavigationGrantToken())].sort()).toEqual(
         [...asking].sort()
       )

@@ -78,6 +78,10 @@
       "reason": "expo-clipboard resolves to navigator.clipboard on the web, which needs a secure context; the iOS shell serves the page from the custom scheme orca-mobile-web://<session>/ while Android serves https, so that path would work on one platform and silently not on the other. This one asks the shell through the native.clipboard.write and native.clipboard.read verbs, where the pasteboard is the device's, and rejects when the route was not granted one so the caller's own catch puts that on screen. An image is the same pasteboard reached a different way: native.clipboard.read admits only text, and a 24 MiB base64 image cannot cross an 8 MiB reply cap, so readImage runs native.media.pick with source 'clipboard', reads the staged bytes back a chunk at a time and gives the handle back. contents answers per grant without probing, because the shell serves no 'is there text' verb and reading to find out would raise iOS's paste-consent prompt on every mount."
     },
     {
+      "file": "app/h/[hostId]/issues.web.tsx",
+      "reason": "The shell renders this page for build-web's Issues, for the same reason as Tasks beside it: no nested shell, and a native file that reaches requireNativeViewManager at import, which throws in a browser and takes the whole bundle down because the manifest imports every route."
+    },
+    {
       "file": "app/h/[hostId]/tasks.web.tsx",
       "reason": "The shell renders this page for this route, so the page has no shell to mount inside itself. Its native file reaches OrcaMobileWebShellView, whose module calls requireNativeViewManager at import and throws in a browser, and one throwing route module takes the whole bundle down because the manifest imports them all."
     },

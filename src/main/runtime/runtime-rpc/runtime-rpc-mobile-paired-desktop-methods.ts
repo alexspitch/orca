@@ -1,3 +1,4 @@
+import { BUILD_WEB_MOBILE_METHODS } from '../../../shared/build-web-mobile-methods'
 import { ORCA_SIDEBAR_INPUTS_IS_MAIN } from '../../../shared/sidebar-inputs-switch'
 
 /** Phone methods the relaying Mac always answers itself, even when the call names a server. */
@@ -46,6 +47,8 @@ export const PAIRED_DESKTOP_METHODS = [
   'accounts.selectCodexForTarget',
   'accounts.subscribe',
   'accounts.unsubscribe',
+  // build-web's token lives on the paired desktop, as Jira's does.
+  ...BUILD_WEB_MOBILE_METHODS,
   // Jira credentials and issue mutations remain desktop-only.
   'jira.attachmentImage',
   'jira.getIssue',

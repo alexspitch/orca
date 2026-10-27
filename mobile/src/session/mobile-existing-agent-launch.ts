@@ -80,6 +80,11 @@ export async function launchAgentInExistingWorkspace(args: {
   reservation?: MobileAgentLaunchReservation
   placement?: AgentLaunchPlacement
   mintOperationId?: () => string
+  /** One Claude account for this launch only; the host honors it on a terminal surface. */
+  accountEnv?: Record<string, string>
+  /** Replaces the host's own arguments: pass them back with any addition, never alone. */
+  agentArgs?: string
+  surface?: 'terminal'
 }): Promise<MobileExistingAgentLaunch> {
   if (!supportsMobileExistingAgentLaunch(args.hostCapabilities)) {
     return { kind: 'unsupported' }
@@ -91,6 +96,9 @@ export async function launchAgentInExistingWorkspace(args: {
     ...(args.prompt ? { prompt: args.prompt } : {}),
     ...(args.launchSource ? { launchSource: args.launchSource } : {}),
     ...(args.placement ? { placement: args.placement } : {}),
+    ...(args.accountEnv ? { accountEnv: args.accountEnv } : {}),
+    ...(args.agentArgs !== undefined ? { agentArgs: args.agentArgs } : {}),
+    ...(args.surface ? { surface: args.surface } : {}),
     ...(args.reservation
       ? {
           paneKey: makePaneKey(args.reservation.pane.tabId, args.reservation.pane.leafId),

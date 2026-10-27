@@ -10,7 +10,7 @@ import { hostRouteWithNotice } from '../host-route-notice'
 import { useResponsiveLayout } from '../layout/responsive-layout'
 import { triggerMediumImpact } from '../platform/haptics'
 import { useOpenMobileSession } from '../session/use-open-mobile-session'
-import { useOpenMobileTasks } from '../tasks/use-open-mobile-tasks'
+import { useOpenMobileIssues } from '../build-web/use-open-mobile-issues'
 import { colors } from '../theme/mobile-theme'
 import {
   useDisconnectHostClient,
@@ -37,7 +37,7 @@ export function MobileHomeScreen() {
   const insets = useSafeAreaInsets()
   const { isWideLayout, contentMaxWidth } = useResponsiveLayout()
   const openMobileHostEdit = useOpenMobileHostEdit()
-  const openMobileTasks = useOpenMobileTasks()
+  const openMobileIssues = useOpenMobileIssues()
   const openMobileSession = useOpenMobileSession()
   const openMobileAccounts = useOpenMobileAccounts()
   const disconnectHostClient = useDisconnectHostClient()
@@ -129,7 +129,7 @@ export function MobileHomeScreen() {
               }
               onOpenAccounts={openMobileAccounts}
               onOpenResume={openResume}
-              onOpenTasks={openMobileTasks}
+              onOpenTasks={openMobileIssues}
               onPairDesktop={() => data.router.push('/pair-scan')}
             />
           }

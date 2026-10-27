@@ -15,6 +15,8 @@ export const PAGE_STORAGE_EXACT_KEYS = [
 
 export const PAGE_STORAGE_KEY_PREFIXES = [
   'orca:pins:',
+  'orca:buildWebQueryTabs:',
+  'orca:buildWebTaskTabs:',
   'orca:nativeChatTabs:',
   'orca:terminalLiveInputDisabled:',
   'orca:terminalDrafts:'
@@ -61,6 +63,26 @@ const WORKSPACE_KEY_PREFIXES = [
   'orca:terminalDrafts:'
 ] as const
 
+// Only the Issues page keeps build-web tabs, so other routes neither hydrate nor write them.
+const ISSUES_KEY_PREFIXES = ['orca:buildWebQueryTabs:', 'orca:buildWebTaskTabs:'] as const
+
+function isIssuesRoute(pathname: string, hostId: string): boolean {
+  const segments = pathname.split('/')
+  if (
+    segments.length !== 4 ||
+    segments[0] !== '' ||
+    segments[1] !== 'h' ||
+    segments[3] !== 'issues'
+  ) {
+    return false
+  }
+  try {
+    return decodeURIComponent(segments[2] ?? '') === hostId
+  } catch {
+    return false
+  }
+}
+
 function workspaceScopedKey(prefix: string, hostId: string, worktreeId: string): string {
   return `${prefix}${encodeURIComponent(hostId)}:${encodeURIComponent(worktreeId)}`
 }
@@ -85,7 +107,12 @@ export function pageStorageKeysForRoute(hostId: string, routePathname: string): 
       : WORKSPACE_KEY_PREFIXES.map((prefix) =>
           workspaceScopedKey(prefix, hostId, workspace.worktreeId)
         )
-  return [...PAGE_STORAGE_EXACT_KEYS, `orca:pins:${hostId}`, ...scoped].filter(isPageStorageKey)
+  const issues = isIssuesRoute(routePathname, hostId)
+    ? ISSUES_KEY_PREFIXES.map((prefix) => `${prefix}${hostId}`)
+    : []
+  return [...PAGE_STORAGE_EXACT_KEYS, `orca:pins:${hostId}`, ...scoped, ...issues].filter(
+    isPageStorageKey
+  )
 }
 
 // Narrow key shapes to this host/workspace; host-area pages additionally reach this host’s other workspaces.

@@ -1,15 +1,7 @@
 import { ChevronRight, ListTodo } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
-import { TaskProviderLogo } from '../components/TaskProviderLogo'
 import type { TaskProvider } from '../../../src/shared/task-providers'
 import { colors, radii, spacing } from '../theme/mobile-theme'
-
-const TASK_PROVIDER_LABELS: Record<TaskProvider, string> = {
-  github: 'GitHub',
-  gitlab: 'GitLab',
-  linear: 'Linear',
-  jira: 'Jira'
-}
 
 export function MobileHomeTasksCard(props: {
   enabled: boolean
@@ -30,39 +22,10 @@ export function MobileHomeTasksCard(props: {
         <ListTodo size={18} color={colors.textSecondary} />
       </View>
       <View style={styles.main}>
-        <Text style={styles.title}>Tasks</Text>
+        <Text style={styles.title}>Issues</Text>
         <Text style={styles.subtitle} numberOfLines={1}>
-          {props.providers.length > 0
-            ? props.providers.map((provider) => TASK_PROVIDER_LABELS[provider]).join(' · ')
-            : 'No task sources connected'}
+          build-web tasks
         </Text>
-      </View>
-      <View style={styles.trailing}>
-        <View
-          style={styles.providerRow}
-          accessibilityLabel={props.providers
-            .map((provider) => TASK_PROVIDER_LABELS[provider])
-            .join(', ')}
-        >
-          {props.providers.map((provider) => (
-            <Pressable
-              key={provider}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${TASK_PROVIDER_LABELS[provider]} tasks`}
-              hitSlop={8}
-              style={({ pressed }) => [
-                styles.providerButton,
-                pressed && styles.providerButtonPressed
-              ]}
-              onPress={(event) => {
-                event.stopPropagation()
-                props.onOpen(provider)
-              }}
-            >
-              <TaskProviderLogo provider={provider} size={22} color={colors.textSecondary} />
-            </Pressable>
-          ))}
-        </View>
       </View>
       <ChevronRight size={16} color={colors.textMuted} />
     </Pressable>
@@ -95,25 +58,5 @@ const styles = StyleSheet.create({
   },
   main: { flex: 1, minWidth: 0 },
   title: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
-  subtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 3 },
-  trailing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 0,
-    marginLeft: spacing.sm
-  },
-  providerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 2
-  },
-  providerButton: {
-    width: 34,
-    height: 34,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: radii.button
-  },
-  providerButtonPressed: { backgroundColor: colors.bgRaised }
+  subtitle: { fontSize: 12, color: colors.textSecondary, marginTop: 3 }
 })

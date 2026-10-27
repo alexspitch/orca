@@ -49,13 +49,13 @@ export function MobileHomeListFooter(props: {
           <MobileHomeResumeCard card={props.resumeCard} onOpen={props.onOpenResume} />
         </>
       ) : null}
-      <Text style={styles.sectionHeading}>Tasks</Text>
+      <Text style={styles.sectionHeading}>Issues</Text>
       <MobileHomeTasksCard
         enabled={props.connectedHosts.length > 0}
         providers={providers}
         onOpen={openTasks}
       />
-      <PickerModal title="Open Tasks On" {...tasksHostPicker.pickerProps} />
+      <PickerModal title="Open Issues On" {...tasksHostPicker.pickerProps} />
       <MobileHomeQuickActions
         connectedHosts={props.connectedHosts}
         onPairDesktop={props.onPairDesktop}

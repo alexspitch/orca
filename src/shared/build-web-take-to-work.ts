@@ -1,0 +1,151 @@
+import type { BuildWebIssueProduct, BuildWebIssueRow } from './build-web-types'
+import type { Repo } from './repo-types'
+import { isGitRepoKind } from './repo-kind'
+
+// «Take to work», as the desktop and the phone both decide it: which tasks may go together,
+// where, and the one line the agent receives. Each client words the refusals itself.
+
+export const MAX_BATCH = 20
+export const MAX_INSTRUCTION = 4000
+const KEY_RE = /^[A-Z][A-Z0-9]*-\d+(?:\.\d+)?$/
+
+export type BatchCheck =
+  | { ok: true }
+  | {
+      ok: false
+      reason: 'empty' | 'mixed' | 'too-many' | 'bad-key' | 'unknown-product'
+      groups: string[]
+    }
+
+type BatchIssue = Pick<BuildWebIssueRow, 'key' | 'product' | 'version_id' | 'version_name'>
+
+const releaseOf = (issue: BatchIssue) => issue.version_name ?? '—'
+
+/** One product and one release per batch: the skill and the train are chosen by both. */
+export function validateBuildWebBatch(
+  issues: readonly BatchIssue[],
+  productLabel: (product: BuildWebIssueProduct) => string
+): BatchCheck {
+  if (issues.length === 0) {
+    return { ok: false, reason: 'empty', groups: [] }
+  }
+  if (issues.length > MAX_BATCH) {
+    return { ok: false, reason: 'too-many', groups: [] }
+  }
+  if (issues.some((issue) => !KEY_RE.test(issue.key))) {
+    return {
+      ok: false,
+      reason: 'bad-key',
+      groups: issues.filter((i) => !KEY_RE.test(i.key)).map((i) => i.key)
+    }
+  }
+  // Why: the skill and the train are picked by product, so one Orca cannot name must not go.
+  const unknown = issues.filter((issue) => issue.product === 'unknown')
+  if (unknown.length) {
+    return { ok: false, reason: 'unknown-product', groups: unknown.map((issue) => issue.key) }
+  }
+  const groups = new Map<string, { label: string; count: number }>()
+  for (const issue of issues) {
+    const key = `${issue.product}|${issue.version_id ?? ''}`
+    const group = groups.get(key) ?? {
+      label: `${productLabel(issue.product)} ${releaseOf(issue)}`,
+      count: 0
+    }
+    groups.set(key, { ...group, count: group.count + 1 })
+  }
+  return groups.size > 1
+    ? {
+        ok: false,
+        reason: 'mixed',
+        groups: [...groups.values()].map((g) => `${g.label} (${g.count})`)
+      }
+    : { ok: true }
+}
+
+export type TakeToWorkFlags = {
+  auto: boolean
+  /** The skill makes its own worktree: a `cp` batch, worked in chat-platform beside its clone. */
+  ownWorktree?: boolean
+  /** The person's own words for this run, sent after the skill call. */
+  instruction?: string
+}
+
+/** A batch of `cp` tasks: the session stays in the monorepo, the work goes to chat-platform. */
+export const isChatPlatformBatch = (issues: readonly Pick<BuildWebIssueRow, 'product'>[]) =>
+  issues.length > 0 && issues.every((issue) => issue.product === 'cp')
+
+/**
+ * The skill call — only checked keys and fixed flags, never task text. `-no-worktree` unless the
+ * skill makes its own: Orca makes the worktree the session runs in when one is wanted, and for a
+ * `cp` batch the skill refuses a monorepo session tree and makes chat-platform's beside its clone.
+ * The person's instruction, if any, follows on lines of its own, named as theirs.
+ */
+export function buildWebBatchPrompt(keys: string[], flags: TakeToWorkFlags): string {
+  const unique = [...new Set(keys)]
+  if (unique.length === 0 || unique.length > MAX_BATCH || unique.some((k) => !KEY_RE.test(k))) {
+    throw new Error('invalid task keys')
+  }
+  const call = [
+    '/build-web-tasks batch',
+    ...unique,
+    flags.ownWorktree ? '' : '-no-worktree',
+    flags.auto ? '-auto' : ''
+  ]
+    .filter(Boolean)
+    .join(' ')
+  const instruction = flags.instruction?.trim().slice(0, MAX_INSTRUCTION)
+  return instruction
+    ? `${call}\n\nAdditional instruction from the person who took these tasks to work:\n${instruction}`
+    : call
+}
+
+type TakeToWorkRepoFields = Pick<Repo, 'path' | 'displayName' | 'kind'>
+
+/** Git repositories of the build-web monorepo (by folder name), or every git repository if none match. */
+export function takeToWorkRepos<R extends TakeToWorkRepoFields>(
+  repos: readonly R[]
+): { repos: R[]; matchedRepo: boolean } {
+  const gitRepos = repos.filter((repo) => isGitRepoKind(repo))
+  const ours = gitRepos.filter((repo) =>
+    /sa-dc-ap-products/i.test(`${repo.path} ${repo.displayName}`)
+  )
+  return ours.length ? { repos: ours, matchedRepo: true } : { repos: gitRepos, matchedRepo: false }
+}
+
+/** Live git worktrees of the build-web repository (by folder name), or every live one if none match. */
+export function takeToWorkCandidates<
+  R extends TakeToWorkRepoFields,
+  W extends { isArchived?: boolean }
+>(
+  repos: readonly R[],
+  worktreesOf: (repo: R) => readonly W[]
+): { worktrees: W[]; matchedRepo: boolean } {
+  const pick = (list: readonly R[]) =>
+    list.flatMap((repo) => worktreesOf(repo).filter((w) => !w.isArchived))
+  const own = takeToWorkRepos(repos)
+  const matched = own.matchedRepo ? pick(own.repos) : []
+  return matched.length
+    ? { worktrees: matched, matchedRepo: true }
+    : { worktrees: pick(repos.filter((repo) => isGitRepoKind(repo))), matchedRepo: false }
+}
+
+/** A name for the batch's own worktree: its keys, lower-cased, at most three of them. */
+export function batchWorktreeName(keys: string[]): string {
+  const named = keys.slice(0, 3).map((k) => k.toLowerCase().replace(/\./g, '-'))
+  return keys.length > 3 ? `${named.join('-')}-batch` : named.join('-')
+}
+
+/** The active worktree when it is a candidate, else the last one used, else the first. */
+export function defaultTakeToWorkWorktree(
+  candidateIds: readonly string[],
+  activeWorktreeId: string | null,
+  lastUsedId: string | null
+): string | null {
+  if (activeWorktreeId && candidateIds.includes(activeWorktreeId)) {
+    return activeWorktreeId
+  }
+  if (lastUsedId && candidateIds.includes(lastUsedId)) {
+    return lastUsedId
+  }
+  return candidateIds[0] ?? null
+}

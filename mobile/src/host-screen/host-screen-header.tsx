@@ -192,10 +192,12 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
                 styles.embeddedToolbarIconButton,
                 connState !== 'connected' && styles.toolbarIconDisabled
               ]}
-              onPress={() => actions.navigateFromHostList(`/h/${encodeURIComponent(hostId)}/tasks`)}
+              onPress={() =>
+                actions.navigateFromHostList(`/h/${encodeURIComponent(hostId)}/issues`)
+              }
               disabled={connState !== 'connected'}
               accessibilityRole="button"
-              accessibilityLabel="Tasks"
+              accessibilityLabel="Issues"
             >
               <List
                 size={16}
@@ -289,10 +291,10 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
 
           <Pressable
             style={styles.searchToggle}
-            onPress={() => actions.navigateFromHostList(`/h/${encodeURIComponent(hostId)}/tasks`)}
+            onPress={() => actions.navigateFromHostList(`/h/${encodeURIComponent(hostId)}/issues`)}
             disabled={connState !== 'connected'}
             accessibilityRole="button"
-            accessibilityLabel="Tasks"
+            accessibilityLabel="Issues"
           >
             <List
               size={16}
