@@ -155,6 +155,7 @@
     "build:mac:custom": "pnpm run build:desktop && pnpm run build:computer-macos && pnpm run build:keyboard-layout-macos && pnpm run build:notification-status-macos && pnpm run ensure:electron-runtime && node config/scripts/build-custom.mjs --mac",
     "build:linux:custom": "pnpm run build:desktop && pnpm run ensure:electron-runtime && pnpm run build:orcad-prebuilds && node config/scripts/build-custom.mjs --linux",
     "publish:custom": "node config/scripts/publish-custom-build.mjs",
+    "publish:custom:android": "node config/scripts/publish-custom-android.mjs",
     "test:e2e": "pnpm run ensure:electron-runtime && npx playwright test --config tests/playwright.config.ts --project=electron-headless",
     "test:e2e:workspace-session-golden": "pnpm run ensure:electron-runtime && npx playwright test tests/e2e/golden-quit-relaunch-session.spec.ts tests/e2e/golden-terminal-file-link.spec.ts tests/e2e/golden-worktree-create-switch.spec.ts --config tests/playwright.config.ts --project electron-headless --workers=1",
     "test:e2e:multi-client-navigation": "node config/scripts/run-multi-client-navigation-e2e.mjs",

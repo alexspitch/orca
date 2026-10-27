@@ -13,10 +13,10 @@ import { DEFAULT_BUILD_WEB_URL } from './build-custom.mjs'
 
 // Why any channel: electron-builder names a prerelease's manifests after it (custom-mac.yml), while
 // the app's generic feed has no channel and asks for latest-*.yml — so build-web stores them as that.
-const MANIFEST_FILE_RE = /^([a-z]+)(-mac|-linux|-linux-arm64)?\.yml$/
+const MANIFEST_FILE_RE = /^([a-z]+)(-mac|-linux|-linux-arm64|-android)?\.yml$/
 const UPLOAD_ATTEMPTS = 3
 
-async function sha512File(path) {
+export async function sha512File(path) {
   const hash = createHash('sha512')
   for await (const chunk of createReadStream(path)) {
     hash.update(chunk)
