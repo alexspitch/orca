@@ -34,6 +34,8 @@ export type Cell = {
   twin: BuildWebRedosTwin | null
   /** A twin's reason to wait or its failure; on a rhel row, why it has no twin. */
   note: string | null
+  /** The rhel build number a twin was made for. */
+  twinOfNumber: number | null
 }
 
 export const cellKey = (c: { image: string; dist: string; branch: string }): string =>
@@ -65,7 +67,8 @@ export function cellsOf(builds: BuildWebRunBuild[]): Record<string, Cell> {
       startedAt: b.started_at,
       testsSkipped: b.tests_skipped,
       twin: twinOf(b.twin),
-      note: b.redos_note ?? (twinOf(b.twin) ? b.error : null)
+      note: b.redos_note ?? (twinOf(b.twin) ? b.error : null),
+      twinOfNumber: b.twin_of ?? null
     }
   }
   return out
@@ -147,7 +150,7 @@ export const FAILED_STATUSES: ReadonlySet<string> = new Set([
 export const isSelectable = (c: Cell): boolean => c.state === 'done'
 
 /** A finished row a rebuild or a push may take: a twin is the console's, not the person's. */
-const isWork = (c: Cell): boolean => isSelectable(c) && !isTwin(c)
+export const isWork = (c: Cell): boolean => isSelectable(c) && !isTwin(c)
 
 /** How long a sent Retry holds its row: a few polls, until the console shows the twin going. */
 export const RETRY_HOLD_MS = 15_000
@@ -161,6 +164,43 @@ export function isRetrying(c: Cell, retrying: ReadonlyMap<string, number>, now: 
 /** A twin the console is deriving or building: the run reads finished, yet the row still moves. */
 export const hasLiveTwin = (cells: Cell[]): boolean =>
   cells.some((c) => isTwin(c) && (c.state === 'queued' || c.state === 'building'))
+
+/** `image|branch|number` of each rhel row: what keeps a derived twin in the list. */
+export function rhelBuildKeysOf(cells: Cell[]): ReadonlySet<string> {
+  return new Set(
+    cells
+      .filter((c) => c.dist === 'rhel' && !isTwin(c))
+      .map((c) => `${c.image}|${c.branch}|${c.number}`)
+  )
+}
+
+/**
+ * What a row's own buttons may do, as the console allows it (IS-230.21). A derived twin is made from
+ * its rhel row: nothing builds or cancels it here, and it goes only once that row is gone. A full
+ * twin is built by a person; once failed it is retried, not rebuilt.
+ */
+export function rowActionsOf(
+  c: Cell,
+  rhelBuildKeys: ReadonlySet<string>
+): { build: boolean; rebuild: boolean; cancel: boolean; remove: boolean } {
+  const live = c.state === 'queued' || c.state === 'building'
+  const ends = c.state === 'pending' || c.state === 'done'
+  if (c.twin === 'derive') {
+    const ownRhel = rhelBuildKeys.has(`${c.image}|${c.branch}|${c.twinOfNumber}`)
+    return { build: false, rebuild: false, cancel: false, remove: ends && !ownRhel }
+  }
+  const failedTwin = c.twin === 'full' && c.state === 'done' && c.status !== 'SUCCESS'
+  return {
+    build: c.state === 'pending',
+    rebuild: c.state === 'done' && !failedTwin,
+    cancel: live,
+    remove: ends
+  }
+}
+
+/** A person picked a twin among these combos on its own row: the console builds it only then. */
+export const picksTwin = (combos: BuildWebCombo[], cells: Record<string, Cell>): boolean =>
+  combos.some((c) => isTwin(cells[cellKey(c)] ?? { twin: null }))
 
 /** Rows still to build — what «Build all» starts; a twin waiting for a person is not one. */
 export function pendingCells(cells: Cell[]): Cell[] {

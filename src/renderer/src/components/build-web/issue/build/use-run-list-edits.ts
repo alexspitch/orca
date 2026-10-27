@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useConfirmationDialog } from '@/components/confirmation-dialog-context'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebCombo } from '../../../../../../shared/build-web-run-types'
+import { distsOfChoice } from '../../../../../../shared/build-web-repos'
 import { cellKey, type Cell } from './run-cells'
 import type { RunActions } from './use-run-actions'
 
@@ -36,7 +37,7 @@ export function useRunListEdits(
   )
 
   const add = async (image: string, dist: string, branch: string): Promise<boolean> => {
-    const want = dist === 'both' ? ['rhel', 'redos'] : [dist]
+    const want = distsOfChoice(dist)
     const missing = want.filter((d) => !cells[cellKey({ image, dist: d, branch })])
     if (missing.length === 0) {
       onError(

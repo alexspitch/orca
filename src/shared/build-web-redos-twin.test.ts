@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { twinChipOf, twinOf, withoutTwins, type TwinChipRow } from './build-web-redos-twin'
+import { distRulesOf, PRODUCTS_RHEL_ONLY_FEATURE } from './build-web-repos'
+import {
+  runDistOf,
+  twinChipOf,
+  twinOf,
+  withoutTwins,
+  type TwinChipRow
+} from './build-web-redos-twin'
 
 // After build-web's Progress: the chip each redos twin and each rhel row without one shows.
 
@@ -8,6 +15,7 @@ const row = (patch: Partial<TwinChipRow>): TwinChipRow => ({
   dist: 'redos',
   state: 'done',
   status: 'SUCCESS',
+  pushed: true,
   note: null,
   ...patch
 })
@@ -46,8 +54,9 @@ describe('redos twins', () => {
     expect(twinChipOf(row({ status: 'FAILURE' }))).toEqual({ kind: 'failed', tip: 'FAILURE' })
   })
 
-  it('shows nothing for a twin that went out, and «no redos» on a rhel row with a note', () => {
+  it('shows nothing for a twin that went out, Retry for one not published yet, and «no redos»', () => {
     expect(twinChipOf(row({}))).toBeNull()
+    expect(twinChipOf(row({ pushed: false }))).toEqual({ kind: 'unpublished' })
     expect(twinChipOf(row({ twin: null, dist: 'rhel', note: 'ветка не собирает redos' }))).toEqual({
       kind: 'no-redos',
       tip: 'ветка не собирает redos'
@@ -59,4 +68,16 @@ describe('redos twins', () => {
 it('takes a row from an older runtime, which has no `twin` key, for an ordinary row', () => {
   const rows: { twin?: 'derive' | null }[] = [{}, { twin: 'derive' }]
   expect(withoutTwins(rows)).toEqual([{}])
+})
+
+it('names a monorepo run rhel on a console after IS-230, unless it holds a redos build of its own', () => {
+  const rules = distRulesOf([PRODUCTS_RHEL_ONLY_FEATURE])
+  const run = (builds: { dist: string; twin?: 'derive' | null }[]) => ({
+    repo: 'products' as const,
+    dist_type: 'both',
+    builds
+  })
+  expect(runDistOf(run([{ dist: 'rhel' }, { dist: 'redos', twin: 'derive' }]), rules)).toBe('rhel')
+  expect(runDistOf(run([{ dist: 'rhel' }, { dist: 'redos' }]), rules)).toBe('both')
+  expect(runDistOf(run([{ dist: 'rhel' }]), distRulesOf([]))).toBe('both')
 })

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import { Play } from 'lucide-react-native'
-import { choosesDist, repoField } from '../../../../../../src/shared/build-web-repos'
+import { distsOfChoice, repoField } from '../../../../../../src/shared/build-web-repos'
+import { useDistRules } from '../../../use-dist-rules'
 import { withoutTwins } from '../../../../../../src/shared/build-web-redos-twin'
 import type {
   BuildWebBranch,
@@ -25,6 +26,8 @@ import {
   isSelectable,
   pendingCells,
   pickedCells,
+  picksTwin,
+  rhelBuildKeysOf,
   productOfImage,
   staleCells,
   unpushedCells,
@@ -93,7 +96,8 @@ export function IssueRunProgress({
   }, [call, runRepo])
 
   const list = useMemo(() => Object.values(cells), [cells])
-  const withDist = choosesDist(run.repo)
+  const withDist = useDistRules().choosesDist(run.repo)
+  const rhelBuildKeys = useMemo(() => rhelBuildKeysOf(list), [list])
   const building = status === 'building'
   const visible = useMemo(
     () =>
@@ -106,7 +110,7 @@ export function IssueRunProgress({
     [filter, hidePending, list, withDist]
   )
   const own = withoutTwins(list)
-  const hasPending = pendingCells(own).length > 0
+  const hasPending = pendingCells(list).length > 0
   const hasLost = own.some((c) => c.status === 'poll-failed')
   const hasStuck = !building && own.some((c) => c.state === 'queued' || c.state === 'building')
   const selectable = visible.filter(isSelectable)
@@ -161,7 +165,7 @@ export function IssueRunProgress({
   )
 
   const add = async (image: string, dist: string, branch: string): Promise<boolean> => {
-    const want = dist === 'both' ? ['rhel', 'redos'] : [dist]
+    const want = distsOfChoice(dist)
     const missing = want.filter((d) => !cells[cellKey({ image, dist: d, branch })])
     if (missing.length === 0) {
       setError(`${image} (${dist}) on ${branch} is already in the list.`)
@@ -203,6 +207,7 @@ export function IssueRunProgress({
     onOpenPush: (rows) => setMenu({ kind: 'push', cells: rows }),
     onCancel: (cell) => void actions.cancel(cell),
     onRetryTwin: (cell) => void actions.retryTwin(cell),
+    rhelBuildKeys,
     onRemove: (combo) => void remove(combo),
     onOpenLog: (url, title) => setLog({ url, title })
   }
@@ -327,7 +332,7 @@ export function IssueRunProgress({
           images={images}
           branches={branches.map((b) => b.name)}
           runBranch={run.branch}
-          repo={run.repo}
+          choosing={withDist}
           defaultDist={run.dist_type}
           disabled={building || actions.busy}
           onAdd={add}
@@ -337,7 +342,7 @@ export function IssueRunProgress({
         menu={menu}
         treeBranches={treeBranches}
         onBuild={(combos, pushAfter, skipTests) =>
-          void actions.trigger(combos, pushAfter, skipTests)
+          void actions.trigger(combos, pushAfter, skipTests, picksTwin(combos, cells))
         }
         onPush={(rows, moveMainTag) => void actions.push(rows, moveMainTag)}
         onClose={() => setMenu(null)}

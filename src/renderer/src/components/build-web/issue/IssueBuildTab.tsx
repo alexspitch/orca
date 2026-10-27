@@ -10,7 +10,9 @@ import { BuildWebListState } from '../BuildWebListState'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { loginOf } from '../build-web-labels'
 import { IssueNewBuild } from './build/IssueNewBuild'
-import { builtDistOf, repoOfProduct } from '../../../../../shared/build-web-repos'
+import { repoOfProduct } from '../../../../../shared/build-web-repos'
+import { runDistOf } from '../../../../../shared/build-web-redos-twin'
+import { useDistRules } from '../use-dist-rules'
 import { IssueRunProgress } from './build/IssueRunProgress'
 
 const SETTLED = new Set(['success', 'failed', 'partial', 'pending'])
@@ -39,6 +41,7 @@ export function IssueBuildTab({
   /** Read the task's run again — it was made, or its status moved. */
   onChanged: () => void
 }): React.JSX.Element {
+  const rules = useDistRules(target)
   const [adopt, setAdopt] = useState<'busy' | 'none' | null>(null)
   const adoptedFor = useRef<string | null>(null)
 
@@ -123,8 +126,7 @@ export function IssueBuildTab({
       </div>
     )
   }
-  // Why: an older monorepo run still stores `both`; it builds rhel, its redos comes with publication.
-  const dist = builtDistOf(run.repo, run.dist_type)
+  const dist = runDistOf(run, rules)
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">

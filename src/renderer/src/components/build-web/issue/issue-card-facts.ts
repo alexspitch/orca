@@ -1,5 +1,6 @@
 import type { BuildWebIssueStatus, BuildWebStatus } from '../../../../../shared/build-web-types'
 import type { BuildWebRun } from '../../../../../shared/build-web-run-types'
+import { withoutTwins } from '../../../../../shared/build-web-redos-twin'
 
 // After build-web's cardFacts.ts: the card's one-step status move and the run's image tally.
 
@@ -23,12 +24,16 @@ export function nextStatus(status: BuildWebIssueStatus, subtask: boolean): Build
   return 'inprogress'
 }
 
-/** Images of a run: how many built, how many only failed, out of how many — an image counts once. */
+/**
+ * Images of a run: how many built, how many only failed, out of how many — an image counts once,
+ * by its own builds; a redos twin comes with its rhel one.
+ */
 export function imageTally(run: BuildWebRun): { ok: number; failed: number; total: number } {
-  const all = new Set(run.builds.map((b) => b.image))
-  const ok = new Set(run.builds.filter((b) => b.status === 'SUCCESS').map((b) => b.image))
+  const builds = withoutTwins(run.builds)
+  const all = new Set(builds.map((b) => b.image))
+  const ok = new Set(builds.filter((b) => b.status === 'SUCCESS').map((b) => b.image))
   const failed = new Set(
-    run.builds
+    builds
       .filter((b) => (b.status === 'FAILURE' || b.status === 'ABORTED') && !ok.has(b.image))
       .map((b) => b.image)
   )

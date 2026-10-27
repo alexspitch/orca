@@ -34,6 +34,7 @@ import {
 } from './image-view-parts'
 import { IMAGE_PAGE_SIZE, toggled, useImageHistory, useImageSort } from './use-build-web-images'
 import { repoOfImage } from '../../../../../shared/build-web-repos'
+import { useDistRules } from '../use-dist-rules'
 
 const DISTS = ['rhel', 'redos'] as const
 const PUSHED = ['yes', 'no'] as const
@@ -54,7 +55,7 @@ export function ImageHistoryView({
 }): React.JSX.Element {
   const [q, setQ] = useState('')
   // Why only Chat Platform: a monorepo image's redos builds are twins of its rhel ones (IS-230).
-  const withDist = repoOfImage(image) === 'chat-platform'
+  const withDist = useDistRules(target).choosesDist(repoOfImage(image))
   const [dists, setDists] = useState<(typeof DISTS)[number][]>([])
   const [pushed, setPushed] = useState<(typeof PUSHED)[number][]>([])
   const [statuses, setStatuses] = useState<(typeof STATUSES)[number][]>([])

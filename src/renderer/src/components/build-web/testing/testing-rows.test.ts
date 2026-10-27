@@ -133,6 +133,7 @@ describe('workCells', () => {
     testsSkipped: false,
     twin: null,
     note: null,
+    twinOfNumber: null,
     ...patch
   })
   const cells = [

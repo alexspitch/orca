@@ -109,7 +109,13 @@ type In<T extends z.ZodTypeAny> = z.infer<T>
 // controller binds this class by that prefix, beside RuntimeBuildWebCommands.
 export class RuntimeBuildWebTaskCommands {
   buildWebBuildCombos(args: In<typeof BuildWebCombosParams>) {
-    return buildBuildWebCombos(args.runId, args.combos, args.pushAfter, args.skipTests)
+    return buildBuildWebCombos(
+      args.runId,
+      args.combos,
+      args.pushAfter,
+      args.skipTests,
+      args.twinDecision === true
+    )
   }
 
   buildWebCancelBuild(args: In<typeof BuildWebComboParams>) {

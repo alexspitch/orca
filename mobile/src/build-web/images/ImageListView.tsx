@@ -32,6 +32,7 @@ import { FreshnessChip, useImageFreshness } from './image-freshness'
 import { ImageFilterChips } from './ImageFilterChips'
 import { ImageRunCards } from './ImageRunCards'
 import { useImageTracking } from './image-tracking'
+import { useDistRules } from '../use-dist-rules'
 import { ImagePager, ImageSearchRow, ImageTableState, imageRowStyles } from './image-view-parts'
 import { SettleFailedChip } from './SettleFailedChip'
 import {
@@ -87,8 +88,9 @@ export function ImageListView({
   const [q, setQ] = useState('')
   const [filters, setFilters] = useState<ImageFilters>(NO_IMAGE_FILTERS)
   const { products, version } = filters
+  const rules = useDistRules()
   // Why only Chat Platform: the monorepo builds rhel, its redos images are twins of those (IS-230).
-  const withDist = products.length === 1 && products[0] === 'cp'
+  const withDist = !rules.productsRhelOnly || (products.length === 1 && products[0] === 'cp')
   const dists = withDist ? filters.dists : []
   const statuses = STATUS_FILTERS.filter((st) => filters.statuses.includes(st))
   const [page, setPage] = useState(0)

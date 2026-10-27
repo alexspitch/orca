@@ -118,3 +118,25 @@ export async function testBuildWebConnection(): Promise<BuildWebConnectResult> {
     return { ok: false, error: describeBuildWebError(error) }
   }
 }
+
+const FEATURES_TTL_MS = 5 * 60_000
+let features: { generation: number; at: number; value: Promise<string[]> } | null = null
+
+/** What the console announces it does (`/api/me` `features`, IS-230.21); an older one names none. */
+export function buildWebConsoleFeatures(): Promise<string[]> {
+  const credential = requireBuildWebCredential()
+  if (
+    features?.generation === credential.generation &&
+    Date.now() - features.at < FEATURES_TTL_MS
+  ) {
+    return features.value
+  }
+  const value = buildWebRequest({ ...credential, path: '/api/me' }).then((me) =>
+    textsOf(recordOf(me)?.features)
+  )
+  const entry = { generation: credential.generation, at: Date.now(), value }
+  features = entry
+  // Why: a failed read is asked again next time, not served for five minutes.
+  value.catch(() => features === entry && (features = null))
+  return value
+}

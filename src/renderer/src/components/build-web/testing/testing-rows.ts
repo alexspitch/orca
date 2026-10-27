@@ -3,8 +3,7 @@ import type {
   BuildWebWatchEntry,
   BuildWebWatchRun
 } from '../../../../../shared/build-web-watch-types'
-import { isTwin } from '../../../../../shared/build-web-redos-twin'
-import { isSelectable, pendingCells, unpushedCells, type Cell } from '../issue/build/run-cells'
+import { isWork, pendingCells, unpushedCells, type Cell } from '../issue/build/run-cells'
 
 // The rows of the «Testing» page: what each task has left to do with its images, in what order.
 
@@ -30,7 +29,8 @@ export function workChips(run: BuildWebWatchRun | null): WorkChip[] {
 
 /**
  * The rows of the run a chip stands for, read when its menu opens: the same rules the console counts
- * by, less the redos twins — a push of their rhel row publishes them in the same mode.
+ * by. To build, push or tag leave the redos twins out — a push of their rhel row publishes them in
+ * the same mode; in flight keeps them, as the console does.
  */
 export function workCells(cells: Cell[], kind: WorkKind): Cell[] {
   switch (kind) {
@@ -40,10 +40,10 @@ export function workCells(cells: Cell[], kind: WorkKind): Cell[] {
       return unpushedCells(cells)
     case 'tag':
       return cells.filter(
-        (c) =>
-          isSelectable(c) && !isTwin(c) && c.status === 'SUCCESS' && c.pushed && c.mainTagSkipped
+        (c) => isWork(c) && c.status === 'SUCCESS' && c.pushed && c.mainTagSkipped
       )
     case 'flight':
+      // Why the twins too: the console counts them in flight, and the menu only opens the build.
       return cells.filter((c) => c.state === 'queued' || c.state === 'building')
   }
 }

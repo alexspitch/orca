@@ -1,3 +1,4 @@
+import { twinOf } from '../../shared/build-web-redos-twin'
 import type {
   BuildWebImageAdoptArgs,
   BuildWebImageAdoptResult,
@@ -97,7 +98,8 @@ function buildOf(value: unknown, baseUrl: string): BuildWebImageBuild | null {
     pushed_main_tag: v.pushed_main_tag === true,
     main_tag_on: textOrNull(v.main_tag_on),
     run_id: v.run_id,
-    url: consoleUrlOf(textOrNull(v.url), baseUrl)
+    url: consoleUrlOf(textOrNull(v.url), baseUrl),
+    twin: twinOf(v.twin)
   }
 }
 

@@ -13,6 +13,7 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.cancelJob',
   'buildWeb.clearAgentSession',
   'buildWeb.commitDiff',
+  'buildWeb.consoleFeatures',
   'buildWeb.connect',
   'buildWeb.createIssueRun',
   'buildWeb.createJiraIssue',

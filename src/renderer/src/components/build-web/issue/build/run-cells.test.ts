@@ -10,7 +10,10 @@ import {
   isRetrying,
   mergeCells,
   pendingCells,
+  picksTwin,
   productOfImage,
+  rhelBuildKeysOf,
+  rowActionsOf,
   staleCells,
   testsChoice,
   unpushedCells
@@ -175,6 +178,35 @@ describe('redos twins (IS-230)', () => {
     expect(isRetrying(failed, sent, 5000)).toBe(true)
     expect(isRetrying(failed, sent, 20_000)).toBe(false)
     expect(isRetrying({ ...failed, state: 'building' }, sent, 5000)).toBe(false)
+  })
+
+  it('lets the row act on a twin only as the console allows', () => {
+    const cells = cellsOf([
+      rec('SUCCESS', { number: 7 }),
+      twin('SUCCESS', { number: 7 }),
+      twin('FAILURE', { image: 'dc/b', twin: 'full', twin_of: 3 }),
+      twin('SUCCESS', { image: 'dc/c', number: 9, twin_of: 9 })
+    ])
+    const keys = rhelBuildKeysOf(Object.values(cells))
+    const at = (k: string) => rowActionsOf(cells[k], keys)
+    // A derived twin beside its rhel row: nothing; without it, only Remove.
+    expect(at('dc/ib-script-engine|redos|master')).toEqual({
+      build: false,
+      rebuild: false,
+      cancel: false,
+      remove: false
+    })
+    expect(at('dc/c|redos|master').remove).toBe(true)
+    // A failed full twin is retried, not rebuilt; it can still go.
+    expect(at('dc/b|redos|master')).toMatchObject({ rebuild: false, remove: true })
+    expect(at(KEY)).toMatchObject({ rebuild: true, remove: true })
+  })
+
+  it('names the build of a twin picked on its row a person’s decision', () => {
+    const cells = cellsOf([rec('pending'), twin('pending', { twin: 'full' })])
+    const combo = { image: 'dc/ib-script-engine', branch: 'master' }
+    expect(picksTwin([{ ...combo, dist: 'redos' }], cells)).toBe(true)
+    expect(picksTwin([{ ...combo, dist: 'rhel' }], cells)).toBe(false)
   })
 
   it('still copies a twin’s references', () => {

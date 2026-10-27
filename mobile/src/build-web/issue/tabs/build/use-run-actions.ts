@@ -53,12 +53,25 @@ export function useRunActions(args: {
   )
 
   const trigger = useCallback(
-    async (combos: BuildWebCombo[], pushAfter: BuildWebPushAfter, skipTests: boolean) => {
+    async (
+      combos: BuildWebCombo[],
+      pushAfter: BuildWebPushAfter,
+      skipTests: boolean,
+      twinDecision = false
+    ) => {
       if (combos.length === 0) {
         return
       }
       setBusy(true)
-      const done = await write(() => call('buildCombos', { runId, combos, pushAfter, skipTests }))
+      const done = await write(() =>
+        call('buildCombos', {
+          runId,
+          combos,
+          pushAfter,
+          skipTests,
+          ...(twinDecision ? { twinDecision: true } : {})
+        })
+      )
       setBusy(false)
       if (done) {
         watch(AFTER_BUILD_MS)
@@ -146,7 +159,8 @@ export function useRunActions(args: {
               startedAt: null,
               testsSkipped: false,
               twin: null,
-              note: null
+              note: null,
+              twinOfNumber: null
             }
           }
           return next

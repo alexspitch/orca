@@ -55,13 +55,24 @@ export function useRunActions(args: {
   )
 
   const trigger = useCallback(
-    async (combos: BuildWebCombo[], pushAfter: BuildWebPushAfter, skipTests: boolean) => {
+    async (
+      combos: BuildWebCombo[],
+      pushAfter: BuildWebPushAfter,
+      skipTests: boolean,
+      twinDecision = false
+    ) => {
       if (combos.length === 0) {
         return
       }
       setBusy(true)
       const done = await write(() =>
-        callBuildWeb(target, 'buildCombos', { runId, combos, pushAfter, skipTests })
+        callBuildWeb(target, 'buildCombos', {
+          runId,
+          combos,
+          pushAfter,
+          skipTests,
+          ...(twinDecision ? { twinDecision: true } : {})
+        })
       )
       setBusy(false)
       if (done) {
@@ -99,11 +110,12 @@ export function useRunActions(args: {
       if (done) {
         setRetrying((m) => new Map([...m, [key, Date.now()]]))
         watch(AFTER_PUSH_MS)
+        kickBadge()
       } else {
         setRetrying((m) => new Map([...m].filter(([k]) => k !== key)))
       }
     },
-    [runId, target, watch, write]
+    [kickBadge, runId, target, watch, write]
   )
 
   const push = useCallback(
@@ -155,7 +167,8 @@ export function useRunActions(args: {
               startedAt: null,
               testsSkipped: false,
               twin: null,
-              note: null
+              note: null,
+              twinOfNumber: null
             }
           }
           return next

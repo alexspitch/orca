@@ -24,7 +24,9 @@ import {
   isSelectable,
   pendingCells,
   pickedCells,
+  picksTwin,
   productOfImage,
+  rhelBuildKeysOf,
   staleCells,
   unpushedCells
 } from './run-cells'
@@ -34,7 +36,8 @@ import { useRunActions } from './use-run-actions'
 import { useRunListEdits } from './use-run-list-edits'
 import { RUN_ROW_GRID, RunImageRow, type RunRowContext } from './RunImageRow'
 import { RunAddImage, RunFilters, RunRefBar, RunSelectionBar } from './RunBars'
-import { choosesDist, repoField } from '../../../../../../shared/build-web-repos'
+import { repoField } from '../../../../../../shared/build-web-repos'
+import { useDistRules } from '../../use-dist-rules'
 import { withoutTwins } from '../../../../../../shared/build-web-redos-twin'
 import { BuildMenu } from './RunMenus'
 
@@ -92,7 +95,8 @@ export function IssueRunProgress({
   }, [runRepo, target])
 
   const list = useMemo(() => Object.values(cells), [cells])
-  const withDist = choosesDist(run.repo)
+  const withDist = useDistRules(target).choosesDist(run.repo)
+  const rhelBuildKeys = useMemo(() => rhelBuildKeysOf(list), [list])
   const building = status === 'building'
   const visible = useMemo(
     () =>
@@ -105,7 +109,7 @@ export function IssueRunProgress({
     [filter, hidePending, list, withDist]
   )
   const own = withoutTwins(list)
-  const hasPending = pendingCells(own).length > 0
+  const hasPending = pendingCells(list).length > 0
   const hasLost = own.some((c) => c.status === 'poll-failed')
   const hasStuck = !building && own.some((c) => c.state === 'queued' || c.state === 'building')
   const selectable = visible.filter(isSelectable)
@@ -168,10 +172,12 @@ export function IssueRunProgress({
     treeBranches,
     testDirs,
     baseUrl,
-    onBuild: (combos, pushAfter, skipTests) => void actions.trigger(combos, pushAfter, skipTests),
+    onBuild: (combos, pushAfter, skipTests) =>
+      void actions.trigger(combos, pushAfter, skipTests, picksTwin(combos, cells)),
     onPush: (rows, moveMainTag) => void actions.push(rows, moveMainTag),
     onCancel: (cell) => void actions.cancel(cell),
     onRetryTwin: (cell) => void actions.retryTwin(cell),
+    rhelBuildKeys,
     onRemove: (combo) => void remove(combo)
   }
 
@@ -358,7 +364,7 @@ export function IssueRunProgress({
           images={images}
           branches={branches.map((b) => b.name)}
           runBranch={run.branch}
-          repo={run.repo}
+          choosing={withDist}
           defaultDist={run.dist_type}
           disabled={building || actions.busy}
           onAdd={add}

@@ -4,12 +4,8 @@ import type {
   BuildWebIssueBuildBranch,
   BuildWebTestingStatus
 } from '../../../../../../src/shared/build-web-run-types'
-import {
-  distOf,
-  distsOf,
-  repoField,
-  type BuildWebRepo
-} from '../../../../../../src/shared/build-web-repos'
+import { repoField, type BuildWebRepo } from '../../../../../../src/shared/build-web-repos'
+import { useDistRules } from '../../../use-dist-rules'
 import { useBuildWebScreen } from '../../../build-web-screen-context'
 import { messageOf, useBuildTabCall } from './build-tab-call'
 import { rowKey, type Row } from './NewBuildParts'
@@ -27,7 +23,8 @@ export function useNewBuild(
 ) {
   const { call } = useBuildTabCall()
   const { notify } = useBuildWebScreen()
-  const dists = distsOf(issue.repo)
+  const rules = useDistRules()
+  const dists = rules.distsOf(issue.repo)
   const releaseBranch = issue.branch
   // Why by hand too: a fix may need building from a branch other than its release's.
   const [picked, setPicked] = useState<string | null>(null)
@@ -153,7 +150,7 @@ export function useNewBuild(
           .filter((r) => r.branch !== releaseBranch)
           .flatMap((r) => dists.map((dist) => ({ image: r.image, dist, branch: r.branch }))),
         testingStatus: testing,
-        distType: distOf(issue.repo),
+        distType: rules.distOf(issue.repo),
         detected: detect?.raw ?? null,
         ...(releaseBranches
           ? {

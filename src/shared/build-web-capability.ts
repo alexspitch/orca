@@ -46,5 +46,8 @@ export const BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY = 'build-web-image-fre
 /** A runtime that derives a redos twin again (IS-230): `buildWeb.retryRedosTwin`. */
 export const BUILD_WEB_REDOS_TWIN_RUNTIME_CAPABILITY = 'build-web-redos-twin.v1'
 
+/** A runtime that reads the console's `features` (IS-230.21): `buildWeb.consoleFeatures`. */
+export const BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY = 'build-web-console-features.v1'
+
 /** A runtime that builds several images in one run: `buildWeb.startImageGroupBuild`. */
 export const BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY = 'build-web-image-group-build.v1'

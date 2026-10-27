@@ -7,7 +7,6 @@ import {
   RUN_PRODUCT_FILTERS,
   type RunFilter
 } from '../../../../../../src/renderer/src/components/build-web/build-web-view-prefs'
-import { choosesDist, type BuildWebRepo } from '../../../../../../src/shared/build-web-repos'
 import type { Cell } from '../../../../../../src/renderer/src/components/build-web/issue/build/run-cells'
 import { MobileSwitch } from '../../../../components/MobileSwitch'
 import { colors, radii, spacing, typography } from '../../../../theme/mobile-theme'
@@ -197,7 +196,7 @@ export function RunAddImage({
   images,
   branches,
   runBranch,
-  repo,
+  choosing,
   defaultDist,
   disabled,
   onAdd
@@ -205,17 +204,16 @@ export function RunAddImage({
   images: string[]
   branches: string[]
   runBranch: string
-  repo: BuildWebRepo
+  /** The console lets this run's repository choose (IS-230: not the monorepo). */
+  choosing: boolean
   defaultDist: string
   disabled: boolean
   onAdd: (image: string, dist: string, branch: string) => Promise<boolean>
 }) {
   const [image, setImage] = useState<string | null>(null)
-  const [chosen, setDist] = useState<(typeof ADD_DISTS)[number]>(
+  const [chosen, setChosen] = useState<(typeof ADD_DISTS)[number]>(
     defaultDist === 'rhel' || defaultDist === 'redos' ? defaultDist : 'both'
   )
-  // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
-  const choosing = choosesDist(repo)
   const dist = choosing ? chosen : 'rhel'
   // The branch last used: the common case is a series of images on one branch.
   const [branch, setBranch] = useState(runBranch)
@@ -229,7 +227,7 @@ export function RunAddImage({
             title="dist"
             value={dist}
             options={ADD_DISTS}
-            onChange={setDist}
+            onChange={setChosen}
             disabled={disabled}
           />
         ) : null}

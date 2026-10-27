@@ -61,6 +61,8 @@ export type BuildWebApi = {
   connect: (args: BuildWebConnectArgs) => Promise<BuildWebConnectResult>
   disconnect: () => Promise<BuildWebConnectionStatus>
   testConnection: () => Promise<BuildWebConnectResult>
+  /** The console's `features` (IS-230.21); a host predating it answers with an unknown method. */
+  consoleFeatures: () => Promise<string[]>
   listIssues: (args: BuildWebIssueQuery) => Promise<BuildWebIssuePage>
   getIssue: (args: { id: string }) => Promise<BuildWebIssueDetail>
   /** A task's subtasks; a host predating it answers with an unknown method. */

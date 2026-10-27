@@ -53,6 +53,7 @@ export function registerBuildWebHandlers(): void {
   ipcMain.handle('buildWeb:status', () => commands.buildWebStatus())
   ipcMain.handle('buildWeb:disconnect', () => commands.buildWebDisconnect())
   ipcMain.handle('buildWeb:testConnection', () => commands.buildWebTestConnection())
+  ipcMain.handle('buildWeb:consoleFeatures', () => commands.buildWebConsoleFeatures())
   ipcMain.handle('buildWeb:listAssignees', () => commands.buildWebListAssignees())
   ipcMain.handle('buildWeb:imageSummary', () => commands.buildWebImageSummary())
   ipcMain.handle('buildWeb:issueSummary', (_event, args: unknown) =>

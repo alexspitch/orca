@@ -6,6 +6,7 @@ export const buildWebApi = {
   connect: (args) => ipcRenderer.invoke('buildWeb:connect', args),
   disconnect: () => ipcRenderer.invoke('buildWeb:disconnect'),
   testConnection: () => ipcRenderer.invoke('buildWeb:testConnection'),
+  consoleFeatures: () => ipcRenderer.invoke('buildWeb:consoleFeatures'),
   listIssues: (args) => ipcRenderer.invoke('buildWeb:listIssues', args),
   getIssue: (args) => ipcRenderer.invoke('buildWeb:getIssue', args),
   listIssueChildren: (args) => ipcRenderer.invoke('buildWeb:listIssueChildren', args),

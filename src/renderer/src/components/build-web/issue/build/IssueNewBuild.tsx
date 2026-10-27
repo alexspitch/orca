@@ -18,12 +18,8 @@ import type {
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
 import { ImagePicker } from './ImagePicker'
-import {
-  distOf,
-  distsOf,
-  repoField,
-  type BuildWebRepo
-} from '../../../../../../shared/build-web-repos'
+import { repoField, type BuildWebRepo } from '../../../../../../shared/build-web-repos'
+import { useDistRules } from '../../use-dist-rules'
 import {
   BuildBranchField,
   NewBuildRows,
@@ -70,7 +66,8 @@ export function IssueNewBuild({
   // Why the repository: a `cp` task's images and branches are chat-platform's, not the monorepo's.
   const repo = repoField(issue.repo)
   const repoKey = issue.repo
-  const dists = distsOf(issue.repo)
+  const rules = useDistRules(target)
+  const dists = rules.distsOf(issue.repo)
   useEffect(() => {
     const args = repoField(repoKey)
     void callBuildWeb(target, 'imageNames', args).then(setAllImages, () => setAllImages([]))
@@ -177,7 +174,7 @@ export function IssueNewBuild({
           .filter((r) => r.branch !== releaseBranch)
           .flatMap((r) => dists.map((dist) => ({ image: r.image, dist, branch: r.branch }))),
         testingStatus: testing,
-        distType: distOf(issue.repo),
+        distType: rules.distOf(issue.repo),
         detected: detect?.raw ?? null,
         ...(releaseBranches
           ? {

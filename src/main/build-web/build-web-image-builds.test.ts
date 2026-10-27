@@ -46,7 +46,7 @@ describe('image builds', () => {
     expect(mocks.request).toHaveBeenCalledTimes(1)
   })
 
-  it('builds a monorepo image as rhel only, passes the console’s note, and drops the catalog', async () => {
+  it('asks for the distribution chosen, passes the console’s note, and drops the catalog', async () => {
     const note = 'собирается только rhel: redos выводится из него при публикации (просили «both»)'
     mocks.request.mockResolvedValueOnce({ id: 'run-9', note }).mockResolvedValueOnce({ ok: true })
     const result = await startBuildWebImageBuild({
@@ -61,35 +61,21 @@ describe('image builds', () => {
       body: {
         branch: 'dc-release-3.1',
         images: ['dc/ib-api-server'],
-        distType: 'rhel',
+        distType: 'both',
         ticket: null
       }
     })
+    // Why both: the console itself folds the monorepo's redos into rhel and says so in `note`.
     expect(mocks.request.mock.calls[1][0]).toMatchObject({
       path: '/api/runs/run-9/builds',
-      body: { combos: [{ image: 'dc/ib-api-server', dist: 'rhel', branch: 'dc-release-3.1' }] }
+      body: {
+        combos: [
+          { image: 'dc/ib-api-server', dist: 'rhel', branch: 'dc-release-3.1' },
+          { image: 'dc/ib-api-server', dist: 'redos', branch: 'dc-release-3.1' }
+        ]
+      }
     })
     expect(mocks.invalidate).toHaveBeenCalled()
-  })
-
-  it('starts one build per distribution of a Chat Platform image', async () => {
-    mocks.request.mockResolvedValueOnce({ id: 'run-8' }).mockResolvedValueOnce({ ok: true })
-    const result = await startBuildWebImageBuild({
-      image: 'chatplatform/agent-manager',
-      branch: 'master',
-      dist: 'both'
-    })
-    expect(result).toEqual({ ok: true, value: { runId: 'run-8' } })
-    expect(mocks.request.mock.calls[0][0].body).toMatchObject({
-      repo: 'chat-platform',
-      distType: 'both'
-    })
-    expect(mocks.request.mock.calls[1][0].body).toEqual({
-      combos: [
-        { image: 'chatplatform/agent-manager', dist: 'rhel', branch: 'master' },
-        { image: 'chatplatform/agent-manager', dist: 'redos', branch: 'master' }
-      ]
-    })
   })
 
   it('builds a Chat Platform image from chat-platform’s branch, and lists its version branches', async () => {
@@ -174,7 +160,7 @@ describe('image builds', () => {
 })
 
 describe('a group build from Images', () => {
-  it('builds the picked monorepo images as one run on the chosen version, rhel only', async () => {
+  it('builds the picked images as one run on the chosen version, each for both dists', async () => {
     mocks.request.mockResolvedValueOnce({ id: 'run-1' }).mockResolvedValueOnce({})
     const result = await startBuildWebImageGroupBuild({
       images: ['ap/ui', 'ap/oauth', 'ap/ui'],
@@ -185,14 +171,16 @@ describe('a group build from Images', () => {
     const [made, started] = mocks.request.mock.calls.map(([r]) => r)
     expect(made).toMatchObject({
       path: '/api/runs',
-      body: { branch: 'ap-release-1.16', images: ['ap/ui', 'ap/oauth'], distType: 'rhel' }
+      body: { branch: 'ap-release-1.16', images: ['ap/ui', 'ap/oauth'], distType: 'both' }
     })
     expect(started).toMatchObject({
       path: '/api/runs/run-1/builds',
       body: {
         combos: [
           { image: 'ap/ui', dist: 'rhel', branch: 'ap-release-1.16' },
-          { image: 'ap/oauth', dist: 'rhel', branch: 'ap-release-1.16' }
+          { image: 'ap/ui', dist: 'redos', branch: 'ap-release-1.16' },
+          { image: 'ap/oauth', dist: 'rhel', branch: 'ap-release-1.16' },
+          { image: 'ap/oauth', dist: 'redos', branch: 'ap-release-1.16' }
         ]
       }
     })

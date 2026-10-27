@@ -1,3 +1,4 @@
+import type { BuildWebRedosTwin } from './build-web-redos-twin'
 // build-web's Images section, as Orca shows it: the console's own records (snake_case), plus the
 // page model main computes so a remote client receives one page, never the whole history.
 
@@ -22,6 +23,8 @@ export type BuildWebImageBuild = {
   run_id: string
   /** The build's log in build-web or Jenkins; opened in the browser. */
   url: string | null
+  /** IS-230.21: a redos twin of a rhel build; its image's state is read without it. Absent from an older host. */
+  twin?: BuildWebRedosTwin | null
 }
 
 export type BuildWebImageRow = {

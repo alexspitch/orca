@@ -79,6 +79,19 @@ describe('image model', () => {
     expect(failedImageCount(catalog)).toBe(0)
   })
 
+  it('reads an image by its own builds: a redos twin is neither its newest nor running', () => {
+    const withTwins: ImageCatalog = {
+      ...catalog,
+      builds: [
+        build({ dist: 'redos', number: 1, status: 'failed', twin: 'derive' }),
+        build({ image: 'dc/asr', product: 'dc', dist: 'redos', status: 'running', twin: 'derive' }),
+        ...catalog.builds
+      ]
+    }
+    expect(failedImageCount(withTwins)).toBe(0)
+    expect(runningImageCount(withTwins)).toBe(runningImageCount(catalog))
+  })
+
   it('shows the newest build of each image and counts the chips', () => {
     const page = imagePage(catalog, { page: 0, pageSize: 50 })
     expect(page.rows.find((r) => r.image === 'sa/api')?.last?.tag).toBe('3.1b2')

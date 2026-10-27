@@ -17,22 +17,39 @@ export function repoField(repo: BuildWebRepo): { repo?: 'chat-platform' } {
   return repo === 'chat-platform' ? { repo } : {}
 }
 
-// IS-230: the monorepo builds rhel only — the console derives its redos images when they are
-// published. chat-platform keeps its own choice, both by default.
+// IS-230: a console that announces `products-rhel-only` builds the monorepo as rhel only and derives
+// its redos images when they are published; chat-platform keeps its own choice, both by default. An
+// older console — or one whose features are not known yet — builds both as before.
 
 export type BuildWebDist = 'rhel' | 'redos'
 
-/** The distribution a new run of this repository asks for. */
-export const distOf = (repo: BuildWebRepo): 'rhel' | 'both' =>
-  repo === 'products' ? 'rhel' : 'both'
+/** The feature `/api/me` names for a console after IS-230. */
+export const PRODUCTS_RHEL_ONLY_FEATURE = 'products-rhel-only'
 
-/** Whether a build of this repository offers a choice of distribution. */
-export const choosesDist = (repo: BuildWebRepo): boolean => repo !== 'products'
+/** The distributions a choice stands for: `both` is one combo each. */
+export const distsOfChoice = (dist: string): string[] =>
+  dist === 'both' ? ['rhel', 'redos'] : [dist]
 
-/** The distributions a build of this repository makes, one combo each. */
-export const distsOf = (repo: BuildWebRepo): BuildWebDist[] =>
-  distOf(repo) === 'rhel' ? ['rhel'] : ['rhel', 'redos']
+export type DistRules = {
+  productsRhelOnly: boolean
+  /** The distribution a new run of this repository asks for. */
+  distOf: (repo: BuildWebRepo) => 'rhel' | 'both'
+  /** Whether a build of this repository offers a choice of distribution. */
+  choosesDist: (repo: BuildWebRepo) => boolean
+  /** The distributions a build of this repository makes, one combo each. */
+  distsOf: (repo: BuildWebRepo) => BuildWebDist[]
+  /** What a train builds, as the console's `trainDists`: a monorepo one stores `both` from before. */
+  trainDistOf: (repo: BuildWebRepo, dist: string) => string
+}
 
-/** What a run or a train of this repository builds: an older monorepo one still stores `both`. */
-export const builtDistOf = (repo: BuildWebRepo, dist: string): string =>
-  repo === 'products' ? 'rhel' : dist
+export function distRulesOf(features: readonly string[]): DistRules {
+  const productsRhelOnly = features.includes(PRODUCTS_RHEL_ONLY_FEATURE)
+  const rhelOnly = (repo: BuildWebRepo) => productsRhelOnly && repo === 'products'
+  return {
+    productsRhelOnly,
+    distOf: (repo) => (rhelOnly(repo) ? 'rhel' : 'both'),
+    choosesDist: (repo) => !rhelOnly(repo),
+    distsOf: (repo) => (rhelOnly(repo) ? ['rhel'] : ['rhel', 'redos']),
+    trainDistOf: (repo, dist) => (rhelOnly(repo) ? 'rhel' : dist)
+  }
+}

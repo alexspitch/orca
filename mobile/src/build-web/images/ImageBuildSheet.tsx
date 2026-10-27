@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import type { BuildWebImageBuildArgs } from '../../../../src/shared/build-web-image-types'
 import { versionOfBranch } from '../../../../src/shared/build-web-image-tracking'
-import { choosesDist, repoOfImage } from '../../../../src/shared/build-web-repos'
+import { repoOfImage } from '../../../../src/shared/build-web-repos'
+import { useDistRules } from '../use-dist-rules'
 import { testsChoice } from '../../../../src/renderer/src/components/build-web/issue/build/run-cells'
 import { BottomDrawer } from '../../components/BottomDrawer'
 import { MobileSegmentedControl } from '../../components/MobileSegmentedControl'
@@ -44,6 +45,7 @@ export function ImageBuildSheet({
 
 function BuildForm({ choice, onClose }: { choice: ImageBuildChoice; onClose: () => void }) {
   const { call, notify } = useBuildWebScreen()
+  const rules = useDistRules()
   const { trackBuild } = useImageTracking()
   const { images, product, branch: initialBranch } = choice
   const [branches, setBranches] = useState<string[] | null>(null)
@@ -92,7 +94,7 @@ function BuildForm({ choice, onClose }: { choice: ImageBuildChoice; onClose: () 
   }, [call, initialBranch, product])
   const tests = testsChoice(branch ? [branch] : [], treeBranches, runTests)
   // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
-  const choosing = images.length > 0 && choosesDist(repoOfImage(images[0] ?? ''))
+  const choosing = images.length > 0 && rules.choosesDist(repoOfImage(images[0] ?? ''))
 
   const start = async (): Promise<void> => {
     setBusy(true)

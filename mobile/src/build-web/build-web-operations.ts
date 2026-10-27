@@ -47,6 +47,7 @@ const BUILD_WEB_OPERATIONS = {
   cancelJob: buildWebOperation('buildWeb.cancelJob'),
   clearAgentSession: buildWebOperation('buildWeb.clearAgentSession'),
   commitDiff: buildWebOperation('buildWeb.commitDiff'),
+  consoleFeatures: buildWebOperation('buildWeb.consoleFeatures'),
   connect: buildWebOperation('buildWeb.connect'),
   createIssueRun: buildWebOperation('buildWeb.createIssueRun'),
   createJiraIssue: buildWebOperation('buildWeb.createJiraIssue'),

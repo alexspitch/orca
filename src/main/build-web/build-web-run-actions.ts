@@ -56,7 +56,9 @@ export function buildBuildWebCombos(
   runId: string,
   combos: BuildWebCombo[],
   pushAfter: BuildWebPushAfter,
-  skipTests: boolean
+  skipTests: boolean,
+  /** IS-230.21: a person picked a redos twin on its own row; the console builds a waiting one only then. */
+  twinDecision = false
 ): Promise<BuildWebMutationResult<true>> {
   return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
@@ -64,7 +66,12 @@ export function buildBuildWebCombos(
       ...credential,
       method: 'POST',
       path: runPath(runId, '/builds'),
-      body: { combos, pushAfter, ...(skipTests ? { skipTests: true } : {}) }
+      body: {
+        combos,
+        pushAfter,
+        ...(skipTests ? { skipTests: true } : {}),
+        ...(twinDecision ? { twinDecision: true } : {})
+      }
     })
     // Why: the Images pages and badge count running builds from the catalog.
     invalidateBuildWebImageCatalog()

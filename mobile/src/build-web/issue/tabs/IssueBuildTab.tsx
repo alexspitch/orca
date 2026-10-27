@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { builtDistOf, repoOfProduct } from '../../../../../src/shared/build-web-repos'
+import { repoOfProduct } from '../../../../../src/shared/build-web-repos'
+import { runDistOf } from '../../../../../src/shared/build-web-redos-twin'
+import { useDistRules } from '../../use-dist-rules'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import { MobileLoadErrorState } from '../../../components/MobileLoadErrorState'
 import { colors, spacing } from '../../../theme/mobile-theme'
@@ -28,6 +30,7 @@ export function IssueBuildTab({
   testing
 }: BuildWebIssueTabProps) {
   const { call } = useBuildWebScreen()
+  const rules = useDistRules()
   const [adopt, setAdopt] = useState<'busy' | 'none' | null>(null)
   const adoptedFor = useRef<string | null>(null)
 
@@ -94,13 +97,12 @@ export function IssueBuildTab({
       </View>
     )
   }
-  const dist = builtDistOf(run.repo, run.dist_type)
+  const dist = runDistOf(run, rules)
   return (
     <View style={styles.column}>
       <View style={styles.row}>
         <Text style={buildTabText.heading}>Build</Text>
         <BuildWebToneChip label={run.branch} tone={null} mono />
-        {/* Why: an older monorepo run still stores `both`; it builds rhel, its redos comes with publication. */}
         <BuildWebToneChip label={dist === 'both' ? 'rhel + redos' : dist} tone={null} />
         <Text style={buildTabText.muted}>
           {loginOf(run.user)} · {new Date(run.created_at).toLocaleString()}

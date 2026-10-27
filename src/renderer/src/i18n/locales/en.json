@@ -21582,7 +21582,9 @@
       "updateServerSavedQueries": "This Orca server does not keep saved queries yet. Update the server.",
       "updateServerImageFreshness": "This Orca server cannot tell which images need a rebuild yet. Update the server.",
       "updateServerImageGroupBuild": "This Orca server cannot build several images at once yet. Update the server.",
-      "updateServerRedosTwin": "This Orca server cannot derive a redos image again yet. Update the server."
+      "updateServerRedosTwin": "This Orca server cannot derive a redos image again yet. Update the server.",
+      "updateServerConsoleFeatures": "This Orca server cannot read what the console supports yet. Update the server.",
+      "updateServerTwinDecision": "This Orca server cannot build a waiting redos image yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -22050,7 +22052,10 @@
       "twinWaiting": "redos awaits a decision",
       "twinFailed": "redos not built",
       "twinRetry": "Retry",
-      "noRedos": "no redos"
+      "noRedos": "no redos",
+      "twinNotPushedTip": "redos goes out with its rhel row — or by «Retry» on this row",
+      "twinOfTip": "For rhel build #{{n}}",
+      "twinTip": "For the published rhel build of this image"
     },
     "overview": {
       "noImages": "no images",

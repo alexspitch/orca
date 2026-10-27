@@ -25,7 +25,8 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import { callBuildWeb } from '../build-web-client'
 import { useImageBuildRuns, versionOfBranch } from './image-build-runs'
 import { testsChoice } from '../issue/build/run-cells'
-import { choosesDist, repoOfImage } from '../../../../../shared/build-web-repos'
+import { repoOfImage } from '../../../../../shared/build-web-repos'
+import { useDistRules } from '../use-dist-rules'
 
 const DISTS: BuildWebImageBuildArgs['dist'][] = ['both', 'rhel', 'redos']
 
@@ -50,6 +51,7 @@ function BuildForm({
   const track = useImageBuildRuns((s) => s.track)
   const [branches, setBranches] = useState<string[] | null>(null)
   const [branch, setBranch] = useState('')
+  const rules = useDistRules(target)
   const [dist, setDist] = useState<BuildWebImageBuildArgs['dist']>('both')
   const [ticket, setTicket] = useState('')
   // Off by default: a build from the tree goes without the offline suites unless asked.
@@ -99,7 +101,7 @@ function BuildForm({
   }, [target])
   const tests = testsChoice(branch ? [branch] : [], treeBranches, runTests)
   // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
-  const choosing = images.length > 0 && choosesDist(repoOfImage(images[0]))
+  const choosing = images.length > 0 && rules.choosesDist(repoOfImage(images[0]))
 
   const start = async (): Promise<void> => {
     setBusy(true)

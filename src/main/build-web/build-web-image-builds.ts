@@ -9,7 +9,7 @@ import { invalidateBuildWebImageCatalog } from './build-web-images'
 import { buildWebMutation, buildWebRequest } from './build-web-request'
 import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 import { runOf } from './build-web-runs'
-import { choosesDist, repoField, repoOfImage } from '../../shared/build-web-repos'
+import { distsOfChoice, repoField, repoOfImage } from '../../shared/build-web-repos'
 
 // Building images from Images, after build-web's ImageBuildDialog: a run for the images on the
 // chosen branch, then their builds started at once (build-web leaves that to its Progress page).
@@ -56,9 +56,8 @@ export function startBuildWebImageGroupBuild(
         'Build the monorepo’s images and Chat Platform’s apart: a run is of one repository'
       )
     }
+    // Why as asked: a console after IS-230 builds the monorepo as rhel and says so in `note`.
     const repo = repoOfImage(images[0])
-    // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
-    const dist = choosesDist(repo) ? args.dist : 'rhel'
     const credential = requireBuildWebCredential()
     const made = recordOf(
       await buildWebRequest({
@@ -70,7 +69,7 @@ export function startBuildWebImageGroupBuild(
           ticket: args.ticket || null,
           images,
           ...repoField(repo),
-          distType: dist,
+          distType: args.dist,
           pushToRepo: false,
           detected: null
         }
@@ -80,7 +79,7 @@ export function startBuildWebImageGroupBuild(
     if (!runId) {
       throw new Error('build-web made no run for the build')
     }
-    const dists = dist === 'both' ? ['rhel', 'redos'] : [dist]
+    const dists = distsOfChoice(args.dist)
     await buildWebRequest({
       ...credential,
       method: 'POST',

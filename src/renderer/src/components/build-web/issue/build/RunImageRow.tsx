@@ -11,7 +11,7 @@ import type {
 } from '../../../../../../shared/build-web-run-types'
 import { BuildWebToneChip } from '../../BuildWebToneChip'
 import { useBuildLogViewer } from '../../images/build-log-viewer'
-import { comboOf, isSelectable, type Cell } from './run-cells'
+import { comboOf, isSelectable, rowActionsOf, type Cell } from './run-cells'
 import {
   CellStateChip,
   FreshnessChip,
@@ -42,6 +42,8 @@ export type RunRowContext = {
   onPush: (cells: Cell[], moveMainTag: boolean) => void
   onCancel: (cell: Cell) => void
   onRetryTwin: (cell: Cell) => void
+  /** The run's rhel builds, by `image|branch|number`: what keeps a derived twin listed. */
+  rhelBuildKeys: ReadonlySet<string>
   onRemove: (combo: BuildWebCombo) => void
 }
 
@@ -84,9 +86,7 @@ export function RunImageRow({
   freshness: BuildWebBuildFreshness | undefined
   ctx: RunRowContext
 }): React.JSX.Element {
-  const live = c.state === 'queued' || c.state === 'building'
-  // Why: the console derives this row from its rhel one — a rebuild here would rebuild rhel.
-  const derived = c.twin === 'derive'
+  const can = rowActionsOf(c, ctx.rhelBuildKeys)
   const testDirs = ctx.testDirs[c.image] ?? []
   const meta = [c.number !== null ? `#${c.number}` : null, formatAt(c.startedAt)]
     .filter(Boolean)
@@ -203,7 +203,7 @@ export function RunImageRow({
             />
           </button>
         ) : null}
-        {live && !derived ? (
+        {can.cancel ? (
           <IconAction
             label={translate('buildWeb.run.cancel', 'Cancel this build')}
             disabled={cancelling}
@@ -212,19 +212,19 @@ export function RunImageRow({
             <CircleStop />
           </IconAction>
         ) : null}
-        {c.state === 'pending' && !derived
+        {can.build
           ? buildTrigger(
               <Play className="text-primary" />,
               translate('buildWeb.run.buildOne', 'Build this image — and choose what it publishes')
             )
           : null}
-        {c.state === 'done' && !derived
+        {can.rebuild
           ? buildTrigger(
               <RotateCw />,
               translate('buildWeb.run.rebuildOne', 'Rebuild — and choose what it publishes')
             )
           : null}
-        {(c.state === 'pending' || c.state === 'done') && !derived ? (
+        {can.remove ? (
           <IconAction
             label={translate('buildWeb.run.removeOne', 'Remove from list')}
             disabled={ctx.building || ctx.busy}

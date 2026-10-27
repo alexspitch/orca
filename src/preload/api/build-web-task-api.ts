@@ -60,6 +60,7 @@ export type BuildWebTaskApi = {
     combos: BuildWebCombo[]
     pushAfter: BuildWebPushAfter
     skipTests: boolean
+    twinDecision?: boolean
   }) => Promise<BuildWebMutationResult<true>>
   cancelBuild: (args: {
     runId: string

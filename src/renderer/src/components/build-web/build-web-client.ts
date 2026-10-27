@@ -1,6 +1,7 @@
 import {
   BUILD_WEB_ACTIVITY_RUNTIME_CAPABILITY,
   BUILD_WEB_COMMENT_TELEGRAM_RUNTIME_CAPABILITY,
+  BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY,
@@ -115,6 +116,15 @@ const NEWER_METHODS: { methods: ReadonlySet<Method>; capability: string; refusal
         )
     },
     {
+      methods: new Set<Method>(['consoleFeatures']),
+      capability: BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY,
+      refusal: () =>
+        translate(
+          'buildWeb.client.updateServerConsoleFeatures',
+          'This Orca server cannot read what the console supports yet. Update the server.'
+        )
+    },
+    {
       methods: new Set<Method>(['retryRedosTwin']),
       capability: BUILD_WEB_REDOS_TWIN_RUNTIME_CAPABILITY,
       refusal: () =>
@@ -200,6 +210,21 @@ const NEWER_ARGUMENTS: {
       translate(
         'buildWeb.client.updateServerChatPlatform',
         'This Orca server does not know Chat Platform yet. Update the server.'
+      )
+  },
+  {
+    // Why: an older server drops `twinDecision`, and the console then refuses the twin's build.
+    applies: (method, arg) =>
+      method === 'buildCombos' &&
+      typeof arg === 'object' &&
+      arg !== null &&
+      'twinDecision' in arg &&
+      arg.twinDecision === true,
+    capability: BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerTwinDecision',
+        'This Orca server cannot build a waiting redos image yet. Update the server.'
       )
   },
   {

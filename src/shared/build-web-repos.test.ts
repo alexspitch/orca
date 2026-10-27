@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  builtDistOf,
-  choosesDist,
-  distOf,
-  distsOf,
+  distRulesOf,
+  PRODUCTS_RHEL_ONLY_FEATURE,
   repoField,
   repoOfImage,
   repoOfProduct
@@ -22,18 +20,16 @@ describe('build-web repositories', () => {
     expect(repoField('products')).toEqual({})
   })
 
-  it('builds the monorepo as rhel only and lets chat-platform choose, as the console does', () => {
-    expect(distOf('products')).toBe('rhel')
-    expect(distsOf('products')).toEqual(['rhel'])
-    expect(choosesDist('products')).toBe(false)
-    expect(distOf('chat-platform')).toBe('both')
-    expect(distsOf('chat-platform')).toEqual(['rhel', 'redos'])
-    expect(choosesDist('chat-platform')).toBe(true)
-  })
-
-  it('reads an older monorepo run or train stored as both as rhel, chat-platform’s as stored', () => {
-    expect(builtDistOf('products', 'both')).toBe('rhel')
-    expect(builtDistOf('chat-platform', 'both')).toBe('both')
-    expect(builtDistOf('chat-platform', 'redos')).toBe('redos')
+  it('builds the monorepo as rhel only on a console that says so, and both on an older one', () => {
+    const after = distRulesOf([PRODUCTS_RHEL_ONLY_FEATURE])
+    expect(after.distsOf('products')).toEqual(['rhel'])
+    expect(after.choosesDist('products')).toBe(false)
+    expect(after.trainDistOf('products', 'both')).toBe('rhel')
+    expect(after.distsOf('chat-platform')).toEqual(['rhel', 'redos'])
+    expect(after.trainDistOf('chat-platform', 'redos')).toBe('redos')
+    const before = distRulesOf([])
+    expect(before.distOf('products')).toBe('both')
+    expect(before.choosesDist('products')).toBe(true)
+    expect(before.trainDistOf('products', 'both')).toBe('both')
   })
 })

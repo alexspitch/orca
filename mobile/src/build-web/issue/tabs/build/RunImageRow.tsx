@@ -9,6 +9,7 @@ import type {
 import {
   comboOf,
   isSelectable,
+  rowActionsOf,
   type Cell
 } from '../../../../../../src/renderer/src/components/build-web/issue/build/run-cells'
 import { openExternalLink } from '../../../../platform/external-link'
@@ -37,6 +38,8 @@ export type RunRowContext = {
   onOpenPush: (cells: Cell[]) => void
   onCancel: (cell: Cell) => void
   onRetryTwin: (cell: Cell) => void
+  /** The run's rhel builds, by `image|branch|number`: what keeps a derived twin listed. */
+  rhelBuildKeys: ReadonlySet<string>
   onRemove: (combo: BuildWebCombo) => void
   onOpenLog: (url: string, title: string) => void
 }
@@ -63,9 +66,7 @@ function RunImageRowView({
   freshness: BuildWebBuildFreshness | undefined
   ctx: RunRowContext
 }) {
-  const live = c.state === 'queued' || c.state === 'building'
-  // Why: the console derives this row from its rhel one — a rebuild here would rebuild rhel.
-  const derived = c.twin === 'derive'
+  const can = rowActionsOf(c, ctx.rhelBuildKeys)
   const testDirs = ctx.testDirs[c.image] ?? []
   const meta = [c.number !== null ? `#${c.number}` : null, formatAt(c.startedAt)]
     .filter(Boolean)
@@ -149,7 +150,7 @@ function RunImageRowView({
           </Text>
         ) : null}
         <View style={styles.grow} />
-        {live && !derived ? (
+        {can.cancel ? (
           <BuildTabButton
             variant="ghost"
             icon={CircleStop}
@@ -158,7 +159,7 @@ function RunImageRowView({
             onPress={() => ctx.onCancel(c)}
           />
         ) : null}
-        {c.state === 'pending' && !derived ? (
+        {can.build ? (
           <BuildTabButton
             variant="ghost"
             icon={Play}
@@ -167,7 +168,7 @@ function RunImageRowView({
             onPress={() => ctx.onOpenBuild([comboOf(c)])}
           />
         ) : null}
-        {c.state === 'done' && !derived ? (
+        {can.rebuild ? (
           <BuildTabButton
             variant="ghost"
             icon={RotateCw}
@@ -176,7 +177,7 @@ function RunImageRowView({
             onPress={() => ctx.onOpenBuild([comboOf(c)])}
           />
         ) : null}
-        {(c.state === 'pending' || c.state === 'done') && !derived ? (
+        {can.remove ? (
           <BuildTabButton
             variant="ghost"
             icon={Trash2}

@@ -40,7 +40,8 @@ import {
   connectBuildWeb,
   disconnectBuildWeb,
   getBuildWebStatus,
-  testBuildWebConnection
+  testBuildWebConnection,
+  buildWebConsoleFeatures
 } from '../build-web/build-web-connection'
 import {
   getBuildWebIssue,
@@ -108,6 +109,10 @@ export class RuntimeBuildWebCommands {
 
   buildWebTestConnection() {
     return testBuildWebConnection()
+  }
+
+  buildWebConsoleFeatures() {
+    return buildWebConsoleFeatures()
   }
 
   buildWebListIssues(args: In<typeof BuildWebIssueQueryParams>, signal?: AbortSignal) {

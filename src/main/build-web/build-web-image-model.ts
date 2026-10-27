@@ -1,3 +1,4 @@
+import { withoutTwins } from '../../shared/build-web-redos-twin'
 import { buildCell, sortByCell } from './build-web-image-sort'
 import type {
   BuildWebImageBuild,
@@ -43,7 +44,9 @@ function countBy<T>(items: T[], key: (item: T) => string | null): Record<string,
 /** Images building right now — one per image and distribution, however many runs hold it. */
 export function runningImageCount(catalog: ImageCatalog): number {
   return new Set(
-    catalog.builds.filter((b) => b.status === 'running').map((b) => `${b.image}|${b.dist}`)
+    withoutTwins(catalog.builds)
+      .filter((b) => b.status === 'running')
+      .map((b) => `${b.image}|${b.dist}`)
   ).size
 }
 
@@ -53,14 +56,17 @@ export function failedImageCount(catalog: ImageCatalog): number {
   return catalog.images.filter((i) => last.get(i.image)?.status === 'failed').length
 }
 
-/** Each image's newest build passing the version and dists; filters first, as build-web's `lastOf`. */
+/**
+ * Each image's newest build passing the version and dists; filters first, as build-web's `lastOf`.
+ * A redos twin is never the newest: it comes with its rhel build (IS-230.21).
+ */
 function newestMatching(
   newest: BuildWebImageBuild[],
   version: string | undefined,
   dists: string[]
 ): Map<string, BuildWebImageBuild> {
   const last = new Map<string, BuildWebImageBuild>()
-  for (const build of newest) {
+  for (const build of withoutTwins(newest)) {
     if (version && build.product_version !== version) {
       continue
     }
@@ -85,7 +91,7 @@ function runningByDist(
 ): Map<string, BuildWebImageBuild[]> {
   const seen = new Set<string>()
   const running = new Map<string, BuildWebImageBuild[]>()
-  for (const build of newest) {
+  for (const build of withoutTwins(newest)) {
     const key = `${build.image}|${build.dist}`
     if (
       seen.has(key) ||

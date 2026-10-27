@@ -19,6 +19,7 @@ import { ImagePushProgress, RowRegistryCell, useTableFollowsPushes } from './Ima
 import { SettleFailedStatus } from './SettleFailedStatus'
 import { FreshnessCell, useImageFreshness } from './image-freshness'
 import { useBuildWebStore } from '../build-web-store'
+import { useDistRules } from '../use-dist-rules'
 import { BuildWebSortHeader } from '../BuildWebSortHeader'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { productTone } from '../build-web-tones'
@@ -55,8 +56,9 @@ export function ImageListView({
   const [q, setQ] = useState('')
   const [filters, setFilters] = useState(() => readViewPrefs().imageFilters)
   const { products, version } = filters
+  const rules = useDistRules(target)
   // Why only Chat Platform: the monorepo builds rhel, its redos images are twins of those (IS-230).
-  const withDist = products.length === 1 && products[0] === 'cp'
+  const withDist = !rules.productsRhelOnly || (products.length === 1 && products[0] === 'cp')
   const dists = withDist ? filters.dists : []
   const statuses = STATUS_FILTERS.filter((st) => filters.statuses.includes(st))
   const [page, setPage] = useState(0)

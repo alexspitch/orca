@@ -988,6 +988,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.clearAgentSession': BuildWebClearSessionParams,
   'buildWeb.commitDiff': BuildWebCommitDiffParams,
   'buildWeb.connect': BuildWebConnect,
+  'buildWeb.consoleFeatures': null,
   'buildWeb.createIssueRun': BuildWebIssueRunParams,
   'buildWeb.createJiraIssue': BuildWebJiraCreateParams,
   'buildWeb.deleteComment': BuildWebCommentDeleteParams,

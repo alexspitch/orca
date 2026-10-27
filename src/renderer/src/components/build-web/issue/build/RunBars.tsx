@@ -17,7 +17,6 @@ import type {
   BuildWebPushAfter
 } from '../../../../../../shared/build-web-run-types'
 import { RUN_DISTS, RUN_PRODUCT_FILTERS, type RunFilter } from '../../build-web-view-prefs'
-import { choosesDist, type BuildWebRepo } from '../../../../../../shared/build-web-repos'
 import { comboOf, type Cell } from './run-cells'
 import { formatAt } from './RunCellChips'
 import { BuildMenu, PushMenu } from './RunMenus'
@@ -284,7 +283,7 @@ export function RunAddImage({
   images,
   branches,
   runBranch,
-  repo,
+  choosing,
   defaultDist,
   disabled,
   onAdd
@@ -292,17 +291,16 @@ export function RunAddImage({
   images: string[]
   branches: string[]
   runBranch: string
-  repo: BuildWebRepo
+  /** The console lets this run's repository choose (IS-230: not the monorepo). */
+  choosing: boolean
   defaultDist: string
   disabled: boolean
   onAdd: (image: string, dist: string, branch: string) => Promise<boolean>
 }): React.JSX.Element {
   const [image, setImage] = useState<string | null>(null)
-  const [chosen, setDist] = useState(
+  const [chosen, setChosen] = useState(
     defaultDist === 'rhel' || defaultDist === 'redos' ? defaultDist : 'both'
   )
-  // Why: the monorepo builds rhel only — its redos comes with publication (IS-230).
-  const choosing = choosesDist(repo)
   const dist = choosing ? chosen : 'rhel'
   // The branch last used: the common case is a series of images on one branch.
   const [branch, setBranch] = useState(runBranch)
@@ -322,7 +320,7 @@ export function RunAddImage({
           size="sm"
           value={dist}
           disabled={disabled}
-          onValueChange={(v) => v && setDist(v)}
+          onValueChange={(v) => v && setChosen(v)}
         >
           {['rhel', 'redos', 'both'].map((d) => (
             <ToggleGroupItem key={d} value={d}>

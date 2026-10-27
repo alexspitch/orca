@@ -23,7 +23,9 @@ export const BuildWebCombosParams = z.object({
   runId: Id,
   combos: Combos,
   pushAfter: z.enum(BUILD_WEB_PUSH_AFTER),
-  skipTests: z.boolean()
+  skipTests: z.boolean(),
+  // Why optional: an older client sends none, and the console then builds no waiting twin.
+  twinDecision: z.boolean().optional()
 })
 export const BuildWebComboParams = z.object({ runId: Id, combo: Combo })
 export const BuildWebRedosTwinParams = z.object({
