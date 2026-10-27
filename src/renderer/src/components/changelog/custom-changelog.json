@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.243-custom.1793081010000",
+      "date": "2026-10-27",
+      "commit": "97443e595daf",
+      "features": [
+        "The phone app's Issues page now shows build-web tasks, with the full task card and all its tabs, replacing the old Tasks view.",
+        "You can take a task to work from the phone's Issues page using a Claude account, handled through your paired desktop.",
+        "The phone app now has an Images section where you can list, build, push and settle images and view their history and logs."
+      ],
+      "settings": [],
+      "fixes": ["Build logs no longer show Jenkins' hidden console notes as stray text."]
+    },
+    {
       "version": "1.4.242-custom.1793047280000",
       "date": "2026-10-26",
       "commit": "2bebc23efdaf",
