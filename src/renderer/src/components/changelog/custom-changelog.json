@@ -1,6 +1,27 @@
 {
   "releases": [
     {
+      "version": "1.4.243-custom.1793134786000",
+      "date": "2026-10-27",
+      "commit": "d3eda4d3bbdb",
+      "features": [
+        "Monorepo products now build for rhel only, and each redos image is derived from its rhel build when published, shown as a redos twin.",
+        "Run rows in Trains show redos twin chips: building, full build, awaiting a decision, not built, or no redos, with the rhel build each twin belongs to.",
+        "A redos twin that was built but not published offers «Retry» on its run row, and a failed full twin is retried instead of rebuilt.",
+        "«Build» on a redos twin awaiting a decision now sends that decision, and older servers that can't accept it explain why they refuse.",
+        "Images and «Add image» build products for rhel only and show the console's note when it replaces the requested distribution.",
+        "Redos twins are left out of Build all, Rebuild stale/failed, Publish, Testing work rows, and image counts, latest builds and running or failed tallies.",
+        "The distribution filter in the build list and Images now appears only for chat-platform, while the distribution column stays everywhere.",
+        "The phone app gets the same redos twin chips, Retry and rhel-only building as the desktop."
+      ],
+      "settings": [],
+      "fixes": [
+        "When connected to an older build-web console, monorepo builds and distribution filters keep offering rhel, redos or both as before.",
+        "A derived redos twin can now be removed once its rhel build has been removed.",
+        "The Issues page in the Android phone app now loads instead of failing on build-web data."
+      ]
+    },
+    {
       "version": "1.4.243-custom.1793081010000",
       "date": "2026-10-27",
       "commit": "97443e595daf",
