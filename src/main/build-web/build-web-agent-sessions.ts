@@ -29,17 +29,27 @@ export async function fetchBuildWebAgentSessions(
   ids: readonly string[],
   options: Options = {}
 ): Promise<BuildWebAgentSessionLookup> {
-  const unique = [...new Set(ids)].slice(0, MAX_IDS)
+  const unique = [...new Set(ids)]
   const credential = credentialFor(options)
-  const query = unique.map(encodeURIComponent).join(',')
-  return agentSessionLookupOf(
-    await buildWebRequest({
-      ...credential,
-      path: `${BASE}?ids=${query}`,
-      signal: options.signal,
-      timeoutMs: options.timeoutMs
-    })
-  )
+  const merged: BuildWebAgentSessionLookup = { sessions: [], settings: { auto_cleanup: true } }
+  // Why chunks: the console refuses more than MAX_IDS ids in one ask (400).
+  for (let start = 0; start === 0 || start < unique.length; start += MAX_IDS) {
+    const query = unique
+      .slice(start, start + MAX_IDS)
+      .map(encodeURIComponent)
+      .join(',')
+    const lookup = agentSessionLookupOf(
+      await buildWebRequest({
+        ...credential,
+        path: `${BASE}?ids=${query}`,
+        signal: options.signal,
+        timeoutMs: options.timeoutMs
+      })
+    )
+    merged.sessions.push(...lookup.sessions)
+    merged.settings = lookup.settings
+  }
+  return merged
 }
 
 function sessionOf(answer: unknown): BuildWebAgentSessionRecord | null {

@@ -19,6 +19,7 @@ import { stopCodexStateDbBackfillRecoveries } from '../codex/codex-state-db-back
 import { stopCodexAccountSessionBridges } from '../codex/codex-account-session-bridge'
 import { awaitPackedRefsLockRelease } from '../git/local-repo-ref-maintenance'
 import { stopBackgroundWorktreeRemovals } from '../worktree-background-removal'
+import { stopBuildWebSessionWatcher } from './main-process-build-web-sessions'
 import { settleTeardownWithinDeadline, settleWithinMs } from '../quit-teardown-deadline'
 import { quitTeardownStartGate } from '../quit-teardown-start-gate'
 import { setUnreadDockBadgeCount } from '../dock/unread-badge'
@@ -109,6 +110,7 @@ function installWillQuitHandler(): void {
     const paneGridFlush = state.runtime?.flushPaneGrids() ?? null
     // A renderer can veto before-quit; push must survive until quit is committed.
     state.desktopPushService?.stop()
+    stopBuildWebSessionWatcher()
     state.unsubscribeSystemResumeBroadcast?.()
     state.unsubscribeSystemResumeBroadcast = null
     state.stopDesktopPresenceReporter?.()

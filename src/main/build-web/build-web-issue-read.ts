@@ -95,9 +95,10 @@ export async function listBuildWebIssueChildren(
 
 export async function getBuildWebIssue(
   id: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  options?: { background?: true }
 ): Promise<BuildWebIssueDetail> {
-  const credential = requireBuildWebCredential()
+  const credential = requireBuildWebCredential(options)
   const detail = issueDetailOf(
     credential.baseUrl,
     await buildWebRequest({

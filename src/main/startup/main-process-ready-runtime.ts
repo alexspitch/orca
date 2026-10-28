@@ -26,6 +26,7 @@ import {
   configureRuntimeServices
 } from './main-process-runtime-service'
 import { initializeMainProcessAutomations } from './main-process-automations'
+import { startBuildWebSessionWatcher } from './main-process-build-web-sessions'
 import { initializeMainProcessPlugins } from './main-process-plugins'
 import { collectWorktreeTrashSweepRoots, sweepStaleWorktreeTrash } from '../worktree-trash'
 import { loadWorktreeRemovalRecordsForStore } from './worktree-removal-records-load'
@@ -52,6 +53,7 @@ export async function initializeReadyRuntimeServices(): Promise<void> {
   const runtime = initializeMainProcessRuntime()
   initializeMainProcessAutomations()
   configureRuntimeServices(runtime)
+  startBuildWebSessionWatcher()
   installFirstWorkRenameHookSubscription()
   await initializeMainProcessPlugins(runtime)
   state.starNag = new StarNagService(store, state.stats!)

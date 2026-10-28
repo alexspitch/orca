@@ -16,6 +16,7 @@ import type { OrcaRuntimeRpcServer } from '../runtime/runtime-rpc'
 import type { DesktopRelayService } from '../runtime/mobile-cloud-relay/desktop-relay-service'
 import type { DesktopRelayServiceInstaller } from '../runtime/mobile-cloud-relay/desktop-relay-service-installer'
 import type { DesktopPushService } from '../runtime/push/desktop-push-service'
+import type { BuildWebSessionWatcher } from '../build-web/build-web-session-watcher'
 import type { StarNagService } from '../star-nag/service'
 import type { AgentAwakeService } from '../agent-awake-service'
 import type { CrashReportStore } from '../crash-reporting/crash-report-store'
@@ -91,6 +92,8 @@ export const mainProcessState = {
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: widens the null slot to the installer assigned by main-process-relay-startup.
   desktopRelayInstaller: null as DesktopRelayServiceInstaller | null,
   desktopPushService: null as DesktopPushService | null,
+  // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: widens the null slot to the watcher assigned by main-process-build-web-sessions.
+  buildWebSessionWatcher: null as BuildWebSessionWatcher | null,
   desktopRelayStatus: 'offline' as RelayBrokerStatus,
   desktopRelayCellUrl: undefined as string | undefined,
   pendingUnpairedDeviceAuthFailure: false,
