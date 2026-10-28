@@ -9,6 +9,7 @@ import {
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
   BUILD_WEB_REDOS_TWIN_RUNTIME_CAPABILITY,
   BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY,
+  BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY,
   BUILD_WEB_STANDS_RUNTIME_CAPABILITY,
   BUILD_WEB_STAND_HEALTH_RUNTIME_CAPABILITY,
   BUILD_WEB_TASK_PAGE_RUNTIME_CAPABILITY,
@@ -183,6 +184,15 @@ export const NEWER_METHODS: {
       translate(
         'buildWeb.client.updateServerSessions',
         'This Orca server does not follow task sessions yet. Update the server.'
+      )
+  },
+  {
+    methods: new Set<Method>(['sessionTranscript']),
+    capability: BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerTranscript',
+        'This Orca server does not hand out session logs yet. Update the server.'
       )
   },
   {

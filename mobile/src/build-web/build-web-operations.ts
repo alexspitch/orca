@@ -103,6 +103,7 @@ const BUILD_WEB_OPERATIONS = {
   savedQueries: buildWebOperation('buildWeb.savedQueries'),
   saveGuide: buildWebOperation('buildWeb.saveGuide'),
   saveQuery: buildWebOperation('buildWeb.saveQuery'),
+  sessionTranscript: buildWebOperation('buildWeb.sessionTranscript'),
   setAgentSession: buildWebOperation('buildWeb.setAgentSession'),
   setAgentSessionSettings: buildWebOperation('buildWeb.setAgentSessionSettings'),
   setFavorite: buildWebOperation('buildWeb.setFavorite'),

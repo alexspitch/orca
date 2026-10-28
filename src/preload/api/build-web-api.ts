@@ -19,6 +19,7 @@ import type {
   BuildWebVersion
 } from '../../shared/build-web-types'
 import type { BuildWebAgentSessionSettings } from '../../shared/build-web-session-types'
+import type { BuildWebSessionTranscript } from '../../shared/build-web-session-transcript'
 import type {
   BuildWebSavedFilter,
   BuildWebSavedQuery
@@ -114,6 +115,12 @@ export type BuildWebApi = {
     args: BuildWebAgentSessionSettings
   ) => Promise<BuildWebMutationResult<BuildWebAgentSessionSettings>>
   keepWorktreeSession: (args: { worktreeId: string }) => Promise<BuildWebMutationResult<true>>
+  /** A session's agent log on this host, a page from its end; `before` reads the page before. */
+  sessionTranscript: (args: {
+    agent: string
+    providerSessionId: string
+    before?: number
+  }) => Promise<BuildWebSessionTranscript>
   imageSummary: () => Promise<BuildWebImageSummary>
   issueSummary: (args?: BuildWebIssueSummaryQuery) => Promise<BuildWebIssueSummary>
   listImages: (args: BuildWebImagePageArgs & { refresh?: boolean }) => Promise<BuildWebImagePage>

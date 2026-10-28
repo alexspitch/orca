@@ -44,6 +44,7 @@ import { BUILD_WEB_TASK_METHODS } from './build-web-task'
 import { BUILD_WEB_WATCH_METHODS } from './build-web-watch'
 import { BUILD_WEB_DIST_METHODS } from './build-web-dist'
 import { BUILD_WEB_SESSION_METHODS } from './build-web-sessions'
+import { BUILD_WEB_SESSION_TRANSCRIPT_METHODS } from './build-web-session-transcript'
 import { BUILD_WEB_RECAP_METHODS } from './build-web-recaps'
 import { BUILD_WEB_ACTIVITY_METHODS } from './build-web-activity'
 import { BUILD_WEB_TEST_HISTORY_METHODS } from './build-web-test-history'
@@ -145,6 +146,7 @@ export const ALL_RPC_METHODS = [
   ...BUILD_WEB_WATCH_METHODS,
   ...BUILD_WEB_DIST_METHODS,
   ...BUILD_WEB_SESSION_METHODS,
+  ...BUILD_WEB_SESSION_TRANSCRIPT_METHODS,
   ...BUILD_WEB_RECAP_METHODS,
   ...BUILD_WEB_ACTIVITY_METHODS,
   ...BUILD_WEB_TEST_HISTORY_METHODS,

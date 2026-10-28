@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Bot, SquareTerminal } from 'lucide-react-native'
 import type { BuildWebIssueDetail } from '../../../../src/shared/build-web-types'
+import type { BuildWebAgentSessionRecord } from '../../../../src/shared/build-web-session-types'
+import { BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 import {
   BUILD_WEB_AGENT_SESSION_STATE_LABELS,
   BUILD_WEB_SESSION_REASON_LABELS,
@@ -19,15 +21,19 @@ import { BuildWebToneChip } from '../BuildWebToneChip'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { useOpenBuildWebSession } from '../list/use-open-build-web-session'
 import { ui } from './issue-card-ui'
+import { SessionTranscriptSheet } from './SessionTranscriptSheet'
 
 const when = (iso: string | null): string => (iso ? new Date(iso).toLocaleString() : '')
 
 function SessionRow({
   row,
-  onOpen
+  onOpen,
+  onLog
 }: {
   row: BuildWebSessionRow<Worktree>
   onOpen: (worktree: Worktree) => void
+  /** Absent when the host cannot hand out the log, or the agent's own session id is unknown. */
+  onLog?: () => void
 }) {
   const { record, worktree, attention } = row
   const state = attention
@@ -55,6 +61,11 @@ function SessionRow({
         ) : (
           <Text style={styles.worktree}>{record.worktree_name || '—'}</Text>
         )}
+        {onLog ? (
+          <Text style={[styles.worktree, styles.link]} accessibilityRole="button" onPress={onLog}>
+            Log
+          </Text>
+        ) : null}
       </View>
       <Text style={ui.muted}>
         {[record.agent, record.by ? loginOf(record.by) : ''].filter(Boolean).join(' · ')} ·{' '}
@@ -77,8 +88,10 @@ export function IssueSessions({
     'id' | 'agent_session' | 'agent_session_state' | 'agent_sessions'
   >
 }) {
-  const { status } = useBuildWebScreen()
+  const { status, hostCapabilities } = useBuildWebScreen()
   const session = useOpenBuildWebSession()
+  const [logOf, setLogOf] = useState<BuildWebAgentSessionRecord | null>(null)
+  const logs = hostCapabilities.includes(BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY)
   const records = detail.agent_sessions
   const [worktrees, setWorktrees] = useState<readonly Worktree[]>([])
   const { listWorktrees } = session
@@ -133,8 +146,10 @@ export function IssueSessions({
           key={row.record.id}
           row={row}
           onOpen={(worktree) => session.openWorktree(worktree)}
+          {...(logs && row.record.provider_session_id ? { onLog: () => setLogOf(row.record) } : {})}
         />
       ))}
+      <SessionTranscriptSheet record={logOf} onClose={() => setLogOf(null)} />
     </View>
   )
 }

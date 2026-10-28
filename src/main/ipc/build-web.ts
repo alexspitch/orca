@@ -32,6 +32,7 @@ import {
   BuildWebSavedQueriesParams,
   BuildWebSavedQueryDeleteParams,
   BuildWebSavedQuerySaveParams,
+  BuildWebSessionTranscriptParams,
   BuildWebVersionsParams,
   BuildWebWorktreeSessionParams
 } from '../../shared/rpc-contract/build-web-params'
@@ -42,6 +43,7 @@ import {
   type BuildWebSessionLinkRuntime
 } from '../build-web/build-web-session-link'
 import { keepBuildWebWorktreeSession } from '../build-web/build-web-session-keep'
+import { readBuildWebSessionTranscript } from '../build-web/build-web-session-transcript'
 import { registerBuildWebStandHandlers } from './build-web-stands'
 import { registerBuildWebTaskHandlers } from './build-web-task'
 
@@ -115,6 +117,9 @@ export function registerBuildWebHandlers(runtime: BuildWebSessionLinkRuntime): v
   )
   handle('keepWorktreeSession', BuildWebWorktreeSessionParams, (args) =>
     keepBuildWebWorktreeSession(runtime, args.worktreeId)
+  )
+  handle('sessionTranscript', BuildWebSessionTranscriptParams, (args) =>
+    readBuildWebSessionTranscript(args)
   )
   handle('getIssueRun', BuildWebIssueId, (args) => commands.buildWebGetIssueRun(args))
   handle('pushRun', BuildWebPushRunParams, (args) => commands.buildWebPushRun(args))

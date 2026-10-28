@@ -68,6 +68,7 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.savedQueries',
   'buildWeb.saveGuide',
   'buildWeb.saveQuery',
+  'buildWeb.sessionTranscript',
   'buildWeb.setAgentSession',
   'buildWeb.setAgentSessionSettings',
   'buildWeb.setFavorite',
