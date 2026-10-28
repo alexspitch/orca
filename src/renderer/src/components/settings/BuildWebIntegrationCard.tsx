@@ -9,6 +9,7 @@ import { callBuildWeb } from '../build-web/build-web-client'
 import { BuildWebConnectForm } from '../build-web/BuildWebConnect'
 import { useBuildWebTarget } from '../build-web/use-build-web-data'
 import { IntegrationCardDetails, IntegrationCardShell } from './integration-card-shell'
+import { BuildWebSessionCleanupSetting } from './BuildWebSessionCleanupSetting'
 import {
   showsBuildWebActivity,
   showsBuildWebRecaps,
@@ -126,6 +127,7 @@ export function BuildWebIntegrationCard(): React.JSX.Element {
           />
         ) : null}
         {message ? <p className="text-xs text-muted-foreground">{message}</p> : null}
+        {connected ? <BuildWebSessionCleanupSetting target={target} /> : null}
         <label className="flex items-center justify-between gap-3 pt-2 text-sm">
           <span>
             <span className="block">

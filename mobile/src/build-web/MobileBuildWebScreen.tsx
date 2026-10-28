@@ -34,6 +34,10 @@ import { BuildWebNoticeBanner, type BuildWebNotice } from './BuildWebNoticeBanne
 import { BuildWebImagesView } from './images/BuildWebImagesView'
 import { BuildWebTasksView } from './tasks/BuildWebTasksView'
 import { ImageTrackingContext, useImageTrackingState } from './images/image-tracking'
+import {
+  BuildWebSessionCleanupSwitch,
+  useSessionCleanupSetting
+} from './BuildWebSessionCleanupSetting'
 
 type OpenCard = { id: string; tab: BuildWebCardTab }
 type Section = 'issues' | 'images' | 'tasks'
@@ -140,6 +144,11 @@ export function MobileBuildWebScreen() {
     [client]
   )
   const tracking = useImageTrackingState(status?.connected ? call : null, notify)
+  const cleanup = useSessionCleanupSetting(
+    hostId,
+    hostCapabilities,
+    status?.connected ? call : null
+  )
 
   const screen = useMemo<BuildWebScreen | null>(
     () =>
@@ -344,7 +353,9 @@ export function MobileBuildWebScreen() {
           { label: 'Check connection', icon: RefreshCw, onPress: () => void refreshStatus() },
           { label: 'Disconnect', destructive: true, onPress: () => void disconnect() }
         ]}
-      />
+      >
+        {cleanup ? <BuildWebSessionCleanupSwitch setting={cleanup} /> : null}
+      </ActionSheetModal>
     </View>
   )
 }
