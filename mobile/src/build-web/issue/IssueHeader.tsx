@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
-import { Archive, ExternalLink, Pencil, SquareTerminal } from 'lucide-react-native'
+import { Archive, ExternalLink, Pencil } from 'lucide-react-native'
 import type {
   BuildWebIssueDetail,
   BuildWebIssuePatch
@@ -17,8 +17,8 @@ import {
   TypeChip
 } from '../BuildWebToneChip'
 import { useBuildWebScreen } from '../build-web-screen-context'
-import { useOpenBuildWebSession } from '../list/use-open-build-web-session'
 import { useTakeToWork } from '../take-to-work/use-take-to-work'
+import { IssueSessions } from './IssueSessions'
 import { CardButton, ui } from './issue-card-ui'
 import { blockedBySubtasks } from './IssueSubtasksTab'
 import type { IssueArchiveState } from './use-issue-archive'
@@ -118,7 +118,6 @@ export function IssueHeader({
 }) {
   const { openIssue, closeIssue } = useBuildWebScreen()
   const takeToWork = useTakeToWork()
-  const session = useOpenBuildWebSession()
   const next = nextStatus(detail.status, Boolean(detail.parent_id))
   // The move the open subtasks forbid: build-web answers 409, so the button says so first.
   const blocked = next && next !== 'inprogress' ? blockedBySubtasks(detail) : ''
@@ -159,21 +158,7 @@ export function IssueHeader({
       <Text style={ui.muted}>
         {detail.created_by} · created {new Date(detail.created_at).toLocaleDateString()}
       </Text>
-      {detail.agent_session ? (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Open the agent session"
-          disabled={session.opening}
-          onPress={() => void session.open(detail)}
-          style={({ pressed }) => [styles.session, pressed ? styles.pressed : null]}
-        >
-          <SquareTerminal size={14} color={chipTones.blue} />
-          <Text style={styles.sessionText} numberOfLines={1}>
-            {detail.agent_session.agent} · {detail.agent_session.worktree_name}
-            {detail.agent_session.by ? ` · ${loginOf(detail.agent_session.by)}` : ''}
-          </Text>
-        </Pressable>
-      ) : null}
+      <IssueSessions detail={detail} />
       <View style={ui.wrapRow}>
         {next ? (
           <CardButton
@@ -224,19 +209,6 @@ const styles = StyleSheet.create({
     lineHeight: 24
   },
   titleInput: { fontSize: 16 },
-  session: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    borderRadius: radii.button,
-    borderWidth: 1,
-    borderColor: colors.borderSubtle
-  },
-  sessionText: { color: chipTones.blue, fontSize: typography.metaSize, flexShrink: 1 },
-  pressed: { opacity: 0.7 },
   blocked: { color: chipTones.amber, fontSize: typography.metaSize },
   note: {
     flexDirection: 'row',

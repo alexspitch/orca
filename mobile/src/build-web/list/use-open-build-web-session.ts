@@ -86,6 +86,20 @@ export function useOpenBuildWebSession() {
     [client, consoleHost, hostCapabilities, hostId]
   )
 
+  /** Every workspace of the host and, where it relays to them, of its servers — for a card's sessions. */
+  const listWorktrees = useCallback(async (): Promise<Worktree[]> => {
+    const catalog = new WorktreeCatalogSnapshotClient()
+    const fetched = await catalog.fetch(client, hostId)
+    const rows = fetched.kind === 'response' ? (catalog.admit(fetched.pending) ?? []) : []
+    if (!relaysToServers(client, hostCapabilities)) {
+      return [...rows]
+    }
+    const servers = await fetchServerWorkspaces(client).catch(() => null)
+    return servers
+      ? [...rows, ...applyServerWorkspaces(NO_SERVER_WORKSPACES, servers).worktrees]
+      : [...rows]
+  }, [client, hostCapabilities, hostId])
+
   /** False when the phone cannot route to the workspace's server; said in a notice. */
   const openWorktree = useCallback(
     (worktree: Worktree): boolean => {
@@ -137,5 +151,5 @@ export function useOpenBuildWebSession() {
     [findWorktree, openWorktree]
   )
 
-  return { open, openTaskWorktree, openWorktree, opening }
+  return { open, openTaskWorktree, openWorktree, listWorktrees, opening }
 }

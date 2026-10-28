@@ -6,7 +6,7 @@ import type { BuildWebIssueDetail, BuildWebIssuePatch } from '../../../../../sha
 import { loginOf, productLabel, statusLabel } from '../build-web-labels'
 import { BuildWebToneChip, PriorityChip, ProductChip, TypeChip } from '../BuildWebToneChip'
 import { StatusPicker } from '../BuildWebRowPickers'
-import { BuildWebSessionBadge } from '../BuildWebSessionBadge'
+import { BuildWebTaskSessions } from '../BuildWebTaskSessions'
 import { EditableTitle } from '../BuildWebIssueEditors'
 import { nextStatus } from './issue-card-facts'
 import { blockedBySubtasks } from '../BuildWebIssueSubtasks'
@@ -141,7 +141,7 @@ export function IssueHeader({
               })}
             </span>
           </div>
-          {detail.agent_session ? <BuildWebSessionBadge session={detail.agent_session} /> : null}
+          <BuildWebTaskSessions detail={detail} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button

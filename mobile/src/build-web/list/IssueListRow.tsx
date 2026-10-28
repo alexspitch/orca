@@ -5,11 +5,15 @@ import {
   CheckSquare,
   ChevronDown,
   ChevronRight,
+  Hourglass,
   Square,
   SquareTerminal,
-  Star
+  Star,
+  Timer
 } from 'lucide-react-native'
 import type { BuildWebIssueRow } from '../../../../src/shared/build-web-types'
+import { BUILD_WEB_SESSION_STATE_LABELS } from '../../../../src/shared/build-web-session-labels'
+import { taskSessionState } from '../../../../src/shared/build-web-session-rows'
 import { chipTones, colors, spacing, typography } from '../../theme/mobile-theme'
 import { loginOf } from '../build-web-labels'
 import {
@@ -52,6 +56,48 @@ function SubtaskCount({ issue }: { issue: BuildWebIssueRow }) {
     >
       <Text style={[styles.countText, { color: hue }]}>{issue.children}</Text>
     </View>
+  )
+}
+
+const SESSION_MARKS = {
+  active: { Icon: SquareTerminal, hue: chipTones.blue },
+  waiting: { Icon: Timer, hue: chipTones.sky },
+  closing: { Icon: Hourglass, hue: colors.textMuted }
+} as const
+
+/** The task's session by its state; tapping it opens the session while one holds the task. */
+function SessionMark({
+  issue,
+  onOpenSession
+}: {
+  issue: BuildWebIssueRow
+  onOpenSession: (issue: BuildWebIssueRow) => void
+}) {
+  const state = taskSessionState(issue)
+  if (!state) {
+    return null
+  }
+  const { Icon, hue } = SESSION_MARKS[state]
+  const words = BUILD_WEB_SESSION_STATE_LABELS[state].full.text
+  const session = issue.agent_session
+  return (
+    <Pressable
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={
+        session
+          ? `${words}: ${session.agent} · ${session.worktree_name}`
+          : `Agent session: ${words}`
+      }
+      disabled={!session}
+      onPress={() => onOpenSession(issue)}
+      style={styles.session}
+    >
+      <Icon size={13} color={hue} />
+      <Text style={[styles.sessionText, { color: hue }]} numberOfLines={1}>
+        {session?.worktree_name || words}
+      </Text>
+    </Pressable>
   )
 }
 
@@ -142,20 +188,7 @@ function IssueListRowView({
           <Bot size={13} color={chipTones.purple} accessibilityLabel="Handed to AI" />
         ) : null}
         <View style={styles.grow} />
-        {issue.agent_session ? (
-          <Pressable
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel={`Agent session: ${issue.agent_session.agent} · ${issue.agent_session.worktree_name}`}
-            onPress={() => onOpenSession(issue)}
-            style={styles.session}
-          >
-            <SquareTerminal size={13} color={chipTones.blue} />
-            <Text style={styles.sessionText} numberOfLines={1}>
-              {issue.agent_session.worktree_name}
-            </Text>
-          </Pressable>
-        ) : null}
+        <SessionMark issue={issue} onOpenSession={onOpenSession} />
         <Pressable
           hitSlop={8}
           accessibilityRole="button"
@@ -235,7 +268,7 @@ const styles = StyleSheet.create({
   },
   grow: { flex: 1 },
   session: { flexDirection: 'row', alignItems: 'center', gap: 3, maxWidth: 140 },
-  sessionText: { color: chipTones.blue, fontSize: 11 },
+  sessionText: { fontSize: 11 },
   titleLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   title: {
     flexShrink: 1,

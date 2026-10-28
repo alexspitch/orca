@@ -18,6 +18,18 @@ export function currentOpenSession(issue: SessionIssue): BuildWebAgentSession | 
   return session && (state === null || state === 'active' || state === 'waiting') ? session : null
 }
 
+/** The worktrees made for the task against this console. */
+export function taskWorktreesOf<W extends TaskWorktree>(
+  issueId: string,
+  worktrees: readonly W[],
+  consoleHost: string
+): W[] {
+  return worktrees.filter(
+    (w) =>
+      w.buildWebTask?.issueId === issueId && sameConsole(w.buildWebTask.consoleHost, consoleHost)
+  )
+}
+
 /**
  * The worktree made for the task that holds `session`: by the console's session row first, then
  * one whose link is not written yet. A worktree linked to another row holds another session.
@@ -28,10 +40,7 @@ export function findSessionWorktree<W extends TaskWorktree>(
   worktrees: readonly W[],
   consoleHost: string
 ): W | null {
-  const ours = worktrees.filter(
-    (w) =>
-      w.buildWebTask?.issueId === issueId && sameConsole(w.buildWebTask.consoleHost, consoleHost)
-  )
+  const ours = taskWorktreesOf(issueId, worktrees, consoleHost)
   return (
     (session.id ? ours.find((w) => w.buildWebTask?.sessionId === session.id) : undefined) ??
     ours.find((w) => !w.buildWebTask?.sessionId) ??

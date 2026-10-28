@@ -15,7 +15,7 @@ import { BuildWebIssueSubtasks } from './BuildWebIssueSubtasks'
 import { EditableDescription, EditableSteps, EditableTitle } from './BuildWebIssueEditors'
 import { SectionTitle } from './BuildWebIssueBody'
 import { useBuildWebTarget } from './use-build-web-data'
-import { BuildWebSessionBadge } from './BuildWebSessionBadge'
+import { BuildWebTaskSessions } from './BuildWebTaskSessions'
 import { PriorityChip, ProductChip, TypeChip } from './BuildWebToneChip'
 import { StatusPicker } from './BuildWebRowPickers'
 import { useBuildWebDrawerWidth } from './use-build-web-drawer-width'
@@ -112,9 +112,7 @@ export function BuildWebIssueDrawer({
             </p>
           ) : !detail ? null : (
             <>
-              {detail.agent_session ? (
-                <BuildWebSessionBadge session={detail.agent_session} />
-              ) : null}
+              <BuildWebTaskSessions detail={detail} />
               <EditableTitle
                 detail={detail}
                 saving={saving}
