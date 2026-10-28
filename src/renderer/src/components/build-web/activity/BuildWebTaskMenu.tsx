@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { ListChecks } from 'lucide-react'
+import { ExternalLink, ListChecks } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,7 @@ import { formatUiRelativeTimeFromDate } from '@/i18n/relative-time-format'
 import type { BuildWebConsoleTask } from '../../../../../shared/build-web-activity-types'
 import { BuildWebJobPanel } from '../BuildWebJobPanel'
 import { BuildWebToneChip } from '../BuildWebToneChip'
-import { taskTarget, taskTone } from './activity-targets'
+import { ALL_TASKS_TARGET, buildPageUrl, taskTarget, taskTone } from './activity-targets'
 import { ActivityCountBadge } from './ActivityCountBadge'
 import { openActivityTarget, type ActivityHost } from './open-activity-target'
 
@@ -39,6 +40,7 @@ function TaskRow({
   onLog: (task: BuildWebConsoleTask) => void
 }): React.JSX.Element {
   const where = taskTarget(task)
+  const page = buildPageUrl(task, host.baseUrl)
   const at = task.active ? task.started_at || task.created_at : task.finished_at || task.created_at
   const line = [task.detail, at ? formatUiRelativeTimeFromDate(at, '') : '']
     .filter(Boolean)
@@ -60,8 +62,32 @@ function TaskRow({
           <span className="block truncate text-2xs text-muted-foreground">{line}</span>
         ) : null}
       </span>
+      {page ? <BuildPageButton url={page} /> : null}
       <BuildWebToneChip label={task.status} tone={taskTone(task.status)} />
     </DropdownMenuItem>
+  )
+}
+
+/** A redos build's own page in the browser; the row itself still opens the run's card. */
+function BuildPageButton({ url }: { url: string }): React.JSX.Element {
+  const label = translate('buildWeb.activity.buildPage', 'Build page')
+  // Why every pointer event: the menu item selects on pointer-up as well as on click.
+  const keep = (event: React.SyntheticEvent) => event.stopPropagation()
+  return (
+    <Button
+      variant="ghost"
+      size="icon-xs"
+      aria-label={label}
+      title={label}
+      onPointerDown={keep}
+      onPointerUp={keep}
+      onClick={(event) => {
+        keep(event)
+        void window.api.shell.openUrl(url)
+      }}
+    >
+      <ExternalLink />
+    </Button>
   )
 }
 
@@ -136,6 +162,11 @@ export function BuildWebTaskMenu({
               })}
             />
           ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => void openActivityTarget(ALL_TASKS_TARGET, host)}>
+            <ExternalLink />
+            {translate('buildWeb.activity.allTasks', 'All tasks')}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <Dialog open={logOf !== null} onOpenChange={(open) => !open && setLogOf(null)}>

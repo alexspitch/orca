@@ -51,6 +51,11 @@ export type BuildWebConsoleTask = {
   finished_at: string | null
   /** A console job (a stand's, a guide's, the test library's): its log is read as a job by its id. */
   has_log: boolean
+  /**
+   * IS-10: the page of the build itself — a Jenkins URL for a full redos build, a console path for
+   * one derived from rhel. Only a redos row has it; an older console sends none.
+   */
+  build_url: string | null
 }
 
 /** What the titlebar shows; a half is null when this console has no such list or refuses it. */

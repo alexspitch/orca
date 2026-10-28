@@ -3,7 +3,7 @@ import type {
   BuildWebConsoleTask,
   BuildWebNotification
 } from '../../../../../shared/build-web-activity-types'
-import { notificationTarget, taskTarget } from './activity-targets'
+import { buildPageUrl, notificationTarget, taskTarget } from './activity-targets'
 
 const note = (over: Partial<BuildWebNotification>): BuildWebNotification => ({
   id: 'n1',
@@ -33,6 +33,7 @@ const task = (over: Partial<BuildWebConsoleTask>): BuildWebConsoleTask => ({
   started_at: null,
   finished_at: null,
   has_log: true,
+  build_url: null,
   ...over
 })
 
@@ -90,5 +91,30 @@ describe('where a task leads', () => {
   it('opens a console job as its log, and nothing without one', () => {
     expect(taskTarget(task({ kind: 'shots' }))).toEqual({ kind: 'job', jobId: 'j1' })
     expect(taskTarget(task({ has_log: false }))).toBeNull()
+  })
+})
+
+describe('a redos build row (IS-10)', () => {
+  const redos = task({
+    key: 'redos:r1:dc/app|master',
+    source: 'build',
+    id: 'r1',
+    kind: 'redos',
+    title: 'Redos dc/app #7'
+  })
+
+  it('opens its run’s card, as any build row', () => {
+    expect(taskTarget(redos)).toEqual({ kind: 'run', runId: 'r1', tab: 'build' })
+  })
+
+  it('has its build’s page: Jenkins as is, a console path on the console', () => {
+    const base = 'https://bw.test'
+    const jenkins = 'https://ci.test/job/redos/7/'
+    expect(buildPageUrl({ ...redos, build_url: jenkins }, base)).toBe(jenkins)
+    expect(buildPageUrl({ ...redos, build_url: '/api/agent-jobs/a1/log' }, base)).toBe(
+      'https://bw.test/api/agent-jobs/a1/log'
+    )
+    expect(buildPageUrl(redos, base)).toBeNull()
+    expect(buildPageUrl({ ...redos, build_url: 'javascript:alert(1)' }, base)).toBeNull()
   })
 })

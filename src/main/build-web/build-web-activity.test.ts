@@ -130,8 +130,29 @@ describe('reading the bell and the tasks', () => {
       created_at: '2026-10-21T09:00:00Z',
       started_at: '2026-10-21T09:00:05Z',
       finished_at: null,
-      has_log: true
+      has_log: true,
+      build_url: null
     })
+  })
+
+  it('reads the page of a redos build, absent from an older console', async () => {
+    const redos = {
+      key: 'redos:r1:dc/app|master',
+      source: 'build',
+      id: 'r1',
+      kind: 'redos',
+      build_url: '/api/agent-jobs/a1/log'
+    }
+    mocks.request.mockImplementation(async ({ path }) =>
+      path.startsWith('/api/tasks')
+        ? { tasks: [task(redos), task({ key: 'build:r2', source: 'build', id: 'r2' })] }
+        : { notifications: [], unread: 0 }
+    )
+    const { tasks } = await readBuildWebActivity()
+    expect(tasks?.map((t) => [t.key, t.build_url])).toEqual([
+      ['redos:r1:dc/app|master', '/api/agent-jobs/a1/log'],
+      ['build:r2', null]
+    ])
   })
 
   it('hides a list the console lacks or refuses, and keeps the other', async () => {

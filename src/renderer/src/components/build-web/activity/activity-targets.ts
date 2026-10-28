@@ -51,6 +51,25 @@ export function taskTarget(task: BuildWebConsoleTask): ActivityTarget | null {
   return task.has_log ? { kind: 'job', jobId: task.id } : null
 }
 
+/** The console's page of all tasks, with its filters and pages (IS-10). */
+export const ALL_TASKS_TARGET: PageTarget = { kind: 'console', path: '/tasks' }
+
+/**
+ * IS-10: where a redos build's own page is — Jenkins as is, a console path on the console's origin.
+ * Null without one, or for anything but a web page.
+ */
+export function buildPageUrl(task: BuildWebConsoleTask, baseUrl: string): string | null {
+  if (!task.build_url) {
+    return null
+  }
+  try {
+    const url = new URL(task.build_url, `${baseUrl}/`)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : null
+  } catch {
+    return null
+  }
+}
+
 /** The console's chip colours; `stale` — the worker went quiet — is a thing to look at. */
 export function taskTone(status: BuildWebConsoleTask['status']): ChipTone {
   switch (status) {

@@ -22649,7 +22649,9 @@
       "moreRunning": "{{count}} more running",
       "moreDone": "{{count}} more finished",
       "alertMany": "build-web: {{count}} new notifications",
-      "alertOpen": "Open"
+      "alertOpen": "Open",
+      "buildPage": "Build page",
+      "allTasks": "All tasks"
     },
     "notifications": {
       "label": "build-web",

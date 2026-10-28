@@ -72,7 +72,8 @@ function taskOf(r: Record<string, unknown>): BuildWebConsoleTask | null {
     created_at: textOf(r.created_at),
     started_at: textOrNull(r.started_at),
     finished_at: textOrNull(r.finished_at),
-    has_log: r.has_log === true
+    has_log: r.has_log === true,
+    build_url: textOrNull(r.build_url)
   }
 }
 
