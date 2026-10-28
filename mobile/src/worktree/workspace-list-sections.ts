@@ -26,7 +26,6 @@ import type {
 } from '../../../src/shared/workspace-view/workspace-view-options'
 import { hostSortsByStamps, sortWorktrees } from './workspace-list-ordering'
 import { getWorktreeRowIdentity } from './worktree-host-row-identity'
-import { resolveWorktreeHostId } from './worktree-host-context-labels'
 import type { ExecutionHostId } from '../../../src/shared/execution-host'
 import {
   buildProjectGroupingIndex,
@@ -37,9 +36,12 @@ import {
 import { withRepoSectionDisplayLabels } from '../../../src/shared/project-section-order'
 import type { ProjectOrderBy } from '../../../src/shared/ui-chrome-types'
 import {
-  filterWorkspaceRows,
-  type WorkspaceRowFactReader
-} from '../../../src/shared/workspace-view/workspace-row-filters'
+  TASK_ATTENTION_GROUP_KEY,
+  isTaskSessionAttention
+} from '../../../src/shared/sidebar-list/task-session-groups'
+import { isSidebarGroupCollapsed } from '../../../src/shared/sidebar-list/default-collapsed-groups'
+import { filterWorktrees } from './phone-workspace-row-filter'
+import { buildTaskLaneSections } from './task-lane-sections'
 
 export type { FilterState, Section, SectionRepo, Worktree } from './workspace-list-types'
 
@@ -79,6 +81,7 @@ export function buildSectionRepoMap(
   return repoMap
 }
 export { getWorktreeStatus, sortWorktrees } from './workspace-list-ordering'
+export { filterWorktrees, isWorktreeActive } from './phone-workspace-row-filter'
 
 function makeSection(
   key: string,
@@ -95,76 +98,12 @@ function makeSection(
   }
 }
 
-// Idle prompts have no recent output; live terminals or unread output still count as active.
-export function isWorktreeActive(w: Worktree): boolean {
-  if (w.hasHostSidebarActivity !== undefined) {
-    return w.hasHostSidebarActivity
-  }
-  if (w.unread) {
-    return true
-  }
-  if (w.status) {
-    return w.status !== 'inactive'
-  }
-  if (w.liveTerminalCount > 0) {
-    return true
-  }
-  return false
-}
-
-// Older hosts omit the main-worktree flag; use the legacy branch heuristic.
-function guessDefaultBranchWorkspace(w: Worktree): boolean {
-  if (w.isMainWorktree !== undefined) {
-    return w.isMainWorktree && w.branch.trim() !== ''
-  }
-  const branch = w.branch.replace(/^refs\/heads\//, '')
-  return branch === 'main' || branch === 'master'
-}
-
-function phoneRowFacts(
-  repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId>
-): WorkspaceRowFactReader<Worktree> {
-  return {
-    isArchived: (w) => w.isArchived === true,
-    isFolderWorkspace: (w) => w.workspaceKind === 'folder-workspace',
-    repoId: (w) => w.repoId,
-    hostId: (w) => resolveWorktreeHostId(w, repoHostIdByRepoId),
-    isOtherClient: (w) => w.desktopOtherClient === true,
-    isDefaultBranch: (w) => w.defaultBranch ?? guessDefaultBranchWorkspace(w),
-    isAutomationCreated: (w) => w.automationCreated === true,
-    isCliCreated: (w) => w.cliCreated === true,
-    isDetachedHead: (w) => w.detachedHead === true,
-    // Why the guess: #8873's exemption must fail open on hosts that predate isMainWorktree.
-    isMainWorktree: (w) => w.isMainWorktree ?? guessDefaultBranchWorkspace(w),
-    isSleeping: (w) => !isWorktreeActive(w)
-  }
-}
-
 function orderMainWorktreeFirst(worktrees: Worktree[]): Worktree[] {
   const mainWorktrees = worktrees.filter((worktree) => worktree.isMainWorktree)
   if (mainWorktrees.length === 0) {
     return worktrees
   }
   return [...mainWorktrees, ...worktrees.filter((worktree) => !worktree.isMainWorktree)]
-}
-
-export function filterWorktrees(
-  worktrees: Worktree[],
-  filters: FilterState,
-  search: string,
-  repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId> = new Map()
-): Worktree[] {
-  const result = filterWorkspaceRows(worktrees, filters, phoneRowFacts(repoHostIdByRepoId))
-  const q = search.trim().toLowerCase()
-  if (!q) {
-    return result
-  }
-  return result.filter(
-    (w) =>
-      w.displayName.toLowerCase().includes(q) ||
-      w.branch.toLowerCase().includes(q) ||
-      w.repo.toLowerCase().includes(q)
-  )
 }
 
 export function isWorktreePinned(w: Worktree, localPins: Set<string>): boolean {
@@ -182,9 +121,15 @@ export function buildMobileWorkspacePlan(
   workspaceStatuses: readonly WorkspaceStatusDefinition[] = DEFAULT_WORKSPACE_STATUSES,
   _collapsedGroups: ReadonlySet<string> = new Set(),
   showPinnedInGroups = false,
-  repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId> = new Map()
+  repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId> = new Map(),
+  /** The connected host announces `build-web-worktree-task.v1`; the session filter waits for it. */
+  hostKnowsTasks = false
 ) {
-  const filtered = filterWorktrees(worktrees, filters, search, repoHostIdByRepoId)
+  const byTask = groupMode === 'task'
+  const filtered = filterWorktrees(worktrees, filters, search, repoHostIdByRepoId, {
+    hostKnowsTasks,
+    keepArchivedAttention: byTask
+  })
   const sorted = sortWorktrees(filtered, sortMode, Date.now(), hostSortsByStamps(worktrees))
   const childrenByParentIdentity = getMobileWorkspaceLineageChildren(
     filters.filterRepoIds.length > 0
@@ -198,12 +143,17 @@ export function buildMobileWorkspacePlan(
     childrenByParentIdentity,
     identityOf: getWorktreeRowIdentity,
     isPinned: (worktree) => isWorktreePinned(worktree, pinnedIds),
+    // Why: Needs attention outranks Pinned, even for a row under a pinned lineage parent.
+    keepOutOfPinned: byTask ? isTaskSessionAttention : undefined,
     duplicatePinned: showPinnedInGroups,
     owningSectionOf: (worktree) =>
       getProjectGroupingForRepo(worktree.repoId, repoMap, projectIndex),
     projectIdOf: (worktree) => worktree.repoId,
     sectionsOf: ({ pinned, natural: canonicalGroupWorktrees, displayRootByIdentity }) => {
       const sections: Section[] = []
+      const taskLanes = byTask ? buildTaskLaneSections(canonicalGroupWorktrees) : []
+      // Needs attention sits above Pinned; it is the only lane emitted before it.
+      sections.push(...taskLanes.filter((lane) => lane.key === TASK_ATTENTION_GROUP_KEY))
       if (pinned.length > 0) {
         sections.push(makeSection('pinned', 'Pinned', pinned, { icon: 'pin' }))
       }
@@ -277,6 +227,8 @@ export function buildMobileWorkspacePlan(
             sections.push(makeSection(getPRLaneKey(groupKey), PR_GROUP_LABELS[groupKey], items))
           }
         }
+      } else if (byTask) {
+        sections.push(...taskLanes.filter((lane) => lane.key !== TASK_ATTENTION_GROUP_KEY))
       }
       return sections.map((section): Section & WorktreeOccurrenceSection<Worktree> => ({
         ...section,
@@ -296,6 +248,16 @@ export function buildMobileWorkspacePlan(
         data: getMobileOccurrenceRows(occurrencePlan, section.key, collapsed)
       }))
   }
+}
+
+/** Empties collapsed lanes; «Awaiting release» stays collapsed until its `:expanded` key is stored. */
+export function collapseSections(
+  sections: readonly Section[],
+  collapsedGroups: ReadonlySet<string>
+): Section[] {
+  return sections.map((section) =>
+    isSidebarGroupCollapsed(collapsedGroups, section.key) ? { ...section, data: [] } : section
+  )
 }
 
 export function buildSections(...args: Parameters<typeof buildMobileWorkspacePlan>): Section[] {

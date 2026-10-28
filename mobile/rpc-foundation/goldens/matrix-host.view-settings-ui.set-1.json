@@ -4,54 +4,17 @@
   "family": "host.view-settings",
   "namedDeltas": [],
   "values": {
-    "1071e4898c81": {
-      "name": "ui.set#1",
-      "ordinal": 8,
-      "args": [
-        {
-          "name": "method",
-          "value": "ui.set"
-        },
-        {
-          "name": "params",
-          "value": {
-            "sortBy": "name"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "absent"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "error": {
-            "code": "refused",
-            "message": "outer refused"
-          },
-          "id": "frame-3",
-          "ok": false
-        }
-      }
-    },
-    "1c2564f1daca": {
-      "name": "settings.get#1",
-      "ordinal": 4,
-      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"settings.get\"}"
-    },
-    "424e4d52d6fa": {
-      "view": {
+    "09c7994c0a66": {
+      "name": "view",
+      "ordinal": 7,
+      "value": {
         "agentActivityDisplayMode": "compact",
         "collapsedGroups": [],
         "compactWorktreeCards": true,
         "filters": {
           "alwaysShowDefaultBranchWorkspace": true,
           "filterRepoIds": [],
+          "hiddenSessionStates": [],
           "hideAutomationGeneratedWorkspaces": false,
           "hideCliCreatedWorkspaces": false,
           "hideDefaultBranchWorkspace": false,
@@ -110,6 +73,46 @@
           "host"
         ]
       }
+    },
+    "1071e4898c81": {
+      "name": "ui.set#1",
+      "ordinal": 8,
+      "args": [
+        {
+          "name": "method",
+          "value": "ui.set"
+        },
+        {
+          "name": "params",
+          "value": {
+            "sortBy": "name"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "absent"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "error": {
+            "code": "refused",
+            "message": "outer refused"
+          },
+          "id": "frame-3",
+          "ok": false
+        }
+      }
+    },
+    "1c2564f1daca": {
+      "name": "settings.get#1",
+      "ordinal": 4,
+      "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"settings.get\"}"
     },
     "4cc5a473bafa": {
       "name": "ui.set#1",
@@ -171,94 +174,15 @@
         "startedAt": 0
       }
     },
-    "651e8014c9ff": {
-      "name": "ui.get#1",
-      "ordinal": 1,
-      "args": [
-        {
-          "name": "method",
-          "value": "ui.get"
-        },
-        {
-          "name": "params",
-          "value": {
-            "$rpc": "absent"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "absent"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "id": "frame-1",
-          "ok": true,
-          "result": {
-            "ui": {
-              "groupBy": "repo",
-              "hideSleepingWorkspaces": true,
-              "sortBy": "name"
-            }
-          }
-        }
-      }
-    },
-    "6bab186637b0": {
-      "name": "showPinnedInGroups",
-      "ordinal": 5,
-      "value": false
-    },
-    "793af4fc3c95": {
-      "name": "ui.set#1",
-      "ordinal": 8,
-      "args": [
-        {
-          "name": "method",
-          "value": "ui.set"
-        },
-        {
-          "name": "params",
-          "value": {
-            "sortBy": "name"
-          }
-        },
-        {
-          "name": "options",
-          "value": {
-            "$rpc": "absent"
-          }
-        }
-      ],
-      "settlement": {
-        "status": "fulfilled",
-        "startedAt": 0,
-        "settledAt": 0,
-        "value": {
-          "error": {
-            "code": "method_not_found",
-            "message": "Unknown method"
-          },
-          "id": "frame-3",
-          "ok": false
-        }
-      }
-    },
-    "8369a6f35fda": {
-      "name": "view",
-      "ordinal": 6,
-      "value": {
+    "5df9e5ac0561": {
+      "view": {
         "agentActivityDisplayMode": "compact",
         "collapsedGroups": [],
         "compactWorktreeCards": true,
         "filters": {
           "alwaysShowDefaultBranchWorkspace": true,
           "filterRepoIds": [],
+          "hiddenSessionStates": [],
           "hideAutomationGeneratedWorkspaces": false,
           "hideCliCreatedWorkspaces": false,
           "hideDefaultBranchWorkspace": false,
@@ -316,6 +240,154 @@
           "inline-agents",
           "host"
         ]
+      }
+    },
+    "651e8014c9ff": {
+      "name": "ui.get#1",
+      "ordinal": 1,
+      "args": [
+        {
+          "name": "method",
+          "value": "ui.get"
+        },
+        {
+          "name": "params",
+          "value": {
+            "$rpc": "absent"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "absent"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "id": "frame-1",
+          "ok": true,
+          "result": {
+            "ui": {
+              "groupBy": "repo",
+              "hideSleepingWorkspaces": true,
+              "sortBy": "name"
+            }
+          }
+        }
+      }
+    },
+    "6bab186637b0": {
+      "name": "showPinnedInGroups",
+      "ordinal": 5,
+      "value": false
+    },
+    "6e1e57b98872": {
+      "name": "view",
+      "ordinal": 6,
+      "value": {
+        "agentActivityDisplayMode": "compact",
+        "collapsedGroups": [],
+        "compactWorktreeCards": true,
+        "filters": {
+          "alwaysShowDefaultBranchWorkspace": true,
+          "filterRepoIds": [],
+          "hiddenSessionStates": [],
+          "hideAutomationGeneratedWorkspaces": false,
+          "hideCliCreatedWorkspaces": false,
+          "hideDefaultBranchWorkspace": false,
+          "hideDetachedHeadWorkspaces": false,
+          "hideSleepingWorkspaces": true,
+          "hideWorkspacesFromOtherDevices": false,
+          "visibleHostIds": {
+            "$rpc": "null"
+          }
+        },
+        "groupBy": "repo",
+        "newCardStyle": false,
+        "projectOrderBy": {
+          "$rpc": "null"
+        },
+        "sharesOtherClientFilter": false,
+        "sortBy": "name",
+        "workspaceStatuses": [
+          {
+            "color": "neutral",
+            "icon": "circle",
+            "id": "todo",
+            "label": "Todo"
+          },
+          {
+            "color": "conductor-progress",
+            "icon": "conductor-progress",
+            "id": "in-progress",
+            "label": "In progress"
+          },
+          {
+            "color": "conductor-review",
+            "icon": "conductor-review",
+            "id": "in-review",
+            "label": "In review"
+          },
+          {
+            "color": "conductor-done",
+            "icon": "conductor-done",
+            "id": "completed",
+            "label": "Done"
+          }
+        ],
+        "worktreeCardProperties": [
+          "status",
+          "unread",
+          "issue",
+          "linear-issue",
+          "jira-issue",
+          "pr",
+          "automation",
+          "cli",
+          "comment",
+          "ports",
+          "inline-agents",
+          "host"
+        ]
+      }
+    },
+    "793af4fc3c95": {
+      "name": "ui.set#1",
+      "ordinal": 8,
+      "args": [
+        {
+          "name": "method",
+          "value": "ui.set"
+        },
+        {
+          "name": "params",
+          "value": {
+            "sortBy": "name"
+          }
+        },
+        {
+          "name": "options",
+          "value": {
+            "$rpc": "absent"
+          }
+        }
+      ],
+      "settlement": {
+        "status": "fulfilled",
+        "startedAt": 0,
+        "settledAt": 0,
+        "value": {
+          "error": {
+            "code": "method_not_found",
+            "message": "Unknown method"
+          },
+          "id": "frame-3",
+          "ok": false
+        }
       }
     },
     "8ab052f2be74": {
@@ -487,21 +559,20 @@
         }
       }
     },
-    "c49dcad120d2": {
-      "name": "view",
-      "ordinal": 7,
-      "value": {
+    "c235b4d35f64": {
+      "view": {
         "agentActivityDisplayMode": "compact",
         "collapsedGroups": [],
-        "compactWorktreeCards": true,
+        "compactWorktreeCards": false,
         "filters": {
           "alwaysShowDefaultBranchWorkspace": true,
           "filterRepoIds": [],
+          "hiddenSessionStates": [],
           "hideAutomationGeneratedWorkspaces": false,
           "hideCliCreatedWorkspaces": false,
           "hideDefaultBranchWorkspace": false,
           "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": true,
+          "hideSleepingWorkspaces": false,
           "hideWorkspacesFromOtherDevices": false,
           "visibleHostIds": {
             "$rpc": "null"
@@ -512,8 +583,10 @@
         "projectOrderBy": {
           "$rpc": "null"
         },
-        "sharesOtherClientFilter": false,
-        "sortBy": "name",
+        "sharesOtherClientFilter": {
+          "$rpc": "null"
+        },
+        "sortBy": "recent",
         "workspaceStatuses": [
           {
             "color": "neutral",
@@ -592,75 +665,6 @@
       "name": "ui.set#1",
       "ordinal": 9,
       "json": "{\"id\":\"frame-3\",\"deviceToken\":\"recording-device\",\"method\":\"ui.set\",\"params\":{\"sortBy\":\"name\"}}"
-    },
-    "dc007face350": {
-      "view": {
-        "agentActivityDisplayMode": "compact",
-        "collapsedGroups": [],
-        "compactWorktreeCards": false,
-        "filters": {
-          "alwaysShowDefaultBranchWorkspace": true,
-          "filterRepoIds": [],
-          "hideAutomationGeneratedWorkspaces": false,
-          "hideCliCreatedWorkspaces": false,
-          "hideDefaultBranchWorkspace": false,
-          "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": false,
-          "hideWorkspacesFromOtherDevices": false,
-          "visibleHostIds": {
-            "$rpc": "null"
-          }
-        },
-        "groupBy": "repo",
-        "newCardStyle": false,
-        "projectOrderBy": {
-          "$rpc": "null"
-        },
-        "sharesOtherClientFilter": {
-          "$rpc": "null"
-        },
-        "sortBy": "recent",
-        "workspaceStatuses": [
-          {
-            "color": "neutral",
-            "icon": "circle",
-            "id": "todo",
-            "label": "Todo"
-          },
-          {
-            "color": "conductor-progress",
-            "icon": "conductor-progress",
-            "id": "in-progress",
-            "label": "In progress"
-          },
-          {
-            "color": "conductor-review",
-            "icon": "conductor-review",
-            "id": "in-review",
-            "label": "In review"
-          },
-          {
-            "color": "conductor-done",
-            "icon": "conductor-done",
-            "id": "completed",
-            "label": "Done"
-          }
-        ],
-        "worktreeCardProperties": [
-          "status",
-          "unread",
-          "issue",
-          "linear-issue",
-          "jira-issue",
-          "pr",
-          "automation",
-          "cli",
-          "comment",
-          "ports",
-          "inline-agents",
-          "host"
-        ]
-      }
     },
     "e524e828664d": {
       "name": "ui.set#1",
@@ -823,7 +827,7 @@
             "mount": "eb79a9b3682a",
             "sync": "9270aeb7d9c6"
           },
-          "state": "dc007face350",
+          "state": "c235b4d35f64",
           "effects": []
         }
       },
@@ -837,8 +841,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -851,8 +855,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -865,8 +869,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -879,8 +883,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -893,8 +897,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -907,8 +911,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -921,8 +925,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -935,8 +939,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -949,8 +953,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -963,8 +967,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -977,8 +981,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       }
     ]

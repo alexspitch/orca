@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import type { TaskSessionFacts } from '../sidebar-list/task-session-groups'
 import {
   activeWorkspaceRowFilterKeys,
   countActiveWorkspaceFilters,
@@ -13,7 +14,12 @@ import {
   recentActivityWithCreateGrace
 } from './workspace-row-sort'
 
-type Row = { id: string; folder?: boolean; facts?: Partial<Record<string, boolean>> }
+type Row = {
+  id: string
+  folder?: boolean
+  facts?: Partial<Record<string, boolean>>
+  task?: TaskSessionFacts | null
+}
 
 const read: WorkspaceRowFactReader<Row> = {
   isArchived: () => false,
@@ -26,7 +32,8 @@ const read: WorkspaceRowFactReader<Row> = {
   isCliCreated: (row) => row.facts?.cli === true,
   isDetachedHead: (row) => row.facts?.detached === true,
   isMainWorktree: (row) => row.facts?.main === true,
-  isSleeping: (row) => row.facts?.sleeping !== false
+  isSleeping: (row) => row.facts?.sleeping !== false,
+  taskSession: (row) => row.task ?? null
 }
 
 const everyFilterOn: WorkspaceRowFilters = {
@@ -38,8 +45,37 @@ const everyFilterOn: WorkspaceRowFilters = {
   hideDetachedHeadWorkspaces: true,
   hideWorkspacesFromOtherDevices: true,
   filterRepoIds: ['other-repo'],
-  visibleHostIds: ['local']
+  visibleHostIds: ['local'],
+  hiddenSessionStates: ['none', 'progress', 'release']
 }
+
+describe('filterWorkspaceRows session filter', () => {
+  const task = { key: 'IS-1' }
+  const rows: Row[] = [
+    { id: 'no-task', task: {}, facts: { sleeping: false } },
+    { id: 'progress', task: { buildWebTask: task, buildWebSession: { state: 'active' } } },
+    { id: 'release', task: { buildWebTask: task, buildWebSession: { state: 'closing' } } },
+    // Why asleep: attention outlives the sleeping sweep too.
+    { id: 'attention', task: { buildWebTask: task, buildWebSession: { state: 'attention' } } },
+    { id: 'unknown', task: { buildWebTask: task }, facts: { sleeping: false } },
+    { id: 'old-host', task: null, facts: { sleeping: false } },
+    { id: 'folder', folder: true }
+  ]
+  const filters: WorkspaceRowFilters = {
+    ...NO_WORKSPACE_ROW_FILTERS,
+    hideSleepingWorkspaces: true,
+    hiddenSessionStates: ['none', 'progress', 'release']
+  }
+
+  it('never hides attention, an unknown state, an older host or a folder', () => {
+    expect(filterWorkspaceRows(rows, filters, read).map((row) => row.id)).toEqual([
+      'attention',
+      'unknown',
+      'old-host',
+      'folder'
+    ])
+  })
+})
 
 describe('filterWorkspaceRows', () => {
   it('keeps a folder workspace through every filter but the host and other-client ones', () => {

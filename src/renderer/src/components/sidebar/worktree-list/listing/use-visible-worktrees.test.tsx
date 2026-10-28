@@ -59,6 +59,7 @@ describe('useVisibleSidebarWorktrees', () => {
           hideAutomationGeneratedWorkspaces: false,
           hideCliCreatedWorkspaces: false,
           hideDetachedHeadWorkspaces: false,
+          hiddenSessionStates: [],
           hideWorkspacesFromOtherDevices: false,
           alwaysShowDefaultBranchWorkspace: true,
           visibleWorkspaceHostIds: null,
@@ -94,6 +95,7 @@ describe('useVisibleSidebarWorktrees', () => {
           hideAutomationGeneratedWorkspaces: false,
           hideCliCreatedWorkspaces: false,
           hideDetachedHeadWorkspaces: false,
+          hiddenSessionStates: [],
           hideWorkspacesFromOtherDevices: false,
           alwaysShowDefaultBranchWorkspace: true,
           visibleWorkspaceHostIds: ['ssh:box'],
@@ -117,7 +119,7 @@ describe('useVisibleSidebarWorktrees', () => {
     const worktree = makeWorktree('alpha', 'Alpha workspace', { hostId: 'local' })
     useAppStore.setState({ worktreesByRepo: { [repo.id]: [worktree] } })
 
-    const baseArgs = {
+    const baseArgs: Parameters<typeof useVisibleSidebarWorktrees>[0] = {
       filterState: {
         showSleepingWorkspaces: true,
         filterRepoIds: [],
@@ -125,6 +127,7 @@ describe('useVisibleSidebarWorktrees', () => {
         hideAutomationGeneratedWorkspaces: false,
         hideCliCreatedWorkspaces: false,
         hideDetachedHeadWorkspaces: false,
+        hiddenSessionStates: [],
         hideWorkspacesFromOtherDevices: false,
         alwaysShowDefaultBranchWorkspace: true,
         visibleWorkspaceHostIds: null,
@@ -136,7 +139,7 @@ describe('useVisibleSidebarWorktrees', () => {
       worktreeLineageById: {},
       defaultHostId: LOCAL_EXECUTION_HOST_ID,
       agentSendTargetWorktreeId: null
-    } as Parameters<typeof useVisibleSidebarWorktrees>[0]
+    }
     // Pass the old settings memo key so unrelated-setting churn would still catch the former invalidation bug.
     const withSettings = (
       settings: ReturnType<typeof useAppStore.getState>['settings']
@@ -180,6 +183,7 @@ describe('useVisibleSidebarWorktrees', () => {
           hideAutomationGeneratedWorkspaces: false,
           hideCliCreatedWorkspaces: false,
           hideDetachedHeadWorkspaces: false,
+          hiddenSessionStates: [],
           hideWorkspacesFromOtherDevices: false,
           alwaysShowDefaultBranchWorkspace: true,
           visibleWorkspaceHostIds: null,

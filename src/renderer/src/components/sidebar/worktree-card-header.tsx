@@ -13,6 +13,7 @@ import { formatSparseDirectoryPreview, shouldBeginWorktreeRename } from './workt
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSshHostControl } from './WorktreeCardSshHostControl'
 import { WorktreeTitleInlineRename } from './WorktreeTitleInlineRename'
+import { WorktreeTaskKey, WorktreeTaskSessionBadge } from './WorktreeCardTaskSession'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
 function RepoIdentityChip({
@@ -170,6 +171,8 @@ export function WorktreeCardHeader({
           </RepoIdentityChip>
         )}
 
+        <WorktreeTaskKey worktree={worktree} />
+
         <WorktreeTitleInlineRename
           displayName={visibleCardTitle}
           disabled={isDeleting || affiliateListMode}
@@ -265,6 +268,13 @@ export function WorktreeCardHeader({
         )}
 
         {showTitleRowIndicators && titleRowIndicators}
+        {card.inTaskAttentionSection ? null : (
+          <WorktreeTaskSessionBadge
+            worktree={worktree}
+            short={compactCards && !presentation.expandedCompactRow}
+            className="ml-auto"
+          />
+        )}
       </div>
 
       {showHeaderActions && (

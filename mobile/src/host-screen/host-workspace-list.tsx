@@ -16,6 +16,7 @@ import { MobileRepoIcon } from '../components/MobileRepoIcon'
 import { MobileSearchField } from '../components/MobileSearchField'
 import { NewWorkspaceFab, FAB_SIZE } from '../components/NewWorkspaceFab'
 import { WorktreeListRow } from '../components/WorktreeListRow'
+import { TaskLaneIcon } from '../components/WorktreeTaskSession'
 import { colors, spacing } from '../theme/mobile-theme'
 import { getWorktreeRowIdentity } from '../worktree/worktree-host-row-identity'
 import {
@@ -30,6 +31,12 @@ import { buildRepoLookById } from './host-repo-looks'
 import { HostPendingCreationRow } from './host-pending-creation-row'
 import { useSlowPendingKeys } from './use-slow-pending-keys'
 import { projectGroupHeaderIndent } from '../worktree/project-group-indent'
+import { isTaskAttentionSectionKey } from '../worktree/task-lane-sections'
+import {
+  getStoredCollapseKey,
+  isSidebarGroupCollapsed,
+  neverCollapses
+} from '../../../src/shared/sidebar-list/default-collapsed-groups'
 import type { HostScreenController } from './use-host-screen-controller'
 
 export function HostWorkspaceList({ controller }: { controller: HostScreenController }) {
@@ -175,7 +182,11 @@ export function HostWorkspaceList({ controller }: { controller: HostScreenContro
             if (!section.title) {
               return pendingCreations ? <>{pendingCreations}</> : null
             }
-            const isCollapsed = controller.collapsedGroups.has(section.key)
+            // Why the stored key: «Awaiting release» starts collapsed and stores its opening.
+            const collapseKey = getStoredCollapseKey(section.key)
+            const collapsible = !neverCollapses(section.key)
+            const isCollapsed = isSidebarGroupCollapsed(controller.collapsedGroups, section.key)
+            const attentionLane = isTaskAttentionSectionKey(section.key)
             const count =
               section.count ?? rawSections.find((s) => s.key === section.key)?.data.length ?? 0
             const repoSectionLook =
@@ -196,15 +207,19 @@ export function HostWorkspaceList({ controller }: { controller: HostScreenContro
                         }
                       : null
                   ]}
-                  onPress={() => settings.toggleCollapsed(section.key)}
+                  disabled={!collapsible}
+                  onPress={() => settings.toggleCollapsed(collapseKey)}
                 >
-                  {isCollapsed ? (
+                  {!collapsible ? null : isCollapsed ? (
                     <ChevronRight size={12} color={colors.textMuted} style={styles.sectionIcon} />
                   ) : (
                     <ChevronDown size={12} color={colors.textMuted} style={styles.sectionIcon} />
                   )}
                   {section.icon === 'pin' && (
                     <Pin size={12} color={colors.textMuted} style={styles.sectionIcon} />
+                  )}
+                  {state.view.groupBy === 'task' && (
+                    <TaskLaneIcon sectionKey={section.key} style={styles.sectionIcon} />
                   )}
                   {state.view.groupBy === 'repo' && section.isProjectGroup ? (
                     <FolderTree size={12} color={colors.textPrimary} style={styles.sectionIcon} />
@@ -217,9 +232,13 @@ export function HostWorkspaceList({ controller }: { controller: HostScreenContro
                       />
                     </View>
                   ) : null}
-                  <Text style={styles.sectionTitle}>{section.title}</Text>
+                  <Text
+                    style={[styles.sectionTitle, attentionLane && { color: colors.statusAmber }]}
+                  >
+                    {section.title}
+                  </Text>
                   <Text style={styles.sectionCount}>{count}</Text>
-                  {pendingCollapseKeys.has(section.key) && (
+                  {pendingCollapseKeys.has(collapseKey) && (
                     <ActivityIndicator
                       size="small"
                       color={colors.textMuted}
@@ -241,7 +260,7 @@ export function HostWorkspaceList({ controller }: { controller: HostScreenContro
               colors={[colors.textSecondary]}
             />
           }
-          renderItem={({ item }) => (
+          renderItem={({ item, section }) => (
             <WorktreeListRow
               item={item}
               isReadOnly={isReadOnly}
@@ -259,6 +278,7 @@ export function HostWorkspaceList({ controller }: { controller: HostScreenContro
                 item.workspaceKind === 'folder-workspace' ? undefined : state.setActionTarget
               }
               onToggleLineage={settings.toggleWorktreeLineage}
+              inTaskAttention={isTaskAttentionSectionKey(section.key)}
             />
           )}
         />

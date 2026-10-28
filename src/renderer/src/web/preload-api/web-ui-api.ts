@@ -29,6 +29,7 @@ import { readLocalWebUIState } from './web-preferences-store'
 import { callRuntimeResult } from './web-runtime-calls'
 import { requireActiveEnvironmentOrNull } from './web-runtime-session'
 import { UI_STORAGE_KEY, noopUnsubscribe, writeJson } from './web-storage'
+import { sendHostUiUpdates } from './web-task-session-ui-fields'
 
 /** Combines browser-local preferences with host persistence; acknowledged writes remain distinct from best-effort writes. */
 export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
@@ -81,10 +82,9 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       writeJson(UI_STORAGE_KEY, next)
       zoomLevel = next.uiZoomLevel
       // Older hosts lack stripping; sending browser runtime:web-* keys would overwrite desktop order.
-      const { environmentId, hostUpdates } = prepareHostUpdates(updates)
       try {
-        await callRuntimeResult('ui.set', hostUpdates, 15_000)
-        explorerRoots.acknowledge(environmentId, hostUpdates)
+        const { environmentId, hostUpdates } = prepareHostUpdates(updates)
+        explorerRoots.acknowledge(environmentId, await sendHostUiUpdates(hostUpdates))
       } catch {
         // Why: unpaired/offline web clients still need local UI persistence.
       }
@@ -95,8 +95,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       writeJson(UI_STORAGE_KEY, next)
       zoomLevel = next.uiZoomLevel
       const { environmentId, hostUpdates } = prepareHostUpdates(updates)
-      await callRuntimeResult('ui.set', hostUpdates, 15_000)
-      explorerRoots.acknowledge(environmentId, hostUpdates)
+      explorerRoots.acknowledge(environmentId, await sendHostUiUpdates(hostUpdates))
       if (
         updates.explorerDisplayRootByWorktree !== undefined &&
         hostUpdates.explorerDisplayRootByWorktree === undefined

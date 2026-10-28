@@ -8,6 +8,7 @@ import type { Repo } from '../../../../../../shared/repo-types'
 import type { WorktreeLineage } from '../../../../../../shared/worktree/lineage-types'
 import type { WorkspaceStatusDefinition, Worktree } from '../../../../../../shared/worktree/types'
 import { getHostSectionCollapseKey } from '../../../../../../shared/sidebar-list/host-section-collapse'
+import { isSidebarGroupCollapsed } from '../../../../../../shared/sidebar-list/default-collapsed-groups'
 import { getWorktreeHostIdentity } from '../../../../../../shared/worktree/host-qualified-identity'
 import { getWorktreeLineageGroupKey } from '../../../../../../shared/sidebar-list/group-keys'
 import type { ProjectGroupingModel } from '../../../../../../shared/project-section-grouping'
@@ -80,5 +81,5 @@ export function getWorktreeRevealCollapsedGroupKeys(args: {
     keys.push(args.hostScopedGroups ? getHostSectionCollapseKey(path.key, hostId) : path.key)
     path = path.parent
   }
-  return [...new Set(keys)].filter((key) => args.collapsedGroups.has(key))
+  return [...new Set(keys)].filter((key) => isSidebarGroupCollapsed(args.collapsedGroups, key))
 }

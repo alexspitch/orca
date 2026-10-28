@@ -23,8 +23,9 @@ import { getDeleteStateForWorktreeHost } from './worktree-delete-state-host-matc
 
 export function useWorktreeCardFoundation({
   worktree,
-  repo
-}: Pick<WorktreeCardProps, 'worktree' | 'repo'>) {
+  repo,
+  isActive = false
+}: Pick<WorktreeCardProps, 'worktree' | 'repo'> & { isActive?: boolean }) {
   const openModal = useAppStore((s) => s.openModal)
   const openTaskPage = useAppStore((s) => s.openTaskPage)
   const openAutomationsPage = useAppStore((s) => s.openAutomationsPage)
@@ -46,8 +47,8 @@ export function useWorktreeCardFoundation({
   const newCardStyle = settings?.experimentalNewWorktreeCardStyle === true
   const compactWorktreeCards = settings?.compactWorktreeCards === true
   const cardDetails = useMemo(
-    () => getWorktreeCardDetails(cardProps, { compactWorktreeCards, newCardStyle }),
-    [cardProps, compactWorktreeCards, newCardStyle]
+    () => getWorktreeCardDetails(cardProps, { compactWorktreeCards, newCardStyle }, isActive),
+    [cardProps, compactWorktreeCards, newCardStyle, isActive]
   )
   const { compactCards } = cardDetails
   const handleEditIssue = useCallback(

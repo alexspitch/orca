@@ -1,3 +1,4 @@
+import type { HideableTaskSessionGroup } from './sidebar-list/task-session-groups'
 import type { JiraQuickFilterState } from './jira/jira-quick-filters'
 import type { BrowserDevToolsDockLayout } from './browser-devtools-dock'
 import type { JiraSavedFilterState } from './jira/jira-saved-filters'
@@ -48,7 +49,8 @@ export type PersistedUIState = {
   codeOutlineVisible?: boolean
   codeOutlinePanelWidth?: number
   combinedDiffFileTreeWidth?: number
-  groupBy: 'none' | 'workspace-status' | 'repo' | 'pr-status'
+  /** `task` (IS-147) is written only to hosts announcing `build-web-worktree-task.v1`. */
+  groupBy: 'none' | 'workspace-status' | 'repo' | 'pr-status' | 'task'
   sortBy: 'name' | 'smart' | 'recent' | 'repo' | 'manual'
   /** Project-header order in repo grouping, independent of workspace sort: manual permits drag, recent follows visible activity. */
   projectOrderBy: ProjectOrderBy
@@ -80,6 +82,8 @@ export type PersistedUIState = {
   hideDetachedHeadWorkspaces?: boolean
   /** Hide workspaces with known provenance from another paired device or the host UI. */
   hideWorkspacesFromOtherDevices?: boolean
+  /** IS-147: task lanes hidden by the session filter; written only to hosts announcing the task capability. */
+  hiddenSessionStates?: HideableTaskSessionGroup[]
   /** Keep each project's main workspace out of the "Hide sleeping" sweep. Absent means on (#8873). */
   alwaysShowDefaultBranchWorkspace?: boolean
   /** Per-worktree Explorer dotfile visibility. Missing entries inherit the default: show. */

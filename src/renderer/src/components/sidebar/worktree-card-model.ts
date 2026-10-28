@@ -28,6 +28,8 @@ export type WorktreeCardProps = {
   /** Reuse the normal project badge for a nested child owned by another repo. */
   showProjectName?: boolean
   inPinnedSection?: boolean
+  /** IS-147: the row sits in «Needs attention», whose reason line replaces its badge. */
+  inTaskAttentionSection?: boolean
   activationRowKey?: string
   renameRowKey?: string
   contentIndent?: number

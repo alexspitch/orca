@@ -1,3 +1,4 @@
+import type { HideableTaskSessionGroup } from '../../../../../shared/sidebar-list/task-session-groups'
 import type { PersistedUIState } from '../../../../../shared/persisted-ui-state-types'
 import type { BrowserDevToolsDockLayout } from '../../../../../shared/browser-devtools-dock'
 import type {
@@ -29,7 +30,7 @@ export type UISlicePreferences = {
   /** Which list the sidebar body shows. Navigator-only; does not change the active view. */
   sidebarBody: 'workspaces' | 'agents'
   setSidebarBody: (body: UISlicePreferences['sidebarBody']) => void
-  groupBy: 'none' | 'workspace-status' | 'repo' | 'pr-status'
+  groupBy: 'none' | 'workspace-status' | 'repo' | 'pr-status' | 'task'
   setGroupBy: (g: UISlicePreferences['groupBy']) => void
   sortBy: 'name' | 'smart' | 'recent' | 'repo' | 'manual'
   setSortBy: (s: UISlicePreferences['sortBy']) => void
@@ -57,6 +58,9 @@ export type UISlicePreferences = {
   setHideCliCreatedWorkspaces: (v: boolean) => void
   hideDetachedHeadWorkspaces: boolean
   setHideDetachedHeadWorkspaces: (v: boolean) => void
+  /** IS-147: the «By task» lanes the session filter hides. */
+  hiddenSessionStates: HideableTaskSessionGroup[]
+  setHiddenSessionStates: (v: readonly HideableTaskSessionGroup[]) => void
   hideWorkspacesFromOtherDevices: boolean
   setHideWorkspacesFromOtherDevices: (v: boolean) => void
   alwaysShowDefaultBranchWorkspace: boolean

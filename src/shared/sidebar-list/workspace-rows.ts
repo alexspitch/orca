@@ -1,3 +1,7 @@
+import {
+  BUILD_WEB_SESSION_ATTENTION_REASONS,
+  WORKTREE_BUILD_WEB_SESSION_STATES
+} from '../build-web-session-types'
 import { z } from 'zod'
 import {
   LOCAL_EXECUTION_HOST_ID,
@@ -71,7 +75,27 @@ export const WorkspaceRowSchema = z.object({
   /** Host-owned sort stamps (sort-stamps.ts); old hosts omit tiers. */
   recentAt: z.number().optional(),
   smartTier: z.enum(SMART_TIERS).optional(),
-  smartAt: z.number().optional()
+  smartAt: z.number().optional(),
+  /** IS-147: the build-web task and its session; older hosts omit them, malformed values drop. */
+  buildWebTask: z
+    .object({
+      issueId: z.string(),
+      key: z.string(),
+      consoleHost: z.string(),
+      branch: z.string(),
+      sessionId: z.string().optional()
+    })
+    .optional()
+    .catch(undefined),
+  buildWebSession: z
+    .object({
+      state: z.enum(WORKTREE_BUILD_WEB_SESSION_STATES),
+      reason: z.enum(BUILD_WEB_SESSION_ATTENTION_REASONS).optional(),
+      detail: z.string().optional(),
+      at: z.number()
+    })
+    .optional()
+    .catch(undefined)
 })
 
 /** Legacy local rows without metadata host retain `|id` keys even when hostId names their owner. */
@@ -128,7 +152,9 @@ function toWorkspaceRow(
     recentAt: worktree.lastActivityAt,
     ...(worktree.smartTier !== undefined
       ? { smartTier: worktree.smartTier, smartAt: worktree.smartAt }
-      : {})
+      : {}),
+    ...(worktree.buildWebTask ? { buildWebTask: worktree.buildWebTask } : {}),
+    ...(worktree.buildWebSession ? { buildWebSession: worktree.buildWebSession } : {})
   }
 }
 

@@ -12,6 +12,7 @@ import { isWorkspaceOwnedBySomeoneElse } from '../../../../shared/workspace-crea
 import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { isInactiveWorkspace } from '@/lib/worktree-activity-state'
+import { isHiddenArchivedRow } from '../../../../shared/sidebar-list/task-session-groups'
 
 export type DesktopWorkspaceRowFactInputs = {
   repoMap: ReadonlyMap<string, Repo>
@@ -24,13 +25,18 @@ export type DesktopWorkspaceRowFactInputs = {
   worktreeIdsWithStructuredChat?: ReadonlySet<string>
   /** Rows in a PTY-rebind grace window; read as unverifiable, never as asleep (#15996). */
   sleepingSweepExemptWorktreeIds?: ReadonlySet<string>
+  /** «By task» lists a closed task's leftover even when it is archived (IS-147). */
+  keepArchivedTaskAttention?: boolean
+  /** False for a row whose host predates task sessions; absent reads every host as knowing. */
+  taskSessionHostKnown?: (worktree: Worktree, repo: Repo | undefined) => boolean
 }
 
 export function buildDesktopWorkspaceRowFactReader(
   inputs: DesktopWorkspaceRowFactInputs
 ): WorkspaceRowFactReader<Worktree> {
   return {
-    isArchived: (worktree) => worktree.isArchived,
+    isArchived: (worktree) =>
+      isHiddenArchivedRow(worktree, inputs.keepArchivedTaskAttention === true ? 'task' : ''),
     isFolderWorkspace: (worktree) => parseWorkspaceKey(worktree.id)?.type === 'folder',
     repoId: (worktree) => worktree.repoId,
     hostId: (worktree) => {
@@ -54,6 +60,10 @@ export function buildDesktopWorkspaceRowFactReader(
         inputs.browserTabsByWorktree,
         inputs.worktreeIdsWithLiveAgent,
         inputs.worktreeIdsWithStructuredChat
-      )
+      ),
+    taskSession: (worktree) =>
+      inputs.taskSessionHostKnown?.(worktree, inputs.repoMap.get(worktree.repoId)) === false
+        ? null
+        : worktree
   }
 }

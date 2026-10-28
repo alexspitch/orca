@@ -1,6 +1,12 @@
 import type { ExecutionHostId } from '../execution-host'
 import type { PersistedUIState } from '../persisted-ui-state-types'
 import {
+  isHiddenByTaskSessionFilter,
+  isTaskSessionAttention,
+  type HideableTaskSessionGroup,
+  type TaskSessionFacts
+} from '../sidebar-list/task-session-groups'
+import {
   isHiddenByKindSwitch,
   type WorkspaceKind,
   type WorkspaceKindSwitches
@@ -15,6 +21,8 @@ export type WorkspaceRowFilters = WorkspaceKindSwitches & {
   filterRepoIds: readonly string[]
   /** The hosts shown; null shows every host. */
   visibleHostIds: readonly ExecutionHostId[] | null
+  /** IS-147: task lanes the session filter hides; Needs attention and unknown states never hide. */
+  hiddenSessionStates: readonly HideableTaskSessionGroup[]
 }
 
 /** Exhaustive mapping from each filter to its PersistedUIState field. */
@@ -27,7 +35,8 @@ export const WORKSPACE_ROW_FILTER_UI_FIELDS = {
   hideDetachedHeadWorkspaces: 'hideDetachedHeadWorkspaces',
   hideWorkspacesFromOtherDevices: 'hideWorkspacesFromOtherDevices',
   filterRepoIds: 'filterRepoIds',
-  visibleHostIds: 'visibleWorkspaceHostIds'
+  visibleHostIds: 'visibleWorkspaceHostIds',
+  hiddenSessionStates: 'hiddenSessionStates'
 } as const satisfies { [Key in keyof WorkspaceRowFilters]: keyof PersistedUIState }
 
 // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the keys of a literal that satisfies a mapped type over WorkspaceRowFilters.
@@ -45,7 +54,8 @@ export const NO_WORKSPACE_ROW_FILTERS: WorkspaceRowFilters = {
   hideDetachedHeadWorkspaces: false,
   hideWorkspacesFromOtherDevices: false,
   filterRepoIds: [],
-  visibleHostIds: null
+  visibleHostIds: null,
+  hiddenSessionStates: []
 }
 
 /** Desktop derives facts from worktrees/tabs; mobile reads host-stamped facts. Missing older-host facts read false to keep rows visible. */
@@ -63,6 +73,8 @@ export type WorkspaceRowFactReader<Row> = {
   isDetachedHead: (row: Row) => boolean
   isMainWorktree: (row: Row) => boolean
   isSleeping: (row: Row) => boolean
+  /** The row's task and session; null (or absent) when its host predates `build-web-worktree-task.v1`. */
+  taskSession?: (row: Row) => TaskSessionFacts | null
 }
 
 /** Exempt the main checkout from sleeping sweeps, including detached/offline mains that may be a project’s only entry point (#8873). */
@@ -111,6 +123,16 @@ function buildWorkspaceRowPredicate<Row>(
     }
     if (repoIds && !repoIds.has(read.repoId(row))) {
       return false
+    }
+    const taskSession = read.taskSession?.(row) ?? null
+    if (
+      isHiddenByTaskSessionFilter(taskSession ?? {}, filters.hiddenSessionStates, !!taskSession)
+    ) {
+      return false
+    }
+    // Why: a closed task's leftover needs a person, so the sleeping sweep never hides it.
+    if (taskSession && isTaskSessionAttention(taskSession)) {
+      return true
     }
     // Explicit hides still win; the exemption covers only the sleeping sweep.
     return (
@@ -186,9 +208,11 @@ export function countActiveWorkspaceFilters(
   const counted = activeWorkspaceRowFilterKeys(filters).filter(
     (key) =>
       key !== 'filterRepoIds' &&
+      // Each hidden task lane is its own switch, counted below.
+      key !== 'hiddenSessionStates' &&
       // Disabling the exemption narrows only an active sleeping sweep.
       (key !== 'alwaysShowDefaultBranchWorkspace' || filters.hideSleepingWorkspaces)
   )
   const selectedRepoCount = knownRepoIds.filter((id) => filters.filterRepoIds.includes(id)).length
-  return counted.length + selectedRepoCount
+  return counted.length + selectedRepoCount + filters.hiddenSessionStates.length
 }

@@ -143,7 +143,7 @@ export const UiUpdateFields = z
     codeOutlineVisible: z.boolean().optional(),
     codeOutlinePanelWidth: z.number().finite().optional(),
     combinedDiffFileTreeWidth: z.number().finite().optional(),
-    groupBy: z.enum(['none', 'workspace-status', 'repo', 'pr-status']).optional(),
+    groupBy: z.enum(['none', 'workspace-status', 'repo', 'pr-status', 'task']).optional(),
     showWorkspaceLineage: z.boolean().optional(),
     sortBy: z.enum(['name', 'smart', 'recent', 'repo', 'manual']).optional(),
     projectOrderBy: z.enum(['manual', 'recent']).optional(),

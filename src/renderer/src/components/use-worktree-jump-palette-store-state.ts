@@ -110,6 +110,7 @@ export function useWorktreeJumpPaletteStoreState({
   )
   const hideCliCreatedWorkspaces = useAppStore((state) => state.hideCliCreatedWorkspaces)
   const hideDetachedHeadWorkspaces = useAppStore((state) => state.hideDetachedHeadWorkspaces)
+  const hiddenSessionStates = useAppStore((state) => state.hiddenSessionStates)
   const hideWorkspacesFromOtherDevices = useAppStore(
     (state) => state.hideWorkspacesFromOtherDevices
   )
@@ -190,6 +191,7 @@ export function useWorktreeJumpPaletteStoreState({
     hideAutomationGeneratedWorkspaces,
     hideCliCreatedWorkspaces,
     hideDetachedHeadWorkspaces,
+    hiddenSessionStates,
     hideWorkspacesFromOtherDevices,
     showSleepingWorkspaces,
     alwaysShowDefaultBranchWorkspace,

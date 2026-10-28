@@ -6,6 +6,7 @@ import {
 import { resolveVisibleWorkspaceHostIds } from '../../../../shared/workspace-view/workspace-host-visibility'
 import type { AppState } from '../../store/types'
 import type { ExecutionHostId, ExecutionHostScope } from '../../../../shared/execution-host'
+import type { HideableTaskSessionGroup } from '../../../../shared/sidebar-list/task-session-groups'
 
 export type SidebarFilterState = {
   showSleepingWorkspaces: boolean
@@ -19,6 +20,8 @@ export type SidebarFilterState = {
   alwaysShowDefaultBranchWorkspace?: boolean
   visibleWorkspaceHostIds?: readonly ExecutionHostId[] | null
   workspaceHostScope?: ExecutionHostScope
+  /** IS-147: absent hides no task lane. */
+  hiddenSessionStates?: readonly HideableTaskSessionGroup[]
 }
 
 export function sidebarWorkspaceRowFilters(state: SidebarFilterState): WorkspaceRowFilters {
@@ -34,7 +37,8 @@ export function sidebarWorkspaceRowFilters(state: SidebarFilterState): Workspace
     visibleHostIds: resolveVisibleWorkspaceHostIds(
       state.visibleWorkspaceHostIds,
       state.workspaceHostScope
-    )
+    ),
+    hiddenSessionStates: state.hiddenSessionStates ?? []
   }
 }
 
@@ -52,7 +56,8 @@ export function selectSidebarFilterState(
     hideWorkspacesFromOtherDevices: state.hideWorkspacesFromOtherDevices,
     alwaysShowDefaultBranchWorkspace: state.alwaysShowDefaultBranchWorkspace,
     visibleWorkspaceHostIds: state.visibleWorkspaceHostIds,
-    workspaceHostScope: state.workspaceHostScope
+    workspaceHostScope: state.workspaceHostScope,
+    hiddenSessionStates: state.hiddenSessionStates
   }
 }
 
@@ -71,6 +76,7 @@ export type SidebarFilterSetters = Pick<
   | 'setHideWorkspacesFromOtherDevices'
   | 'setFilterRepoIds'
   | 'setVisibleWorkspaceHostIds'
+  | 'setHiddenSessionStates'
 >
 
 /** How each shared filter returns to its default; a new filter fails to compile until listed. */
@@ -99,7 +105,9 @@ const RESET_SIDEBAR_FILTER: Record<
       NO_WORKSPACE_ROW_FILTERS.hideWorkspacesFromOtherDevices
     ),
   filterRepoIds: (store) => store.setFilterRepoIds([...NO_WORKSPACE_ROW_FILTERS.filterRepoIds]),
-  visibleHostIds: (store) => store.setVisibleWorkspaceHostIds(null)
+  visibleHostIds: (store) => store.setVisibleWorkspaceHostIds(null),
+  hiddenSessionStates: (store) =>
+    store.setHiddenSessionStates(NO_WORKSPACE_ROW_FILTERS.hiddenSessionStates)
 }
 
 /** Reset only active filters so an unfiltered click performs no writes. */

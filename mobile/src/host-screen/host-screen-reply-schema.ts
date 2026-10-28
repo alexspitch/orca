@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { PersistedUIState } from '../../../src/shared/persisted-ui-state-types'
 import type { RepoIcon } from '../../../src/shared/repo-icon'
+import { normalizeHiddenTaskSessionGroups } from '../../../src/shared/sidebar-list/task-session-groups'
 import { hostUnionArms, salvagedOptional, salvagingArray } from '../../../src/shared/zod-salvage'
 import { NODE_PLATFORM_NAMES } from '../transport/mobile-runtime-host-platform'
 
@@ -8,7 +9,8 @@ export const WORKSPACE_GROUP_BY_ARMS = hostUnionArms<PersistedUIState['groupBy']
   none: true,
   'workspace-status': true,
   repo: true,
-  'pr-status': true
+  'pr-status': true,
+  task: true
 })
 export const WORKSPACE_SORT_BY_ARMS = hostUnionArms<PersistedUIState['sortBy']>({
   name: true,
@@ -131,6 +133,11 @@ export const hostViewSettingsSchema = z
       visibleWorkspaceHostIds: salvagedOptional(
         'visibleWorkspaceHostIds',
         z.array(z.string()).nullable()
+      ),
+      // IS-147: a lane a newer desktop adds is dropped, not a reason to lose the others.
+      hiddenSessionStates: salvagedOptional(
+        'hiddenSessionStates',
+        z.array(z.unknown()).transform(normalizeHiddenTaskSessionGroups)
       ),
       workspaceHostScope: salvagedOptional('workspaceHostScope', z.string())
     })

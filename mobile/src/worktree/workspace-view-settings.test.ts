@@ -152,6 +152,7 @@ describe('buildWorkspaceViewSettingsUpdate', () => {
       hideWorkspacesFromOtherDevices: false,
       filterRepoIds: [],
       visibleWorkspaceHostIds: null,
+      hiddenSessionStates: [],
       workspaceHostScope: 'all'
     })
   })

@@ -21560,7 +21560,33 @@
       "logReading": "Reading the log…",
       "logEarlier": "Read earlier messages",
       "logWhole": "The whole log is shown.",
-      "logTitle": "Session log"
+      "logTitle": "Session log",
+      "cmdJ": {
+        "openTask": "Open Task",
+        "openTaskDescription": "Open the current workspace's build-web task.",
+        "openTaskVerb": "open task"
+      },
+      "attentionCounter": "{{count}} workspaces need attention. Group by task",
+      "openTaskAria": "Open task {{key}}",
+      "action": {
+        "openTask": "Open task {{key}}"
+      },
+      "groupBy": {
+        "task": "Task"
+      },
+      "remove": {
+        "commits": "Kept on branch {{branch}}:",
+        "files": "Lost:",
+        "unread": "Orca could not read every change in it.",
+        "title": "Remove workspace {{name}}?",
+        "confirm": "Remove workspace"
+      },
+      "openTask": {
+        "otherConsole": "{{key}} lives on another console: {{console}}."
+      },
+      "hostUnknown": "The host of this workspace is unknown.",
+      "kept": "{{name}} kept, unlinked from {{key}}",
+      "reopened": "{{key}} is back in progress"
     },
     "launch": {
       "sessionNotSaved": "Session ID not saved to {{keys}}",

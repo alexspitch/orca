@@ -1,13 +1,20 @@
 import type { ExecutionHostId } from '../execution-host'
 import type { HostSectionRow } from './host-section-rows'
 import { PINNED_GROUP_KEY } from './group-keys'
+import { TASK_GROUP_KEY_PREFIX, TASK_RELEASE_GROUP_KEY } from './task-session-groups'
+import {
+  getStoredCollapseKey,
+  isSidebarGroupCollapsed,
+  withEveryDefaultCollapsedGroupOpen
+} from './default-collapsed-groups'
 
 export function isHostLaneSectionKey(key: string): boolean {
   return (
     key === PINNED_GROUP_KEY ||
     key === 'all' ||
     key.startsWith('pr:') ||
-    key.startsWith('workspace-status:')
+    key.startsWith('workspace-status:') ||
+    key.startsWith(TASK_GROUP_KEY_PREFIX)
   )
 }
 
@@ -16,10 +23,15 @@ export function getHostSectionCollapseKey(key: string, hostId: ExecutionHostId):
 }
 
 export function deferHostSectionCollapse(collapsedGroups: Set<string>): Set<string> {
-  if (![...collapsedGroups].some(isHostLaneSectionKey)) {
-    return collapsedGroups
+  // Why the release marker stays and is added: each host section collapses its own copy afterwards.
+  const deferred = (key: string): boolean =>
+    isHostLaneSectionKey(key) && key !== getStoredCollapseKey(TASK_RELEASE_GROUP_KEY)
+  if (![...collapsedGroups].some(deferred)) {
+    return withEveryDefaultCollapsedGroupOpen(collapsedGroups)
   }
-  return new Set([...collapsedGroups].filter((key) => !isHostLaneSectionKey(key)))
+  return withEveryDefaultCollapsedGroupOpen(
+    new Set([...collapsedGroups].filter((key) => !deferred(key)))
+  )
 }
 
 export function scopeHostSectionCollapse(args: {
@@ -42,7 +54,7 @@ export function scopeHostSectionCollapse(args: {
           ? row.hostWorktreeCounts.keys().next().value
           : undefined)
       const collapseKey = hostId ? getHostSectionCollapseKey(row.key, hostId) : row.key
-      sectionCollapsed = args.collapsedGroups.has(collapseKey)
+      sectionCollapsed = isSidebarGroupCollapsed(args.collapsedGroups, collapseKey)
       return [{ ...row, collapseKey }]
     }
     return sectionCollapsed ? [] : [row]

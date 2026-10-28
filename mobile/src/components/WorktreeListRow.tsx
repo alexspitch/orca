@@ -16,6 +16,11 @@ import { HostKindIcon } from './HostKindIcon'
 import { MobileRepoIcon } from './MobileRepoIcon'
 import { WorktreeAgentList } from './WorktreeAgentList'
 import { WorktreeMetaGlyphs, prStateColor } from './WorktreeMetaGlyphs'
+import {
+  WorktreeTaskAttentionReason,
+  WorktreeTaskKey,
+  WorktreeTaskSessionChip
+} from './WorktreeTaskSession'
 
 // Match desktop formatBranchName by hiding refs/heads/ prefix.
 function displayBranch(branch: string): string {
@@ -41,6 +46,8 @@ type Props = {
   statusLive?: boolean
   onLongPress?: (item: Worktree) => void
   onToggleLineage?: (item: Worktree) => void
+  /** In «By task»'s Needs attention: the reason line replaces the session chip. */
+  inTaskAttention?: boolean
 }
 
 function WorktreeListRowComponent({
@@ -57,7 +64,8 @@ function WorktreeListRowComponent({
   onAgentPress,
   statusLive,
   onLongPress,
-  onToggleLineage
+  onToggleLineage,
+  inTaskAttention = false
 }: Props) {
   const isFolderWorkspace = item.workspaceKind === 'folder-workspace'
   const folderMeta = item.comment?.trim() || item.path || 'Folder'
@@ -119,6 +127,7 @@ function WorktreeListRowComponent({
               <MobileRepoIcon repoIcon={repoIcon} size={11} color={repoColor} />
             </View>
           )}
+          <WorktreeTaskKey row={item} />
           <Text
             style={[
               styles.worktreeName,
@@ -142,8 +151,16 @@ function WorktreeListRowComponent({
               <Text style={styles.folderBadgeText}>Folder</Text>
             </View>
           )}
+          {/* Only «By task» lists an archived row: a closed task's leftover. */}
+          {item.isArchived && (
+            <View style={styles.folderBadge}>
+              <Text style={styles.folderBadgeText}>Archived</Text>
+            </View>
+          )}
           <WorktreeMetaGlyphs presence={getWorktreeMetaGlyphPresence(item, cardDetails)} />
+          {!inTaskAttention && <WorktreeTaskSessionChip row={item} />}
         </View>
+        {inTaskAttention && <WorktreeTaskAttentionReason row={item} />}
         {cardDetails.metaRow && (
           <View style={styles.worktreeMetaRow}>
             {lineageDepth > 0 && (

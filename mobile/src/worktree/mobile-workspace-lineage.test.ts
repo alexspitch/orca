@@ -51,7 +51,8 @@ describe('applyMobileWorkspaceLineage', () => {
         hideDetachedHeadWorkspaces: false,
         hideWorkspacesFromOtherDevices: false,
         filterRepoIds: [],
-        visibleHostIds: null
+        visibleHostIds: null,
+        hiddenSessionStates: []
       }
       const plan = buildMobileWorkspacePlan(
         [grandchild, child, parent],

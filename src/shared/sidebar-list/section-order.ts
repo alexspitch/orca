@@ -4,6 +4,7 @@ import type { ProjectSectionModel } from '../project-section-grouping'
 import { ALL_GROUP_KEY } from './group-keys'
 import type { SidebarPRGroupReader, WorktreeGroupBy } from './row-types'
 import { getGroupKeyForWorktree } from './worktree-group-keys'
+import { isSidebarGroupCollapsed } from './default-collapsed-groups'
 
 export function getRenderedNaturalAnchorRepoIds({
   groupBy,
@@ -46,7 +47,7 @@ export function getRenderedNaturalAnchorRepoIds({
       workspaceStatuses,
       projectGrouping
     )
-    if (groupKey && !collapsedGroups.has(groupKey)) {
+    if (groupKey && !isSidebarGroupCollapsed(collapsedGroups, groupKey)) {
       renderedRepoIds.add(worktree.repoId)
     }
   }

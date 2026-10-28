@@ -27,6 +27,7 @@ import { DrillRow, OptionRowList } from './workspace-option-rows'
 import { OptionPager, useOptionPager, type OptionPagerControls } from './workspace-options-pager'
 import {
   WORKSPACE_OPTION_CONTROLS,
+  taskSessionFilterRows,
   type WorkspaceOptionHost,
   type WorkspaceOptionProps
 } from './workspace-option-controls'
@@ -173,6 +174,9 @@ function WorkspaceOptionsContent({
             const target = control.framed ? framedRows : bareRows
             target.push(<control.Row key={option.key} {...props} />)
           }
+        }
+        if (section === 'filters') {
+          framedRows.push(...taskSessionFilterRows(controller))
         }
         return (
           <View key={section} testID={`workspace-option-section-${section}`}>

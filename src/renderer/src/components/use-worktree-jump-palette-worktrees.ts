@@ -34,6 +34,7 @@ export function useWorktreeJumpPaletteWorktrees({
   hideAutomationGeneratedWorkspaces,
   hideCliCreatedWorkspaces,
   hideDetachedHeadWorkspaces,
+  hiddenSessionStates,
   hideWorkspacesFromOtherDevices,
   showSleepingWorkspaces,
   alwaysShowDefaultBranchWorkspace,
@@ -98,7 +99,8 @@ export function useWorktreeJumpPaletteWorktrees({
         hideDetachedHeadWorkspaces,
         hideWorkspacesFromOtherDevices,
         filterRepoIds: [],
-        visibleHostIds: null
+        visibleHostIds: null,
+        hiddenSessionStates
       },
       buildDesktopWorkspaceRowFactReader({
         repoMap,
@@ -121,6 +123,7 @@ export function useWorktreeJumpPaletteWorktrees({
     hideCliCreatedWorkspaces,
     hideDefaultBranchWorkspace,
     hideDetachedHeadWorkspaces,
+    hiddenSessionStates,
     hideWorkspacesFromOtherDevices,
     pairedDeviceIdsByEnvironment,
     ptyIdsByTabId,

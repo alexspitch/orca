@@ -1,3 +1,7 @@
+import {
+  getWorktreeTaskGroup,
+  isHiddenByTaskSessionFilter
+} from '../../../../../../shared/sidebar-list/task-session-groups'
 import { useCallback } from 'react'
 import { useAppStore } from '@/store'
 import {
@@ -80,6 +84,14 @@ const REVEAL_WORKSPACE: Record<keyof WorkspaceRowFilters, (context: RevealContex
   hideCliCreatedWorkspaces: ({ state, worktree }) => {
     if (isCliCreatedWorkspace(worktree)) {
       state.setHideCliCreatedWorkspaces(false)
+    }
+  },
+  hiddenSessionStates: ({ state, worktree }) => {
+    const hidden = state.hiddenSessionStates
+    if (isHiddenByTaskSessionFilter(worktree, hidden, true)) {
+      state.setHiddenSessionStates(
+        hidden.filter((group) => group !== getWorktreeTaskGroup(worktree))
+      )
     }
   },
   hideDetachedHeadWorkspaces: ({ state, worktree }) => {

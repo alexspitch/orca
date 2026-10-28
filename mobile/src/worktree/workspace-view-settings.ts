@@ -1,5 +1,6 @@
 // Sync phone view settings through the shared ui.get/ui.set store so edits converge across clients.
 
+import type { HideableTaskSessionGroup } from '../../../src/shared/sidebar-list/task-session-groups'
 import type { WorkspaceStatusDefinition } from '../../../src/shared/worktree/types'
 import {
   withDefaultWorkspaceStatuses,
@@ -32,7 +33,9 @@ export type WorkspaceViewSettings = {
     ? string[]
     : Key extends 'visibleHostIds'
       ? string[] | null
-      : FilterState[Key]
+      : Key extends 'hiddenSessionStates'
+        ? HideableTaskSessionGroup[]
+        : FilterState[Key]
 } & Partial<
   Pick<
     PersistedUIState,

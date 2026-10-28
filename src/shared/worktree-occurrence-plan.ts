@@ -42,6 +42,8 @@ export function getLineagePlacementRows<Row>(args: {
   childrenByParentIdentity: ReadonlyMap<string, readonly Row[]>
   identityOf: (row: Row) => string
   isPinned: (row: Row) => boolean
+  /** Rows a section outranking Pinned claims, even under a pinned lineage parent. */
+  keepOutOfPinned?: (row: Row) => boolean
   duplicatePinned: boolean
 }): LineagePlacementRows<Row> {
   const { rows, childrenByParentIdentity, identityOf } = args
@@ -52,10 +54,13 @@ export function getLineagePlacementRows<Row>(args: {
     identityOf,
     true
   )
-  const pinned = rows.filter((row) => pinnedPlacement.has(identityOf(row)))
+  const pinned = rows.filter(
+    (row) => pinnedPlacement.has(identityOf(row)) && args.keepOutOfPinned?.(row) !== true
+  )
+  const pinnedIdentities = new Set(pinned.map(identityOf))
   const natural = args.duplicatePinned
     ? rows
-    : rows.filter((row) => !pinnedPlacement.has(identityOf(row)))
+    : rows.filter((row) => !pinnedIdentities.has(identityOf(row)))
   return {
     pinned,
     natural,
@@ -72,6 +77,7 @@ export function buildWorktreeOccurrencePlan<
   childrenByParentIdentity: ReadonlyMap<string, readonly Row[]>
   identityOf: (row: Row) => string
   isPinned: (row: Row) => boolean
+  keepOutOfPinned?: (row: Row) => boolean
   duplicatePinned: boolean
   sectionsOf: (placement: LineagePlacementRows<Row>) => readonly Section[]
   owningSectionOf?: (row: Row) => { key: string; label: string }

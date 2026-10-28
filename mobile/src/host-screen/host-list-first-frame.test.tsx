@@ -86,6 +86,7 @@ function List({ hostId }: { hostId: string }) {
     feed,
     displayWorktrees: LISTED,
     hostPlatform: 'darwin',
+    hostKnowsTasks: false,
     state: STATE
   }).sections
   return null

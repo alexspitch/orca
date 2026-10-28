@@ -5,6 +5,9 @@ import { getWorkspaceAttachments } from '../../../../shared/workspace-attachment
 import { WorktreeCardHeader } from './worktree-card-header'
 import { WorktreeCardMetaRow } from './worktree-card-meta-row'
 import { WorktreeCardDetailsHover } from './WorktreeCardMeta'
+
+// Why 500 ms: the row body is where the pointer rests while scanning a long list (IS-147).
+const WORKTREE_CARD_DETAILS_OPEN_DELAY_MS = 500
 import { WorktreeCardPortsDetails } from './WorktreeCardPorts'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSecondaryRows } from './worktree-card-secondary-rows'
@@ -97,7 +100,7 @@ export function WorktreeCardParentContent({
         detailsAfter={
           workspacePorts.length > 0 ? <WorktreeCardPortsDetails ports={workspacePorts} /> : null
         }
-        openDelay={100}
+        openDelay={WORKTREE_CARD_DETAILS_OPEN_DELAY_MS}
         hoverControl={detailsHoverControl}
         onRenameWorkspaceTitle={affiliateListMode ? undefined : handleRenameTitle}
         onEditIssue={affiliateListMode ? undefined : handleEditIssue}

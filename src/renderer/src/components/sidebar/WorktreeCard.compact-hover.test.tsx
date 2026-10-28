@@ -240,7 +240,7 @@ describe('WorktreeCard compact hover details', () => {
 
     expect(markup).toContain('data-worktree-title-inline-rename=""')
     expectIdentityBodyIsHoverTrigger(markup)
-    expect(markup).toContain('data-hover-open-delay="100"')
+    expect(markup).toContain('data-hover-open-delay="500"')
     expect(markup).toContain('PR #456')
     expect(markup).toContain('Fix stale GH PR')
     expect(markup).toContain('Live Ports')
@@ -290,7 +290,7 @@ describe('WorktreeCard compact hover details', () => {
       <WorktreeCard worktree={worktree} repo={makeRepo()} isActive={false} />
     )
 
-    expect(markup).toContain('data-hover-open-delay="100"')
+    expect(markup).toContain('data-hover-open-delay="500"')
     expectIdentityBodyIsHoverTrigger(markup)
     expect(markup).toContain('Issue #123')
     expect(markup).toContain('ENG-123</span>')
@@ -396,7 +396,7 @@ describe('WorktreeCard compact hover details', () => {
       />
     )
 
-    expect(markup).not.toContain('data-hover-open-delay="100"')
+    expect(markup).not.toContain('data-hover-open-delay="500"')
     expect(markup).toContain('feature/local-branch')
     expect(markup).toContain('Human title')
   })
@@ -422,7 +422,7 @@ describe('WorktreeCard compact hover details', () => {
     expect(markup).toContain('Workspace metadata')
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
     expectIdentityBodyIsHoverTrigger(markup)
-    expect(markup.match(/data-hover-open-delay="100"/g)).toHaveLength(1)
+    expect(markup.match(/data-hover-open-delay="500"/g)).toHaveLength(1)
     expect(markup).toContain('Reviewer handoff note')
   })
 
@@ -486,7 +486,7 @@ describe('WorktreeCard compact hover details', () => {
 
     expect(markup).toContain('data-worktree-card-meta-row=""')
     expectIdentityBodyIsHoverTrigger(markup)
-    expect(markup.match(/data-hover-open-delay="100"/g)).toHaveLength(1)
+    expect(markup.match(/data-hover-open-delay="500"/g)).toHaveLength(1)
     expect(markup.match(/Readable identity only/g)).toHaveLength(2)
     expect(markup).toContain('feature/local-branch')
     expect(markup).not.toContain('Workspace metadata')
@@ -783,7 +783,7 @@ describe('WorktreeCard compact hover details', () => {
     )
 
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
-    expect(markup).toContain('data-hover-open-delay="100"')
+    expect(markup).toContain('data-hover-open-delay="500"')
     expect(markup).toContain('/Users/x/projects/my-app')
     expect(markup).toContain('Docs folder')
   })
@@ -819,7 +819,7 @@ describe('WorktreeCard compact hover details', () => {
     )
 
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
-    expect(markup).toContain('data-hover-open-delay="100"')
+    expect(markup).toContain('data-hover-open-delay="500"')
     expect(markup).toContain('feature/local-branch')
   })
 

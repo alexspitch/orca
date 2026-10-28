@@ -1,3 +1,4 @@
+import { SidebarTaskAttentionCounter } from './SidebarTaskAttentionCounter'
 import React, { useCallback } from 'react'
 import { FolderPlus, Plus } from 'lucide-react'
 import { useAppStore } from '@/store'
@@ -87,6 +88,7 @@ export function SidebarHeaderActions({
 }): React.JSX.Element {
   return (
     <div className="flex shrink-0 items-center gap-1" data-sidebar-header-actions="">
+      {agentsViewActive ? null : <SidebarTaskAttentionCounter />}
       <div ref={activityOptionsTarget} className="flex size-6 shrink-0 items-center">
         {agentsViewActive ? null : (
           <SidebarWorkspaceOptionsMenu

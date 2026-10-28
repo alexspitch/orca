@@ -10,6 +10,12 @@ import {
 } from './folder-workspace-lanes'
 import { PR_GROUP_ORDER, getPRLaneKey } from './group-keys'
 import type { OrderedGroupEntry, WorktreeGroupEntry } from './worktree-group-entry'
+import {
+  TASK_GROUP_ORDER,
+  getTaskLaneKey,
+  getWorktreeTaskGroup,
+  type SidebarTaskGroupReader
+} from './task-session-groups'
 import { buildProjectSections, type ProjectGroupingIndex } from '../project-section-grouping'
 import { orderProjectSections } from '../project-section-order'
 import type {
@@ -25,6 +31,7 @@ export function buildOrderedGroups(args: {
   naturalWorktrees: readonly Worktree[]
   repoMap: Map<string, Repo>
   prGroupOf: SidebarPRGroupReader
+  taskGroupOf?: SidebarTaskGroupReader
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectIndex: ProjectGroupingIndex | null
   displayRootByIdentity?: ReadonlyMap<string, Worktree>
@@ -41,6 +48,7 @@ export function buildOrderedGroups(args: {
     naturalWorktrees,
     repoMap,
     prGroupOf,
+    taskGroupOf = getWorktreeTaskGroup,
     workspaceStatuses,
     projectIndex,
     displayRootByIdentity,
@@ -83,7 +91,9 @@ export function buildOrderedGroups(args: {
     const key =
       groupBy === 'workspace-status'
         ? getWorkspaceStatusGroupKey(getWorkspaceStatus(w, workspaceStatuses))
-        : getPRLaneKey(prGroupOf(w))
+        : groupBy === 'task'
+          ? getTaskLaneKey(taskGroupOf(w))
+          : getPRLaneKey(prGroupOf(w))
     if (!grouped.has(key)) {
       grouped.set(key, { label: '', items: [], repo: undefined, repoIds: new Set() })
     }
@@ -115,6 +125,14 @@ export function buildOrderedGroups(args: {
   if (groupBy === 'pr-status') {
     for (const prGroup of PR_GROUP_ORDER) {
       const key = `pr:${prGroup}`
+      const group = grouped.get(key)
+      if (group) {
+        orderedGroups.push([key, group])
+      }
+    }
+  } else if (groupBy === 'task') {
+    for (const taskGroup of TASK_GROUP_ORDER) {
+      const key = getTaskLaneKey(taskGroup)
       const group = grouped.get(key)
       if (group) {
         orderedGroups.push([key, group])

@@ -147,6 +147,7 @@ function clearedSetters(state: FilterState): string[] {
     setHideAutomationGeneratedWorkspaces: record('setHideAutomationGeneratedWorkspaces'),
     setHideCliCreatedWorkspaces: record('setHideCliCreatedWorkspaces'),
     setHideDetachedHeadWorkspaces: record('setHideDetachedHeadWorkspaces'),
+    setHiddenSessionStates: record('setHiddenSessionStates'),
     setHideWorkspacesFromOtherDevices: record('setHideWorkspacesFromOtherDevices'),
     setFilterRepoIds: record('setFilterRepoIds'),
     setVisibleWorkspaceHostIds: record('setVisibleWorkspaceHostIds')

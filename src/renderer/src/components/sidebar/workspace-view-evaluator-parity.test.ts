@@ -262,7 +262,8 @@ describe('the shared Workspace options evaluator matches the sidebar it replaced
         {
           ...t,
           hideSleepingWorkspaces: !t.showSleepingWorkspaces,
-          visibleHostIds: t.visibleWorkspaceHostIds
+          visibleHostIds: t.visibleWorkspaceHostIds,
+          hiddenSessionStates: []
         },
         repos.map((repo) => repo.id)
       )

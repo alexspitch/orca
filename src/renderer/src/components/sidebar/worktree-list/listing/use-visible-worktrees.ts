@@ -21,6 +21,8 @@ import type { SidebarWorktreeFilters } from './use-filters'
 import { useReusedArrayIdentity } from './use-reused-array-identity'
 import { useSleepingSweepRetention } from './use-sleeping-sweep-retention'
 import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
+import type { WorktreeGroupBy } from '../../../../../../shared/sidebar-list/row-types'
+import { createTaskSessionHostReader } from '../../task-session-capability'
 
 const EMPTY_WORKTREE_ID_SET: ReadonlySet<string> = new Set()
 
@@ -34,6 +36,7 @@ export function useVisibleSidebarWorktrees(args: {
   /** Pass only focused host so unrelated settings writes cannot invalidate the full workspace scan. */
   defaultHostId: ExecutionHostId
   agentSendTargetWorktreeId: string | null
+  groupBy?: WorktreeGroupBy
 }) {
   const { filterState, sortBy, sortedIds, repoMap, worktreeLineageById, defaultHostId } = args
   const {
@@ -46,14 +49,20 @@ export function useVisibleSidebarWorktrees(args: {
     hideWorkspacesFromOtherDevices,
     alwaysShowDefaultBranchWorkspace,
     visibleWorkspaceHostIds,
-    workspaceHostScope
+    workspaceHostScope,
+    hiddenSessionStates
   } = filterState
+  const keepArchivedTaskAttention = args.groupBy === 'task'
   const worktreesByRepo = useAppStore((s) => selectWorktreesByRepo(s))
   const agentStatusEpoch = useAppStore((s) => (!showSleepingWorkspaces ? s.agentStatusEpoch : 0))
   // Opt-out lists must skip the clock so they cannot evict the sample shared by live lists.
   const agentStatusNow = showSleepingWorkspaces ? 0 : getAgentStatusEpochNow(agentStatusEpoch)
   const runtimeEnvironments = useAppStore((s) => s.runtimeEnvironments)
   const runtimeStatusByEnvironmentId = useAppStore((s) => s.runtimeStatusByEnvironmentId)
+  const taskSessionHostKnown = useMemo(
+    () => createTaskSessionHostReader({ runtimeStatusByEnvironmentId }, defaultHostId),
+    [defaultHostId, runtimeStatusByEnvironmentId]
+  )
   const pairedDeviceIdsByEnvironment = useMemo(
     () =>
       hideWorkspacesFromOtherDevices
@@ -125,6 +134,9 @@ export function useVisibleSidebarWorktrees(args: {
       preserveLineageParentOrder: sortBy === 'manual',
       // Switch point: the stamp sort ranks by host identity (use-sort-order.ts).
       sortedByHostIdentity: ORCA_SIDEBAR_INPUTS_IS_MAIN,
+      hiddenSessionStates,
+      keepArchivedTaskAttention,
+      taskSessionHostKnown,
       forcedVisibleWorktreeIds: args.agentSendTargetWorktreeId
         ? [args.agentSendTargetWorktreeId]
         : undefined
@@ -153,7 +165,10 @@ export function useVisibleSidebarWorktrees(args: {
     worktreeLineageById,
     worktreesByRepo,
     pairedDeviceIdsByEnvironment,
-    worktreeIdsWithStructuredChat
+    worktreeIdsWithStructuredChat,
+    hiddenSessionStates,
+    keepArchivedTaskAttention,
+    taskSessionHostKnown
   ])
   // Reuse equal visibility results across epochs to avoid churning the entire row-model chain.
   const visibleWorktrees = useReusedArrayIdentity(recomputedVisibleWorktrees)

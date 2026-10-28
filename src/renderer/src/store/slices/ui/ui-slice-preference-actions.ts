@@ -38,6 +38,7 @@ import {
   normalizeWorkspaceStatuses,
   WORKSPACE_BOARD_COLUMN_WIDTH_DEFAULT
 } from '../../../../../shared/workspace-statuses'
+import { getStoredCollapseKey } from '../../../../../shared/sidebar-list/default-collapsed-groups'
 
 /** Builds preference defaults and setters for the UI slice, leaving durable writes to the persistence layer. */
 export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Partial<UISlice> {
@@ -103,6 +104,8 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
     setHideCliCreatedWorkspaces: (v) => set({ hideCliCreatedWorkspaces: v }),
     hideDetachedHeadWorkspaces: false,
     setHideDetachedHeadWorkspaces: (v) => set({ hideDetachedHeadWorkspaces: v }),
+    hiddenSessionStates: [],
+    setHiddenSessionStates: (v) => set({ hiddenSessionStates: [...v] }),
     hideWorkspacesFromOtherDevices: false,
     setHideWorkspacesFromOtherDevices: (v) => set({ hideWorkspacesFromOtherDevices: v }),
     alwaysShowDefaultBranchWorkspace: true,
@@ -161,9 +164,11 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
     ...createAgentsViewPreferenceActions(set),
 
     collapsedGroups: new Set<string>(),
-    toggleCollapsedGroup: (key) =>
+    toggleCollapsedGroup: (collapseKey) =>
       set((s) => {
         const next = new Set(s.collapsedGroups)
+        // Why: a lane that starts collapsed stores its expansion instead.
+        const key = getStoredCollapseKey(collapseKey)
         if (next.has(key)) {
           next.delete(key)
         } else {

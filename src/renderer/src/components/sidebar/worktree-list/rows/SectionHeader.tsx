@@ -21,6 +21,8 @@ import type {
   WorktreeGroupBy
 } from '../../../../../../shared/sidebar-list/row-types'
 import { PINNED_GROUP_KEY } from '../../../../../../shared/sidebar-list/group-keys'
+import { isSidebarGroupCollapsed } from '../../../../../../shared/sidebar-list/default-collapsed-groups'
+import { getTaskHeaderChrome, TaskHeaderCount } from './task-section-header'
 import { getWorkspaceStatusFromGroupKey } from '../../workspace-status'
 import { getVirtualRowTransform } from '../viewport/virtual-rows'
 import { getSidebarHeaderVisual } from './header-visuals'
@@ -182,11 +184,12 @@ export function renderWorktreeSectionHeaderRow(args: {
       })
     : null
   const collapseKey = row.collapseKey ?? row.key
-  const isHeaderCollapsed = ctx.collapsedGroups.has(collapseKey)
-  // Why: repo/project/status/pinned share compact section chrome; flat "All" stays a simple label.
+  const isHeaderCollapsed = isSidebarGroupCollapsed(ctx.collapsedGroups, collapseKey)
+  const taskHeader = getTaskHeaderChrome(row.icon, collapseKey, ctx.toggleGroupWithScrollAnchor)
+  // Why: repo/project/status/pinned/task share compact section chrome; flat "All" stays a simple label.
+  const laneHeader = headerWorkspaceStatus !== null || isPinnedHeader || taskHeader.collapsible
   const showHeaderCollapseAffordance =
-    row.count > 0 &&
-    (isRepoHeader || isProjectGroupHeader || headerWorkspaceStatus !== null || isPinnedHeader)
+    row.count > 0 && (isRepoHeader || isProjectGroupHeader || laneHeader)
   return (
     <div
       key={vItem.key}
@@ -245,6 +248,7 @@ export function renderWorktreeSectionHeaderRow(args: {
             // Keep grab on the title; action buttons use pointer cursors.
             'group relative flex h-7 w-full items-center gap-1.5 pr-2 text-left transition-all',
             !(isDraggableRepoHeader || isDraggableProjectGroupHeader) && 'cursor-pointer',
+            taskHeader.toneClassName,
             ctx.highlightedRevealRowKey === row.key &&
               'rounded-md bg-worktree-sidebar-accent ring-1 ring-worktree-sidebar-ring/50',
             (isDraggingThis || isDraggingThisProjectGroup) &&
@@ -295,7 +299,7 @@ export function renderWorktreeSectionHeaderRow(args: {
             if (shouldIgnoreRepoHeaderToggle(event)) {
               return
             }
-            ctx.toggleGroupWithScrollAnchor(collapseKey)
+            taskHeader.toggle(collapseKey)
           }}
           onKeyDown={(e) => {
             if (shouldIgnoreRepoHeaderToggle(e)) {
@@ -303,7 +307,7 @@ export function renderWorktreeSectionHeaderRow(args: {
             }
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
-              ctx.toggleGroupWithScrollAnchor(collapseKey)
+              taskHeader.toggle(collapseKey)
             }
           }}
         >
@@ -339,6 +343,7 @@ export function renderWorktreeSectionHeaderRow(args: {
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-1.5">
                 <div className="min-w-0 truncate text-[13px] font-semibold leading-4">{label}</div>
+                <TaskHeaderCount taskGroup={taskHeader.taskGroup} count={row.count} />
                 {hostContext ? <ProjectHeaderHostLabel context={hostContext} /> : null}
                 <RepoForkIndicator upstream={row.repo?.upstream} />
                 <FolderPathStatusIndicator status={projectGroupPathStatus} />

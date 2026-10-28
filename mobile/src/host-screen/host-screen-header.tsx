@@ -4,6 +4,7 @@ import {
   WORKSPACE_OPTIONS_TITLE
 } from '../worktree/workspace-options-copy'
 import { WorkspaceOptionsCountBadge } from './workspace-options-count-badge'
+import { TaskAttentionCounter } from './task-attention-counter'
 import {
   ChevronLeft,
   List,
@@ -166,6 +167,7 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
               </Text>
               <WorkspaceOptionsCountBadge count={controller.activeFilterCount} />
             </Pressable>
+            <TaskAttentionCounter controller={controller} />
           </View>
 
           <View style={styles.embeddedToolbarRow}>
@@ -271,6 +273,7 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
             </Text>
             <WorkspaceOptionsCountBadge count={controller.activeFilterCount} />
           </Pressable>
+          <TaskAttentionCounter controller={controller} />
 
           <View style={styles.toolbarSpacer} />
 
