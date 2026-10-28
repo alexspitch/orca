@@ -35,6 +35,7 @@ import {
 import { IMAGE_PAGE_SIZE, toggled, useImageHistory, useImageSort } from './use-build-web-images'
 import { repoOfImage } from '../../../../../shared/build-web-repos'
 import { useDistRules } from '../use-dist-rules'
+import { ImageTwinChip } from './ImageTwinChip'
 
 const DISTS = ['rhel', 'redos'] as const
 const PUSHED = ['yes', 'no'] as const
@@ -219,7 +220,7 @@ export function ImageHistoryView({
                   {...sorting}
                   sortKey="dist"
                   label={translate('buildWeb.images.dist', 'dist')}
-                  className="w-16"
+                  className="w-36"
                 />
                 <BuildWebSortHeader
                   {...sorting}
@@ -277,7 +278,12 @@ export function ImageHistoryView({
                       <BuildWebToneChip label={b.product_version} tone={null} mono />
                     ) : null}
                   </td>
-                  <td className="py-2 text-xs">{b.dist}</td>
+                  <td className="py-2 text-xs">
+                    <span className="inline-flex flex-wrap items-center gap-1">
+                      {b.dist}
+                      <ImageTwinChip build={b} />
+                    </span>
+                  </td>
                   <td className="truncate py-2 font-mono text-xs text-muted-foreground">
                     {b.branch}
                   </td>

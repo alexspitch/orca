@@ -22,10 +22,11 @@ import { ImageActionBar } from './ImageActionBar'
 import type { ImageBuildChoice } from './ImageBuildSheet'
 import {
   BuildStatusChip,
-  LogLink,
-  RowRegistryChip,
   buildStatusLabel,
   formatBuildTime,
+  ImageTwinChip,
+  LogLink,
+  RowRegistryChip,
   type OpenImageLog
 } from './image-cells'
 import { FreshnessChip, useImageFreshness } from './image-freshness'
@@ -175,6 +176,7 @@ export function ImageListView({
             <BuildWebToneChip label={productName(row.product)} tone={productTone(row.product)} />
             {last?.version ? <BuildWebToneChip label={last.version} tone={null} mono /> : null}
             {last ? <Text style={imageRowStyles.meta}>{last.dist}</Text> : null}
+            {last ? <ImageTwinChip build={last} /> : null}
             {last?.at ? <Text style={imageRowStyles.meta}>{formatBuildTime(last.at)}</Text> : null}
             {fresh.shown ? <FreshnessChip row={row} scan={fresh.of(row)} /> : null}
             {last ? <LogLink build={last} onOpen={onOpenLog} /> : null}

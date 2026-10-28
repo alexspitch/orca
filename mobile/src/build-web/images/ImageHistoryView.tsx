@@ -18,10 +18,11 @@ import { ImageActionBar } from './ImageActionBar'
 import type { ImageBuildChoice } from './ImageBuildSheet'
 import {
   BuildStatusChip,
-  LogLink,
-  RegistryChip,
   buildStatusLabel,
   formatBuildTime,
+  ImageTwinChip,
+  LogLink,
+  RegistryChip,
   type OpenImageLog
 } from './image-cells'
 import { ImageFilterChips } from './ImageFilterChips'
@@ -132,6 +133,7 @@ export function ImageHistoryView({
               <BuildWebToneChip label={b.product_version} tone={null} mono />
             ) : null}
             <Text style={imageRowStyles.meta}>{b.dist}</Text>
+            <ImageTwinChip build={b} />
             <Text style={[imageRowStyles.meta, styles.branch]} numberOfLines={1}>
               {b.branch}
             </Text>

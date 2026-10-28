@@ -10,7 +10,15 @@ import type {
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebToneChip } from '../BuildWebToneChip'
-import { isPushOver, useImagePushes, type TrackedImagePush } from './image-push-runs'
+import {
+  areTwinsGoing,
+  isPushFollowed,
+  isPushOver,
+  progressNews,
+  twinPushOf,
+  type TwinPush
+} from '../../../../../shared/build-web-image-tracking'
+import { useImagePushes, type TrackedImagePush } from './image-push-runs'
 import { RegistryCell } from './image-build-cells'
 
 const POLL_MS = 1500
@@ -26,10 +34,44 @@ function headline(push: TrackedImagePush, progress: BuildWebPushProgress | undef
       'build-web did not report this push; the table shows what the registry holds'
     )
   }
-  return translate('buildWeb.push.finished', 'Push finished: {{ok}} pushed, {{failed}} failed', {
-    ok: String(progress?.ok.length ?? 0),
-    failed: String(progress?.failed.length ?? 0)
-  })
+  const finished = translate(
+    'buildWeb.push.finished',
+    'Push finished: {{ok}} pushed, {{failed}} failed',
+    { ok: String(progress?.ok.length ?? 0), failed: String(progress?.failed.length ?? 0) }
+  )
+  return areTwinsGoing(progress)
+    ? `${finished} · ${translate('buildWeb.push.twinsGoing', 'redos being made and pushed…')}`
+    : finished
+}
+
+function twinChip(twin: TwinPush): React.JSX.Element {
+  switch (twin) {
+    case 'pushed':
+      return (
+        <BuildWebToneChip
+          label={translate('buildWeb.push.twinPushed', 'redos pushed')}
+          tone="green"
+        />
+      )
+    case 'made':
+      return (
+        <BuildWebToneChip label={translate('buildWeb.push.twinMade', 'redos made')} tone="amber" />
+      )
+    case 'failed':
+      return (
+        <BuildWebToneChip
+          label={translate('buildWeb.push.twinFailed', 'redos failed')}
+          tone="red"
+        />
+      )
+    case 'going':
+      return (
+        <span className="inline-flex items-center gap-1">
+          <Loader2 className="size-3 animate-spin text-chip-tone-blue" />
+          <BuildWebToneChip label={translate('buildWeb.push.twinGoing', 'redos…')} tone="blue" />
+        </span>
+      )
+  }
 }
 
 function imageChip(key: string, progress: BuildWebPushProgress | undefined): React.JSX.Element {
@@ -61,7 +103,7 @@ function PushCard({
   const [showLog, setShowLog] = useState(false)
   const logRef = useRef<HTMLPreElement>(null)
   const lines = progress?.lines ?? []
-  const going = !isPushOver(progress)
+  const going = !isPushOver(progress) || areTwinsGoing(progress)
   useEffect(() => {
     logRef.current?.scrollTo(0, logRef.current.scrollHeight)
   }, [lines.length, showLog])
@@ -93,11 +135,13 @@ function PushCard({
       <div className="flex flex-col gap-1">
         {push.keys.map((key) => {
           const [image, dist] = key.split('|')
+          const twin = twinPushOf(progress, key)
           return (
             <div key={key} className="flex flex-wrap items-center gap-2 text-xs">
               <span className="font-mono">{image}</span>
               <span className="text-muted-foreground">{dist}</span>
               {imageChip(key, progress)}
+              {twin ? twinChip(twin) : null}
             </div>
           )
         })}
@@ -199,7 +243,7 @@ export function ImagePushProgress({
     [all, image]
   )
   const goingIds = all
-    .filter((p) => !isPushOver(progress[p.runId]))
+    .filter((p) => isPushFollowed(progress[p.runId]))
     .map((p) => p.runId)
     .join(',')
   const settledRef = useRef(onSettled)
@@ -216,26 +260,35 @@ export function ImagePushProgress({
         if (!alive) {
           return
         }
+        const { pushEnded, twinsEnded } = progressNews(useImagePushes.getState().progress, list)
         setProgress(list)
-        const ended = list.filter((p) => p.state !== 'pushing')
-        if (ended.length) {
+        if (pushEnded.length || twinsEnded.length) {
           settledRef.current()
           // Why again: a table read in the same moment the console writes the flags shows the old ones.
           window.setTimeout(() => settledRef.current(), 3000)
-          for (const p of ended) {
-            if (p.failed.length) {
-              toast.error(
-                translate('buildWeb.push.toastFailed', '{{n}} image(s) were not pushed', {
-                  n: String(p.failed.length)
-                })
-              )
-            } else if (p.ok.length) {
-              toast.success(
-                translate('buildWeb.push.toastDone', '{{n}} image(s) pushed', {
-                  n: String(p.ok.length)
-                })
-              )
-            }
+        }
+        for (const p of pushEnded) {
+          if (p.failed.length) {
+            toast.error(
+              translate('buildWeb.push.toastFailed', '{{n}} image(s) were not pushed', {
+                n: String(p.failed.length)
+              })
+            )
+          } else if (p.ok.length) {
+            toast.success(
+              translate('buildWeb.push.toastDone', '{{n}} image(s) pushed', {
+                n: String(p.ok.length)
+              })
+            )
+          }
+        }
+        for (const p of twinsEnded) {
+          if (p.redos?.failed.length) {
+            toast.error(
+              translate('buildWeb.push.toastTwinsFailed', 'redos of {{images}} not made', {
+                images: p.redos.failed.join(', ')
+              })
+            )
           }
         }
       } catch {

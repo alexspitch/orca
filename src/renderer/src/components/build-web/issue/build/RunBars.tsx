@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, Copy, Loader2, RotateCw } from 'lucide-react'
+import { ChevronDown, Loader2, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -17,6 +17,8 @@ import type {
   BuildWebPushAfter
 } from '../../../../../../shared/build-web-run-types'
 import { RUN_DISTS, RUN_PRODUCT_FILTERS, type RunFilter } from '../../build-web-view-prefs'
+import type { BuildWebDistChoice } from '../../../../../../shared/build-web-dist-links'
+import { DistCopyMenu } from '../../DistCopyMenu'
 import { comboOf, type Cell } from './run-cells'
 import { formatAt } from './RunCellChips'
 import { BuildMenu, PushMenu } from './RunMenus'
@@ -166,7 +168,7 @@ const caret = <ChevronDown className="size-3 opacity-60" />
 export function RunSelectionBar({
   selectable,
   picked,
-  links,
+  linksOf,
   stale,
   failed,
   unpushed,
@@ -180,7 +182,7 @@ export function RunSelectionBar({
 }: {
   selectable: number
   picked: number
-  links: string[]
+  linksOf: (choice: BuildWebDistChoice) => string[]
   stale: Cell[]
   failed: Cell[]
   unpushed: Cell[]
@@ -188,11 +190,11 @@ export function RunSelectionBar({
   building: boolean
   treeBranches: ReadonlySet<string>
   onPickAll: (on: boolean) => void
-  onCopy: () => Promise<boolean>
+  onCopy: (links: string[]) => Promise<boolean>
   onBuild: (combos: BuildWebCombo[], pushAfter: BuildWebPushAfter, skipTests: boolean) => void
   onPush: (cells: Cell[], moveMainTag: boolean) => void
 }): React.JSX.Element {
-  const [copied, setCopied] = useState(false)
+  const links = linksOf('both')
   const allPicked = selectable > 0 && picked === selectable
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -218,25 +220,13 @@ export function RunSelectionBar({
             )}
       </span>
       <div className="flex-1" />
-      <Button
+      <DistCopyMenu
         variant="outline"
         size="xs"
-        disabled={links.length === 0}
-        title={links.join('\n') || undefined}
-        onClick={() =>
-          void onCopy().then((ok) => {
-            if (ok) {
-              setCopied(true)
-              window.setTimeout(() => setCopied(false), 1500)
-            }
-          })
-        }
-      >
-        <Copy />
-        {copied
-          ? translate('buildWeb.run.copied', 'Copied')
-          : translate('buildWeb.run.copyLinks', 'Copy links')}
-      </Button>
+        linksOf={linksOf}
+        onCopy={onCopy}
+        label={translate('buildWeb.run.copyLinks', 'Copy links')}
+      />
       <BuildMenu
         combos={stale.map(comboOf)}
         treeBranches={treeBranches}

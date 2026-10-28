@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import {
   withoutPush,
-  isPushOver,
+  isPushFollowed,
+  progressNews,
   withTrackedBuild,
   withTrackedPush,
   withPushProgress,
@@ -46,11 +47,13 @@ export function useImageTrackingState(
   const [pushes, setPushes] = useState<ImagePushTracking>({ pushes: [], progress: {} })
   const [pushSettles, setPushSettles] = useState(0)
   const goingIds = pushes.pushes
-    .filter((p) => !isPushOver(pushes.progress[p.runId]))
+    .filter((p) => isPushFollowed(pushes.progress[p.runId]))
     .map((p) => p.runId)
     .join(',')
   const notifyRef = useRef(notify)
   notifyRef.current = notify
+  const progressRef = useRef(pushes.progress)
+  progressRef.current = pushes.progress
 
   useEffect(() => {
     if (!goingIds || !call) {
@@ -63,17 +66,27 @@ export function useImageTrackingState(
         if (!alive) {
           return
         }
+        const { pushEnded, twinsEnded } = progressNews(progressRef.current, list)
+        // Why at once: a second read before the next render must not say the same news again.
+        progressRef.current = withPushProgress(
+          { pushes: [], progress: progressRef.current },
+          list
+        ).progress
         setPushes((state) => withPushProgress(state, list))
-        const ended = list.filter((p) => p.state !== 'pushing')
-        if (ended.length === 0) {
+        if (pushEnded.length === 0 && twinsEnded.length === 0) {
           return
         }
         setPushSettles((n) => n + 1)
-        for (const p of ended) {
+        for (const p of pushEnded) {
           if (p.failed.length) {
             notifyRef.current(`${p.failed.length} image(s) were not pushed`, 'error')
           } else if (p.ok.length) {
             notifyRef.current(`${p.ok.length} image(s) pushed`, 'success')
+          }
+        }
+        for (const p of twinsEnded) {
+          if (p.redos?.failed.length) {
+            notifyRef.current(`redos of ${p.redos.failed.join(', ')} not made`, 'error')
           }
         }
       } catch {

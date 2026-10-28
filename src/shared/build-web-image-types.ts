@@ -25,7 +25,17 @@ export type BuildWebImageBuild = {
   url: string | null
   /** IS-230.21: a redos twin of a rhel build; its image's state is read without it. Absent from an older host. */
   twin?: BuildWebRedosTwin | null
+  /** IS-230.21: on a twin, the number of the rhel build it was made for. */
+  twin_of?: number | null
+  /** IS-230.23: a rhel build's twin, or a twin's rhel build — found over the whole catalog. Absent from an older host. */
+  pair?: BuildWebImagePair | null
 }
+
+/** The other side of a rhel build and its redos twin: what a cell and «Copy links» need of it. */
+export type BuildWebImagePair = Pick<
+  BuildWebImageBuild,
+  'dist' | 'number' | 'status' | 'ref' | 'pushed_build_tag' | 'twin'
+>
 
 export type BuildWebImageRow = {
   image: string
@@ -163,4 +173,17 @@ export type BuildWebPushProgress = {
   ok: string[]
   failed: string[]
   error: string | null
+  /** IS-230.23: the redos twins the console makes after the push, on the same stream. Absent from an older host. */
+  redos?: BuildWebRedosProgress | null
+}
+
+/**
+ * `waiting`: the push is over and the stream is still open for twins; `going`: a derivation is heard;
+ * `done`: the stream ended. Images are by name: `derived` made, `pushed` published, `failed` not made.
+ */
+export type BuildWebRedosProgress = {
+  state: 'waiting' | 'going' | 'done'
+  derived: string[]
+  pushed: string[]
+  failed: string[]
 }

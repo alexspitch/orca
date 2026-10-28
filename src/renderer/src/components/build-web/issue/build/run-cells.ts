@@ -236,19 +236,6 @@ export function unpushedCells(cells: Cell[]): Cell[] {
   return cells.filter((c) => isWork(c) && c.status === 'SUCCESS' && c.tags.length > 0 && !c.pushed)
 }
 
-/** The image references of the ticked rows, in row order, each once. */
-export function imageLinks(cells: Cell[], picked: ReadonlySet<string>): string[] {
-  const out: string[] = []
-  for (const cell of pickedCells(cells, picked)) {
-    for (const tag of cell.tags) {
-      if (!out.includes(tag)) {
-        out.push(tag)
-      }
-    }
-  }
-  return out
-}
-
 /**
  * Whether a build started by hand runs the offline suites. A warm-tree branch goes without them
  * unless asked; Jenkins (any other branch) always runs them, so one such branch forces them on.

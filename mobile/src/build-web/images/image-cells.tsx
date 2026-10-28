@@ -6,8 +6,10 @@ import type {
 import {
   isPushOver,
   pushStateOf,
-  rowPushProgress
+  rowPushProgress,
+  type TwinPush
 } from '../../../../src/shared/build-web-image-tracking'
+import { imageTwinCellOf } from '../../../../src/shared/build-web-image-twins'
 import { imageBuildTone } from '../../../../src/renderer/src/components/build-web/build-web-tones'
 import { imageRefOf } from '../../../../src/renderer/src/components/build-web/images/image-links'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
@@ -42,12 +44,53 @@ export function BuildStatusChip({ build }: { build: BuildWebImageBuild }) {
   )
 }
 
-function Going({ label }: { label: string }) {
+function Going({ label, tone = 'amber' }: { label: string; tone?: 'amber' | 'blue' }) {
   return (
     <View style={styles.row}>
-      <LoadingSpinner size={12} color={chipTones.amber} />
-      <BuildWebToneChip label={label} tone="amber" />
+      <LoadingSpinner size={12} color={chipTones[tone]} />
+      <BuildWebToneChip label={label} tone={tone} />
     </View>
+  )
+}
+
+/** IS-230.23: a rhel image's redos twin in a push's follow-on. */
+export function TwinPushChip({ twin }: { twin: TwinPush }) {
+  switch (twin) {
+    case 'pushed':
+      return <BuildWebToneChip label="redos pushed" tone="green" />
+    case 'made':
+      return <BuildWebToneChip label="redos made" tone="amber" />
+    case 'failed':
+      return <BuildWebToneChip label="redos failed" tone="red" />
+    case 'going':
+      return <Going label="redos…" tone="blue" />
+  }
+}
+
+const TWIN_CHIP = {
+  pushed: { label: 'redos', tone: 'green' },
+  built: { label: 'redos: not pushed', tone: 'amber' },
+  running: { label: 'redos: going', tone: 'blue' },
+  failed: { label: 'redos: failed', tone: 'red' }
+} as const
+
+/** IS-230.23, build-web's «redos» column: a rhel build's twin and its state, or a twin's rhel build. */
+export function ImageTwinChip({ build }: { build: BuildWebImageBuild }) {
+  const cell = imageTwinCellOf(build)
+  if (!cell) {
+    return null
+  }
+  if (cell.kind === 'source') {
+    const n = cell.of ?? '?'
+    return (
+      <BuildWebToneChip label={cell.full ? `full for rhel #${n}` : `from rhel #${n}`} tone={null} />
+    )
+  }
+  const chip = TWIN_CHIP[cell.state]
+  return cell.state === 'running' ? (
+    <Going label={chip.label} tone="blue" />
+  ) : (
+    <BuildWebToneChip label={chip.label} tone={chip.tone} />
   )
 }
 

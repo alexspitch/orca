@@ -68,6 +68,43 @@ describe('push progress', () => {
     expect(mocks.invalidate).toHaveBeenCalled()
   })
 
+  it('follows the redos twins the console makes after the push, on the same stream', async () => {
+    mocks.fetch.mockResolvedValueOnce(
+      stream([
+        { type: 'log', data: { line: '[push] OK   dc/a (rhel)' } },
+        { type: 'log', data: { line: '[push] OK   dc/b (rhel)' } },
+        { type: 'push-status', data: { pushing: false } },
+        { type: 'log', data: { line: '[redos dc/a] FROM rhel image' } },
+        { type: 'log', data: { line: '[redos] OK   dc/a -> r/dc/a:1b7-redos' } },
+        { type: 'log', data: { line: '[redos] FAIL dc/b — agent gone' } },
+        { type: 'log', data: { line: '[push] OK   dc/a (redos)' } },
+        { type: 'push-status', data: { pushing: false } },
+        { type: 'done', data: {} }
+      ])
+    )
+    followBuildWebPush('run-1')
+    await vi.waitFor(() => expect(buildWebPushProgress(['run-1'])[0].redos?.state).toBe('done'))
+    expect(buildWebPushProgress(['run-1'])[0]).toMatchObject({
+      state: 'done',
+      ok: ['dc/a|rhel', 'dc/b|rhel'],
+      failed: [],
+      redos: { derived: ['dc/a'], pushed: ['dc/a'], failed: ['dc/b'] }
+    })
+  })
+
+  it('hears no twins from a console that ends the stream with the push', async () => {
+    mocks.fetch.mockResolvedValueOnce(
+      stream([
+        { type: 'log', data: { line: '[push] OK   dc/a (rhel)' } },
+        { type: 'push-status', data: { pushing: false } },
+        { type: 'done', data: {} }
+      ])
+    )
+    followBuildWebPush('run-1')
+    await vi.waitFor(() => expect(buildWebPushProgress(['run-1'])[0].redos).toBeNull())
+    expect(await settled()).toMatchObject({ state: 'done', ok: ['dc/a|rhel'] })
+  })
+
   it('says it does not know when the console reports nothing about the push', async () => {
     mocks.fetch.mockResolvedValueOnce(stream([]))
     followBuildWebPush('run-1')

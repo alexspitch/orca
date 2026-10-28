@@ -21,7 +21,6 @@ import {
   cellKey,
   comboOf,
   failedCells,
-  imageLinks,
   isRetrying,
   isSelectable,
   pendingCells,
@@ -34,6 +33,8 @@ import {
   type Cell
 } from '../../../../../../src/renderer/src/components/build-web/issue/build/run-cells'
 import { LoadingSpinner } from '../../../../components/LoadingSpinner'
+import type { BuildWebDistChoice } from '../../../../../../src/shared/build-web-dist-links'
+import { runLinksByDist } from '../../../../../../src/renderer/src/components/build-web/issue/build/run-links'
 import { useClipboardWriter } from '../../../../platform/clipboard'
 import { chipTones, colors, spacing } from '../../../../theme/mobile-theme'
 import { useBuildWebScreen } from '../../../build-web-screen-context'
@@ -115,7 +116,7 @@ export function IssueRunProgress({
   const hasStuck = !building && own.some((c) => c.state === 'queued' || c.state === 'building')
   const selectable = visible.filter(isSelectable)
   const pickedRows = pickedCells(visible, picked)
-  const links = imageLinks(visible, picked)
+  const linksOf = (choice: BuildWebDistChoice) => runLinksByDist(visible, list, picked, choice)
   const pendingCombos = pendingCells(visible).map(comboOf)
   const treeBranches = useMemo(
     () => new Set(branches.filter((b) => b.fromTree).map((b) => b.name)),
@@ -174,7 +175,7 @@ export function IssueRunProgress({
     return actions.add(missing.map((d) => ({ image, dist: d, branch })))
   }
 
-  const copyLinks = async (): Promise<boolean> => {
+  const copyLinks = async (links: string[]): Promise<boolean> => {
     try {
       await clipboard.writeText(links.join('\n'))
       return true
@@ -284,7 +285,7 @@ export function IssueRunProgress({
         <RunSelectionBar
           selectable={selectable.length}
           picked={pickedRows.length}
-          links={links}
+          linksOf={linksOf}
           stale={staleCells(pickedRows, scan.freshness)}
           failed={failedCells(pickedRows)}
           unpushed={unpushedCells(pickedRows)}

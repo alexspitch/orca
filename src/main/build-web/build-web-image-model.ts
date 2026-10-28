@@ -1,3 +1,4 @@
+import { withPairs } from '../../shared/build-web-image-twins'
 import { withoutTwins } from '../../shared/build-web-redos-twin'
 import { buildCell, sortByCell } from './build-web-image-sort'
 import type {
@@ -178,9 +179,12 @@ export function imagePage(catalog: ImageCatalog, args: BuildWebImagePageArgs): B
     ? args.products.map((p) => catalog.versions[p] ?? [])
     : Object.values(catalog.versions)
   // Why per page: the scan is over the whole catalog, so only the rows that cross RPC pay for it.
-  const pageRows = pageOf(rows, args.page, args.pageSize).map((row) =>
-    row.last?.status === 'failed' ? { ...row, lastSuccess: lastSuccessFor(newest, row.last) } : row
-  )
+  const pageRows = pageOf(rows, args.page, args.pageSize).map((row) => {
+    const last = withPairs(catalog.builds, row.last)
+    return last?.status === 'failed'
+      ? { ...row, last, lastSuccess: lastSuccessFor(newest, last) }
+      : { ...row, last }
+  })
   return {
     rows: pageRows,
     total: rows.length,
@@ -221,7 +225,7 @@ export function imageHistory(
     ? sortByCell(filtered, (b) => buildCell(b, sort), args.dir ?? 'asc')
     : filtered
   return {
-    builds: pageOf(builds, args.page, args.pageSize),
+    builds: pageOf(builds, args.page, args.pageSize).map((b) => withPairs(catalog.builds, b)),
     total: builds.length,
     of: own.length,
     counts: {

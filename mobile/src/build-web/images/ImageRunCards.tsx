@@ -6,7 +6,9 @@ import type { BuildWebPushProgress } from '../../../../src/shared/build-web-imag
 import {
   isBuildGoing,
   trackedBuildsOf,
+  areTwinsGoing,
   isPushOver,
+  twinPushOf,
   versionOfBranch,
   type TrackedImageBuild,
   type TrackedImagePush
@@ -17,7 +19,7 @@ import { colors, radii, spacing, typography } from '../../theme/mobile-theme'
 import { buildWebErrorMessage } from '../build-web-operations'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { BuildWebToneChip } from '../BuildWebToneChip'
-import { PushOutcomeChip, type OpenImageLog } from './image-cells'
+import { PushOutcomeChip, TwinPushChip, type OpenImageLog } from './image-cells'
 import { useImageTracking } from './image-tracking'
 
 const BUILD_POLL_MS = 3000
@@ -168,7 +170,8 @@ function pushHeadline(push: TrackedImagePush, progress: BuildWebPushProgress | u
   if (progress?.state === 'unknown') {
     return 'build-web did not report this push; the table shows what the registry holds'
   }
-  return `Push finished: ${progress?.ok.length ?? 0} pushed, ${progress?.failed.length ?? 0} failed`
+  const finished = `Push finished: ${progress?.ok.length ?? 0} pushed, ${progress?.failed.length ?? 0} failed`
+  return areTwinsGoing(progress) ? `${finished} · redos being made and pushed…` : finished
 }
 
 function PushCard({
@@ -181,7 +184,7 @@ function PushCard({
   const { dismissPush } = useImageTracking()
   const [showLog, setShowLog] = useState(false)
   const lines = progress?.lines ?? []
-  const going = !isPushOver(progress)
+  const going = !isPushOver(progress) || areTwinsGoing(progress)
   return (
     <View style={styles.card}>
       <CardHead
@@ -198,6 +201,7 @@ function PushCard({
       </CardHead>
       {push.keys.map((key) => {
         const [image, dist] = key.split('|')
+        const twin = twinPushOf(progress, key)
         return (
           <View key={key} style={styles.line}>
             <Text style={styles.mono} numberOfLines={1}>
@@ -205,6 +209,7 @@ function PushCard({
             </Text>
             <Text style={styles.small}>{dist}</Text>
             <PushOutcomeChip pushKey={key} progress={progress} />
+            {twin ? <TwinPushChip twin={twin} /> : null}
           </View>
         )
       })}

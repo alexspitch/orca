@@ -21677,7 +21677,20 @@
       "neverBuiltTip": "No build of this version on {{branch}} yet",
       "freshnessLoading": "Checking for changes…",
       "rebuildPackages": "packages",
-      "rebuildPackagesTip": "Only shared packages it is built with changed on {{branch}} since its last build: {{what}}"
+      "rebuildPackagesTip": "Only shared packages it is built with changed on {{branch}} since its last build: {{what}}",
+      "twinPushed": "redos",
+      "twinBuilt": "redos: not pushed",
+      "twinRunning": "redos: going",
+      "twinFailed": "redos: failed",
+      "twinPushedHint": "in the registry",
+      "twinBuiltHint": "not pushed — «Retry» on the run’s row",
+      "twinRunningHint": "being made",
+      "twinFailedHint": "not made — «Retry» on the run’s row",
+      "twinFullFor": "full for rhel #{{n}}",
+      "twinFrom": "from rhel #{{n}}",
+      "twinNoSource": "The rhel build is not in the catalog",
+      "twinFullHow": "full build #{{n}}",
+      "twinDerivedHow": "derived from this build"
     },
     "card": {
       "overview": "Overview",
@@ -22143,7 +22156,13 @@
       "hideLog": "Hide log",
       "log": "Log",
       "toastFailed": "{{n}} image(s) were not pushed",
-      "toastDone": "{{n}} image(s) pushed"
+      "toastDone": "{{n}} image(s) pushed",
+      "twinsGoing": "redos being made and pushed…",
+      "twinPushed": "redos pushed",
+      "twinMade": "redos made",
+      "twinFailed": "redos failed",
+      "twinGoing": "redos…",
+      "toastTwinsFailed": "redos of {{images}} not made"
     },
     "trains": {
       "runTitle": "Depart «{{name}}» now?",
@@ -22686,6 +22705,10 @@
       "sharedHint": "Everybody sees it; only you can delete it.",
       "cancel": "Cancel",
       "save": "Save"
+    },
+    "copy": {
+      "both": "rhel + redos",
+      "which": "References of which distribution"
     }
   },
   "gitLog": {

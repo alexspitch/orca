@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildWebRunBuild } from '../../../../../../shared/build-web-run-types'
+import { runLinksByDist } from './run-links'
 import {
   cellLabel,
   cellsOf,
   elapsedLabel,
   failedCells,
-  imageLinks,
   hasLiveTwin,
   isRetrying,
   mergeCells,
@@ -131,7 +131,11 @@ describe('what each bulk button takes', () => {
 
   it('copies each reference once, in row order', () => {
     const picked = new Set(['dc/a|rhel|master', 'dc/b|rhel|master'])
-    expect(imageLinks(rows, picked)).toEqual(['r/dc/a:1', 'r/dc/a:1b2', 'r/dc/b:1'])
+    expect(runLinksByDist(rows, rows, picked, 'both')).toEqual([
+      'r/dc/a:1',
+      'r/dc/a:1b2',
+      'r/dc/b:1'
+    ])
   })
 })
 
@@ -210,7 +214,24 @@ describe('redos twins (IS-230)', () => {
   })
 
   it('still copies a twin’s references', () => {
-    expect(imageLinks(rows, new Set(['dc/c|redos|master']))).toEqual(['r/dc/c:1b7'])
+    expect(runLinksByDist(rows, rows, new Set(['dc/c|redos|master']), 'redos')).toEqual([
+      'r/dc/c:1b7'
+    ])
+  })
+
+  it('gives a ticked rhel row its twin, even one a filter hides, but not a twin of an earlier build', () => {
+    const all = Object.values(
+      cellsOf([
+        rec('SUCCESS', { image: 'dc/c', number: 7, tags: ['r/dc/c:1b7'] }),
+        twin('SUCCESS', { image: 'dc/c', tags: ['r/dc/c:1b7-redos'] })
+      ])
+    )
+    const rhelOnly = all.filter((c) => c.dist === 'rhel')
+    const ticked = new Set(['dc/c|rhel|master'])
+    expect(runLinksByDist(rhelOnly, all, ticked, 'redos')).toEqual(['r/dc/c:1b7-redos'])
+    expect(runLinksByDist(rhelOnly, all, ticked, 'rhel')).toEqual(['r/dc/c:1b7'])
+    const rebuilt = all.map((c) => (c.dist === 'rhel' ? { ...c, number: 8 } : c))
+    expect(runLinksByDist(rebuilt, rebuilt, ticked, 'redos')).toEqual([])
   })
 })
 

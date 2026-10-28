@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ScrollView, StyleSheet } from 'react-native'
-import { CloudUpload, Copy, Hammer } from 'lucide-react-native'
+import { CloudUpload, Hammer } from 'lucide-react-native'
+import type { BuildWebDistChoice } from '../../../../src/shared/build-web-dist-links'
 import type { BuildWebImageBuild } from '../../../../src/shared/build-web-image-types'
 import {
   isPushable,
@@ -9,15 +10,13 @@ import {
   pushRequests
 } from '../../../../src/shared/build-web-image-push'
 import { pushKeyOf } from '../../../../src/shared/build-web-image-tracking'
-import {
-  imageLinksOf,
-  unpushedLinkCount
-} from '../../../../src/renderer/src/components/build-web/images/image-links'
+import { imageLinksByDist } from '../../../../src/renderer/src/components/build-web/images/image-links'
 import type { useImagePicks } from './use-image-picks'
 import { ActionSheetModal } from '../../components/ActionSheetModal'
 import { useClipboardWriter } from '../../platform/clipboard'
 import { spacing } from '../../theme/mobile-theme'
 import { buildWebErrorMessage } from '../build-web-operations'
+import { DistCopyButton } from '../DistCopyButton'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { BuildTabButton } from '../issue/tabs/build/BuildTabControls'
 import type { ImageBuildChoice } from './ImageBuildSheet'
@@ -54,25 +53,26 @@ export function ImageActionBar({
   const clipboard = useClipboardWriter()
   const [pushOpen, setPushOpen] = useState(false)
   const [busy, setBusy] = useState(false)
-  const links = imageLinksOf(picks.builds)
+  const linksOf = (choice: BuildWebDistChoice) => imageLinksByDist(picks.builds, choice)
   const images = new Set(picks.builds.map((b) => b.image)).size
   const group = groupChoice(picks.builds)
   const pushable = picks.pushable
 
-  const copy = async (): Promise<void> => {
+  const copy = async (links: string[], choice: BuildWebDistChoice): Promise<boolean> => {
     try {
       await clipboard.writeText(links.join('\n'))
     } catch (failure) {
       notify(buildWebErrorMessage(failure), 'error')
-      return
+      return false
     }
-    const unpushed = unpushedLinkCount(picks.builds)
+    const unpushed = linksOf(choice).filter((l) => !l.pushed).length
     notify(
       unpushed > 0
         ? `Copied. ${unpushed} of the copied images are not in the registry yet.`
         : `Copied ${links.length} link(s).`,
       unpushed > 0 ? 'info' : 'success'
     )
+    return true
   }
 
   /** The choice in the sheet is the confirmation; every run is asked, one refusal costs no other. */
@@ -122,11 +122,10 @@ export function ImageActionBar({
         style={styles.scroll}
         contentContainerStyle={styles.bar}
       >
-        <BuildTabButton
-          icon={Copy}
-          label={`Copy links (${links.length})`}
-          disabled={links.length === 0}
-          onPress={() => void copy()}
+        <DistCopyButton
+          label={`Copy links (${linksOf('both').length})`}
+          linksOf={(choice) => linksOf(choice).map((l) => l.ref)}
+          onCopy={copy}
         />
         {canBuild ? (
           <BuildTabButton

@@ -31,6 +31,7 @@ import {
 } from '../build-web-view-prefs'
 import { FoundCount, ImagePages, ImageSearch, ImageTableState } from './image-view-parts'
 import { IMAGE_PAGE_SIZE, toggled, useImagePage, useImageSort } from './use-build-web-images'
+import { ImageTwinChip } from './ImageTwinChip'
 
 const PRODUCTS = ['dc', 'sa', 'ap', 'storage', 'cp', 'other'] as const
 // In progress first: the quick filter for what is building now.
@@ -242,7 +243,7 @@ export function ImageListView({
                   {...sorting}
                   sortKey="dist"
                   label={translate('buildWeb.images.dist', 'dist')}
-                  className="w-16"
+                  className="w-36"
                 />
                 <BuildWebSortHeader
                   {...sorting}
@@ -316,7 +317,12 @@ export function ImageListView({
                         <BuildWebToneChip label={row.last.version} tone={null} mono />
                       ) : null}
                     </td>
-                    <td className="py-2 text-xs">{row.last?.dist ?? ''}</td>
+                    <td className="py-2 text-xs">
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        {row.last?.dist ?? ''}
+                        {row.last ? <ImageTwinChip build={row.last} /> : null}
+                      </span>
+                    </td>
                     <td className="py-2 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">
                         {formatBuildTime(row.last?.at ?? null)}

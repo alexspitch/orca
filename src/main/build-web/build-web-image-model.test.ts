@@ -9,7 +9,7 @@ import {
   runningImageCount,
   type ImageCatalog
 } from './build-web-image-model'
-import { imageCatalogOf } from './build-web-images'
+import { imageCatalogOf } from './build-web-image-catalog'
 
 const build = (over: Partial<BuildWebImageBuild>): BuildWebImageBuild => ({
   image: 'sa/api',

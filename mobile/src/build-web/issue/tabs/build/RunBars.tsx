@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { Copy, RotateCw } from 'lucide-react-native'
+import { RotateCw } from 'lucide-react-native'
+import type { BuildWebDistChoice } from '../../../../../../src/shared/build-web-dist-links'
 import type { BuildWebFreshnessRef } from '../../../../../../src/shared/build-web-run-types'
 import {
   RUN_DISTS,
@@ -9,6 +10,7 @@ import {
 } from '../../../../../../src/renderer/src/components/build-web/build-web-view-prefs'
 import type { Cell } from '../../../../../../src/renderer/src/components/build-web/issue/build/run-cells'
 import { MobileSwitch } from '../../../../components/MobileSwitch'
+import { DistCopyButton } from '../../../DistCopyButton'
 import { colors, radii, spacing, typography } from '../../../../theme/mobile-theme'
 import { ImagePicker, SelectField } from './BuildPickers'
 import { BuildTabButton, BuildTabTick, buildTabText } from './BuildTabControls'
@@ -112,7 +114,7 @@ export function RunFilters({
 export function RunSelectionBar({
   selectable,
   picked,
-  links,
+  linksOf,
   stale,
   failed,
   unpushed,
@@ -125,18 +127,18 @@ export function RunSelectionBar({
 }: {
   selectable: number
   picked: number
-  links: string[]
+  linksOf: (choice: BuildWebDistChoice) => string[]
   stale: Cell[]
   failed: Cell[]
   unpushed: Cell[]
   busy: boolean
   building: boolean
   onPickAll: (on: boolean) => void
-  onCopy: () => Promise<boolean>
+  onCopy: (links: string[]) => Promise<boolean>
   onOpenBuild: (cells: Cell[]) => void
   onOpenPush: (cells: Cell[]) => void
 }) {
-  const [copied, setCopied] = useState(false)
+  const links = linksOf('both')
   const allPicked = selectable > 0 && picked === selectable
   return (
     <View style={styles.selection}>
@@ -155,19 +157,7 @@ export function RunSelectionBar({
         </Text>
       </View>
       <View style={styles.wrapRow}>
-        <BuildTabButton
-          icon={Copy}
-          label={copied ? 'Copied' : 'Copy links'}
-          disabled={links.length === 0}
-          onPress={() =>
-            void onCopy().then((ok) => {
-              if (ok) {
-                setCopied(true)
-                setTimeout(() => setCopied(false), 1500)
-              }
-            })
-          }
-        />
+        <DistCopyButton label="Copy links" linksOf={linksOf} onCopy={onCopy} />
         <BuildTabButton
           icon={RotateCw}
           label={`Rebuild stale (${stale.length})`}

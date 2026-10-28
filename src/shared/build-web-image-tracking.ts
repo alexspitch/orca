@@ -45,6 +45,56 @@ export const pushKeyOf = (build: { image: string; dist: string }): string =>
 export const isPushOver = (progress: BuildWebPushProgress | undefined): boolean =>
   progress !== undefined && progress.state !== 'pushing'
 
+/** IS-230.23: still worth asking about — the push goes, or its redos twins may be on their way. */
+export const isPushFollowed = (progress: BuildWebPushProgress | undefined): boolean =>
+  !isPushOver(progress) || (progress?.redos != null && progress.redos.state !== 'done')
+
+/** The push is over and the console is heard making its twins: what the card says goes on. */
+export const areTwinsGoing = (progress: BuildWebPushProgress | undefined): boolean =>
+  progress?.redos?.state === 'going'
+
+/** A rhel image's redos twin in a push's follow-on. */
+export type TwinPush = 'going' | 'made' | 'pushed' | 'failed'
+
+/** What a push's follow-on says of one rhel image's redos twin; null outside one or for any other row. */
+export function twinPushOf(
+  progress: BuildWebPushProgress | undefined,
+  key: string
+): TwinPush | null {
+  const [image, dist] = key.split('|')
+  const redos = progress?.redos
+  if (!redos || dist !== 'rhel' || !progress.ok.includes(key)) {
+    return null
+  }
+  if (redos.failed.includes(image)) {
+    return 'failed'
+  }
+  if (redos.pushed.includes(image)) {
+    return 'pushed'
+  }
+  if (redos.derived.includes(image)) {
+    return redos.state === 'done' ? 'made' : 'going'
+  }
+  // Not heard of yet: going only once the console is heard making twins.
+  return redos.state === 'going' ? 'going' : null
+}
+
+/**
+ * What a read brings against the one before: pushes that just ended, and pushes whose twins
+ * just did — each said once, though a push is asked about until its twins are over.
+ */
+export function progressNews(
+  before: Readonly<Record<string, BuildWebPushProgress>>,
+  list: readonly BuildWebPushProgress[]
+): { pushEnded: BuildWebPushProgress[]; twinsEnded: BuildWebPushProgress[] } {
+  return {
+    pushEnded: list.filter((p) => isPushOver(p) && !isPushOver(before[p.runId])),
+    twinsEnded: list.filter(
+      (p) => p.redos?.state === 'done' && before[p.runId]?.redos?.state !== 'done'
+    )
+  }
+}
+
 export function withTrackedPush(
   state: ImagePushTracking,
   push: TrackedImagePush

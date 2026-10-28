@@ -1,11 +1,15 @@
+import { isTwin } from './build-web-redos-twin'
 import type { BuildWebImageBuild, BuildWebImagePushArgs } from './build-web-image-types'
 
 // Publishing builds to the registry, after build-web's web/src/image-push.ts: a build is pushed by
 // the run that holds it, and «main tag» means something only where the moving tag can still go.
 
-/** A finished build a push can still add a tag for. */
+/**
+ * A finished build a push can still add a tag for. Not a redos twin: it goes out with its rhel
+ * build, and the console refuses it alone (IS-230.21).
+ */
 export function isPushable(build: BuildWebImageBuild): boolean {
-  if (build.status !== 'success' || !build.ref) {
+  if (build.status !== 'success' || !build.ref || isTwin(build)) {
     return false
   }
   return !build.pushed_build_tag || (!build.pushed_main_tag && !build.main_tag_on)

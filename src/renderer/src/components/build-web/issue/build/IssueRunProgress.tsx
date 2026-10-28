@@ -19,7 +19,6 @@ import {
   cellKey,
   comboOf,
   failedCells,
-  imageLinks,
   isRetrying,
   isSelectable,
   pendingCells,
@@ -33,6 +32,8 @@ import {
 import { useRunProgress } from './use-run-progress'
 import { useRunScan } from './use-run-scan'
 import { useRunActions } from './use-run-actions'
+import type { BuildWebDistChoice } from '../../../../../../shared/build-web-dist-links'
+import { runLinksByDist } from './run-links'
 import { useRunListEdits } from './use-run-list-edits'
 import { RUN_ROW_GRID, RunImageRow, type RunRowContext } from './RunImageRow'
 import { RunAddImage, RunFilters, RunRefBar, RunSelectionBar } from './RunBars'
@@ -114,7 +115,7 @@ export function IssueRunProgress({
   const hasStuck = !building && own.some((c) => c.state === 'queued' || c.state === 'building')
   const selectable = visible.filter(isSelectable)
   const pickedRows = pickedCells(visible, picked)
-  const links = imageLinks(visible, picked)
+  const linksOf = (choice: BuildWebDistChoice) => runLinksByDist(visible, list, picked, choice)
   const pendingCombos = pendingCells(visible).map(comboOf)
   const treeBranches = useMemo(
     () => new Set(branches.filter((b) => b.fromTree).map((b) => b.name)),
@@ -152,7 +153,7 @@ export function IssueRunProgress({
 
   const { add, remove } = useRunListEdits(cells, actions, setError)
 
-  const copyLinks = async (): Promise<boolean> => {
+  const copyLinks = async (links: string[]): Promise<boolean> => {
     try {
       await window.api.ui.writeClipboardText(links.join('\n'))
       return true
@@ -292,7 +293,7 @@ export function IssueRunProgress({
         <RunSelectionBar
           selectable={selectable.length}
           picked={pickedRows.length}
-          links={links}
+          linksOf={linksOf}
           stale={staleCells(pickedRows, scan.freshness)}
           failed={failedCells(pickedRows)}
           unpushed={unpushedCells(pickedRows)}
