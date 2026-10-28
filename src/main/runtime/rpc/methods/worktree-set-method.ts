@@ -1,7 +1,7 @@
 import { displayNameUpdatePinsLabel } from '../../../../shared/worktree/display-name-provenance'
 import { getWorkspaceStatusWarning } from '../../../../shared/workspace-status-warning'
 import { WorktreeSet } from '../../../../shared/rpc-contract/worktree-params'
-import { assertBuildWebTaskWorktree } from '../../../build-web/build-web-task-worktree'
+import { hostBuildWebTaskLink } from '../../../build-web/build-web-task-worktree'
 import { defineMethod } from '../core'
 
 export const WORKTREE_SET_METHOD = defineMethod({
@@ -9,9 +9,9 @@ export const WORKTREE_SET_METHOD = defineMethod({
   permission: 'workspace',
   params: WorktreeSet,
   handler: async (params, { runtime }) => {
-    if (params.buildWebTask) {
-      await assertBuildWebTaskWorktree(runtime, params.worktree)
-    }
+    const buildWebTask = params.buildWebTask
+      ? await hostBuildWebTaskLink(runtime, params.worktree, params.buildWebTask)
+      : params.buildWebTask
     const worktree = await runtime.updateManagedWorktreeMeta(params.worktree, {
       displayName: params.displayName,
       ...(params.displayName !== undefined
@@ -35,7 +35,7 @@ export const WORKTREE_SET_METHOD = defineMethod({
         ? { linkedItemsSelectionChanged: params.linkedItemsSelectionChanged }
         : {}),
       linkedTaskSourceContext: params.linkedTaskSourceContext,
-      buildWebTask: params.buildWebTask,
+      buildWebTask,
       comment: params.comment,
       isArchived: params.isArchived,
       isUnread: params.isUnread,

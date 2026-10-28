@@ -1,14 +1,12 @@
 import type { BuildWebAgentSession, BuildWebIssueRow } from './build-web-types'
 import type { WorktreeBuildWebTask } from './build-web-session-types'
+import { sameBuildWebConsole } from './build-web-console-origin'
 
 // Which worktree holds a task's session (IS-147), as the desktop and the phone both find it:
 // «Take to work» opens it again only while it holds the task's current, open session.
 
 type SessionIssue = Pick<BuildWebIssueRow, 'id' | 'agent_session' | 'agent_session_state'>
 type TaskWorktree = { buildWebTask?: WorktreeBuildWebTask }
-
-const sameConsole = (a: string, b: string): boolean =>
-  a.replace(/\/+$/, '').toLowerCase() === b.replace(/\/+$/, '').toLowerCase()
 
 /** The session holding the task while its skill runs, unless the task is closed. */
 export function currentOpenSession(issue: SessionIssue): BuildWebAgentSession | null {
@@ -26,7 +24,8 @@ export function taskWorktreesOf<W extends TaskWorktree>(
 ): W[] {
   return worktrees.filter(
     (w) =>
-      w.buildWebTask?.issueId === issueId && sameConsole(w.buildWebTask.consoleHost, consoleHost)
+      w.buildWebTask?.issueId === issueId &&
+      sameBuildWebConsole(w.buildWebTask.consoleHost, consoleHost)
   )
 }
 

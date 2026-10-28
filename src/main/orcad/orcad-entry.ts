@@ -209,6 +209,10 @@ async function startOrcadRuntime(
     }
   })
   paneGridsForShutdown = runtime
+  // Every delete, including one over RPC, must find IS-147's report hook; the watcher starts later.
+  const { installBuildWebSessionReportHook, startBuildWebSessionService } =
+    await import('../build-web/build-web-session-service')
+  installBuildWebSessionReportHook()
 
   accountLaunch?.attachToRuntime(runtime)
   const { installOrcadEmulatorBridge } = await import('./orcad-emulator-bridge')
@@ -298,7 +302,6 @@ async function startOrcadRuntime(
   registerCleanup(() => rpc.stop())
   await rpc.start()
   startOrcadAutomations(runtime, profileStore, registerCleanup)
-  const { startBuildWebSessionService } = await import('../build-web/build-web-session-service')
   const buildWebSessions = startBuildWebSessionService(profileStore, runtime)
   registerCleanup(() => buildWebSessions?.stop())
   const pushService = DesktopPushService.create({

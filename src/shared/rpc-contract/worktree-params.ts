@@ -14,7 +14,7 @@ import { WorkspaceLinkedItemSchema } from '../workspace-linked-item-schema'
 import { WorkspaceAttachmentsSchema } from '../workspace-attachment-schema'
 import { DiffCommentSchema, MobileDiffReviewSchema } from '../diff-comment-schema'
 import { TaskSourceContextSchema } from '../task-source-context-schema'
-import { WorktreeBuildWebTaskSchema } from '../build-web-session-schema'
+import { WorktreeBuildWebTaskRequestSchema } from '../build-web-session-schema'
 import { isWorkspaceLinkedItemSourceContextMatch } from '../workspace-linked-item-source-context'
 
 export const OptionalExecutionHostId = z
@@ -139,7 +139,8 @@ export const WorktreeSet = WorktreeSelector.extend({
   linkedItemsSelectionChanged: z.boolean().optional(),
   linkedTaskSourceContext: TaskSourceContextSchema.nullable().optional(),
   // IS-147: a task worktree's link, null clears it; refused for a main worktree or a folder.
-  buildWebTask: WorktreeBuildWebTaskSchema.nullable().optional(),
+  // The host decides `branch` and `sessionId`; an older client's copies are stripped here.
+  buildWebTask: WorktreeBuildWebTaskRequestSchema.nullable().optional(),
   isArchived: OptionalBoolean,
   isUnread: OptionalBoolean,
   isPinned: OptionalBoolean,

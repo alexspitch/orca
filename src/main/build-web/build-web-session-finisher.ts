@@ -2,6 +2,7 @@ import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import type {
   BuildWebAgentSessionStatus,
   BuildWebSessionAttentionReason,
+  WorktreeBuildWebSession,
   WorktreeBuildWebTask
 } from '../../shared/build-web-session-types'
 import type { RemoveWorktreeResult } from '../../shared/worktree/create-types'
@@ -18,6 +19,11 @@ import { checkBuildWebEmptyContainer } from './build-web-empty-container'
 import { removeEmptyBuildWebWorktree } from './build-web-session-removal'
 import type { BuildWebSessionLinkRuntime } from './build-web-session-link'
 import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
+import {
+  isWaitAttention,
+  sameBuildWebSessionState,
+  watchedBuildWebSessionChange
+} from './build-web-session-state'
 import {
   createBuildWebWorktreeGitProbe,
   type BuildWebTaskWorktreeRef,
@@ -54,26 +60,50 @@ export type BuildWebSessionFinisherDeps = {
   /** A fresh `eligible` from the console, asked with a timeout just before the delete queue. */
   confirmEligible: (sessionId: string) => Promise<boolean>
   announceRemoved: (removed: { worktreeId: string; key: string }) => void
-  /** How long a closed task may keep something running before it needs a person. */
+  /** How long this host waits on a busy or unknown worktree before it needs a person. */
   stuckMs: number
   now?: () => number
 }
 
 const LOCAL = LOCAL_EXECUTION_HOST_ID
 
-function consoleTime(value: string | null): number | null {
-  const at = value ? Date.parse(value) : Number.NaN
-  return Number.isFinite(at) ? at : null
-}
-
 export class BuildWebSessionFinisher {
-  private readonly firstSeenEligibleAt = new Map<string, number>()
+  /** Since when each session has been waiting, by this host's clock; a restart starts it over. */
+  private readonly waitingSince = new Map<string, number>()
   private readonly running = new Set<string>()
+  private stopped = false
 
   constructor(private readonly deps: BuildWebSessionFinisherDeps) {}
 
+  /** Quit: a look in flight goes no further, and a delete not yet started does not start. */
+  stop(): void {
+    this.stopped = true
+  }
+
+  /** A look or a delete of this worktree is under way. */
+  isWorking(worktreeId: string): boolean {
+    return this.running.has(worktreeId)
+  }
+
   private now(): number {
     return (this.deps.now ?? Date.now)()
+  }
+
+  private readMeta(target: BuildWebFinisherTarget) {
+    const meta = readWorktreeMetaForHost(this.deps.store, target.worktreeId, LOCAL)
+    // Why: a Keep that landed meanwhile took the worktree out of the task's lifecycle.
+    return meta?.buildWebTask?.sessionId === target.task.sessionId ? meta : null
+  }
+
+  private async writeSession(
+    target: BuildWebFinisherTarget,
+    session: Omit<WorktreeBuildWebSession, 'at'> | null
+  ): Promise<void> {
+    await this.deps.runtime
+      .updateManagedWorktreeMeta(`id:${target.worktreeId}`, {
+        buildWebSession: session ? { ...session, at: this.now() } : null
+      })
+      .catch((error) => console.warn('[build-web] could not mark a task worktree:', error))
   }
 
   private async attention(
@@ -81,51 +111,54 @@ export class BuildWebSessionFinisher {
     reason: BuildWebSessionAttentionReason,
     detail?: string
   ): Promise<void> {
-    const meta = readWorktreeMetaForHost(this.deps.store, target.worktreeId, LOCAL)
-    // Why: a Keep that landed meanwhile took the worktree out of the task's lifecycle.
-    if (meta?.buildWebTask?.sessionId !== target.task.sessionId) {
+    const meta = this.readMeta(target)
+    const session = { state: 'attention' as const, reason, ...(detail ? { detail } : {}) }
+    // Why: a long wait is seen again on every poll; clients hear only a change.
+    if (meta && !sameBuildWebSessionState(meta.buildWebSession, session)) {
+      await this.writeSession(target, session)
+    }
+  }
+
+  /** A check got past waiting: a wait's attention gives way to what the console says. */
+  private async liftWaitAttention(
+    target: BuildWebFinisherTarget,
+    status: BuildWebAgentSessionStatus
+  ): Promise<void> {
+    if (!isWaitAttention(this.readMeta(target)?.buildWebSession)) {
       return
     }
-    const session = { state: 'attention' as const, reason, ...(detail ? { detail } : {}) }
-    await this.deps.runtime
-      .updateManagedWorktreeMeta(`id:${target.worktreeId}`, {
-        buildWebSession: { ...session, at: this.now() }
-      })
-      .catch((error) => console.warn('[build-web] could not mark a task worktree:', error))
+    const change = watchedBuildWebSessionChange(undefined, status)
+    await this.writeSession(target, change.kind === 'set' ? change.session : null)
   }
 
-  /** Since when the task was ready for cleanup: the console's clock when it says, else first seen here. */
-  private eligibleSince(status: BuildWebAgentSessionStatus): number {
-    const firstSeen = this.firstSeenEligibleAt.get(status.id) ?? this.now()
-    this.firstSeenEligibleAt.set(status.id, firstSeen)
-    const times = [consoleTime(status.closed_since), consoleTime(status.agent_finished_at)]
-    const known = times.filter((at): at is number => at !== null)
-    return known.length > 0 ? Math.max(...known) : firstSeen
-  }
-
+  /** The «stuck» clock starts at the first wait this host sees, so a passing failure is no alarm. */
   private async waitOrAttention(
     target: BuildWebFinisherTarget,
-    status: BuildWebAgentSessionStatus,
     reason: BuildWebSessionAttentionReason
   ): Promise<void> {
-    if (this.now() - this.eligibleSince(status) > this.deps.stuckMs) {
+    const { sessionId } = target.task
+    const since = this.waitingSince.get(sessionId) ?? this.now()
+    this.waitingSince.set(sessionId, since)
+    if (this.now() - since > this.deps.stuckMs) {
       await this.attention(target, reason)
     }
   }
 
-  /** One eligible session of this host; `ps` is the tick's shared process listing. */
+  /** One eligible session of this host; `ps` is the tick's shared process listing. Never throws. */
   async finish(
     target: BuildWebFinisherTarget,
     status: BuildWebAgentSessionStatus,
     ps?: RuntimeWorktreePsResult
   ): Promise<void> {
     const { worktreeId } = target
-    if (this.running.has(worktreeId)) {
+    if (this.stopped || this.running.has(worktreeId)) {
       return
     }
     this.running.add(worktreeId)
     try {
       await this.finishUnguarded(target, status, ps)
+    } catch (error) {
+      console.warn(`[build-web] finishing ${target.task.key}'s worktree failed:`, error)
     } finally {
       this.running.delete(worktreeId)
     }
@@ -137,32 +170,46 @@ export class BuildWebSessionFinisher {
     ps?: RuntimeWorktreePsResult
   ): Promise<void> {
     const { runtime, store } = this.deps
+    const { sessionId } = target.task
     // Why fresh: a Keep or a state write may have landed since the tick listed the worktree.
-    const meta = readWorktreeMetaForHost(store, target.worktreeId, LOCAL)
-    if (
-      meta?.buildWebTask?.sessionId !== target.task.sessionId ||
-      meta.isPinned ||
-      // Why: attention waits for a person; there is no automatic repair or retry.
-      meta.buildWebSession?.state === 'attention'
-    ) {
+    const meta = this.readMeta(target)
+    if (!meta || meta.isPinned) {
+      this.waitingSince.delete(sessionId)
+      return
+    }
+    // Why: attention waits for a person; only a wait's attention is looked at again.
+    const current = meta.buildWebSession
+    if (current?.state === 'attention' && !isWaitAttention(current)) {
       return
     }
     const activity = await readBuildWebWorktreeActivity(runtime, target.worktreeId, ps)
+    if (this.stopped) {
+      return
+    }
     if (activity.kind === 'busy') {
-      return this.waitOrAttention(target, status, activity.reason)
+      return this.waitOrAttention(target, activity.reason)
     }
     const probe = createBuildWebWorktreeGitProbe(runtime, store, target)
     const verdict = await checkBuildWebEmptyContainer(probe)
-    if (verdict.kind === 'pinned') {
+    if (this.stopped) {
       return
     }
     if (verdict.kind === 'wait') {
-      return this.waitOrAttention(target, status, 'state-unknown')
+      return this.waitOrAttention(target, 'state-unknown')
+    }
+    this.waitingSince.delete(sessionId)
+    if (verdict.kind === 'pinned') {
+      return
     }
     if (verdict.kind === 'attention') {
       return this.attention(target, verdict.reason, verdict.detail)
     }
-    if (!(await this.deps.confirmEligible(status.id))) {
+    await this.liftWaitAttention(target, status)
+    if (this.stopped || !(await this.deps.confirmEligible(status.id))) {
+      return
+    }
+    const ignored = await probe.readIgnored()
+    if (this.stopped) {
       return
     }
     const outcome = await removeEmptyBuildWebWorktree(
@@ -182,18 +229,19 @@ export class BuildWebSessionFinisher {
           }),
         forceDeleteBranch: (selector, branchName, expectedHead) =>
           runtime.forceDeletePreservedBranch(selector, branchName, expectedHead, LOCAL),
-        reports: this.deps.reports
+        reports: this.deps.reports,
+        stopped: () => this.stopped
       },
       {
         worktreeId: target.worktreeId,
-        sessionId: target.task.sessionId,
+        sessionId,
         branch: target.task.branch,
         head: verdict.head,
-        lastActivityAt: meta.lastActivityAt
+        lastActivityAt: meta.lastActivityAt,
+        ...(ignored && ignored.length > 0 ? { ignored } : {})
       }
     )
     if (outcome.kind === 'removed') {
-      this.firstSeenEligibleAt.delete(status.id)
       this.deps.announceRemoved({ worktreeId: target.worktreeId, key: target.task.key })
     } else if (outcome.kind === 'failed') {
       // Why no retry: the next delete call would run retryFailedRemoval on its own.

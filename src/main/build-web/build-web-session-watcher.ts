@@ -56,6 +56,7 @@ const readIssueInBackground = (issueId: string): Promise<BuildWebIssueDetail> =>
 export class BuildWebSessionWatcher {
   private timer: NodeJS.Timeout | null = null
   private ticking: Promise<void> | null = null
+  private stopped = false
   private readonly finisher: BuildWebSessionFinisher
   private readonly reportedGone = new Set<string>()
   private readonly healTriedAt = new Map<string, number>()
@@ -85,7 +86,10 @@ export class BuildWebSessionWatcher {
     this.timer.unref?.()
   }
 
+  /** Quit: a tick in flight writes and deletes nothing more. */
   stop(): void {
+    this.stopped = true
+    this.finisher.stop()
     if (this.timer) {
       clearInterval(this.timer)
       this.timer = null
@@ -93,6 +97,9 @@ export class BuildWebSessionWatcher {
   }
 
   tick(): Promise<void> {
+    if (this.stopped) {
+      return Promise.resolve()
+    }
     this.ticking ??= this.look()
       .catch((error) => console.warn('[build-web] session watch failed:', error))
       .finally(() => {
@@ -105,16 +112,16 @@ export class BuildWebSessionWatcher {
     await this.deps.reports.drain()
     const consoleHost = getBuildWebStatus().baseUrl
     const rows = consoleHost ? listLocalBuildWebTaskWorktrees(this.deps.store, consoleHost) : []
-    if (rows.length === 0) {
+    if (rows.length === 0 || this.stopped) {
       return
     }
     const features = await buildWebConsoleFeatures({ background: true }).catch((): string[] => [])
-    if (!features.includes(BUILD_WEB_AGENT_SESSION_LIFECYCLE_FEATURE)) {
+    if (!features.includes(BUILD_WEB_AGENT_SESSION_LIFECYCLE_FEATURE) || this.stopped) {
       return
     }
     await this.heal(rows.filter((row) => !hasBuildWebSession(row)))
     const present = await this.withoutGoneWorktrees(rows.filter(hasBuildWebSession))
-    if (present.length === 0) {
+    if (present.length === 0 || this.stopped) {
       return
     }
     const lookup = await fetchBuildWebAgentSessions(
@@ -125,27 +132,32 @@ export class BuildWebSessionWatcher {
     const eligible: [BuildWebLinkedTaskWorktree, BuildWebAgentSessionStatus][] = []
     for (const row of present) {
       const status = byId.get(row.task.sessionId)
-      if (status) {
+      if (status && !this.stopped) {
         await this.mirrorState(row, status)
         if (status.eligible && lookup.settings.auto_cleanup) {
           eligible.push([row, status])
         }
       }
     }
-    if (eligible.length === 0) {
+    if (eligible.length === 0 || this.stopped) {
       return
     }
     const ps = await this.deps.runtime
       .getWorktreePs(BUILD_WEB_WORKTREE_PS_LIMIT)
       .catch(() => undefined)
     for (const [row, status] of eligible) {
-      await this.finisher.finish(row, status, ps)
+      // Why not awaited: a slow Git scan or a hung delete must not stall the next tick; the
+      // finisher runs one look per worktree at a time.
+      void this.finisher.finish(row, status, ps)
     }
   }
 
   private async heal(rows: BuildWebTaskWorktree[]): Promise<void> {
     const now = Date.now()
     for (const row of rows) {
+      if (this.stopped) {
+        return
+      }
       if (now - (this.healTriedAt.get(row.worktreeId) ?? 0) < HEAL_RETRY_MS) {
         continue
       }
@@ -162,10 +174,11 @@ export class BuildWebSessionWatcher {
     const present: BuildWebLinkedTaskWorktree[] = []
     for (const row of rows) {
       const { sessionId, consoleHost } = row.task
-      if (this.reportedGone.has(sessionId)) {
+      // Why the finisher's rows are skipped: its own delete is not a removal behind Orca's back.
+      if (this.reportedGone.has(sessionId) || this.finisher.isWorking(row.worktreeId)) {
         continue
       }
-      if (await isBuildWebTaskWorktreeGone(this.deps.store, row)) {
+      if ((await isBuildWebTaskWorktreeGone(this.deps.store, row)) && !this.stopped) {
         this.reportedGone.add(sessionId)
         this.deps.reports.enqueue({
           kind: 'worktree-removed',

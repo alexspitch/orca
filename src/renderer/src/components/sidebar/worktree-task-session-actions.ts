@@ -6,6 +6,7 @@ import { getProviderRuntimeContextKey } from '@/lib/provider-runtime-context'
 import { runtimeTargetForWorkspaceOwner } from '@/lib/resolve-owner'
 import { ipcOrRuntimeTargetForHostId } from '@/runtime/runtime-client-target'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
+import { sameBuildWebConsole } from '../../../../shared/build-web-console-origin'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { callBuildWeb } from '../build-web/build-web-client'
 import { useBuildWebStore } from '../build-web/build-web-store'
@@ -18,17 +19,6 @@ function ownerTarget(worktree: Pick<Worktree, 'id' | 'hostId'>): RuntimeClientTa
   return worktree.hostId
     ? ipcOrRuntimeTargetForHostId(worktree.hostId)
     : runtimeTargetForWorkspaceOwner(useAppStore.getState(), { workspaceId: worktree.id })
-}
-
-function sameConsole(left: string | null, right: string): boolean {
-  if (!left) {
-    return false
-  }
-  try {
-    return new URL(left).origin === new URL(right).origin
-  } catch {
-    return left.replace(/\/+$/, '') === right.replace(/\/+$/, '')
-  }
 }
 
 /** The task's card, only when this client's console is the one the task lives on. */
@@ -46,7 +36,7 @@ export async function openWorktreeBuildWebTask(worktree: Worktree): Promise<void
     store.contextKey === contextKey && store.status
       ? store.status
       : await callBuildWeb(defaultScopeHost(host), 'status').catch(() => null)
-  if (!status?.connected || !sameConsole(status.baseUrl, task.consoleHost)) {
+  if (!status?.connected || !sameBuildWebConsole(status.baseUrl, task.consoleHost)) {
     toast.error(
       translate(
         'buildWeb.session.openTask.otherConsole',

@@ -202,6 +202,20 @@ export function stripOrcaProvenanceMetaUpdates(
   return sanitized
 }
 
+// IS-147: a task worktree's link and state are the host's; a renderer's meta update never writes them.
+const HOST_OWNED_BUILD_WEB_META_KEYS = ['buildWebTask', 'buildWebSession'] as const
+
+/** What the desktop renderer may write: no Orca provenance and no build-web task link or state. */
+export function stripRendererOwnedMetaUpdates(
+  updates: Partial<WorktreeMeta> | null | undefined
+): Partial<WorktreeMeta> {
+  const sanitized = stripOrcaProvenanceMetaUpdates(updates)
+  for (const key of HOST_OWNED_BUILD_WEB_META_KEYS) {
+    delete sanitized[key]
+  }
+  return sanitized
+}
+
 function isMissingPathError(error: unknown): boolean {
   const code =
     error && typeof error === 'object' && 'code' in error
