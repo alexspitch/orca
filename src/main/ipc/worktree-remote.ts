@@ -1560,6 +1560,7 @@ async function performLocalWorktreeCreate(
     ...(args.linkedTaskSourceContext !== undefined
       ? { linkedTaskSourceContext: args.linkedTaskSourceContext }
       : {}),
+    ...(args.buildWebTask ? { buildWebTask: { ...args.buildWebTask, branch: branchName } } : {}),
     ...(args.workspaceStatus !== undefined ? { workspaceStatus: args.workspaceStatus } : {})
   }
   const { worktree } = timing.timeSync('persist_metadata', () => {

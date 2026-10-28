@@ -5,6 +5,7 @@ import type { WorkspaceSource } from '../workspace-source'
 import type { TaskSourceContext } from '../task-source-context'
 import type { WorkspaceKey } from '../folder-workspace-types'
 import type { TuiAgent } from '../tui-agent'
+import type { WorktreeBuildWebTaskRequest } from '../build-web-session-types'
 import type {
   AutomationWorkspaceProvenanceRequest,
   GitPushTarget,
@@ -114,6 +115,8 @@ export type CreateWorktreeArgs = {
   linkedWorkItem?: WorkspaceLinkedItem | null
   linkedItems?: WorkspaceAttachment[]
   linkedTaskSourceContext?: TaskSourceContext | null
+  /** «Take to work»'s task (IS-147); the host records it with the branch it made. Git worktrees only. */
+  buildWebTask?: WorktreeBuildWebTaskRequest
   pushTarget?: GitPushTarget
   workspaceStatus?: WorkspaceStatus
   manualOrder?: number

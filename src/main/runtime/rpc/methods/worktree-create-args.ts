@@ -49,6 +49,7 @@ export function buildManagedWorktreeCreateArgs(
     linkedWorkItem: params.linkedWorkItem,
     linkedItems: params.linkedItems,
     linkedTaskSourceContext: params.linkedTaskSourceContext,
+    ...(params.buildWebTask ? { buildWebTask: params.buildWebTask } : {}),
     comment: params.comment,
     displayName: params.displayName,
     displayNameKind: params.displayNameKind,

@@ -15,9 +15,9 @@ vi.mock('@/lib/launch-work-item-direct-preflight', () => ({
   resolveDirectSetupDecision: async () => ({ kind: 'decided', decision: 'skip' })
 }))
 
-import { createBatchWorktree } from './build-web-new-worktree'
+import { createTaskWorktree } from './build-web-new-worktree'
 
-describe('createBatchWorktree', () => {
+describe('createTaskWorktree', () => {
   beforeEach(() => getState.mockReset())
 
   it('returns the store record under the client host, not the server view of itself', async () => {
@@ -30,7 +30,7 @@ describe('createBatchWorktree', () => {
         id === created.id && hostId === 'runtime:station' ? known : undefined
     })
 
-    const worktree = await createBatchWorktree({
+    const worktree = await createTaskWorktree({
       repoId: 'repo-1',
       name: 'is-164',
       baseBranch: 'origin/master'

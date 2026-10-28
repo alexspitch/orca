@@ -46,12 +46,16 @@ async function writeSession(
   call: BuildWebScreen['call'],
   baseUrl: string,
   issue: BuildWebIssueRow,
-  session: BuildWebSessionArgs
+  session: BuildWebSessionArgs,
+  worktreeId: string
 ): Promise<boolean> {
   if (sessionUnsupported.has(baseUrl)) {
     return true
   }
-  const result = await call('setAgentSession', { id: issue.id, session }).catch(() => null)
+  // Why the worktree: its host then records the console's session row on it (IS-147).
+  const result = await call('setAgentSession', { id: issue.id, session, worktreeId }).catch(
+    () => null
+  )
   // Why: only a missing route — a deleted task answers 404 too, with the console's own error.
   if (result && !result.ok && result.routeMissing) {
     sessionUnsupported.add(baseUrl)
@@ -111,16 +115,23 @@ export async function launchBuildWebTask(args: {
   const paneKey = outcome.kind === 'terminal' ? outcome.paneKey : undefined
   const warnings = [launched.result.warning?.trim()]
   const surface = surfaceOf(outcome)
-  // Why no record without delivery: the session never got the tasks, so they must not point at it.
+  // Why no record without delivery: the session never got the task, so it must not point at it —
+  // nor take it from a session that holds it. Nothing recorded means nothing to abandon either.
   // Why none without a surface id either: such a record could never be cleared.
   if (launched.promptDelivered && surface.surface_id) {
-    const saved = await writeSession(args.call, args.baseUrl, issue, {
-      ...surface,
-      worktree_name: worktree.displayName,
-      execution_host_id: worktree.hostId ?? '',
-      agent: 'claude',
-      started_at: startedAt
-    })
+    const saved = await writeSession(
+      args.call,
+      args.baseUrl,
+      issue,
+      {
+        ...surface,
+        worktree_name: worktree.displayName,
+        execution_host_id: worktree.hostId ?? '',
+        agent: 'claude',
+        started_at: startedAt
+      },
+      launched.result.worktreeId || worktree.worktreeId
+    )
     if (!saved) {
       warnings.push(`Session ID not saved to ${issue.key}`)
     }

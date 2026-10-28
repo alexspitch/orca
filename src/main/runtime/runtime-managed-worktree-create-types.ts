@@ -12,6 +12,7 @@ import type { TuiAgent } from '../../shared/tui-agent'
 import type { WorkspaceSource as WorkspaceCreateTelemetrySource } from '../../shared/workspace-source'
 import type { WorktreeStartupLaunch } from '../../shared/worktree/launch-types'
 import type { TaskSourceContext } from '../../shared/task-source-context'
+import type { WorktreeBuildWebTaskRequest } from '../../shared/build-web-session-types'
 import type { WorktreeStartupDraftPaste } from './runtime-worktree-agent-startup'
 import type { RuntimeNavigationTarget } from '../../shared/runtime-navigation'
 import type { RuntimeRepoSelector } from './runtime-repo-selector'
@@ -37,6 +38,8 @@ export type RuntimeManagedWorktreeCreateArgs = {
   linkedWorkItem?: WorkspaceLinkedItem | null
   linkedItems?: WorkspaceAttachment[]
   linkedTaskSourceContext?: TaskSourceContext | null
+  /** IS-147: recorded with the branch this create makes; a folder create ignores it. */
+  buildWebTask?: WorktreeBuildWebTaskRequest
   comment?: string
   displayName?: string
   displayNameKind?: CreateWorktreeArgs['displayNameKind']

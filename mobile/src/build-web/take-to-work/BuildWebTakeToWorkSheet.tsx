@@ -11,7 +11,7 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { BuildWebToneChip, ProductChip, StatusChip } from '../BuildWebToneChip'
 import { CardButton, ErrorText, MutedText, ui } from '../issue/issue-card-ui'
 import { launchBuildWebTask } from './build-web-agent-launch'
-import { createBatchWorktree } from './build-web-new-worktree'
+import { createTaskWorktree } from './build-web-new-worktree'
 import {
   batchCheckMessage,
   defaultTakeToWorkWorktree,
@@ -39,6 +39,7 @@ import {
   supportsMobileExistingAgentLaunch
 } from '../../session/mobile-existing-agent-launch'
 import { useTakeToWorkHost } from './use-take-to-work-host'
+import { BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 
 const SETUP_CHOICES = [
   { value: 'inherit', label: 'Repo default' },
@@ -196,12 +197,16 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
       if (!chatPlatform) {
         const name = shownDraft.name.trim()
         notify(`Creating the worktree ${name}…`)
-        const made = await createBatchWorktree({
+        const made = await createTaskWorktree({
           client,
           repoId: shownDraft.repoId,
           name,
           baseBranch: shownDraft.baseBranch,
-          setupDecision
+          setupDecision,
+          // Why gated: an older host strips the field, and then nothing would say it was dropped.
+          ...(baseUrl && hostCapabilities.includes(BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY)
+            ? { buildWebTask: { issueId: issue.id, key: issue.key, consoleHost: baseUrl } }
+            : {})
         })
         if ('error' in made) {
           notify(made.error, 'error')

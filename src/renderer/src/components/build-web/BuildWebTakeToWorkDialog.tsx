@@ -32,7 +32,7 @@ import {
 } from './build-web-take-to-work'
 import { launchBuildWebTask } from './build-web-agent-launch'
 import { taskSessionName } from './build-web-task-session'
-import { createBatchWorktree } from './build-web-new-worktree'
+import { createTaskWorktree } from './build-web-new-worktree'
 import { TakeToWorkNewWorktree, type NewWorktreeDraft } from './TakeToWorkNewWorktree'
 import { BuildWebToneChip, ProductChip, StatusChip } from './BuildWebToneChip'
 import { TakeToWorkAgentPicker } from './TakeToWorkAgentPicker'
@@ -137,7 +137,11 @@ function TakeToWorkForm({
           translate('buildWeb.take.creating', 'Creating the worktree {{name}}…', { name })
         )
         try {
-          const created = await createBatchWorktree({ ...draft, name })
+          const created = await createTaskWorktree({
+            ...draft,
+            name,
+            buildWebTask: { issueId: issue.id, key: issue.key, consoleHost: baseUrl }
+          })
           if (created) {
             toast.loading(
               translate('buildWeb.take.starting', 'Starting the session in {{name}}…', { name }),

@@ -26,14 +26,18 @@ async function writeSession(
   target: RuntimeClientTarget,
   baseUrl: string,
   issue: BuildWebIssueRow,
-  session: BuildWebSessionArgs
+  session: BuildWebSessionArgs,
+  worktreeId: string
 ): Promise<boolean> {
   if (sessionUnsupported.has(baseUrl)) {
     return false
   }
-  const result = await callBuildWeb(target, 'setAgentSession', { id: issue.id, session }).catch(
-    () => null
-  )
+  // Why the worktree: its host then records the console's session row on it (IS-147).
+  const result = await callBuildWeb(target, 'setAgentSession', {
+    id: issue.id,
+    session,
+    worktreeId
+  }).catch(() => null)
   // Why: only a missing route — a deleted task answers 404 too, with the console's own error.
   if (result && !result.ok && result.routeMissing) {
     sessionUnsupported.add(baseUrl)
@@ -177,13 +181,19 @@ export async function launchBuildWebTask(args: {
   if (!surface.surface_id) {
     return true
   }
-  const written = await writeSession(target, baseUrl, issue, {
-    ...surface,
-    worktree_name: worktree.displayName,
-    execution_host_id: worktree.hostId ?? '',
-    agent: 'claude',
-    started_at: startedAt
-  })
+  const written = await writeSession(
+    target,
+    baseUrl,
+    issue,
+    {
+      ...surface,
+      worktree_name: worktree.displayName,
+      execution_host_id: worktree.hostId ?? '',
+      agent: 'claude',
+      started_at: startedAt
+    },
+    worktree.id
+  )
   if (!written) {
     return true
   }
@@ -191,9 +201,11 @@ export async function launchBuildWebTask(args: {
     ? await result.promptDeliveryResult.catch(() => null)
     : null
   if (delivery && !delivery.delivered && surface.surface_id) {
+    // Why abandon: the session never got the task, so its history row says it never started.
     await callBuildWeb(target, 'clearAgentSession', {
       id: issue.id,
-      surfaceId: surface.surface_id
+      surfaceId: surface.surface_id,
+      abandon: true
     }).catch(() => {})
     return false
   }
