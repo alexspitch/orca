@@ -9,6 +9,7 @@ import { getRuntimeGitHistory, getRuntimeGitStatus } from '@/runtime/runtime-git
 import { findRepoForHost } from '@/store/slices/repo-host-identity'
 import { toWorktreeRemovalTarget } from '../../../../shared/worktree/removal'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { BUILD_WEB_SESSION_ACTION_LABELS } from '../../../../shared/build-web-session-labels'
 import { useConfirmationDialog } from '../confirmation-dialog-context'
 import { runWorktreeDeleteWithToast } from './run-worktree-delete-with-toast'
 
@@ -94,8 +95,8 @@ function describe(worktree: Worktree, commits: string[] | null, files: string[] 
   }
   parts.push(
     translate(
-      'buildWeb.session.remove.rule',
-      'Uncommitted, untracked and ignored files are lost. The branch is deleted only when merged; an unmerged branch is kept.'
+      BUILD_WEB_SESSION_ACTION_LABELS.removeRule.key,
+      BUILD_WEB_SESSION_ACTION_LABELS.removeRule.text
     )
   )
   return parts.join('\n\n')

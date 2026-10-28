@@ -88,9 +88,16 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
   } = card
 
   // Why: pinned trees mix repos, so ordinary rows lead with the project chip; cross-repo children keep the regular project badge.
-  const showPinnedRepoIcon = inPinnedSection && !!repo && !showProjectName
+  // Why a task's compact row drops the chip: its number names the work, and the title needs the room.
+  const taskNumberLeads = cardDetails.compactCards && Boolean(worktree.buildWebTask)
+  const showPinnedRepoIcon = inPinnedSection && !!repo && !showProjectName && !taskNumberLeads
   const showInlineRepoBadge =
-    cardDetails.repoInTitle && !!repo && !hideRepoBadge && !isFolder && !showPinnedRepoIcon
+    cardDetails.repoInTitle &&
+    !!repo &&
+    !hideRepoBadge &&
+    !isFolder &&
+    !showPinnedRepoIcon &&
+    !taskNumberLeads
   const showRepoBadgeInMetaRow =
     !cardDetails.repoInTitle && !!repo && !hideRepoBadge && !showPinnedRepoIcon
   const contextLabel = getVisibleContextLabel(

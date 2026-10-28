@@ -5,12 +5,18 @@ import { translate } from '@/i18n/i18n'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { isTaskSessionAttention } from '../../../../shared/sidebar-list/task-session-groups'
 import type { Worktree } from '../../../../shared/worktree/types'
+import {
+  BUILD_WEB_SESSION_ACTION_LABELS,
+  type BuildWebSessionLabel
+} from '../../../../shared/build-web-session-labels'
 import { useRemoveTaskWorktreeAnyway } from './use-remove-task-worktree-anyway'
 import {
   keepWorktreeTaskSession,
   openWorktreeBuildWebTask,
   reopenWorktreeTask
 } from './worktree-task-session-actions'
+
+const say = (label: BuildWebSessionLabel): string => translate(label.key, label.text)
 
 /** IS-147: «Open task» for a task worktree, and the actions a closed task's leftover needs. */
 export function WorktreeTaskSessionMenuItems({
@@ -37,7 +43,7 @@ export function WorktreeTaskSessionMenuItems({
           disabled={disabled}
         >
           <SquareArrowOutUpRight className="size-3.5" />
-          {translate('buildWeb.session.action.open', 'Open')}
+          {say(BUILD_WEB_SESSION_ACTION_LABELS.open)}
         </DropdownMenuItem>
       ) : null}
       <DropdownMenuItem onSelect={() => void openWorktreeBuildWebTask(worktree)}>
@@ -69,15 +75,15 @@ function AttentionMenuItems({
         disabled={disabled}
       >
         <Trash2 className="size-3.5" />
-        {translate('buildWeb.session.action.removeAnyway', 'Remove anyway…')}
+        {say(BUILD_WEB_SESSION_ACTION_LABELS.removeAnyway)}
       </DropdownMenuItem>
       <DropdownMenuItem onSelect={() => void keepWorktreeTaskSession(worktree)} disabled={disabled}>
         <Unlink className="size-3.5" />
-        {translate('buildWeb.session.action.keep', 'Keep, unlink from task')}
+        {say(BUILD_WEB_SESSION_ACTION_LABELS.keep)}
       </DropdownMenuItem>
       <DropdownMenuItem onSelect={() => void reopenWorktreeTask(worktree)} disabled={disabled}>
         <RotateCcw className="size-3.5" />
-        {translate('buildWeb.session.action.backToWork', 'Back to work')}
+        {say(BUILD_WEB_SESSION_ACTION_LABELS.backToWork)}
       </DropdownMenuItem>
     </>
   )
