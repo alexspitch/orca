@@ -68,6 +68,8 @@ function readFeedRow(
       | 'linkedGitLabMR'
       | 'linkedGitLabIssue'
       | 'linkedItems'
+      | 'buildWebTask'
+      | 'buildWebSession'
     >
   > = {}
 ): SidebarFeedWorkspace {
@@ -171,7 +173,9 @@ export function readFeedWorkspaceRow(
         linkedLinearIssue: row.linkedLinearIssue,
         linkedGitLabMR: row.linkedGitLabMR,
         linkedGitLabIssue: row.linkedGitLabIssue,
-        linkedItems: row.linkedItems
+        linkedItems: row.linkedItems,
+        buildWebTask: row.buildWebTask,
+        buildWebSession: row.buildWebSession
       })
     : null
 }

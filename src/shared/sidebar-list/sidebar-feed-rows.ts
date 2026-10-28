@@ -51,7 +51,7 @@ import type {
 import type { SidebarFeedDomains } from './sidebar-feed-domains'
 import { planSidebarRows } from './sidebar-row-plan'
 import type { SortBy } from './smart-sort'
-import { selectVisibleSidebarWorktrees } from './visible-worktrees'
+import { isHiddenArchivedRow, selectVisibleSidebarWorktrees } from './visible-worktrees'
 import { isIdleWorkspaceActivity } from './workspace-activity-facts'
 import { prGroupOfReviewFact } from './workspace-review-facts'
 
@@ -161,7 +161,7 @@ export function planSidebarFeedRows(
     rankOf: (worktree) => rankByIdentity.get(getWorktreeHostIdentity(worktree)),
     filters: view.filters,
     facts: {
-      isArchived: (worktree) => worktree.isArchived,
+      isArchived: (worktree) => isHiddenArchivedRow(worktree, view.groupBy),
       isFolderWorkspace: () => false,
       repoId: (worktree) => worktree.repoId,
       hostId: (worktree) => {

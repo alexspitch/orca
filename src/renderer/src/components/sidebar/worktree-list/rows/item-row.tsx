@@ -1,3 +1,4 @@
+import { TASK_ATTENTION_GROUP_KEY } from '../../../../../../shared/sidebar-list/task-session-groups'
 import type { DraggedWorktreeCopies } from '../drag/dragged-worktree-copies'
 import React from 'react'
 import { cn } from '@/lib/utils'
@@ -201,6 +202,7 @@ export function renderWorktreeItemRow(
         hostContextLabel={itemRow.hostContextLabel}
         showProjectName={itemRow.showProjectName}
         inPinnedSection={itemRow.sectionKey === PINNED_GROUP_KEY}
+        inTaskAttentionSection={itemRow.sectionKey === TASK_ATTENTION_GROUP_KEY}
         renameRowKey={itemRow.rowKey}
         lineageChildCount={itemRow.lineageChildCount}
         lineageCollapsed={itemRow.lineageCollapsed}

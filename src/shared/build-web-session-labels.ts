@@ -3,6 +3,7 @@ import type {
   BuildWebSessionAttentionReason,
   WorktreeBuildWebSessionState
 } from './build-web-session-types'
+import type { HideableTaskSessionGroup } from './sidebar-list/task-session-groups'
 
 // The words for a task session's states (IS-147), one source for the sidebar, the task card and
 // the phone. The desktop passes `key` and `text` to translate(); the phone shows `text`.
@@ -99,4 +100,23 @@ export const BUILD_WEB_TASK_GROUP_LABELS = {
   release: label('group.release', 'Awaiting release'),
   progress: label('group.progress', 'In progress'),
   none: label('group.none', 'No task')
+} as const
+
+/** The session filter's switches in Workspace options. */
+export const BUILD_WEB_TASK_FILTER_LABELS: Record<HideableTaskSessionGroup, BuildWebSessionLabel> = {
+  none: label('filter.none', 'Hide workspaces without a task'),
+  progress: label('filter.progress', 'Hide in progress'),
+  release: label('filter.release', 'Hide awaiting release')
+}
+
+/** What a closed task's leftover offers from its row's menu. */
+export const BUILD_WEB_SESSION_ACTION_LABELS = {
+  open: label('action.open', 'Open'),
+  removeAnyway: label('action.removeAnyway', 'Remove anyway…'),
+  keep: label('action.keep', 'Keep, unlink from task'),
+  backToWork: label('action.backToWork', 'Back to work'),
+  removeRule: label(
+    'remove.rule',
+    'Uncommitted, untracked and ignored files are lost. The branch is deleted only when merged; an unmerged branch is kept.'
+  )
 } as const

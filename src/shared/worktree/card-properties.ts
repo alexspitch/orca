@@ -119,6 +119,8 @@ function matchesWorktreeCardProperties(
 export type WorktreeCardDetails = {
   /** The Compact layout as it applies: the new card style overrides it. */
   compactCards: boolean
+  /** A compact card opened as the current workspace: its meta line and running agents show. */
+  expanded: boolean
   /** Repo identity sits in the title row, not the meta row (compact cards and the new card style).
    *  Read by the phone row and the desktop card's repo badge. */
   repoInTitle: boolean
@@ -141,14 +143,18 @@ export type WorktreeCardDetails = {
 /** Reads the desktop's raw settings, so no caller resolves the layout on its own. */
 export function getWorktreeCardDetails(
   cardProps: readonly WorktreeCardProperty[],
-  settings: { compactWorktreeCards: boolean; newCardStyle: boolean }
+  settings: { compactWorktreeCards: boolean; newCardStyle: boolean },
+  /** The row is the current workspace; only the desktop's compact list opens it (IS-147). */
+  rowExpanded = false
 ): WorktreeCardDetails {
   const compactCards = !settings.newCardStyle && settings.compactWorktreeCards
-  const metaRow = !compactCards
+  const expanded = compactCards && rowExpanded
+  const metaRow = !compactCards || expanded
   const shows = (property: WorktreeCardProperty) => cardProps.includes(property)
   return {
     compactCards,
-    repoInTitle: settings.newCardStyle || compactCards,
+    expanded,
+    repoInTitle: settings.newCardStyle || (compactCards && !expanded),
     metaRow,
     issue: shows('issue'),
     linearIssue: shows('linear-issue'),
@@ -158,7 +164,8 @@ export function getWorktreeCardDetails(
     cli: shows('cli'),
     comment: shows('comment'),
     ports: shows('ports'),
-    host: metaRow && shows('host'),
-    inlineAgents: !compactCards && shows('inline-agents')
+    // Why regardless of the properties: an opened compact row shows where and what runs.
+    host: expanded || (metaRow && shows('host')),
+    inlineAgents: expanded || (!compactCards && shows('inline-agents'))
   }
 }

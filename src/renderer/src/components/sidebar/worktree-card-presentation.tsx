@@ -285,7 +285,8 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     cardStyle,
     detailsAndPorts,
     titleRowIndicators,
-    titleOnlyCard
+    titleOnlyCard,
+    expandedCompactRow: cardDetails.expanded
   }
 }
 

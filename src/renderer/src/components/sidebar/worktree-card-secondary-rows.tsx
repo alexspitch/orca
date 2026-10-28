@@ -7,6 +7,7 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import { LinearAgentSkillSetupPrompt } from './LinearAgentSkillSetupPrompt'
 import WorktreeCardAgents from './WorktreeCardAgents'
+import { WorktreeTaskAttentionReason } from './WorktreeCardTaskSession'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
@@ -38,6 +39,7 @@ export function WorktreeCardSecondaryRows({
 
   return (
     <>
+      {card.inTaskAttentionSection ? <WorktreeTaskAttentionReason worktree={worktree} /> : null}
       {remoteBranchConflict && (
         <div className="mt-0.5 flex items-start gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 px-1.5 py-1 text-[10.5px] leading-snug text-amber-700 dark:text-amber-300">
           <AlertTriangle className="mt-[1px] size-3 shrink-0" />

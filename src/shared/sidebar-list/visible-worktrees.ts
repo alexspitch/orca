@@ -8,6 +8,8 @@ import {
 } from '../workspace-view/workspace-row-filters'
 import { getSidebarLineageParentsByIdentity } from './worktree-lineage-projection'
 
+export { isHiddenArchivedRow } from './task-session-groups'
+
 export type VisibleSidebarWorktreeInputs = {
   /** Every catalog row, one per host-qualified identity. */
   rows: readonly Worktree[]

@@ -12,7 +12,7 @@ import { isWorkspaceOwnedBySomeoneElse } from '../../../../shared/workspace-crea
 import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { isInactiveWorkspace } from '@/lib/worktree-activity-state'
-import { isTaskSessionAttention } from '../../../../shared/sidebar-list/task-session-groups'
+import { isHiddenArchivedRow } from '../../../../shared/sidebar-list/task-session-groups'
 
 export type DesktopWorkspaceRowFactInputs = {
   repoMap: ReadonlyMap<string, Repo>
@@ -36,8 +36,7 @@ export function buildDesktopWorkspaceRowFactReader(
 ): WorkspaceRowFactReader<Worktree> {
   return {
     isArchived: (worktree) =>
-      worktree.isArchived &&
-      !(inputs.keepArchivedTaskAttention === true && isTaskSessionAttention(worktree)),
+      isHiddenArchivedRow(worktree, inputs.keepArchivedTaskAttention === true ? 'task' : ''),
     isFolderWorkspace: (worktree) => parseWorkspaceKey(worktree.id)?.type === 'folder',
     repoId: (worktree) => worktree.repoId,
     hostId: (worktree) => {

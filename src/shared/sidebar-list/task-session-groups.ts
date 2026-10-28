@@ -63,6 +63,14 @@ export function isTaskSessionAttention(worktree: TaskSessionFacts): boolean {
   return getWorktreeTaskSessionState(worktree) === 'attention'
 }
 
+/** Archived rows stay hidden, except a closed task's leftover in «By task». */
+export function isHiddenArchivedRow(
+  worktree: TaskSessionFacts & { isArchived: boolean },
+  groupBy: string
+): boolean {
+  return worktree.isArchived && !(groupBy === 'task' && isTaskSessionAttention(worktree))
+}
+
 /** A worktree's task lane, read by each client from its own worktree meta. */
 export type SidebarTaskGroupReader = (worktree: TaskSessionFacts) => SidebarTaskGroupKey
 

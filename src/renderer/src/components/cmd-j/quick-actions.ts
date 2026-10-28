@@ -1,4 +1,12 @@
-import { FileText, FolderPlus, Globe, Play, SquareTerminal, Trash2 } from 'lucide-react'
+import {
+  ExternalLink,
+  FileText,
+  FolderPlus,
+  Globe,
+  Play,
+  SquareTerminal,
+  Trash2
+} from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { CmdJQuickActionAvailability, CmdJQuickActionContext } from './quick-action-context'
 import {
@@ -9,6 +17,14 @@ import {
 import { translate } from '@/i18n/i18n'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
 import { getNativeChatSplitQuickActions } from './native-chat-split-quick-actions'
+import { openWorktreeBuildWebTask } from '../sidebar/worktree-task-session-actions'
+
+// IS-147: only a workspace made for a build-web task offers its task.
+function currentTaskAvailability(ctx: CmdJQuickActionContext): CmdJQuickActionAvailability {
+  return ctx.activeWorktree?.buildWebTask
+    ? { available: true }
+    : { available: false, reason: 'no-active-workspace' }
+}
 
 export type CmdJQuickActionRunResult =
   | { status: 'ok' }
@@ -171,6 +187,25 @@ export const getCmdJQuickActions = createLocalizedCatalog((): CmdJQuickAction[] 
         return { status: 'unavailable', reason: availability.reason }
       }
       ctx.deleteActiveWorkspace()
+      return { status: 'ok' }
+    }
+  },
+  {
+    id: 'open-current-task',
+    kind: 'action',
+    title: translate('buildWeb.session.cmdJ.openTask', 'Open Task'),
+    description: translate(
+      'buildWeb.session.cmdJ.openTaskDescription',
+      "Open the current workspace's build-web task."
+    ),
+    icon: ExternalLink,
+    verbKeywords: [translate('buildWeb.session.cmdJ.openTaskVerb', 'open task')],
+    isAvailable: currentTaskAvailability,
+    run: async (ctx) => {
+      if (!ctx.activeWorktree?.buildWebTask) {
+        return { status: 'unavailable', reason: 'no-active-workspace' }
+      }
+      await openWorktreeBuildWebTask(ctx.activeWorktree)
       return { status: 'ok' }
     }
   },
