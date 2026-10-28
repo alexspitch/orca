@@ -76,6 +76,9 @@ export type Worktree = {
   linkedGitLabIssue?: number | null
   /** Every linked issue and review; hosts before the attachment list omit it. Unchecked wire data. */
   linkedItems?: RuntimeWorktreePsSummary['linkedItems']
+  /** Hosts before `build-web-worktree-task.v1` omit both. Unchecked wire data. */
+  buildWebTask?: RuntimeWorktreePsSummary['buildWebTask']
+  buildWebSession?: RuntimeWorktreePsSummary['buildWebSession']
   comment?: string
   status?: 'working' | 'active' | 'permission' | 'done' | 'inactive'
   workingMode?: AgentWorkingMode

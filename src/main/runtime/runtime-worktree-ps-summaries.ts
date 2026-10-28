@@ -72,6 +72,8 @@ export function buildRuntimeWorktreePsSummaries(args: {
       linkedGitLabMR: meta?.linkedGitLabMR ?? null,
       linkedGitLabIssue: meta?.linkedGitLabIssue ?? null,
       linkedItems: getWorkspaceAttachments(meta ?? worktree),
+      ...(meta?.buildWebTask ? { buildWebTask: meta.buildWebTask } : {}),
+      ...(meta?.buildWebSession ? { buildWebSession: meta.buildWebSession } : {}),
       comment: meta?.comment ?? '',
       isPinned: meta?.isPinned ?? false,
       isActive: false,

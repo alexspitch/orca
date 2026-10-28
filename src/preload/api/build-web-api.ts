@@ -18,6 +18,7 @@ import type {
   BuildWebUser,
   BuildWebVersion
 } from '../../shared/build-web-types'
+import type { BuildWebAgentSessionSettings } from '../../shared/build-web-session-types'
 import type {
   BuildWebSavedFilter,
   BuildWebSavedQuery
@@ -92,10 +93,12 @@ export type BuildWebApi = {
     jira: boolean
     telegram?: boolean
   }) => Promise<BuildWebMutationResult<BuildWebCommentOutcome>>
+  /** The value is the console's session row id, or `true` from a console or host without history. */
   setAgentSession: (args: {
     id: string
     session: BuildWebSessionArgs
-  }) => Promise<BuildWebMutationResult<true>>
+    worktreeId?: string
+  }) => Promise<BuildWebMutationResult<string | true>>
   noteProviderSession: (args: {
     id: string
     surfaceId: string
@@ -104,7 +107,13 @@ export type BuildWebApi = {
   clearAgentSession: (args: {
     id: string
     surfaceId: string
+    abandon?: boolean
   }) => Promise<BuildWebMutationResult<true>>
+  agentSessionSettings: () => Promise<BuildWebMutationResult<BuildWebAgentSessionSettings>>
+  setAgentSessionSettings: (
+    args: BuildWebAgentSessionSettings
+  ) => Promise<BuildWebMutationResult<BuildWebAgentSessionSettings>>
+  keepWorktreeSession: (args: { worktreeId: string }) => Promise<BuildWebMutationResult<true>>
   imageSummary: () => Promise<BuildWebImageSummary>
   issueSummary: (args?: BuildWebIssueSummaryQuery) => Promise<BuildWebIssueSummary>
   listImages: (args: BuildWebImagePageArgs & { refresh?: boolean }) => Promise<BuildWebImagePage>

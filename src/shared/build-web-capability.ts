@@ -54,3 +54,10 @@ export const BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY = 'build-web-console-
 export const BUILD_WEB_TASK_PAGE_RUNTIME_CAPABILITY = 'build-web-task-page.v1'
 
 export const BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY = 'build-web-image-group-build.v1'
+
+/**
+ * A runtime whose worktrees carry their build-web task and its session state (IS-147):
+ * `worktree.create` takes `buildWebTask`, rows carry `buildWebTask`/`buildWebSession`, the
+ * `task` grouping and the `buildWeb.agentSession*` methods. Absent means «unknown»: no badge.
+ */
+export const BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY = 'build-web-worktree-task.v1'

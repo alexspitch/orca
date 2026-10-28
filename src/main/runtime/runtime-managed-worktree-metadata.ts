@@ -1,6 +1,10 @@
 import { getRepoRegistrationHostIds } from '../../shared/repo-host-identity'
 import type { GitPushTarget, Worktree } from '../../shared/worktree/types'
 import type { WorktreeMeta } from '../../shared/worktree/meta-types'
+import type {
+  WorktreeBuildWebSession,
+  WorktreeBuildWebTask
+} from '../../shared/build-web-session-types'
 import { worktreeWorkspaceKey } from '../../shared/workspace-scope'
 import { splitWorktreeId } from '../../shared/worktree/id'
 import type { WorktreeSortOrderUpdate } from '../../shared/worktree/sort-order-update'
@@ -21,10 +25,15 @@ import {
 import { RuntimeLineageError } from './runtime-worktree-lineage-resolution'
 import type { ResolvedWorktree } from './runtime-worktree-path-identity'
 
-type Updates = Omit<Partial<WorktreeMeta>, 'pushTarget'> & {
+type Updates = Omit<Partial<WorktreeMeta>, 'pushTarget' | 'buildWebTask' | 'buildWebSession'> & {
   pushTarget?: GitPushTarget | null
+  /** `null` clears: «Keep» drops the task link and its state in one write. */
+  buildWebTask?: WorktreeBuildWebTask | null
+  buildWebSession?: WorktreeBuildWebSession | null
   lineage?: { parentWorktree?: string; noParent?: boolean }
 }
+
+const CLEARABLE_KEYS = ['pushTarget', 'buildWebTask', 'buildWebSession'] as const
 
 type Ports = {
   resolveWorktree: (selector: string) => Promise<ResolvedWorktree>
@@ -66,11 +75,16 @@ export async function updateRuntimeManagedWorktreeMetadata(args: {
     args.ports.invalidateResolved()
     args.ports.invalidateScan(worktree.repoId)
   }
-  const clearPushTarget =
-    Object.hasOwn(metaUpdates, 'pushTarget') && metaUpdates.pushTarget === null
-  const normalized: Partial<WorktreeMeta> = clearPushTarget
-    ? { ...metaUpdates, pushTarget: undefined }
-    : (metaUpdates as Partial<WorktreeMeta>)
+  const cleared = CLEARABLE_KEYS.filter(
+    (key) => Object.hasOwn(metaUpdates, key) && metaUpdates[key] === null
+  )
+  const { pushTarget, buildWebTask, buildWebSession, ...rest } = metaUpdates
+  const normalized: Partial<WorktreeMeta> = {
+    ...rest,
+    ...(pushTarget ? { pushTarget } : {}),
+    ...(buildWebTask ? { buildWebTask } : {}),
+    ...(buildWebSession ? { buildWebSession } : {})
+  }
   const persisted: Partial<WorktreeMeta> = omitUndefinedProperties(
     normalized.displayName !== undefined
       ? {
@@ -80,8 +94,8 @@ export async function updateRuntimeManagedWorktreeMetadata(args: {
         }
       : normalized
   )
-  if (clearPushTarget) {
-    persisted.pushTarget = undefined
+  for (const key of cleared) {
+    persisted[key] = undefined
   }
   if (lineage?.noParent === true) {
     args.store.removeWorktreeLineage?.(target)

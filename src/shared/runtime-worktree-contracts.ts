@@ -93,6 +93,9 @@ export type RuntimeWorktreePsSummary = {
   linkedGitLabMR: number | null
   linkedGitLabIssue: number | null
   linkedItems?: Worktree['linkedItems']
+  /** The build-web task and its session state (IS-147); hosts before `build-web-worktree-task.v1` omit both. */
+  buildWebTask?: Worktree['buildWebTask']
+  buildWebSession?: Worktree['buildWebSession']
   comment: string
   isPinned: boolean
   isActive: boolean

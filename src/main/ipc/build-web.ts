@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import type { ZodTypeAny, z } from 'zod'
 import {
   BuildWebAgentSessionParams,
+  BuildWebAgentSessionSettingsParams,
   BuildWebClearSessionParams,
   BuildWebCommentParams,
   BuildWebConnect,
@@ -31,10 +32,16 @@ import {
   BuildWebSavedQueriesParams,
   BuildWebSavedQueryDeleteParams,
   BuildWebSavedQuerySaveParams,
-  BuildWebVersionsParams
+  BuildWebVersionsParams,
+  BuildWebWorktreeSessionParams
 } from '../../shared/rpc-contract/build-web-params'
 import { RuntimeBuildWebCommands } from '../runtime/runtime-build-web-commands'
 import { stageBuildWebIssueFile } from '../build-web/build-web-issue-files'
+import {
+  setBuildWebAgentSessionOnHost,
+  type BuildWebSessionLinkRuntime
+} from '../build-web/build-web-session-link'
+import { keepBuildWebWorktreeSession } from '../build-web/build-web-session-keep'
 import { registerBuildWebStandHandlers } from './build-web-stands'
 import { registerBuildWebTaskHandlers } from './build-web-task'
 
@@ -49,7 +56,7 @@ function handle<S extends ZodTypeAny>(
   ipcMain.handle(`buildWeb:${channel}`, async (_event, args: unknown) => run(schema.parse(args)))
 }
 
-export function registerBuildWebHandlers(): void {
+export function registerBuildWebHandlers(runtime: BuildWebSessionLinkRuntime): void {
   ipcMain.handle('buildWeb:status', () => commands.buildWebStatus())
   ipcMain.handle('buildWeb:disconnect', () => commands.buildWebDisconnect())
   ipcMain.handle('buildWeb:testConnection', () => commands.buildWebTestConnection())
@@ -94,13 +101,20 @@ export function registerBuildWebHandlers(): void {
   )
   handle('addComment', BuildWebCommentParams, (args) => commands.buildWebAddComment(args))
   handle('setAgentSession', BuildWebAgentSessionParams, (args) =>
-    commands.buildWebSetAgentSession(args)
+    setBuildWebAgentSessionOnHost(runtime, args)
   )
   handle('noteProviderSession', BuildWebProviderSessionParams, (args) =>
     commands.buildWebNoteProviderSession(args)
   )
   handle('clearAgentSession', BuildWebClearSessionParams, (args) =>
     commands.buildWebClearAgentSession(args)
+  )
+  ipcMain.handle('buildWeb:agentSessionSettings', () => commands.buildWebAgentSessionSettings())
+  handle('setAgentSessionSettings', BuildWebAgentSessionSettingsParams, (args) =>
+    commands.buildWebSetAgentSessionSettings(args)
+  )
+  handle('keepWorktreeSession', BuildWebWorktreeSessionParams, (args) =>
+    keepBuildWebWorktreeSession(runtime, args.worktreeId)
   )
   handle('getIssueRun', BuildWebIssueId, (args) => commands.buildWebGetIssueRun(args))
   handle('pushRun', BuildWebPushRunParams, (args) => commands.buildWebPushRun(args))

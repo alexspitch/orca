@@ -1,4 +1,5 @@
 import { defineMethod } from '../core'
+import { setBuildWebAgentSessionOnHost } from '../../../build-web/build-web-session-link'
 import {
   BuildWebAgentSessionParams,
   BuildWebClearSessionParams,
@@ -141,7 +142,7 @@ export const BUILD_WEB_METHODS = [
     name: 'buildWeb.setAgentSession',
     permission: 'workspace',
     params: BuildWebAgentSessionParams,
-    handler: async (params, { runtime }) => runtime.buildWebSetAgentSession(params)
+    handler: async (params, { runtime }) => setBuildWebAgentSessionOnHost(runtime, params)
   }),
   defineMethod({
     name: 'buildWeb.noteProviderSession',

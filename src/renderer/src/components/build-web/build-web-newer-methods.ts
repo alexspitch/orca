@@ -13,7 +13,8 @@ import {
   BUILD_WEB_STAND_HEALTH_RUNTIME_CAPABILITY,
   BUILD_WEB_TASK_PAGE_RUNTIME_CAPABILITY,
   BUILD_WEB_TEST_HISTORY_RUNTIME_CAPABILITY,
-  BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY
+  BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY,
+  BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY
 } from '../../../../shared/build-web-capability'
 import type { BuildWebApi } from '../../../../preload/api/build-web-api'
 import { translate } from '@/i18n/i18n'
@@ -169,6 +170,19 @@ export const NEWER_METHODS: {
       translate(
         'buildWeb.client.updateServerTaskPage',
         'This Orca server does not read the list of all build-web tasks yet. Update the server.'
+      )
+  },
+  {
+    methods: new Set<Method>([
+      'agentSessionSettings',
+      'setAgentSessionSettings',
+      'keepWorktreeSession'
+    ]),
+    capability: BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerSessions',
+        'This Orca server does not follow task sessions yet. Update the server.'
       )
   },
   {

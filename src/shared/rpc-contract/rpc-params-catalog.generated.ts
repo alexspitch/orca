@@ -151,6 +151,7 @@ import { ScreencastUnsubscribe } from './browser-screencast-params'
 import { BrowserOpenUrlParams, BrowserTabCreateParams } from './browser-tab-create-params'
 import {
   BuildWebAgentSessionParams,
+  BuildWebAgentSessionSettingsParams,
   BuildWebBuildLogParams,
   BuildWebClearSessionParams,
   BuildWebCommentDeleteParams,
@@ -181,7 +182,8 @@ import {
   BuildWebSavedQueryDeleteParams,
   BuildWebSavedQuerySaveParams,
   BuildWebVersionBranchesParams,
-  BuildWebVersionsParams
+  BuildWebVersionsParams,
+  BuildWebWorktreeSessionParams
 } from './build-web-params'
 import {
   BuildWebStandHealthParams,
@@ -980,6 +982,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.addRunImages': BuildWebRunCombosParams,
   'buildWeb.adoptBuilt': BuildWebAdoptParams,
   'buildWeb.adoptImageSuccess': BuildWebImageAdoptParams,
+  'buildWeb.agentSessionSettings': null,
   'buildWeb.archiveIssue': BuildWebIssueId,
   'buildWeb.branches': BuildWebRepoParams,
   'buildWeb.buildCombos': BuildWebCombosParams,
@@ -1018,6 +1021,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.jiraInfo': BuildWebJiraKeyParams,
   'buildWeb.jiraTransition': BuildWebJiraTransitionParams,
   'buildWeb.jiraTransitions': BuildWebJiraKeyParams,
+  'buildWeb.keepWorktreeSession': BuildWebWorktreeSessionParams,
   'buildWeb.lastBuilt': BuildWebRunId,
   'buildWeb.listAssignees': null,
   'buildWeb.listImageBuilds': BuildWebImageHistoryParams,
@@ -1049,6 +1053,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.saveQuery': BuildWebSavedQuerySaveParams,
   'buildWeb.savedQueries': BuildWebSavedQueriesParams,
   'buildWeb.setAgentSession': BuildWebAgentSessionParams,
+  'buildWeb.setAgentSessionSettings': BuildWebAgentSessionSettingsParams,
   'buildWeb.setFavorite': BuildWebFavoriteParams,
   'buildWeb.setGuideTarget': BuildWebGuideTargetParams,
   'buildWeb.setTestingStatus': BuildWebTestingParams,

@@ -12,6 +12,11 @@ import {
   type BuildWebProduct
 } from '../../shared/build-web-types'
 import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
+import {
+  agentSessionRecordsOf,
+  agentSessionStateOf,
+  liveSessionStateOf
+} from './build-web-agent-session-mapping'
 
 const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
 const SURFACES: readonly BuildWebAgentSession['surface_kind'][] = [
@@ -42,7 +47,10 @@ function agentSessionOf(value: unknown): BuildWebAgentSession | null {
     agent: textOf(v.agent),
     started_at: textOf(v.started_at),
     provider_session_id: textOf(v.provider_session_id),
-    by: textOf(v.by)
+    by: textOf(v.by),
+    ...(typeof v.id === 'string' && v.id ? { id: v.id } : {}),
+    ...(agentSessionStateOf(v.state) ? { state: agentSessionStateOf(v.state) ?? undefined } : {}),
+    ...('agent_finished_at' in v ? { agent_finished_at: textOrNull(v.agent_finished_at) } : {})
   }
 }
 
@@ -77,6 +85,9 @@ export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | 
     jira_key: textOrNull(v.jira_key),
     updated_at: textOf(v.updated_at),
     agent_session: agentSessionOf(v.agent_session),
+    ...('agent_session_state' in v
+      ? { agent_session_state: liveSessionStateOf(v.agent_session_state) }
+      : {}),
     url: buildWebIssueUrl(baseUrl, v.id, textOf(v.product))
   }
 }
@@ -152,6 +163,12 @@ export function issueDetailOf(baseUrl: string, value: unknown): BuildWebIssueDet
     telegram_available: card.telegram_available === true,
     archived_at: textOrNull(issue.archived_at),
     archived_by: textOrNull(issue.archived_by),
-    deleted_at: textOrNull(issue.deleted_at)
+    deleted_at: textOrNull(issue.deleted_at),
+    ...withAgentSessions(card.agent_sessions ?? issue.agent_sessions)
   }
+}
+
+function withAgentSessions(value: unknown): Pick<BuildWebIssueDetail, 'agent_sessions'> {
+  const sessions = agentSessionRecordsOf(value)
+  return sessions ? { agent_sessions: sessions } : {}
 }

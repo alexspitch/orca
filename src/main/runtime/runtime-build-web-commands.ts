@@ -1,6 +1,6 @@
 import type { z } from 'zod'
 import type {
-  BuildWebAgentSessionParams,
+  BuildWebAgentSessionSettingsParams,
   BuildWebClearSessionParams,
   BuildWebCommentParams,
   BuildWebConnect,
@@ -32,6 +32,10 @@ import type {
   BuildWebVersionsParams
 } from '../../shared/rpc-contract/build-web-params'
 import {
+  getBuildWebAgentSessionSettings,
+  setBuildWebAgentSessionSettings
+} from '../build-web/build-web-agent-sessions'
+import {
   deleteBuildWebSavedQuery,
   listBuildWebSavedQueries,
   saveBuildWebSavedQuery
@@ -56,7 +60,6 @@ import {
   restoreBuildWebIssue,
   clearBuildWebAgentSession,
   noteBuildWebProviderSession,
-  setBuildWebAgentSession,
   setBuildWebFavorite,
   updateBuildWebIssue
 } from '../build-web/build-web-issue-write'
@@ -167,16 +170,20 @@ export class RuntimeBuildWebCommands {
     return addBuildWebComment(args.id, args.body, args.jira, args.telegram === true)
   }
 
-  buildWebSetAgentSession(args: In<typeof BuildWebAgentSessionParams>) {
-    return setBuildWebAgentSession(args.id, args.session)
-  }
-
   buildWebNoteProviderSession(args: In<typeof BuildWebProviderSessionParams>) {
     return noteBuildWebProviderSession(args.id, args.surfaceId, args.providerSessionId)
   }
 
   buildWebClearAgentSession(args: In<typeof BuildWebClearSessionParams>) {
-    return clearBuildWebAgentSession(args.id, args.surfaceId)
+    return clearBuildWebAgentSession(args.id, args.surfaceId, args.abandon === true)
+  }
+
+  buildWebAgentSessionSettings() {
+    return getBuildWebAgentSessionSettings()
+  }
+
+  buildWebSetAgentSessionSettings(args: In<typeof BuildWebAgentSessionSettingsParams>) {
+    return setBuildWebAgentSessionSettings(args)
   }
 
   buildWebIssueSummary(args: In<typeof BuildWebIssueSummaryParams> = {}) {

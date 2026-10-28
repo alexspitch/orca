@@ -162,20 +162,25 @@ export type BuildWebSessionInput = Pick<
   'surface_kind' | 'surface_id' | 'worktree_name' | 'execution_host_id' | 'agent' | 'started_at'
 >
 
-/** Hand the task to an Orca session. A 404 means the console predates the field. */
+/**
+ * Hand the task to an Orca session. A 404 means the console predates the field. The value is the
+ * console's session row id (IS-147), or `true` from a console that keeps no history.
+ */
 export function setBuildWebAgentSession(
   id: string,
   session: BuildWebSessionInput
-): Promise<BuildWebMutationResult<true>> {
+): Promise<BuildWebMutationResult<string | true>> {
   return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
-    await buildWebRequest({
-      ...credential,
-      method: 'PUT',
-      path: issuePath(id, '/agent-session'),
-      body: session
-    })
-    return true as const
+    const answer = recordOf(
+      await buildWebRequest({
+        ...credential,
+        method: 'PUT',
+        path: issuePath(id, '/agent-session'),
+        body: session
+      })
+    )
+    return textOf(recordOf(answer?.agent_session)?.id) || (true as const)
   })
 }
 
@@ -196,17 +201,22 @@ export function noteBuildWebProviderSession(
   })
 }
 
-/** Take the task back from the session named — a newer session is left alone (409). */
+/**
+ * Take the task back from the session named — a newer session is left alone (409). A console with
+ * session history reads it as «the skill finished»; `abandon` says the launch never happened.
+ */
 export function clearBuildWebAgentSession(
   id: string,
-  surfaceId: string
+  surfaceId: string,
+  abandon = false
 ): Promise<BuildWebMutationResult<true>> {
   return buildWebMutation(async () => {
     const credential = requireBuildWebCredential()
+    const query = `surface_id=${encodeURIComponent(surfaceId)}${abandon ? '&abandon=1' : ''}`
     await buildWebRequest({
       ...credential,
       method: 'DELETE',
-      path: issuePath(id, `/agent-session?surface_id=${encodeURIComponent(surfaceId)}`)
+      path: issuePath(id, `/agent-session?${query}`)
     })
     return true as const
   })

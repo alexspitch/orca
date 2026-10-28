@@ -9,6 +9,7 @@ import type { BuiltInWorktreeVisibilitySourceId } from '../repo-types'
 import type { WorktreeIdentity } from './identity'
 import type { WorktreeScanFailureKind } from '../worktree-scan-failure'
 import type { SmartTier } from '../sidebar-list/sort-stamps'
+import type { WorktreeBuildWebSession, WorktreeBuildWebTask } from '../build-web-session-types'
 
 export type WorkspaceAttachmentOrigin = {
   kind: 'observed'
@@ -164,6 +165,10 @@ export type Worktree = {
   mobileDiffReview?: MobileDiffReviewState
   automationProvenance?: AutomationWorkspaceProvenance
   cliProvenance?: CliWorkspaceProvenance
+  /** See {@link WorktreeMeta.buildWebTask}. */
+  buildWebTask?: WorktreeBuildWebTask
+  /** See {@link WorktreeMeta.buildWebSession}. */
+  buildWebSession?: WorktreeBuildWebSession
   /** The host is deleting this checkout in the background; Git lists it until that finishes.
    *  Sent only to clients that advertise `worktree.background-removal.v1`. */
   removing?: true

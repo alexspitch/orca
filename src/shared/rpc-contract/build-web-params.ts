@@ -110,7 +110,9 @@ export const BuildWebAgentSessionParams = z.object({
     execution_host_id: ShortText,
     agent: z.string().regex(/^[a-z0-9][a-z0-9-]{0,39}$/),
     started_at: z.string().max(40)
-  })
+  }),
+  // IS-147: the host then records the console's session row on this worktree. Older hosts drop it.
+  worktreeId: z.string().min(1).max(4096).optional()
 })
 
 export const BuildWebProviderSessionParams = z.object({
@@ -121,7 +123,18 @@ export const BuildWebProviderSessionParams = z.object({
 
 export const BuildWebClearSessionParams = z.object({
   id: Id,
-  surfaceId: required('Missing session id', 200)
+  surfaceId: required('Missing session id', 200),
+  // IS-147: the launch failed — the console ends the session as abandoned. Older hosts drop it.
+  abandon: z.boolean().optional()
+})
+
+export const BuildWebAgentSessionSettingsParams = z.object({
+  auto_cleanup: z.boolean()
+})
+
+/** A worktree the host owns, by id — the session actions run where the worktree lives. */
+export const BuildWebWorktreeSessionParams = z.object({
+  worktreeId: z.string().min(1).max(4096)
 })
 
 const ImageFilters = {

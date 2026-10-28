@@ -5,6 +5,10 @@ import type { RemoteFetchResult, RemoteTrackingBase } from '../runtime-remote-fe
 import type { WorktreeBaseStatusEvent } from '../../../shared/worktree/base-ref-drift-types'
 import { probeRuntimeWorktreeDrift } from '../runtime-worktree-drift-probe'
 import type { WorktreeMeta } from '../../../shared/worktree/meta-types'
+import type {
+  WorktreeBuildWebSession,
+  WorktreeBuildWebTask
+} from '../../../shared/build-web-session-types'
 import type { GitHubPrStartPoint, GitPushTarget } from '../../../shared/worktree/types'
 import {
   persistRuntimeManagedWorktreeSortOrder,
@@ -112,8 +116,10 @@ export abstract class OrcaRuntimeWithCreateManagedRemoteWorktree extends OrcaRun
 
   async updateManagedWorktreeMeta(
     worktreeSelector: string,
-    updates: Omit<Partial<WorktreeMeta>, 'pushTarget'> & {
+    updates: Omit<Partial<WorktreeMeta>, 'pushTarget' | 'buildWebTask' | 'buildWebSession'> & {
       pushTarget?: GitPushTarget | null
+      buildWebTask?: WorktreeBuildWebTask | null
+      buildWebSession?: WorktreeBuildWebSession | null
       lineage?: {
         parentWorktree?: string
         noParent?: boolean

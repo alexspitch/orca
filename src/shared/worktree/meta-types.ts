@@ -15,6 +15,7 @@ import type { OrcaWorkspaceLayout } from '../global-settings-types'
 import type { DiffComment, MobileDiffReviewState } from '../diff-comment-types'
 import type { SmartTier } from '../sidebar-list/sort-stamps'
 import type { ExternalConversationLink } from '../external-conversation-link'
+import type { WorktreeBuildWebSession, WorktreeBuildWebTask } from '../build-web-session-types'
 
 export type WorktreeMeta = {
   /** Immutable per-workspace-instance ID used to reject stale lineage after path reuse. */
@@ -100,4 +101,8 @@ export type WorktreeMeta = {
   cliProvenance?: CliWorkspaceProvenance
   /** System-owned connector threads whose agents run here; never published on `Worktree`. */
   externalConversations?: ExternalConversationLink[]
+  /** The build-web task «Take to work» made this worktree for; cleared only by «Keep». */
+  buildWebTask?: WorktreeBuildWebTask
+  /** That task's session state; written by the owning host only. */
+  buildWebSession?: WorktreeBuildWebSession
 }

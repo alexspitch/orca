@@ -1,4 +1,9 @@
 import type { SecretAtRestProtection } from './secret-at-rest-protection'
+import type {
+  BuildWebAgentSessionRecord,
+  BuildWebAgentSessionState,
+  BuildWebLiveSessionState
+} from './build-web-session-types'
 
 // build-web: the internal build console whose task registry Orca shows in its Issues page.
 // Shapes mirror tools/build-web's own JSON (snake_case) so nothing is renamed on the way through.
@@ -63,6 +68,10 @@ export type BuildWebAgentSession = {
   started_at: string
   provider_session_id: string
   by: string
+  /** The console's session row (IS-147); absent from consoles before `agent-session-lifecycle`. */
+  id?: string
+  state?: BuildWebAgentSessionState
+  agent_finished_at?: string | null
 }
 
 /** A list row: no description, so a page of rows stays well under one RPC frame. */
@@ -87,6 +96,11 @@ export type BuildWebIssueRow = {
   jira_key: string | null
   updated_at: string
   agent_session: BuildWebAgentSession | null
+  /**
+   * The current session's state, kept after the skill finished (when `agent_session` is empty
+   * again). Absent from consoles before `agent-session-lifecycle`.
+   */
+  agent_session_state?: BuildWebLiveSessionState | null
   /** Built in main from the stored base URL — never taken from the console's answer. */
   url: string
 }
@@ -158,6 +172,8 @@ export type BuildWebIssueDetail = BuildWebIssueRow & {
   archived_by: string | null
   /** In the console's trash: archived too, and taken back only from the console's Archive section. */
   deleted_at: string | null
+  /** Every agent session the task had, newest first (IS-147); absent from older consoles. */
+  agent_sessions?: BuildWebAgentSessionRecord[]
 }
 
 /** The console's own sort keys for the task list. */

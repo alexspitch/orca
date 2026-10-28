@@ -85,6 +85,8 @@ export function mergeWorktree(
       ? { automationProvenance: meta.automationProvenance }
       : {}),
     ...(meta?.cliProvenance !== undefined ? { cliProvenance: meta.cliProvenance } : {}),
+    ...(meta?.buildWebTask !== undefined ? { buildWebTask: meta.buildWebTask } : {}),
+    ...(meta?.buildWebSession !== undefined ? { buildWebSession: meta.buildWebSession } : {}),
     ...(meta?.pendingFirstAgentMessageRename !== undefined
       ? { pendingFirstAgentMessageRename: meta.pendingFirstAgentMessageRename }
       : {}),

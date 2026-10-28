@@ -198,7 +198,7 @@ export function registerCoreHandlers(
   registerHostedReviewHandlers(store, stats)
   registerLinearHandlers()
   registerJiraHandlers()
-  registerBuildWebHandlers()
+  registerBuildWebHandlers(runtime)
   registerJiraIssueSummaryGenerationHandlers(store, commitMessageAgentEnv)
   registerBitbucketHandlers()
   registerFeedbackHandlers()
