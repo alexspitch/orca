@@ -1,18 +1,17 @@
-import type { BuildWebIssueRow } from '../../../../src/shared/build-web-types'
 import {
   defaultTakeToWorkWorktree as defaultWorktreeOf,
   takeToWorkCandidates as candidatesOf,
-  validateBuildWebBatch as validateBatch,
   type BatchCheck
 } from '../../../../src/shared/build-web-take-to-work'
-import { productLabel } from '../build-web-labels'
 
 export {
   MAX_INSTRUCTION,
-  batchWorktreeName,
-  buildWebBatchPrompt,
   isChatPlatformBatch,
+  takeToWorkPrompt,
   takeToWorkRepos,
+  takenWorktreeNames,
+  taskWorktreeName,
+  validateBuildWebBatch,
   type TakeToWorkFlags
 } from '../../../../src/shared/build-web-take-to-work'
 
@@ -37,21 +36,15 @@ export type TakeToWorkWorktree = {
   isArchived?: boolean
 }
 
-/** One product and one release per batch: the skill and the train are chosen by both. */
-export const validateBuildWebBatch = (issues: readonly BuildWebIssueRow[]): BatchCheck =>
-  validateBatch(issues, productLabel)
-
-/** Why the batch cannot go, in words; null when it can (or is merely empty). */
+/** Why the selection cannot go, in words; null when it can (or is merely empty). */
 export function batchCheckMessage(check: BatchCheck): string | null {
   if (check.ok || check.reason === 'empty') {
     return null
   }
   const groups = check.groups.join(', ')
   switch (check.reason) {
-    case 'mixed':
-      return `Tasks of different products or releases: ${groups}`
     case 'too-many':
-      return 'At most 20 tasks at once.'
+      return 'Take to work takes one task at a time: select just one.'
     case 'bad-key':
       return `These keys cannot be sent: ${groups}`
     case 'unknown-product':

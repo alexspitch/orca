@@ -10,7 +10,6 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { WorkspaceCombobox } from '@/components/automations/WorkspaceCombobox'
 import { useAppStore } from '@/store'
@@ -20,19 +19,20 @@ import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebTarget } from './use-build-web-data'
 import {
-  batchWorktreeName,
-  buildWebBatchPrompt,
   MAX_INSTRUCTION,
   isChatPlatformBatch,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
+  takeToWorkPrompt,
   takeToWorkRepos,
+  takenWorktreeNames,
+  taskWorktreeName,
   batchCheckMessage,
   validateBuildWebBatch
 } from './build-web-take-to-work'
-import { launchBuildWebBatch } from './build-web-agent-launch'
+import { launchBuildWebTask } from './build-web-agent-launch'
 import { taskSessionName } from './build-web-task-session'
-import { createBatchWorktree } from './build-web-new-worktree'
+import { createTaskWorktree } from './build-web-new-worktree'
 import { TakeToWorkNewWorktree, type NewWorktreeDraft } from './TakeToWorkNewWorktree'
 import { BuildWebToneChip, ProductChip, StatusChip } from './BuildWebToneChip'
 import { TakeToWorkAgentPicker } from './TakeToWorkAgentPicker'
@@ -86,22 +86,23 @@ function TakeToWorkForm({
   )
   const [auto, setAuto] = useState(false)
   const [instruction, setInstruction] = useState('')
-  // Why: the skill runs from the monorepo and makes chat-platform's worktree itself.
+  const issue = issues[0]
+  // Why: a `cp` task's session runs in a monorepo worktree, and the skill makes chat-platform's itself.
   const chatPlatform = isChatPlatformBatch(issues)
   const flags = { auto, ownWorktree: chatPlatform, instruction }
-  const [picked, setMode] = useState<'existing' | 'new'>(() =>
-    worktrees.length ? 'existing' : 'new'
-  )
-  const mode = chatPlatform ? 'existing' : picked
   const ownRepos = useMemo(() => takeToWorkRepos(repos).repos, [repos])
-  const [draft, setDraft] = useState<NewWorktreeDraft>(() => ({
-    repoId: ownRepos[0]?.id ?? '',
-    name: batchWorktreeName(issues.map((i) => i.key)),
-    baseBranch: ''
-  }))
+  const [draft, setDraft] = useState<NewWorktreeDraft>(() => {
+    const repoId = ownRepos[0]?.id ?? ''
+    return {
+      repoId,
+      name: taskWorktreeName(issue.key, takenWorktreeNames(worktreesByRepo[repoId] ?? [])),
+      baseBranch: ''
+    }
+  })
   // Why a worktree of the picked repo for a new one: it runs on the host the new one will.
-  const hostWorktreeId =
-    mode === 'new' ? worktreesByRepo[draft.repoId]?.[0]?.id : (worktreeId ?? undefined)
+  const hostWorktreeId = chatPlatform
+    ? (worktreeId ?? undefined)
+    : worktreesByRepo[draft.repoId]?.[0]?.id
   const accounts = useClaudeLaunchAccounts(hostWorktreeId ?? '', Boolean(hostWorktreeId))
   const [pickedAccountId, setPickedAccountId] = useState<string | undefined>(undefined)
   // Why: an account of a host no longer picked would fail the pane, so it falls back to the selection.
@@ -110,26 +111,21 @@ function TakeToWorkForm({
     : undefined
   const account = claudeAccountId ? { claudeAccountId } : {}
   const check = validateBuildWebBatch(issues)
-  const held = issues.filter((i) => i.agent_session)
+  const held = issue.agent_session
   const worktree = worktrees.find((w) => w.id === worktreeId) ?? null
-  const prompt = check.ok
-    ? buildWebBatchPrompt(
-        issues.map((i) => i.key),
-        flags
-      )
-    : ''
+  const prompt = check.ok ? takeToWorkPrompt(issue.key, flags) : ''
 
   const ready =
     check.ok &&
     Boolean(baseUrl) &&
-    (mode === 'new'
-      ? Boolean(draft.repoId && draft.name.trim() && draft.baseBranch.trim())
-      : Boolean(worktree))
+    (chatPlatform
+      ? Boolean(worktree)
+      : Boolean(draft.repoId && draft.name.trim() && draft.baseBranch.trim()))
   const start = (): void => {
     if (!check.ok || !baseUrl) {
       return
     }
-    if (mode === 'new') {
+    if (!chatPlatform) {
       if (!draft.repoId || !draft.name.trim() || !draft.baseBranch.trim()) {
         return
       }
@@ -141,18 +137,21 @@ function TakeToWorkForm({
           translate('buildWeb.take.creating', 'Creating the worktree {{name}}…', { name })
         )
         try {
-          const created = await createBatchWorktree({ ...draft, name })
+          const created = await createTaskWorktree({
+            ...draft,
+            name,
+            buildWebTask: { issueId: issue.id, key: issue.key, consoleHost: baseUrl }
+          })
           if (created) {
             toast.loading(
               translate('buildWeb.take.starting', 'Starting the session in {{name}}…', { name }),
               { id: pending }
             )
-            remember(created.id)
-            await launchBuildWebBatch({
+            await launchBuildWebTask({
               target,
               baseUrl,
               worktree: created,
-              issues,
+              issue,
               flags,
               ...account
             })
@@ -168,22 +167,25 @@ function TakeToWorkForm({
     }
     remember(worktree.id)
     onClose()
-    void launchBuildWebBatch({ target, baseUrl, worktree, issues, flags, ...account })
+    void launchBuildWebTask({ target, baseUrl, worktree, issue, flags, ...account })
   }
 
   return (
     <>
       <DialogHeader>
         <DialogTitle>
-          {translate('buildWeb.take.title', 'Take to work ({{count}})', {
-            count: issues.length
-          })}
+          {translate('buildWeb.take.titleOne', 'Take {{key}} to work', { key: issue.key })}
         </DialogTitle>
         <DialogDescription>
-          {translate(
-            'buildWeb.take.description',
-            'A new Claude session in the worktree gets only the build-web-tasks skill call.'
-          )}
+          {chatPlatform
+            ? translate(
+                'buildWeb.take.description',
+                'A new Claude session in the worktree gets only the build-web-tasks skill call.'
+              )
+            : translate(
+                'buildWeb.take.descriptionNew',
+                'Orca makes a worktree for this task and starts a Claude session there with only the build-web-tasks skill call.'
+              )}
         </DialogDescription>
       </DialogHeader>
       <ul className="flex flex-col gap-1 rounded-md border border-border p-3 text-sm">
@@ -195,11 +197,11 @@ function TakeToWorkForm({
           </li>
         ))}
         <li className="flex items-center gap-1.5 pt-1">
-          <ProductChip product={issues[0].product} />
+          <ProductChip product={issue.product} />
           <BuildWebToneChip
-            label={issues[0].version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
+            label={issue.version_name ?? translate('buildWeb.detail.noRelease', 'No release')}
             tone={null}
-            mono={Boolean(issues[0].version_name)}
+            mono={Boolean(issue.version_name)}
           />
         </li>
       </ul>
@@ -208,25 +210,11 @@ function TakeToWorkForm({
           {batchCheckMessage(check)}
         </p>
       ) : null}
-      <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium">
-          {translate('buildWeb.take.worktree', 'Worktree')}
-        </span>
-        <Tabs value={mode} onValueChange={(next) => setMode(next === 'new' ? 'new' : 'existing')}>
-          <TabsList>
-            <TabsTrigger value="existing" disabled={!worktrees.length}>
-              {translate('buildWeb.take.existing', 'Existing worktree')}
-            </TabsTrigger>
-            <TabsTrigger value="new" disabled={chatPlatform}>
-              {translate('buildWeb.take.createNew', 'Create a new worktree')}
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </div>
-      {mode === 'new' ? (
-        <TakeToWorkNewWorktree repos={ownRepos} draft={draft} onChange={setDraft} />
-      ) : (
+      {chatPlatform ? (
         <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium">
+            {translate('buildWeb.take.worktree', 'Worktree')}
+          </span>
           <WorkspaceCombobox
             worktrees={worktrees}
             value={worktreeId ?? ''}
@@ -242,17 +230,14 @@ function TakeToWorkForm({
                   'buildWeb.take.noRepo',
                   'No sa-dc-ap-products repository found; showing every git worktree.'
                 )}{' '}
-            {chatPlatform
-              ? translate(
-                  'buildWeb.take.chatPlatformWorktree',
-                  'Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone.'
-                )
-              : translate(
-                  'buildWeb.take.inThisWorktree',
-                  'The skill works in this worktree (-no-worktree) and never makes its own.'
-                )}
+            {translate(
+              'buildWeb.take.chatPlatformWorktree',
+              'Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone.'
+            )}
           </p>
         </div>
+      ) : (
+        <TakeToWorkNewWorktree repos={ownRepos} draft={draft} onChange={setDraft} />
       )}
       <TakeToWorkAgentPicker
         accounts={accounts}
@@ -289,14 +274,12 @@ function TakeToWorkForm({
           )}
         />
       </label>
-      {held.length ? (
+      {held ? (
         <p className="text-xs text-muted-foreground">
           {translate(
-            'buildWeb.take.held',
-            'Already held by a session: {{list}}. Starting replaces it.',
-            {
-              list: held.map((i) => `${i.key} (${i.agent_session?.worktree_name})`).join(', ')
-            }
+            'buildWeb.take.heldOne',
+            'A session in {{worktree}} holds this task. The new session takes it over, and that one ends as replaced.',
+            { worktree: held.worktree_name }
           )}
         </p>
       ) : null}
@@ -317,7 +300,7 @@ function TakeToWorkForm({
   )
 }
 
-/** Pick an existing worktree or make one, and start a Claude session there with only the skill call. */
+/** Make the task's own worktree (a `cp` task: pick one), and start a Claude session there with only the skill call. */
 export function BuildWebTakeToWorkDialog({
   issues,
   onClose

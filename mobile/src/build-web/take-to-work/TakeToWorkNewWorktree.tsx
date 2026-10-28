@@ -61,7 +61,7 @@ function useBranchSearch(client: RpcClient, repoId: string, query: string) {
   return needle ? (found?.key === key ? found.refs : null) : []
 }
 
-/** Where the batch's own worktree goes: the repository, its name and the branch it starts from. */
+/** Where the task's own worktree goes: the repository, its name and the branch it starts from. */
 export function TakeToWorkNewWorktree({
   client,
   repos,

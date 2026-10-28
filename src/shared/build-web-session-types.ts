@@ -13,6 +13,12 @@ export type WorktreeBuildWebTask = {
   sessionId?: string
 }
 
+/** What «Take to work» asks `worktree.create` to record; the host adds `branch`, later `sessionId`. */
+export type WorktreeBuildWebTaskRequest = Pick<
+  WorktreeBuildWebTask,
+  'issueId' | 'key' | 'consoleHost'
+>
+
 /** What the console derives from the task's status; ended rows answer their `ended_state`. */
 export const BUILD_WEB_AGENT_SESSION_STATES = [
   'active',

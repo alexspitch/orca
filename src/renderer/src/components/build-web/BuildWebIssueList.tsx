@@ -1,4 +1,4 @@
-import { Bot, ChevronDown, ChevronRight, SquareTerminal, Star } from 'lucide-react'
+import { Bot, ChevronDown, ChevronRight, Star } from 'lucide-react'
 import { PaginationBar } from '@/components/task-page/PaginationBar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -10,6 +10,7 @@ import type {
   BuildWebUser
 } from '../../../../shared/build-web-types'
 import { ISSUE_PAGE_SIZE, useBuildWebStore } from './build-web-store'
+import { BuildWebSessionStateMark } from './BuildWebSessionStateMark'
 import { BuildWebToneChip, ProductChip, TypeChip } from './BuildWebToneChip'
 import { BuildWebSortHeader } from './BuildWebSortHeader'
 import { AssigneePicker, PriorityPicker, StatusPicker } from './BuildWebRowPickers'
@@ -208,21 +209,7 @@ function IssueRow({
       </td>
       <td className="w-16 py-2 pr-3 md:pr-5">
         <div className="flex items-center justify-end gap-1">
-          {issue.agent_session ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="text-chip-tone-blue">
-                  <SquareTerminal
-                    className="size-3.5"
-                    aria-label={translate('buildWeb.list.session', 'Agent session')}
-                  />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>
-                {issue.agent_session.agent} · {issue.agent_session.worktree_name}
-              </TooltipContent>
-            </Tooltip>
-          ) : null}
+          <BuildWebSessionStateMark issue={issue} />
           <button
             type="button"
             onClick={onFavorite}

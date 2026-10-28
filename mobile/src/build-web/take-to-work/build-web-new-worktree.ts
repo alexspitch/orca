@@ -2,11 +2,12 @@ import type { RpcClient } from '../../transport/rpc-client'
 import { createWorktreeWithNameRetry } from '../../tasks/worktree-create-retry'
 import { readNewWorktreeRuntimeCapabilities } from '../../tasks/worktree-create-capability'
 import { repoDefaultBaseRefRead } from '../../source-control/mobile-repo-base-ref-operations'
+import type { WorktreeBuildWebTaskRequest } from '../../../../src/shared/build-web-session-types'
 
 // «Take to work» in a new worktree: the host makes it with the repo's own setup policy, then the
 // session is launched in it like in any existing one.
 
-export async function createBatchWorktree(args: {
+export async function createTaskWorktree(args: {
   client: RpcClient
   repoId: string
   name: string
@@ -14,6 +15,8 @@ export async function createBatchWorktree(args: {
   baseBranch: string
   /** The repo's own policy decides unless the person chose; a repo that asks refuses `inherit`. */
   setupDecision: 'inherit' | 'run' | 'skip'
+  /** The task the worktree is made for; only for a host that announces it keeps one. */
+  buildWebTask?: WorktreeBuildWebTaskRequest
 }): Promise<{ worktreeId: string; name: string } | { error: string }> {
   const created = await createWorktreeWithNameRetry({
     client: args.client,
@@ -29,7 +32,8 @@ export async function createBatchWorktree(args: {
       displayName: args.name,
       displayNameKind: 'user',
       baseBranch: args.baseBranch.trim(),
-      setupDecision: args.setupDecision
+      setupDecision: args.setupDecision,
+      ...(args.buildWebTask ? { buildWebTask: args.buildWebTask } : {})
     })
   })
   if ('error' in created) {

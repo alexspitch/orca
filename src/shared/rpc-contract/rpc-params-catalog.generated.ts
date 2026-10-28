@@ -181,6 +181,7 @@ import {
   BuildWebSavedQueriesParams,
   BuildWebSavedQueryDeleteParams,
   BuildWebSavedQuerySaveParams,
+  BuildWebSessionTranscriptParams,
   BuildWebVersionBranchesParams,
   BuildWebVersionsParams,
   BuildWebWorktreeSessionParams
@@ -1052,6 +1053,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.saveGuide': BuildWebGuideParams,
   'buildWeb.saveQuery': BuildWebSavedQuerySaveParams,
   'buildWeb.savedQueries': BuildWebSavedQueriesParams,
+  'buildWeb.sessionTranscript': BuildWebSessionTranscriptParams,
   'buildWeb.setAgentSession': BuildWebAgentSessionParams,
   'buildWeb.setAgentSessionSettings': BuildWebAgentSessionSettingsParams,
   'buildWeb.setFavorite': BuildWebFavoriteParams,

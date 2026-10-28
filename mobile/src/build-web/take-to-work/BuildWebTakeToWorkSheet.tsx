@@ -10,19 +10,20 @@ import { colors, radii, spacing, typography } from '../../theme/mobile-theme'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { BuildWebToneChip, ProductChip, StatusChip } from '../BuildWebToneChip'
 import { CardButton, ErrorText, MutedText, ui } from '../issue/issue-card-ui'
-import { launchBuildWebBatch } from './build-web-agent-launch'
-import { createBatchWorktree } from './build-web-new-worktree'
+import { launchBuildWebTask } from './build-web-agent-launch'
+import { createTaskWorktree } from './build-web-new-worktree'
 import {
   batchCheckMessage,
-  batchWorktreeName,
-  buildWebBatchPrompt,
   defaultTakeToWorkWorktree,
   isChatPlatformBatch,
   lastTakeToWorkWorktree,
   MAX_INSTRUCTION,
   rememberTakeToWorkWorktree,
   takeToWorkCandidates,
+  takeToWorkPrompt,
   takeToWorkRepos,
+  takenWorktreeNames,
+  taskWorktreeName,
   validateBuildWebBatch,
   type TakeToWorkWorktree
 } from './build-web-take-to-work'
@@ -38,8 +39,7 @@ import {
   supportsMobileExistingAgentLaunch
 } from '../../session/mobile-existing-agent-launch'
 import { useTakeToWorkHost } from './use-take-to-work-host'
-
-type Mode = 'existing' | 'new'
+import { BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 
 const SETUP_CHOICES = [
   { value: 'inherit', label: 'Repo default' },
@@ -47,12 +47,7 @@ const SETUP_CHOICES = [
   { value: 'skip', label: 'Skip setup' }
 ] as const
 
-const MODES = [
-  { value: 'existing', label: 'Existing worktree' },
-  { value: 'new', label: 'New worktree' }
-] as const
-
-/** Pick an existing worktree or make one, and start a Claude session there with only the skill call. */
+/** Make the task's own worktree (a `cp` task: pick one), and start a Claude session there with only the skill call. */
 export function BuildWebTakeToWorkSheet({
   issues,
   onClose
@@ -86,17 +81,18 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
     picked ?? defaultTakeToWorkWorktree(worktrees, null, lastTakeToWorkWorktree(hostId))
   const [auto, setAuto] = useState(false)
   const [instruction, setInstruction] = useState('')
-  // Why: the skill runs from the monorepo and makes chat-platform's worktree itself.
+  const issue = issues[0]
+  // Why: a `cp` task's session runs in a monorepo worktree, and the skill makes chat-platform's itself.
   const chatPlatform = isChatPlatformBatch(issues)
   const flags = { auto, ownWorktree: chatPlatform, instruction }
-  const [pickedMode, setMode] = useState<Mode | null>(null)
-  const mode: Mode = chatPlatform
-    ? 'existing'
-    : (pickedMode ?? (ready && worktrees.length === 0 ? 'new' : 'existing'))
   const [draft, setDraft] = useState<NewWorktreeDraft | null>(null)
+  const defaultRepoId = ownRepos[0]?.id ?? ''
   const shownDraft: NewWorktreeDraft = draft ?? {
-    repoId: ownRepos[0]?.id ?? '',
-    name: batchWorktreeName(issues.map((i) => i.key)),
+    repoId: defaultRepoId,
+    name: taskWorktreeName(
+      issue.key,
+      takenWorktreeNames(all.filter((w) => w.repoId === defaultRepoId))
+    ),
     baseBranch: ''
   }
   const [starting, setStarting] = useState(false)
@@ -111,10 +107,9 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
   } | null>(null)
   const launchSupported = supportsMobileExistingAgentLaunch(hostCapabilities)
   const hostClaudeArgs = useHostClaudeArgs(client)
-  const targetRepoId =
-    mode === 'new'
-      ? shownDraft.repoId
-      : (worktrees.find((w) => w.worktreeId === worktreeId)?.repoId ?? '')
+  const targetRepoId = chatPlatform
+    ? (worktrees.find((w) => w.worktreeId === worktreeId)?.repoId ?? '')
+    : shownDraft.repoId
   // Why: over SSH or in WSL the session keeps its own login, so another account cannot be named.
   const ownLogin = repos.find((r) => r.id === targetRepoId)?.ownLogin === true
   const offeredAccounts = useClaudeLaunchAccounts(client, hostCapabilities)
@@ -125,21 +120,16 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
     ? pickedAccountId
     : undefined
   const check = validateBuildWebBatch(issues)
-  const held = issues.filter((i) => i.agent_session)
+  const held = issue.agent_session
   const worktree = worktrees.find((w) => w.worktreeId === worktreeId) ?? null
-  const prompt = check.ok
-    ? buildWebBatchPrompt(
-        issues.map((i) => i.key),
-        flags
-      )
-    : ''
+  const prompt = check.ok ? takeToWorkPrompt(issue.key, flags) : ''
   const baseUrl = status.baseUrl
 
   const targetReady =
     created !== null ||
-    (mode === 'new'
-      ? Boolean(shownDraft.repoId && shownDraft.name.trim() && shownDraft.baseBranch.trim())
-      : Boolean(worktree))
+    (chatPlatform
+      ? Boolean(worktree)
+      : Boolean(shownDraft.repoId && shownDraft.name.trim() && shownDraft.baseBranch.trim()))
   const canStart =
     !starting &&
     launchSupported &&
@@ -161,13 +151,13 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
     if (!baseUrl) {
       return
     }
-    const result = await launchBuildWebBatch({
+    const result = await launchBuildWebTask({
       client,
       hostCapabilities,
       call,
       baseUrl,
       worktree: target,
-      issues,
+      issue,
       flags,
       hostClaudeArgs,
       ...(claudeAccountId ? { claudeAccountId } : {})
@@ -204,15 +194,19 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
         await launchIn({ worktreeId: created.worktreeId, displayName: created.name })
         return
       }
-      if (mode === 'new') {
+      if (!chatPlatform) {
         const name = shownDraft.name.trim()
         notify(`Creating the worktree ${name}…`)
-        const made = await createBatchWorktree({
+        const made = await createTaskWorktree({
           client,
           repoId: shownDraft.repoId,
           name,
           baseBranch: shownDraft.baseBranch,
-          setupDecision
+          setupDecision,
+          // Why gated: an older host strips the field, and then nothing would say it was dropped.
+          ...(baseUrl && hostCapabilities.includes(BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY)
+            ? { buildWebTask: { issueId: issue.id, key: issue.key, consoleHost: baseUrl } }
+            : {})
         })
         if ('error' in made) {
           notify(made.error, 'error')
@@ -237,9 +231,11 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
       contentContainerStyle={styles.form}
       keyboardShouldPersistTaps="handled"
     >
-      <Text style={styles.title}>Take to work ({issues.length})</Text>
+      <Text style={styles.title}>Take {issue.key} to work</Text>
       <MutedText>
-        A new Claude session in the worktree gets only the build-web-tasks skill call.
+        {chatPlatform
+          ? 'A new Claude session in the worktree gets only the build-web-tasks skill call.'
+          : 'Orca makes a worktree for this task and starts a Claude session there with only the build-web-tasks skill call.'}
       </MutedText>
       <View style={styles.tasks}>
         {issues.map((i) => (
@@ -252,11 +248,11 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
           </View>
         ))}
         <View style={ui.row}>
-          <ProductChip product={issues[0].product} />
+          <ProductChip product={issue.product} />
           <BuildWebToneChip
-            label={issues[0].version_name ?? 'No release'}
+            label={issue.version_name ?? 'No release'}
             tone={null}
-            mono={Boolean(issues[0].version_name)}
+            mono={Boolean(issue.version_name)}
           />
         </View>
       </View>
@@ -270,27 +266,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
       ) : null}
       {ready ? (
         <TakeToWorkField label="Worktree">
-          {chatPlatform ? null : (
-            <MobileSegmentedControl segments={MODES} selected={mode} onSelect={setMode} fill />
-          )}
-          {mode === 'new' ? (
-            <>
-              <TakeToWorkNewWorktree
-                client={client}
-                repos={ownRepos}
-                draft={shownDraft}
-                onChange={setDraft}
-              />
-              <TakeToWorkField label="Setup script">
-                <MobileSegmentedControl
-                  segments={SETUP_CHOICES}
-                  selected={setupDecision}
-                  onSelect={setSetupDecision}
-                  fill
-                />
-              </TakeToWorkField>
-            </>
-          ) : (
+          {chatPlatform ? (
             <>
               {worktrees.length ? (
                 <TakeToWorkWorktreePicker
@@ -306,10 +282,26 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
                 {matchedRepo
                   ? 'Worktrees of sa-dc-ap-products. The skill must be up to date in the one you pick.'
                   : 'No sa-dc-ap-products repository found; showing every git worktree.'}{' '}
-                {chatPlatform
-                  ? 'Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone.'
-                  : 'The skill works in this worktree (-no-worktree) and never makes its own.'}
+                Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes
+                the chat-platform worktree itself, beside its clone.
               </MutedText>
+            </>
+          ) : (
+            <>
+              <TakeToWorkNewWorktree
+                client={client}
+                repos={ownRepos}
+                draft={shownDraft}
+                onChange={setDraft}
+              />
+              <TakeToWorkField label="Setup script">
+                <MobileSegmentedControl
+                  segments={SETUP_CHOICES}
+                  selected={setupDecision}
+                  onSelect={setSetupDecision}
+                  fill
+                />
+              </TakeToWorkField>
             </>
           )}
         </TakeToWorkField>
@@ -340,11 +332,10 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
           accessibilityLabel="Additional instruction"
         />
       </TakeToWorkField>
-      {held.length ? (
+      {held ? (
         <MutedText>
-          Already held by a session:{' '}
-          {held.map((i) => `${i.key} (${i.agent_session?.worktree_name})`).join(', ')}. Starting
-          replaces it.
+          A session in {held.worktree_name} holds this task. The new session takes it over, and that
+          one ends as replaced.
         </MutedText>
       ) : null}
       {prompt ? (

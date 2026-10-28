@@ -12,63 +12,51 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { BuildWebSessionArgs } from '../../../../preload/api/build-web-api'
 import { callBuildWeb } from './build-web-client'
-import { buildWebBatchPrompt, type TakeToWorkFlags } from './build-web-take-to-work'
+import { takeToWorkPrompt, type TakeToWorkFlags } from './build-web-take-to-work'
 import { claudeNameArgs, taskSessionName } from './build-web-task-session'
 import { resolveTuiAgentLaunchArgs } from '../../../../shared/tui-agent-launch-defaults'
 
 // Plain module code, not a component effect: revealing the worktree leaves the Issues page.
 
 const PROVIDER_SESSION_WAIT_MS = 10 * 60_000
-const WRITE_CONCURRENCY = 4
 /** Consoles that predate the session route; Orca then stops trying for that address. */
 const sessionUnsupported = new Set<string>()
 
-async function eachLimited<T>(items: T[], run: (item: T) => Promise<void>): Promise<void> {
-  const queue = [...items]
-  await Promise.all(
-    Array.from({ length: Math.min(WRITE_CONCURRENCY, queue.length) }, async () => {
-      for (let item = queue.shift(); item; item = queue.shift()) {
-        await run(item)
-      }
-    })
-  )
-}
-
-async function writeSessions(
+async function writeSession(
   target: RuntimeClientTarget,
   baseUrl: string,
-  issues: BuildWebIssueRow[],
-  session: BuildWebSessionArgs
+  issue: BuildWebIssueRow,
+  session: BuildWebSessionArgs,
+  worktreeId: string
 ): Promise<boolean> {
   if (sessionUnsupported.has(baseUrl)) {
     return false
   }
-  const failed: string[] = []
-  await eachLimited(issues, async (issue) => {
-    const result = await callBuildWeb(target, 'setAgentSession', { id: issue.id, session }).catch(
-      () => null
-    )
-    // Why: only a missing route — a deleted task answers 404 too, with the console's own error.
-    if (result && !result.ok && result.routeMissing) {
-      sessionUnsupported.add(baseUrl)
-    } else if (!result?.ok) {
-      failed.push(issue.key)
-    }
-  })
-  if (failed.length && !sessionUnsupported.has(baseUrl)) {
+  // Why the worktree: its host then records the console's session row on it (IS-147).
+  const result = await callBuildWeb(target, 'setAgentSession', {
+    id: issue.id,
+    session,
+    worktreeId
+  }).catch(() => null)
+  // Why: only a missing route — a deleted task answers 404 too, with the console's own error.
+  if (result && !result.ok && result.routeMissing) {
+    sessionUnsupported.add(baseUrl)
+    return false
+  }
+  if (!result?.ok) {
     toast.error(
       translate('buildWeb.launch.sessionNotSaved', 'Session ID not saved to {{keys}}', {
-        keys: failed.join(', ')
+        keys: issue.key
       })
     )
   }
-  return !sessionUnsupported.has(baseUrl)
+  return true
 }
 
-/** Once the hook server learns Claude's own session id for this tab, record it on the tasks. */
+/** Once the hook server learns Claude's own session id for this tab, record it on the task. */
 function noteProviderSessionLater(
   target: RuntimeClientTarget,
-  issues: BuildWebIssueRow[],
+  issue: BuildWebIssueRow,
   tabId: string
 ): void {
   let done = false
@@ -89,13 +77,11 @@ function noteProviderSessionLater(
       return
     }
     finish()
-    for (const issue of issues) {
-      void callBuildWeb(target, 'noteProviderSession', {
-        id: issue.id,
-        surfaceId: tabId,
-        providerSessionId
-      }).catch(() => {})
-    }
+    void callBuildWeb(target, 'noteProviderSession', {
+      id: issue.id,
+      surfaceId: tabId,
+      providerSessionId
+    }).catch(() => {})
   }
   const unsubscribe = useAppStore.subscribe(check)
   const timer = window.setTimeout(finish, PROVIDER_SESSION_WAIT_MS)
@@ -114,19 +100,18 @@ function nameStructuredTab(worktreeId: string, sessionId: string, name: string):
   }
 }
 
-export async function launchBuildWebBatch(args: {
+export async function launchBuildWebTask(args: {
   target: RuntimeClientTarget
   baseUrl: string
   worktree: Worktree
-  issues: BuildWebIssueRow[]
+  issue: BuildWebIssueRow
   flags: TakeToWorkFlags
   /** Another Claude account of the worktree's host than its selection; absent runs the selection. */
   claudeAccountId?: string
 }): Promise<boolean> {
-  const { target, baseUrl, worktree, issues, flags, claudeAccountId } = args
-  const keys = issues.map((i) => i.key)
-  const prompt = buildWebBatchPrompt(keys, flags)
-  const sessionName = taskSessionName(issues)
+  const { target, baseUrl, worktree, issue, flags, claudeAccountId } = args
+  const prompt = takeToWorkPrompt(issue.key, flags)
+  const sessionName = taskSessionName([issue])
   // Why the defaults too: launch arguments replace the user's own Claude arguments, not add to them.
   const agentArgs = claudeNameArgs(
     resolveTuiAgentLaunchArgs('claude', useAppStore.getState().settings),
@@ -196,13 +181,19 @@ export async function launchBuildWebBatch(args: {
   if (!surface.surface_id) {
     return true
   }
-  const written = await writeSessions(target, baseUrl, issues, {
-    ...surface,
-    worktree_name: worktree.displayName,
-    execution_host_id: worktree.hostId ?? '',
-    agent: 'claude',
-    started_at: startedAt
-  })
+  const written = await writeSession(
+    target,
+    baseUrl,
+    issue,
+    {
+      ...surface,
+      worktree_name: worktree.displayName,
+      execution_host_id: worktree.hostId ?? '',
+      agent: 'claude',
+      started_at: startedAt
+    },
+    worktree.id
+  )
   if (!written) {
     return true
   }
@@ -210,16 +201,16 @@ export async function launchBuildWebBatch(args: {
     ? await result.promptDeliveryResult.catch(() => null)
     : null
   if (delivery && !delivery.delivered && surface.surface_id) {
-    await eachLimited(issues, async (issue) => {
-      await callBuildWeb(target, 'clearAgentSession', {
-        id: issue.id,
-        surfaceId: surface.surface_id
-      }).catch(() => {})
-    })
+    // Why abandon: the session never got the task, so its history row says it never started.
+    await callBuildWeb(target, 'clearAgentSession', {
+      id: issue.id,
+      surfaceId: surface.surface_id,
+      abandon: true
+    }).catch(() => {})
     return false
   }
   if (surface.surface_kind === 'terminal') {
-    noteProviderSessionLater(target, issues, surface.surface_id)
+    noteProviderSessionLater(target, issue, surface.surface_id)
   }
   return true
 }

@@ -164,7 +164,8 @@ export const getIntegrationsPaneSearchEntries = createLocalizedCatalog(() => [
     ),
     keywords: [
       ...translateSearchKeyword('buildWeb.settings.searchKeyword', 'build-web'),
-      ...translateSearchKeyword('buildWeb.settings.searchIssues', 'issues')
+      ...translateSearchKeyword('buildWeb.settings.searchIssues', 'issues'),
+      ...translateSearchKeyword('buildWeb.settings.searchAutoCleanup', 'auto-remove workspaces')
     ]
   },
   {

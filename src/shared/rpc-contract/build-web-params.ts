@@ -275,3 +275,11 @@ export const BuildWebSavedQuerySaveParams = z.object({
 export const BuildWebSavedQueryDeleteParams = z.object({
   id: required('Missing query id', 128).refine(notDotSegment, 'Invalid id')
 })
+
+/** IS-147: a session's agent log on the host that ran it, a page at a time from its end. */
+export const BuildWebSessionTranscriptParams = z.object({
+  agent: z.string().regex(/^[a-z0-9][a-z0-9-]{0,39}$/),
+  // Why so strict: the id names a file under the agent's log folders.
+  providerSessionId: z.string().regex(/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/),
+  before: z.number().int().nonnegative().optional()
+})

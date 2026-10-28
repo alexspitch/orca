@@ -23,7 +23,7 @@ import { track } from '../../../telemetry/client'
 import { classifyWorkspaceCreateError } from '../../workspace-create-error-classifier'
 import { getCohortAtEmit } from '../../../telemetry/cohort-classifier'
 import { adoptProvisionedRootSshCheckout } from '../../../provisioned-root-ssh-adoption'
-import { normalizeLinkedWorkItemFields } from '../ipc-context-schemas'
+import { normalizeBuildWebTaskField, normalizeLinkedWorkItemFields } from '../ipc-context-schemas'
 import type { CreateWorktreeArgsWithSystemProvenance } from '../ipc-context-schemas'
 import { createFolderWorkspace } from './folder-workspace-creation'
 import { findExactRepoOwner, isCapturedRepoCurrent } from '../listing/worktree-host-ownership'
@@ -40,7 +40,7 @@ export function registerWorktreeCreateHandlers(context: WorktreeIpcContext): voi
   ipcMain.handle(
     'worktrees:create',
     async (_event, rawArgs: CreateWorktreeArgs): Promise<CreateWorktreeResult> => {
-      const args = normalizeLinkedWorkItemFields(rawArgs)
+      const args = normalizeBuildWebTaskField(normalizeLinkedWorkItemFields(rawArgs))
       // Parent Git spans without recording user branch names or remote URLs.
       return withWorktreeSpan({ stage: 'create' }, async (span) => {
         const repo = store.getRepo(args.repoId)

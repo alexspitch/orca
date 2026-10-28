@@ -10,6 +10,7 @@ import { WorkspaceLinkedItemSchema } from '../../../shared/workspace-linked-item
 import { WorkspaceAttachmentsSchema } from '../../../shared/workspace-attachment-schema'
 import { TaskSourceContextSchema } from '../../../shared/task-source-context-schema'
 import { isWorkspaceLinkedItemSourceContextMatch } from '../../../shared/workspace-linked-item-source-context'
+import { WorktreeBuildWebTaskRequestSchema } from '../../../shared/build-web-session-schema'
 
 export type CreateWorktreeArgsWithSystemProvenance = CreateWorktreeArgs & {
   automationProvenance?: AutomationWorkspaceProvenance
@@ -76,4 +77,13 @@ export function normalizeLinkedWorkItemFields<
     ...(linkedWorkItem !== undefined ? { linkedWorkItem } : {}),
     ...(linkedTaskSourceContext !== undefined ? { linkedTaskSourceContext } : {})
   }
+}
+
+/** IS-147: the renderer's create names its build-web task; checked here as RPC checks it. */
+export function normalizeBuildWebTaskField<T extends Pick<CreateWorktreeArgs, 'buildWebTask'>>(
+  input: T
+): T {
+  return input.buildWebTask === undefined
+    ? input
+    : { ...input, buildWebTask: WorktreeBuildWebTaskRequestSchema.parse(input.buildWebTask) }
 }

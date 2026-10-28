@@ -5,7 +5,7 @@ import { BuildWebToneChip, ProductChip } from '../BuildWebToneChip'
 import { CardButton } from '../issue/issue-card-ui'
 import { batchCheckMessage, validateBuildWebBatch } from '../take-to-work/build-web-take-to-work'
 
-/** The picked tasks and «Take to work», refused for a mix of products or releases. */
+/** The picked tasks and «Take to work», which takes one task: with more, the bar says why it waits. */
 export function IssueSelectionBar({
   picked,
   onClear,
@@ -38,7 +38,7 @@ export function IssueSelectionBar({
         <CardButton variant="ghost" label="Clear" onPress={onClear} />
         <CardButton
           variant="primary"
-          label={`Take to work (${picked.length})`}
+          label="Take to work"
           disabled={!check.ok}
           onPress={() => onTakeToWork(picked)}
         />
@@ -61,5 +61,5 @@ const styles = StyleSheet.create({
   line: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   grow: { flex: 1 },
   count: { color: colors.textPrimary, fontSize: typography.bodySize, fontWeight: '600' },
-  reason: { color: colors.statusRed, fontSize: typography.metaSize }
+  reason: { color: colors.textMuted, fontSize: typography.metaSize }
 })

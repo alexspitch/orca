@@ -6,16 +6,32 @@ import {
   resolveDirectLaunchOwnerRow,
   resolveDirectSetupDecision
 } from '@/lib/launch-work-item-direct-preflight'
+import { runtimeEnvironmentSupportsCapability } from '@/runtime/runtime-rpc-client'
 import type { Worktree } from '../../../../shared/worktree/types'
+import type { WorktreeBuildWebTaskRequest } from '../../../../shared/build-web-session-types'
+import { BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY } from '../../../../shared/build-web-capability'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 
 // «Take to work» in a new worktree: made the way a task's «Start work» makes one — the repo's
 // setup policy and hook trust decide the setup script — before the session opens in it.
 
-export async function createBatchWorktree(args: {
+/** This window's own main keeps it; a server only from the version that announces it. */
+async function hostKeepsBuildWebTask(target: RuntimeClientTarget): Promise<boolean> {
+  return target.kind === 'local'
+    ? true
+    : runtimeEnvironmentSupportsCapability(
+        target.environmentId,
+        BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY
+      ).catch(() => false)
+}
+
+export async function createTaskWorktree(args: {
   repoId: string
   name: string
   /** Always named: the dialog fills in the repository's default and lets the person pick another. */
   baseBranch: string
+  /** The task the worktree is made for; dropped for a host that would not keep it. */
+  buildWebTask?: WorktreeBuildWebTaskRequest
 }): Promise<Worktree | null> {
   const store = useAppStore.getState()
   const owner = resolveDirectLaunchOwnerRow(store.repos, args.repoId)
@@ -23,6 +39,8 @@ export async function createBatchWorktree(args: {
     toast.error(translate('buildWeb.take.noRepoFound', 'The repository is not available.'))
     return null
   }
+  const buildWebTask =
+    args.buildWebTask && (await hostKeepsBuildWebTask(owner.target)) ? args.buildWebTask : null
   const setup = await resolveDirectSetupDecision(args.repoId, owner.repo, owner.executionHostId)
   // Why `inherit` when the repo asks per workspace: there is no composer here to ask in.
   const decision = setup.kind === 'decided' ? setup.decision : 'inherit'
@@ -64,7 +82,7 @@ export async function createBatchWorktree(args: {
         undefined,
         undefined,
         undefined,
-        { executionHostId: owner.executionHostId }
+        { executionHostId: owner.executionHostId, ...(buildWebTask ? { buildWebTask } : {}) }
       )
     // Why the store's record: a paired server reports its own host as `local`, and revealing the new
     // worktree by that host finds nothing — the session never started.

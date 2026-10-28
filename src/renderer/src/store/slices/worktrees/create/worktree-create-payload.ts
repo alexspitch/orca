@@ -16,6 +16,8 @@ export type CreateWorktreeCallOptions = {
   automationProvenanceRequest?: CreateWorktreeArgs['automationProvenanceRequest']
   linkedWorkItem?: WorkspaceLinkedItem | null
   linkedTaskSourceContext?: TaskSourceContext | null
+  /** IS-147: only for a host that announces `build-web-worktree-task.v1`; older ones strip it. */
+  buildWebTask?: CreateWorktreeArgs['buildWebTask']
   /** Lets the owning runtime launch and prefill a task agent without first creating an idle shell. */
   startupDraft?: string
   /** A terminal agent the owning host may plan from its own settings; `startup` stays the fallback. */
@@ -112,6 +114,7 @@ function sharedCreateFields(
     ...(options?.linkedTaskSourceContext !== undefined
       ? { linkedTaskSourceContext: options.linkedTaskSourceContext }
       : {}),
+    ...(options?.buildWebTask ? { buildWebTask: options.buildWebTask } : {}),
     ...(options?.automationProvenanceRequest
       ? { automationProvenanceRequest: options.automationProvenanceRequest }
       : {})

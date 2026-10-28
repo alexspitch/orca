@@ -26,6 +26,7 @@ export const buildWebApi = {
   agentSessionSettings: () => ipcRenderer.invoke('buildWeb:agentSessionSettings'),
   setAgentSessionSettings: (args) => ipcRenderer.invoke('buildWeb:setAgentSessionSettings', args),
   keepWorktreeSession: (args) => ipcRenderer.invoke('buildWeb:keepWorktreeSession', args),
+  sessionTranscript: (args) => ipcRenderer.invoke('buildWeb:sessionTranscript', args),
   imageSummary: () => ipcRenderer.invoke('buildWeb:imageSummary'),
   issueSummary: (args) => ipcRenderer.invoke('buildWeb:issueSummary', args),
   listImages: (args) => ipcRenderer.invoke('buildWeb:listImages', args),

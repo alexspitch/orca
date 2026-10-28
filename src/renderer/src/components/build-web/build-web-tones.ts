@@ -1,5 +1,6 @@
 import type { BuildWebIssueStatus } from '../../../../shared/build-web-types'
 import type { BuildWebImageBuildStatus } from '../../../../shared/build-web-image-types'
+import type { BuildWebAgentSessionState } from '../../../../shared/build-web-session-types'
 
 // The colour of each value, after build-web's issue.ts, product.ts and vocab.ts: the same hue for
 // the same value in the list, the card and the filter. Hues are main.css chip-tone tokens.
@@ -115,4 +116,24 @@ const JIRA_RULES: [RegExp, ChipTone][] = [
 
 export function jiraStatusTone(status: string): ChipTone | null {
   return JIRA_RULES.find(([re]) => re.test(status))?.[1] ?? null
+}
+
+/** A task session's state (IS-147): live ones in their statuses' hues, ended ones quiet, attention warm. */
+export function sessionStateTone(state: BuildWebAgentSessionState | 'attention'): ChipTone {
+  switch (state) {
+    case 'active':
+      return 'blue'
+    case 'waiting':
+      return 'sky'
+    case 'closing':
+      return 'faint'
+    case 'attention':
+      return 'orange'
+    case 'removed':
+      return 'green'
+    case 'replaced':
+    case 'kept':
+    case 'abandoned':
+      return 'neutral'
+  }
 }
