@@ -1,6 +1,21 @@
 {
   "releases": [
     {
+      "version": "1.4.244-custom.1793182962000",
+      "date": "2026-10-28",
+      "commit": "8d29c7cbb317",
+      "features": [
+        "The task menu's «All tasks» now opens a searchable task list inside Orca, filterable by status, kind, author and dates, with 25, 50 or 100 per page.",
+        "Opening a test run from the task menu now shows that run in the Testing page's history instead of the console's website.",
+        "«Build page» on a redo task now shows the build's log inside Orca instead of opening the console's website.",
+        "Tasks now show who started them, and you can filter the task list by author.",
+        "Tasks Orca cannot open now say so instead of sending you to the console's website.",
+        "The phone view gains a «Tasks» section with the same list and filters, opening builds, live job logs and build logs directly."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.244-custom.1793181608000",
       "date": "2026-10-28",
       "commit": "19c25478be76",
