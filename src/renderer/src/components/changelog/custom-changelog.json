@@ -1,6 +1,21 @@
 {
   "releases": [
     {
+      "version": "1.4.244-custom.1793170755000",
+      "date": "2026-10-28",
+      "commit": "1e7b74fc9753",
+      "features": [
+        "Images now shows each RHEL build's RedOS twin status in the distribution column, and each twin shows which RHEL build it comes from.",
+        "Copy links in a task's Build tab and in Images asks whether to copy RHEL, RedOS or both; selecting a RHEL build includes its twin.",
+        "After a push from Images, the push log follows RedOS twin creation, each image gets a RedOS chip, and a notification appears if a twin fails.",
+        "The phone app gets the same RedOS twin display, link copying and push tracking as the desktop."
+      ],
+      "settings": [],
+      "fixes": [
+        "Images no longer offers to push a RedOS twin on its own; it is pushed together with its RHEL build."
+      ]
+    },
+    {
       "version": "1.4.243-custom.1793134786000",
       "date": "2026-10-27",
       "commit": "d3eda4d3bbdb",
