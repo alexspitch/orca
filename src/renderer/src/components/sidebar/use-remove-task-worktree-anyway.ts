@@ -1,92 +1,83 @@
 import { useCallback } from 'react'
+import { toast } from 'sonner'
 import { useAppStore } from '@/store'
+import { getAllWorktreesFromState, getWorktreeOnHostFromState } from '@/store/selectors'
 import { translate } from '@/i18n/i18n'
-import { getConnectionId } from '@/lib/connection-context'
-import { runtimeTargetForWorkspaceOwner } from '@/lib/resolve-owner'
-import { ipcOrRuntimeTargetForHostId } from '@/runtime/runtime-client-target'
-import type { RuntimeGitContext } from '@/runtime/runtime-git-client-context'
-import { getRuntimeGitHistory, getRuntimeGitStatus } from '@/runtime/runtime-git-status-client'
-import { findRepoForHost } from '@/store/slices/repo-host-identity'
-import { toWorktreeRemovalTarget } from '../../../../shared/worktree/removal'
+import { collectRemovalUnsavedFiles } from '@/components/editor/removal-unsaved-editor-files'
+import { confirmUnsavedDiscard } from '@/store/slices/worktrees/teardown/removed-workspace-unsaved-files'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { getWorktreeHostIdentity } from '../../../../shared/worktree/host-qualified-identity'
 import { BUILD_WEB_SESSION_ACTION_LABELS } from '../../../../shared/build-web-session-labels'
 import { useConfirmationDialog } from '../confirmation-dialog-context'
-import { runWorktreeDeleteWithToast } from './run-worktree-delete-with-toast'
+import { runWorktreeDeletesInParallel } from './delete-worktree-flow'
+import { discardedUnsavedFilesLabel } from './removal-unsaved-files'
+import { showWorkspaceListChangedToast } from './stale-workspace-list-toast'
+import { getWorkspaceDeleteLineage } from './workspace-delete-lineage'
+import {
+  LEFTOVER_LINES_LISTED,
+  readTaskWorktreeLeftovers,
+  type TaskWorktreeLeftovers
+} from './task-worktree-leftovers'
 
-// IS-147 «Remove anyway»: a closed task's worktree the host would not remove. The existing force
-// delete skips only the dirty check; the branch goes with `-d`, so an unmerged branch survives.
+// IS-147 «Remove anyway»: a closed task's worktree the host would not remove. It runs the delete
+// flow's force removal, which skips only the dirty check; the branch goes with `-d`, so an unmerged
+// branch survives. Lineage children go with it, as the Delete dialog removes them.
 
-const LISTED = 12
-
-function gitContext(worktree: Worktree): RuntimeGitContext | null {
-  const state = useAppStore.getState()
-  const target = worktree.hostId
-    ? ipcOrRuntimeTargetForHostId(worktree.hostId)
-    : runtimeTargetForWorkspaceOwner(state, { workspaceId: worktree.id })
-  if (!target) {
-    return null
-  }
-  const owner = worktree.hostId
-    ? findRepoForHost(state.repos, worktree.repoId, { hostId: worktree.hostId })
-    : undefined
-  return {
-    target,
-    worktreeId: worktree.id,
-    worktreePath: worktree.path,
-    connectionId: worktree.hostId
-      ? (owner?.connectionId ?? undefined)
-      : (getConnectionId(worktree.id) ?? undefined)
-  }
-}
-
-/** Commits the branch holds over its base, and the files a removal loses; null when unreadable. */
-async function readLeftovers(
-  worktree: Worktree
-): Promise<{ commits: string[] | null; files: string[] | null }> {
-  const context = gitContext(worktree)
-  if (!context) {
-    return { commits: null, files: null }
-  }
-  const [history, status] = await Promise.all([
-    worktree.baseRef
-      ? getRuntimeGitHistory(context, { baseRef: worktree.baseRef, limit: LISTED + 1 }).catch(
-          () => null
-        )
-      : Promise.resolve(null),
-    getRuntimeGitStatus(context, { admissionTier: 'interactive', includeLineStats: false }).catch(
-      () => null
-    )
-  ])
-  const baseIndex = history?.items.findIndex((item) => item.id === history.mergeBase) ?? -1
-  // Why all when the base is not listed: the branch holds more commits than the page shows.
-  const ahead = history ? history.items.slice(0, baseIndex >= 0 ? baseIndex : undefined) : null
-  return {
-    commits:
-      ahead?.map((item) => `${item.displayId ?? item.id.slice(0, 7)} ${item.subject}`) ?? null,
-    files: status?.entries.map((entry) => `${entry.status} ${entry.path}`) ?? null
-  }
-}
-
-function section(title: string, lines: string[]): string {
-  const shown = lines.slice(0, LISTED).map((line) => `  ${line}`)
-  const more = lines.length > LISTED ? [`  … ${lines.length - LISTED}`] : []
+function section(title: string, lines: readonly string[], total = lines.length): string {
+  const shown = lines.slice(0, LEFTOVER_LINES_LISTED).map((line) => `  ${line}`)
+  const more = total > shown.length ? [`  … ${total - shown.length}`] : []
   return [title, ...shown, ...more].join('\n')
 }
 
-function describe(worktree: Worktree, commits: string[] | null, files: string[] | null): string {
-  const parts: string[] = []
-  if (commits && commits.length > 0) {
-    parts.push(
-      section(
-        translate('buildWeb.session.remove.commits', 'Kept on branch {{branch}}:', {
-          branch: worktree.branch.replace(/^refs\/heads\//, '')
-        }),
-        commits
+function describeCommits(worktree: Worktree, commits: TaskWorktreeLeftovers['commits']): string {
+  const branch = worktree.branch.replace(/^refs\/heads\//, '')
+  return commits && commits.total > 0
+    ? section(
+        translate('buildWeb.session.remove.commits', 'Kept on branch {{branch}}:', { branch }),
+        commits.lines,
+        commits.total
       )
-    )
+    : translate(
+        'buildWeb.session.remove.noCommits',
+        'Branch {{branch}} has no commits of its own.',
+        {
+          branch
+        }
+      )
+}
+
+function describe(
+  worktree: Worktree,
+  { commits, files }: TaskWorktreeLeftovers,
+  children: readonly Worktree[],
+  unsavedPaths: readonly string[]
+): string {
+  const parts: string[] = []
+  if (commits) {
+    parts.push(describeCommits(worktree, commits))
   }
   if (files && files.length > 0) {
     parts.push(section(translate('buildWeb.session.remove.files', 'Lost:'), files))
+  }
+  if (unsavedPaths.length > 0) {
+    parts.push(section(discardedUnsavedFilesLabel(unsavedPaths.length), unsavedPaths))
+  }
+  if (children.length > 0) {
+    parts.push(
+      section(
+        children.length === 1
+          ? translate(
+              'auto.components.sidebar.DeleteWorktreeLineageNotice.66798cc6a2',
+              'Deleting this workspace also deletes 1 child workspace.'
+            )
+          : translate(
+              'auto.components.sidebar.DeleteWorktreeLineageNotice.29b98bf9cd',
+              'Deleting this workspace also deletes {{value0}} child workspaces.',
+              { value0: children.length }
+            ),
+        children.map((child) => child.displayName)
+      )
+    )
   }
   if (commits === null || files === null) {
     parts.push(
@@ -102,25 +93,87 @@ function describe(worktree: Worktree, commits: string[] | null, files: string[] 
   return parts.join('\n\n')
 }
 
-/** Confirms with what is kept and lost, then runs the existing force delete. */
+/** The row as the store holds it now; a removed or recreated workspace refuses the action. */
+function currentCopy(worktree: Worktree): Worktree | null {
+  const current = getWorktreeOnHostFromState(useAppStore.getState(), worktree.id, worktree.hostId)
+  return current && current.instanceId === worktree.instanceId ? current : null
+}
+
+/** Asks with what is kept and lost; the confirmed targets, children first, or null. */
+async function askToRemove(
+  target: Worktree,
+  confirm: ReturnType<typeof useConfirmationDialog>
+): Promise<Worktree[] | null> {
+  const state = useAppStore.getState()
+  if (target.hostId) {
+    state.clearWorktreeDeleteState(target.id, target.hostId)
+  } else {
+    state.clearWorktreeDeleteState(target.id)
+  }
+  const lineage = getWorkspaceDeleteLineage(
+    target,
+    getAllWorktreesFromState(state),
+    state.worktreeLineageById
+  )
+  const pending = toast.loading(
+    translate('buildWeb.session.remove.reading', 'Reading what {{name}} holds…', {
+      name: target.displayName
+    })
+  )
+  const leftovers = await readTaskWorktreeLeftovers(target).finally(() => toast.dismiss(pending))
+  const targets = lineage.descendants.length > 0 ? lineage.deleteAllTargets : [target]
+  const unsaved = collectRemovalUnsavedFiles(useAppStore.getState, targets)
+  const confirmed = await confirm({
+    title: translate('buildWeb.session.remove.title', 'Remove workspace {{name}}?', {
+      name: target.displayName
+    }),
+    description: describe(
+      target,
+      leftovers,
+      lineage.descendants,
+      unsaved.map((file) => file.relativePath || file.filePath)
+    ),
+    descriptionClassName: 'whitespace-pre-line',
+    confirmLabel: translate('buildWeb.session.remove.confirm', 'Remove workspace'),
+    confirmVariant: 'destructive'
+  })
+  return confirmed ? targets : null
+}
+
+// Why: reading a host's git can take up to 15 s; a second click must not stack another dialog.
+const inFlight = new Set<string>()
+
+/** Confirms with what is kept and lost, then runs the delete flow's force removal. */
 export function useRemoveTaskWorktreeAnyway(): (worktree: Worktree) => Promise<void> {
   const confirm = useConfirmationDialog()
   return useCallback(
     async (worktree) => {
-      const { commits, files } = await readLeftovers(worktree)
-      const confirmed = await confirm({
-        title: translate('buildWeb.session.remove.title', 'Remove workspace {{name}}?', {
-          name: worktree.displayName
-        }),
-        description: describe(worktree, commits, files),
-        descriptionClassName: 'whitespace-pre-line',
-        confirmLabel: translate('buildWeb.session.remove.confirm', 'Remove workspace'),
-        confirmVariant: 'destructive'
-      })
-      if (confirmed) {
-        await runWorktreeDeleteWithToast(toWorktreeRemovalTarget(worktree), worktree.displayName, {
-          force: true
+      const target = currentCopy(worktree)
+      if (!target) {
+        showWorkspaceListChangedToast()
+        return
+      }
+      const identity = getWorktreeHostIdentity(target)
+      if (inFlight.has(identity)) {
+        return
+      }
+      inFlight.add(identity)
+      try {
+        const targets = await askToRemove(target, confirm)
+        if (!targets) {
+          return
+        }
+        // Why again: a workspace may have been removed or recreated while the dialog was open.
+        if (targets.some((entry) => !currentCopy(entry))) {
+          showWorkspaceListChangedToast()
+          return
+        }
+        await runWorktreeDeletesInParallel(targets, {
+          force: true,
+          confirmedDiscards: confirmUnsavedDiscard(useAppStore.getState, targets)
         })
+      } finally {
+        inFlight.delete(identity)
       }
     },
     [confirm]
