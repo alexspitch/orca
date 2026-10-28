@@ -70,7 +70,8 @@ describe('checkBuildWebEmptyContainer', () => {
   it('flags a single commit the base does not have', async () => {
     expect(await checkBuildWebEmptyContainer(probe({ countCommits: async () => 1 }))).toEqual({
       kind: 'attention',
-      reason: 'commits'
+      reason: 'commits',
+      detail: '1'
     })
   })
 

@@ -39,43 +39,43 @@ export const BUILD_WEB_SESSION_REASON_LABELS: Record<
 > = {
   commits: {
     full: label('reason.commits', 'Task closed, branch has unmerged commits'),
-    short: label('reason.commitsShort', 'commits')
+    short: label('reason.commitsShort', 'Unmerged commits')
   },
   dirty: {
     full: label('reason.dirty', 'Task closed, worktree has uncommitted changes'),
-    short: label('reason.dirtyShort', 'changes')
+    short: label('reason.dirtyShort', 'Uncommitted')
   },
   'head-moved': {
     full: label('reason.headMoved', 'Task closed, worktree is on another branch'),
-    short: label('reason.headMovedShort', 'branch')
+    short: label('reason.headMovedShort', 'Other branch')
   },
   blocked: {
     full: label('reason.blocked', 'Task closed, cleanup is blocked'),
-    short: label('reason.blockedShort', 'blocked')
+    short: label('reason.blockedShort', 'Blocked')
   },
   'remove-failed': {
     full: label('reason.removeFailed', 'Task closed, removing the worktree failed'),
-    short: label('reason.removeFailedShort', 'failed')
+    short: label('reason.removeFailedShort', 'Delete failed')
   },
   'agent-running': {
     full: label('reason.agentRunning', 'Task closed a day ago, the agent is still running'),
-    short: label('reason.agentRunningShort', 'agent')
+    short: label('reason.agentRunningShort', 'Agent running')
   },
   'terminal-busy': {
     full: label('reason.terminalBusy', 'Task closed a day ago, a terminal is still busy'),
-    short: label('reason.terminalBusyShort', 'busy')
+    short: label('reason.terminalBusyShort', 'Terminal busy')
   },
   'state-unknown': {
     full: label('reason.stateUnknown', 'Task closed a day ago, the worktree state is unknown'),
-    short: label('reason.stateUnknownShort', 'unknown')
+    short: label('reason.stateUnknownShort', 'State unknown')
   },
   'skill-unfinished': {
     full: label('reason.skillUnfinished', 'Task done a day ago, the skill never finished'),
-    short: label('reason.skillUnfinishedShort', 'skill')
+    short: label('reason.skillUnfinishedShort', 'Skill unfinished')
   },
   replaced: {
     full: label('reason.replaced', 'A newer session took this task'),
-    short: label('reason.replacedShort', 'replaced')
+    short: label('reason.replacedShort', 'Replaced')
   }
 }
 

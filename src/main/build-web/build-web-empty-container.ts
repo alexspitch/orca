@@ -68,7 +68,7 @@ export async function checkBuildWebEmptyContainer<Base extends { ref: string }>(
     return { kind: 'wait' }
   }
   if (commits > 0) {
-    return { kind: 'attention', reason: 'commits' }
+    return { kind: 'attention', reason: 'commits', detail: String(commits) }
   }
   const blockers = (await probe.scanBlockers())?.filter((blocker) => blocker !== 'pinned')
   if (!blockers || blockers.includes('git-status-error')) {
