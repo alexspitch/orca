@@ -30,6 +30,7 @@ test.skip(
 test.skip(process.platform === 'win32', 'the scratch repository is made with a POSIX shell')
 
 test('a task worktree follows its session from work to removal', async () => {
+  // One serve launch, a restart, and five sessions that each wait out the console's 8 s pause.
   test.setTimeout(300_000)
   const scratch = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-build-web-sessions-'))
   const host = await launchHeadlessPairedRuntimeHost({
@@ -88,6 +89,7 @@ test('a task worktree follows its session from work to removal', async () => {
       // Without a credential the report cannot go; it must outlive the process that queued it.
       await host.client.call('buildWeb.disconnect', {})
       await host.client.call('worktree.rm', { worktree: `id:${wt.worktreeId}`, force: true })
+      // ast-grep-ignore: test-no-real-time-wait -- proving a report did NOT go has no event to wait on
       await new Promise((resolve) => setTimeout(resolve, 3 * SESSION_POLL_MS))
       expect(await consoleSessionState(wt.sessionId)).toBe('active')
       await host.restartServeProcess()
@@ -103,6 +105,7 @@ test('a task worktree follows its session from work to removal', async () => {
       await moveTask(task.id, 'inprogress')
       await expect.poll(() => taskSessionState(host, wt.worktreeId), poll).toBe('active')
       // Past the console's shortened pause and several polls: nothing may be removed.
+      // ast-grep-ignore: test-no-real-time-wait -- proving nothing is removed has no event to wait on
       await new Promise((resolve) => setTimeout(resolve, 12_000))
       expect(await taskSessionState(host, wt.worktreeId)).toBe('active')
       expect(existsSync(wt.path)).toBe(true)

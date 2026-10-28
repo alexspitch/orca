@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
 import path from 'node:path'
+import { z } from 'zod'
 import { expect } from './orca-app'
 import type { HeadlessPairedRuntimeHost } from './headless-paired-runtime-host'
 
@@ -21,7 +22,7 @@ export type TaskSessionRow = {
 
 export type TaskWorktree = { worktreeId: string; path: string; branch: string; sessionId: string }
 
-async function consoleCall<T>(method: string, apiPath: string, body?: unknown): Promise<T> {
+async function consoleCall(method: string, apiPath: string, body?: unknown): Promise<unknown> {
   const response = await fetch(`${CONSOLE_URL}${apiPath}`, {
     method,
     headers: {
@@ -34,19 +35,22 @@ async function consoleCall<T>(method: string, apiPath: string, body?: unknown): 
   if (!response.ok) {
     throw new Error(`${method} ${apiPath}: ${response.status} ${text}`)
   }
-  return JSON.parse(text) as T
+  const parsed: unknown = JSON.parse(text)
+  return parsed
 }
+
+const CreatedTask = z.object({ issue: z.object({ id: z.string().min(1), key: z.string() }) })
+const SessionLookup = z.object({
+  sessions: z.array(z.object({ id: z.string(), state: z.string() }))
+})
 
 export type ConsoleTask = { id: string; key: string; title: string }
 
 export async function createTask(title: string): Promise<ConsoleTask> {
-  const answer = await consoleCall<{ issue?: { id: string; key: string } }>(
-    'POST',
-    '/api/tms/issues',
-    { product: 'dc', title, type: 'improvement' }
+  const { issue } = CreatedTask.parse(
+    await consoleCall('POST', '/api/tms/issues', { product: 'dc', title, type: 'improvement' })
   )
-  expect(answer.issue?.id ?? '').not.toBe('')
-  return { id: answer.issue?.id ?? '', key: answer.issue?.key ?? '', title }
+  return { id: issue.id, key: issue.key, title }
 }
 
 export const moveTask = (id: string, status: string) =>
@@ -60,11 +64,10 @@ export const skillFinished = (id: string, surfaceId: string) =>
   )
 
 export async function consoleSessionState(sessionId: string): Promise<string | null> {
-  const answer = await consoleCall<{ sessions: { id: string; state: string }[] }>(
-    'GET',
-    `/api/tms/agent-sessions?ids=${encodeURIComponent(sessionId)}`
+  const { sessions } = SessionLookup.parse(
+    await consoleCall('GET', `/api/tms/agent-sessions?ids=${encodeURIComponent(sessionId)}`)
   )
-  return answer.sessions.find((s) => s.id === sessionId)?.state ?? null
+  return sessions.find((s) => s.id === sessionId)?.state ?? null
 }
 
 /** A clone with an `origin` to measure «empty» against, on `master` like the monorepo. */
@@ -157,14 +160,10 @@ export async function takeTaskToWork(
     worktreeId
   })
   expect(stored.result.ok).toBe(true)
-  let linked: TaskSessionRow | null = null
   await expect
-    .poll(async () => {
-      linked = await taskSessionRow(host, worktreeId)
-      return linked?.buildWebTask?.sessionId ?? ''
-    })
+    .poll(async () => (await taskSessionRow(host, worktreeId))?.buildWebTask?.sessionId ?? '')
     .not.toBe('')
-  const row: TaskSessionRow | null = linked
+  const row = await taskSessionRow(host, worktreeId)
   return {
     worktreeId,
     path: created.result.worktree.path,

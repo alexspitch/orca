@@ -30,6 +30,7 @@ const SHOT_DIR = process.env.ORCA_E2E_SHOT_DIR
 
 // oxlint-disable-next-line no-empty-pattern -- Playwright fixture callbacks require object destructuring here.
 test('«By task» groups a hundred rows by their task state on a paired client', async ({}, testInfo) => {
+  // A hundred worktree creates on the serve host before the client even opens.
   test.setTimeout(420_000)
   const scratch = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-build-web-sidebar-'))
   const host = await launchHeadlessPairedRuntimeHost({
