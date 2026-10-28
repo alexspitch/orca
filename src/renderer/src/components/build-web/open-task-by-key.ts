@@ -122,3 +122,44 @@ export async function openTaskByKey(key: string): Promise<void> {
     })
   )
 }
+
+function sameConsole(left: string | null, right: string): boolean {
+  if (!left) {
+    return false
+  }
+  try {
+    return new URL(left).origin === new URL(right).origin
+  } catch {
+    return left.replace(/\/+$/, '') === right.replace(/\/+$/, '')
+  }
+}
+
+/** A task worktree's card (IS-147), only when this client's console is the one the task lives on. */
+export async function openBuildWebTaskCard(task: {
+  issueId: string
+  key: string
+  title: string
+  consoleHost: string
+}): Promise<void> {
+  const host = taskHost()
+  const store = useBuildWebStore.getState()
+  const status =
+    store.contextKey === host.contextKey && store.status
+      ? store.status
+      : await callBuildWeb(host.target, 'status').catch(() => null)
+  if (!status?.connected || !sameConsole(status.baseUrl, task.consoleHost)) {
+    toast.error(
+      translate(
+        'buildWeb.session.openTask.otherConsole',
+        '{{key}} lives on another console: {{console}}.',
+        { key: task.key, console: task.consoleHost }
+      )
+    )
+    return
+  }
+  // Why: the first status of a host clears the open card, so it must land before the card opens.
+  if (store.contextKey !== host.contextKey) {
+    store.setStatus(host.contextKey, status)
+  }
+  showBuildWebTaskCard({ id: task.issueId, key: task.key, title: task.title })
+}

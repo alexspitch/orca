@@ -81,10 +81,13 @@ function AttentionMenuItems({
         <Unlink className="size-3.5" />
         {say(BUILD_WEB_SESSION_ACTION_LABELS.keep)}
       </DropdownMenuItem>
-      <DropdownMenuItem onSelect={() => void reopenWorktreeTask(worktree)} disabled={disabled}>
-        <RotateCcw className="size-3.5" />
-        {say(BUILD_WEB_SESSION_ACTION_LABELS.backToWork)}
-      </DropdownMenuItem>
+      {/* Why not for `replaced`: a newer session already works on the task. */}
+      {worktree.buildWebSession?.reason === 'replaced' ? null : (
+        <DropdownMenuItem onSelect={() => void reopenWorktreeTask(worktree)} disabled={disabled}>
+          <RotateCcw className="size-3.5" />
+          {say(BUILD_WEB_SESSION_ACTION_LABELS.backToWork)}
+        </DropdownMenuItem>
+      )}
     </>
   )
 }
