@@ -3088,6 +3088,10 @@
     "run": {
       "copied": "Copied"
     },
+    "session": {
+      "attentionCounter_one": "{{count}} workspace needs attention. Group by task",
+      "attentionCounter_other": "{{count}} workspaces need attention. Group by task"
+    },
     "sidebar": {
       "issuesBlockers": "{{label}}, {{count}} blockers"
     },
