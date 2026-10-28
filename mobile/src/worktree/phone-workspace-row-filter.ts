@@ -12,12 +12,17 @@ import { resolveWorktreeHostId } from './worktree-host-context-labels'
 export type PhoneTaskSessionScope = {
   /** The connected host announces `build-web-worktree-task.v1`. */
   hostKnowsTasks: boolean
+  /** The paired servers (`runtime:` ids) whose own status announces it. */
+  serversKnowingTasks: ReadonlySet<string>
   /** «By task» lists a closed task's leftover even when it is archived. */
   keepArchivedAttention: boolean
 }
 
+export const NO_SERVERS_KNOWING_TASKS: ReadonlySet<string> = new Set()
+
 export const NO_TASK_SESSION_SCOPE: PhoneTaskSessionScope = {
   hostKnowsTasks: false,
+  serversKnowingTasks: NO_SERVERS_KNOWING_TASKS,
   keepArchivedAttention: false
 }
 
@@ -47,11 +52,13 @@ function guessDefaultBranchWorkspace(w: Worktree): boolean {
   return branch === 'main' || branch === 'master'
 }
 
-// Why a server row needs its own task: the phone does not know whether that server reports tasks.
-function rowKnowsTasks(w: Worktree, hostId: ExecutionHostId | null, hostKnowsTasks: boolean) {
-  return (
-    Boolean(w.buildWebTask) || (hostKnowsTasks && parseExecutionHostId(hostId)?.kind !== 'runtime')
-  )
+// Why a server row asks its server: one that predates task sessions reports none, as on the desktop.
+function rowKnowsTasks(w: Worktree, hostId: ExecutionHostId | null, scope: PhoneTaskSessionScope) {
+  if (w.buildWebTask) {
+    return true
+  }
+  const host = parseExecutionHostId(hostId)
+  return host?.kind === 'runtime' ? scope.serversKnowingTasks.has(host.id) : scope.hostKnowsTasks
 }
 
 function phoneRowFacts(
@@ -73,7 +80,7 @@ function phoneRowFacts(
     // Why the guess: #8873's exemption must fail open on hosts that predate isMainWorktree.
     isMainWorktree: (w) => w.isMainWorktree ?? guessDefaultBranchWorkspace(w),
     isSleeping: (w) => !isWorktreeActive(w),
-    taskSession: (w) => (rowKnowsTasks(w, hostIdOf(w), taskScope.hostKnowsTasks) ? w : null)
+    taskSession: (w) => (rowKnowsTasks(w, hostIdOf(w), taskScope) ? w : null)
   }
 }
 

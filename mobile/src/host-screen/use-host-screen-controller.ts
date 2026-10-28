@@ -19,6 +19,7 @@ import {
 } from '../transport/client-context-connection-metrics'
 import { useHostDisplayWorktrees, useResolvedHostPlatform } from './use-host-display-worktrees'
 import { useHostListSections } from './use-host-list-sections'
+import { useServersKnowingTasks } from './use-servers-knowing-tasks'
 import { useSwitchedHostSidebarFeed } from './use-host-sidebar-feed'
 import { useHostProjectSections } from './use-host-project-sections'
 import { useHostRepoMetadata, type FetchHostRepoMetadata } from './use-host-repo-metadata'
@@ -124,6 +125,13 @@ export function useHostScreenController({
   const feed = sidebarFeed?.feed ?? null
   // IS-147: only such a host reports task sessions and takes «By task» and the session filter.
   const hostKnowsTasks = hostCapabilities.includes(BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY)
+  const serversKnowingTasks = useServersKnowingTasks({
+    client,
+    hostCapabilities,
+    worktrees: displayWorktrees,
+    repoHostIdByRepoId: state.repoHostIdByRepoId,
+    enabled: (state.view.filters.hiddenSessionStates?.length ?? 0) > 0
+  })
   const sectionsResult = useHostListSections({
     client,
     hostId,
@@ -131,6 +139,7 @@ export function useHostScreenController({
     displayWorktrees,
     hostPlatform,
     hostKnowsTasks,
+    serversKnowingTasks,
     state
   })
   const { collapsedGroups, projectOrderBy } = sectionsResult

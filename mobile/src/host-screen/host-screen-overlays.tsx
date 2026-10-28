@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { openExternalLink } from '../platform/external-link'
 import { Pressable, Text, View } from 'react-native'
 import { Moon, Pin, PinOff, RotateCcw, SquareArrowOutUpRight, Unlink } from 'lucide-react-native'
@@ -29,7 +30,8 @@ function taskAttentionActions(
   run: {
     open: (item: Worktree) => void
     confirmRemove: (item: Worktree) => void
-    keep: (item: Worktree) => void
+    /** Asks first, as «Remove anyway» does: the worktree leaves the task for good. */
+    confirmKeep: (item: Worktree) => void
     reopen: (item: Worktree) => void
   }
 ): ActionSheetAction[] {
@@ -40,21 +42,43 @@ function taskAttentionActions(
       destructive: true,
       onPress: () => run.confirmRemove(target)
     },
-    { label: ACTION.keep.text, icon: Unlink, onPress: () => run.keep(target) },
-    { label: ACTION.backToWork.text, icon: RotateCcw, onPress: () => run.reopen(target) }
+    { label: ACTION.keep.text, icon: Unlink, onPress: () => run.confirmKeep(target) },
+    // Why not for `replaced`: a newer session already works on the task.
+    ...(target.buildWebSession?.reason === 'replaced'
+      ? []
+      : [{ label: ACTION.backToWork.text, icon: RotateCcw, onPress: () => run.reopen(target) }])
   ]
 }
 
-function deleteConfirmCopy(target: Worktree): { title: string; message: string; confirm: string } {
+type ConfirmCopy = { title: string; message: string; confirm: string; destructive: boolean }
+
+function deleteConfirmCopy(target: Worktree): ConfirmCopy {
   const name = `"${target.displayName || target.repo}" (${target.branch})`
   if (!isTaskSessionAttention(target)) {
-    return { title: 'Delete Worktree', message: `Delete ${name}?`, confirm: 'Delete' }
+    return {
+      title: 'Delete Worktree',
+      message: `Delete ${name}?`,
+      confirm: 'Delete',
+      destructive: true
+    }
   }
   const reason = describeTaskAttention(target)
   return {
     title: 'Remove anyway',
     message: [`Remove ${name}?`, reason, ACTION.removeRule.text].filter(Boolean).join('\n\n'),
-    confirm: 'Remove'
+    confirm: 'Remove',
+    destructive: true
+  }
+}
+
+function keepConfirmCopy(target: Worktree): ConfirmCopy {
+  const name = `"${target.displayName || target.repo}" (${target.branch})`
+  const key = target.buildWebTask?.key ?? 'its task'
+  return {
+    title: 'Keep workspace',
+    message: `Keep ${name} as it is and unlink it from ${key}? Orca will not remove it.`,
+    confirm: 'Keep',
+    destructive: false
   }
 }
 
@@ -76,8 +100,29 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
     fetchWorktrees: catalog.fetchWorktrees,
     state
   })
-  const closeActions = () => state.setActionTarget(null)
-  const confirmCopy = state.confirmDelete ? deleteConfirmCopy(state.confirmDelete) : null
+  const [confirmKeep, setConfirmKeep] = useState<Worktree | null>(null)
+  const closeActions = () => {
+    setConfirmKeep(null)
+    state.setActionTarget(null)
+  }
+  const confirmCopy = state.confirmDelete
+    ? deleteConfirmCopy(state.confirmDelete)
+    : confirmKeep
+      ? keepConfirmCopy(confirmKeep)
+      : null
+  const cancelConfirm = () => {
+    state.setConfirmDelete(null)
+    setConfirmKeep(null)
+  }
+  const runConfirmed = () => {
+    if (state.confirmDelete) {
+      void actions.handleDeleteWorktree(state.confirmDelete)
+    } else if (confirmKeep) {
+      void taskActions.keepTaskSession(confirmKeep)
+    }
+    state.setConfirmDelete(null)
+    closeActions()
+  }
   // A server row's screens are offered by what that server supports, not the desktop.
   const actionServer = useWorkspaceServer({
     client,
@@ -95,10 +140,10 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
         visible={actionTarget != null}
         onClose={() => {
           state.setConfirmDelete(null)
-          state.setActionTarget(null)
+          closeActions()
         }}
       >
-        {state.confirmDelete && confirmCopy ? (
+        {confirmCopy ? (
           <View>
             <View style={styles.confirmContent}>
               <Text style={styles.confirmTitle}>{confirmCopy.title}</Text>
@@ -111,25 +156,27 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                   styles.confirmBtnCancel,
                   pressed && styles.confirmBtnPressed
                 ]}
-                onPress={() => state.setConfirmDelete(null)}
+                onPress={cancelConfirm}
               >
                 <Text style={styles.confirmBtnCancelText}>Cancel</Text>
               </Pressable>
               <Pressable
                 style={({ pressed }) => [
                   styles.confirmBtn,
-                  styles.confirmBtnDestructive,
+                  confirmCopy.destructive ? styles.confirmBtnDestructive : styles.confirmBtnPrimary,
                   pressed && styles.confirmBtnPressed
                 ]}
-                onPress={() => {
-                  if (state.confirmDelete) {
-                    void actions.handleDeleteWorktree(state.confirmDelete)
-                  }
-                  state.setConfirmDelete(null)
-                  state.setActionTarget(null)
-                }}
+                onPress={runConfirmed}
               >
-                <Text style={styles.confirmBtnDestructiveText}>{confirmCopy.confirm}</Text>
+                <Text
+                  style={
+                    confirmCopy.destructive
+                      ? styles.confirmBtnDestructiveText
+                      : styles.confirmBtnPrimaryText
+                  }
+                >
+                  {confirmCopy.confirm}
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -145,10 +192,7 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                             closeActions()
                           },
                           confirmRemove: state.setConfirmDelete,
-                          keep: (item) => {
-                            void taskActions.keepTaskSession(item)
-                            closeActions()
-                          },
+                          confirmKeep: setConfirmKeep,
                           reopen: (item) => {
                             void taskActions.reopenTask(item)
                             closeActions()

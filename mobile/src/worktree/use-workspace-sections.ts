@@ -34,6 +34,8 @@ export function useWorkspaceSections(args: {
   repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId>
   /** The connected host announces `build-web-worktree-task.v1`. */
   hostKnowsTasks: boolean
+  /** The paired servers announcing it, for their own rows. */
+  serversKnowingTasks: ReadonlySet<string>
 }): {
   sections: Section[]
   rawSections: Section[]
@@ -53,7 +55,8 @@ export function useWorkspaceSections(args: {
     collapsedGroups,
     workspaceStatuses,
     repoHostIdByRepoId,
-    hostKnowsTasks
+    hostKnowsTasks,
+    serversKnowingTasks
   } = args
 
   const uniqueRepos = useMemo(
@@ -80,11 +83,13 @@ export function useWorkspaceSections(args: {
         undefined,
         showPinnedInGroups,
         repoHostIdByRepoId,
-        hostKnowsTasks
+        hostKnowsTasks,
+        serversKnowingTasks
       ),
     [
       repoHostIdByRepoId,
       hostKnowsTasks,
+      serversKnowingTasks,
       displayWorktrees,
       sortMode,
       filters,

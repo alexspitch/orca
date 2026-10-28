@@ -469,7 +469,8 @@ describe('the phone list before the first feed read', () => {
       search,
       repoHostIdByRepoId: new Map(),
       lastVisited,
-      hostKnowsTasks: false
+      hostKnowsTasks: false,
+      serversKnowingTasks: new Set()
     })
   const preFeed = (search: string, rows = cached) => preFeedVisiting(search, rows, null)
 

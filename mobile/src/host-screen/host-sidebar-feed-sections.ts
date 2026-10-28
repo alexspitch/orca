@@ -245,13 +245,18 @@ export function buildPreFeedSections(sources: {
   repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId>
   lastVisited: LastVisitedWorktreeOnHost | null
   hostKnowsTasks: boolean
+  serversKnowingTasks: ReadonlySet<string>
 }): Section[] {
   const rows = filterWorktrees(
     sources.rows,
     rowFiltersForView(sources.view),
     sources.search,
     sources.repoHostIdByRepoId,
-    { hostKnowsTasks: sources.hostKnowsTasks, keepArchivedAttention: false }
+    {
+      hostKnowsTasks: sources.hostKnowsTasks,
+      serversKnowingTasks: sources.serversKnowingTasks,
+      keepArchivedAttention: false
+    }
   ).map((row) => ({
     ...row,
     // Replaces worktree.ps's mark, which is the desktop's selection.

@@ -184,6 +184,9 @@ export const hostScreenSecondaryStyles = StyleSheet.create({
   confirmBtnDestructive: {
     backgroundColor: colors.statusRed
   },
+  confirmBtnPrimary: {
+    backgroundColor: colors.textPrimary
+  },
   confirmBtnPressed: {
     opacity: 0.7
   },
@@ -196,5 +199,10 @@ export const hostScreenSecondaryStyles = StyleSheet.create({
     fontSize: typography.bodySize,
     fontWeight: '600',
     color: '#fff'
+  },
+  confirmBtnPrimaryText: {
+    fontSize: typography.bodySize,
+    fontWeight: '600',
+    color: colors.bgBase
   }
 })

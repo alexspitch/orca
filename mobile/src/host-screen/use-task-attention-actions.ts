@@ -10,6 +10,34 @@ import type { HostScreenState } from './use-host-screen-state'
 
 type Outcome = { ok: true } | { ok: false; error: string }
 
+async function moveTaskBackToWork(
+  rowClient: RpcClient,
+  issueId: string,
+  key: string
+): Promise<Outcome> {
+  const detail = await callBuildWeb(rowClient, 'getIssue', { id: issueId })
+  if (detail.archived_at || detail.deleted_at) {
+    const restored = await callBuildWeb(rowClient, 'restoreIssue', { id: issueId })
+    if (!restored.ok) {
+      return restored
+    }
+  }
+  const patched = await callBuildWeb(rowClient, 'updateIssue', {
+    id: issueId,
+    patch: { status: 'inprogress' }
+  })
+  if (!patched.ok) {
+    return patched
+  }
+  // Why the second read: the console may answer a patch without the task.
+  const status =
+    patched.value.issue?.status ??
+    (await callBuildWeb(rowClient, 'getIssue', { id: issueId })).status
+  return status === 'inprogress'
+    ? { ok: true }
+    : { ok: false, error: `The console kept ${key} in ${status}.` }
+}
+
 export function useTaskAttentionActions(args: {
   client: RpcClient | null
   hostCapabilities: readonly string[]
@@ -53,7 +81,7 @@ export function useTaskAttentionActions(args: {
     [run]
   )
 
-  /** «Back to work»: reopens the task in the console, which takes the session out of closing. */
+  /** «Back to work»: out of the archive or trash first, then back in progress, as the desktop does. */
   const reopenTask = useCallback(
     (item: Worktree) => {
       const task = item.buildWebTask
@@ -63,11 +91,7 @@ export function useTaskAttentionActions(args: {
       }
       return run(
         item,
-        (rowClient) =>
-          callBuildWeb(rowClient, 'updateIssue', {
-            id: task.issueId,
-            patch: { status: 'inprogress' }
-          }),
+        (rowClient) => moveTaskBackToWork(rowClient, task.issueId, task.key),
         `${task.key} is back in progress`
       )
     },

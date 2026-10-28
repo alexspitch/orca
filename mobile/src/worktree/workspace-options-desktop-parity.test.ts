@@ -36,7 +36,17 @@ const repos: Repo[] = [
 ]
 const repoMap = new Map(repos.map((repo) => [repo.id, repo]))
 
-type Fixture = DesktopWorktree & { sleeping: boolean; otherClient: boolean; folderWorkspace?: true }
+type Fixture = DesktopWorktree & {
+  sleeping: boolean
+  otherClient: boolean
+  folderWorkspace?: true
+  /** A paired server's row; absent for the desktop's own. */
+  server?: `runtime:${string}`
+}
+
+// IS-147: one paired server announces task sessions, the other predates them.
+const SERVER_KNOWING_TASKS = 'runtime:env-new'
+const SERVER_BEFORE_TASKS = 'runtime:env-old'
 
 function fixture(id: string, fields: Partial<Fixture> = {}): Fixture {
   return {
@@ -107,7 +117,10 @@ const FIXTURES: Fixture[] = [
   fixture('task-closing', { ...task('IS-3', 'closing'), sleeping: false }),
   fixture('task-unknown', task('IS-4')),
   fixture('task-attention', task('IS-5', 'attention')),
-  fixture('task-attention-archived', { ...task('IS-6', 'attention'), isArchived: true })
+  fixture('task-attention-archived', { ...task('IS-6', 'attention'), isArchived: true }),
+  fixture('server-no-task', { server: SERVER_KNOWING_TASKS, sleeping: false }),
+  fixture('server-task', { ...task('IS-7', 'active'), server: SERVER_KNOWING_TASKS }),
+  fixture('older-server-no-task', { server: SERVER_BEFORE_TASKS, sleeping: false })
 ]
 
 /** The desktop's reader (desktop-workspace-row-facts.ts) for a host that reports tasks. */
@@ -115,7 +128,7 @@ const desktopFacts = (keepArchivedTaskAttention: boolean): WorkspaceRowFactReade
   isArchived: (w) => w.isArchived && !(keepArchivedTaskAttention && isTaskSessionAttention(w)),
   isFolderWorkspace: (w) => w.folderWorkspace === true,
   repoId: (w) => w.repoId,
-  hostId: () => 'local',
+  hostId: (w) => w.server ?? 'local',
   isOtherClient: (w) => w.otherClient,
   isDefaultBranch: (w) => isDefaultBranchWorkspace(w, repoMap.get(w.repoId)),
   isAutomationCreated: isAutomationGeneratedWorkspace,
@@ -123,7 +136,8 @@ const desktopFacts = (keepArchivedTaskAttention: boolean): WorkspaceRowFactReade
   isDetachedHead: isDetachedHeadWorkspace,
   isMainWorktree: (w) => w.isMainWorktree,
   isSleeping: (w) => w.sleeping,
-  taskSession: (w) => w
+  // As createTaskSessionHostReader: a server row knows tasks only when its server announces them.
+  taskSession: (w) => (w.server && w.server !== SERVER_KNOWING_TASKS ? null : w)
 })
 
 /** The row the phone receives for this workspace from a current host. */
@@ -132,7 +146,7 @@ function served(w: Fixture): Worktree {
     workspaceKind: w.folderWorkspace ? 'folder-workspace' : 'git',
     worktreeId: w.id,
     repoId: w.repoId,
-    hostId: 'local',
+    hostId: w.server ?? 'local',
     repo: repoMap.get(w.repoId)?.displayName ?? w.repoId,
     branch: w.branch,
     displayName: w.displayName,
@@ -210,6 +224,7 @@ describe('the phone shows what the desktop sidebar shows', () => {
           new Map(),
           {
             hostKnowsTasks: true,
+            serversKnowingTasks: new Set([SERVER_KNOWING_TASKS]),
             keepArchivedAttention: byTask
           }
         )
