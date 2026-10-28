@@ -153,7 +153,7 @@ function served(w: Fixture): Worktree {
 }
 
 const EVERY_SESSION_FILTER = HIDEABLE_TASK_SESSION_GROUPS.reduce<HideableTaskSessionGroup[][]>(
-  (subsets, group) => subsets.concat(subsets.map((subset) => [...subset, group])),
+  (subsets, group) => subsets.flatMap((subset) => [subset, [...subset, group]]),
   [[]]
 )
 

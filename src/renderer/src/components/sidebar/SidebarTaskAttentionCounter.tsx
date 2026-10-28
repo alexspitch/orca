@@ -1,7 +1,7 @@
 import React from 'react'
 import { CircleAlert } from 'lucide-react'
 import { useAppStore } from '@/store'
-import { getAllWorktreesFromState } from '@/store/selectors'
+import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import type { AppState } from '@/store/types'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -10,10 +10,12 @@ import { isTaskSessionAttention } from '../../../../shared/sidebar-list/task-ses
 import { selectTaskSessionUiAvailable } from './task-session-capability'
 
 function selectTaskAttentionCount(state: AppState): number {
-  // Why the guard: header fixtures mount it over a partial store.
-  return state.worktreesByRepo
-    ? getAllWorktreesFromState(state).filter(isTaskSessionAttention).length
-    : 0
+  let count = 0
+  // Why the fallback: header fixtures mount it over a partial store.
+  for (const worktrees of Object.values(selectWorktreesByRepo(state) ?? {})) {
+    count += worktrees.filter(isTaskSessionAttention).length
+  }
+  return count
 }
 
 /** IS-147: outside «By task» an attention row keeps its lane; this counts them and opens By task. */
@@ -37,13 +39,14 @@ export function SidebarTaskAttentionCounter(): React.JSX.Element | null {
           variant="ghost"
           size="xs"
           type="button"
-          className="h-6 gap-0.5 px-1 text-status-warning hover:text-status-warning"
           aria-label={label}
           data-workspace-board-preserve-open=""
           onClick={() => setGroupBy('task')}
         >
-          <CircleAlert className="size-3.5" />
-          <span className="text-[11px] font-semibold tabular-nums">{count}</span>
+          <span className="inline-flex items-center gap-0.5 text-status-warning">
+            <CircleAlert className="size-3.5" />
+            <span className="text-[11px] font-semibold tabular-nums">{count}</span>
+          </span>
         </Button>
       </TooltipTrigger>
       <TooltipContent side="bottom" sideOffset={6}>

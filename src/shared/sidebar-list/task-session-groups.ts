@@ -35,15 +35,11 @@ export function getWorktreeTaskGroup(worktree: TaskSessionFacts): SidebarTaskGro
   if (!worktree.buildWebTask) {
     return 'none'
   }
-  switch (worktree.buildWebSession?.state) {
-    case 'attention':
-      return 'attention'
-    case 'waiting':
-    case 'closing':
-      return 'release'
-    default:
-      return 'progress'
+  const state = worktree.buildWebSession?.state
+  if (state === 'attention') {
+    return 'attention'
   }
+  return state === 'waiting' || state === 'closing' ? 'release' : 'progress'
 }
 
 /** The state a row's badge shows; null without a task or while the state is unknown. */

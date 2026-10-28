@@ -21556,7 +21556,33 @@
       "label": "Agent session",
       "openHere": "open here",
       "unverifiable": "unverifiable",
-      "open": "Open session"
+      "open": "Open session",
+      "cmdJ": {
+        "openTask": "Open Task",
+        "openTaskDescription": "Open the current workspace's build-web task.",
+        "openTaskVerb": "open task"
+      },
+      "attentionCounter": "{{count}} workspaces need attention. Group by task",
+      "openTaskAria": "Open task {{key}}",
+      "action": {
+        "openTask": "Open task {{key}}"
+      },
+      "groupBy": {
+        "task": "Task"
+      },
+      "remove": {
+        "commits": "Kept on branch {{branch}}:",
+        "files": "Lost:",
+        "unread": "Orca could not read every change in it.",
+        "title": "Remove workspace {{name}}?",
+        "confirm": "Remove workspace"
+      },
+      "openTask": {
+        "otherConsole": "{{key}} lives on another console: {{console}}."
+      },
+      "hostUnknown": "The host of this workspace is unknown.",
+      "kept": "{{name}} kept, unlinked from {{key}}",
+      "reopened": "{{key}} is back in progress"
     },
     "launch": {
       "sessionNotSaved": "Session ID not saved to {{keys}}",
@@ -21585,7 +21611,8 @@
       "updateServerRedosTwin": "This Orca server cannot derive a redos image again yet. Update the server.",
       "updateServerConsoleFeatures": "This Orca server cannot read what the console supports yet. Update the server.",
       "updateServerTwinDecision": "This Orca server cannot build a waiting redos image yet. Update the server.",
-      "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server."
+      "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server.",
+      "updateServerSessions": "This Orca server does not follow task sessions yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",

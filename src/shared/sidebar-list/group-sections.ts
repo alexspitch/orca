@@ -3,7 +3,7 @@ import type { WorktreeOccurrencePlan } from '../worktree-occurrence-plan'
 import type { WorkspaceStatusDefinition, Worktree } from '../worktree/types'
 import type { ExecutionHostId } from '../execution-host'
 import { getWorkspaceStatusFromGroupKey } from '../workspace-statuses'
-import type { PRGroupKey } from './group-keys'
+import { PR_GROUP_ORDER, getPRLaneKey, type PRGroupKey } from './group-keys'
 import type { NoticeHostContext } from './host-labels'
 import {
   getLaneHostWorktreeCounts,
@@ -47,6 +47,10 @@ export type SectionAppendContext = {
   mixedWorktreeHostContextLabels: Map<string, string> | undefined
   noticeHostContextLabelByRepoId: Map<string, NoticeHostContext> | undefined
   occurrencePlan: WorktreeOccurrencePlan<Worktree>
+}
+
+function prGroupFromLaneKey(key: string): PRGroupKey {
+  return PR_GROUP_ORDER.find((group) => getPRLaneKey(group) === key) ?? 'in-progress'
 }
 
 export function appendOrderedGroups(
@@ -121,7 +125,7 @@ export function appendOrderedGroups(
                 count: group.items.length + folderPairs.length,
                 icon: taskGroup
                   ? { kind: 'task' as const, taskGroup }
-                  : { kind: 'pr-status' as const, prGroup: key.replace(/^pr:/, '') as PRGroupKey },
+                  : { kind: 'pr-status' as const, prGroup: prGroupFromLaneKey(key) },
                 hostWorktreeCounts: getLaneHostWorktreeCounts(
                   group.items,
                   folderPairs,
