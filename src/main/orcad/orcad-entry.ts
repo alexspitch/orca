@@ -298,6 +298,9 @@ async function startOrcadRuntime(
   registerCleanup(() => rpc.stop())
   await rpc.start()
   startOrcadAutomations(runtime, profileStore, registerCleanup)
+  const { startBuildWebSessionService } = await import('../build-web/build-web-session-service')
+  const buildWebSessions = startBuildWebSessionService(profileStore, runtime)
+  registerCleanup(() => buildWebSessions?.stop())
   const pushService = DesktopPushService.create({
     runtime,
     runtimeRpc: rpc,
