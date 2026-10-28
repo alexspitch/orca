@@ -171,7 +171,7 @@ export function WorktreeCardHeader({
           </RepoIdentityChip>
         )}
 
-        <WorktreeTaskKey worktree={worktree} />
+        {presentation.showTaskKeyInMetaRow ? null : <WorktreeTaskKey worktree={worktree} />}
 
         <WorktreeTitleInlineRename
           displayName={visibleCardTitle}
@@ -267,14 +267,21 @@ export function WorktreeCardHeader({
           </Tooltip>
         )}
 
-        {showTitleRowIndicators && titleRowIndicators}
-        {card.inTaskAttentionSection ? null : (
-          <WorktreeTaskSessionBadge
-            worktree={worktree}
-            short={compactCards && !presentation.expandedCompactRow}
-            className="ml-auto"
-          />
-        )}
+        {/* Why one end group: two `ml-auto` siblings would split the free space between them. */}
+        <div
+          className={cn(
+            'ml-auto flex shrink-0 items-center gap-1.5 empty:hidden',
+            showTitleRowIndicators && titleRowIndicators && 'pr-1.5'
+          )}
+        >
+          {showTitleRowIndicators && titleRowIndicators}
+          {card.inTaskAttentionSection ? null : (
+            <WorktreeTaskSessionBadge
+              worktree={worktree}
+              short={compactCards && !presentation.expandedCompactRow}
+            />
+          )}
+        </div>
       </div>
 
       {showHeaderActions && (
