@@ -25,6 +25,7 @@ import {
   BuildWebGuideParams,
   BuildWebGuideShotParams,
   BuildWebIssueFileParams,
+  BuildWebLinkWorktreeSessionParams,
   BuildWebStageIssueFileParams,
   BuildWebPublishGuideParams,
   BuildWebPushRunParams,
@@ -39,6 +40,7 @@ import {
 import { RuntimeBuildWebCommands } from '../runtime/runtime-build-web-commands'
 import { stageBuildWebIssueFile } from '../build-web/build-web-issue-files'
 import {
+  linkBuildWebSessionToWorktree,
   setBuildWebAgentSessionOnHost,
   type BuildWebSessionLinkRuntime
 } from '../build-web/build-web-session-link'
@@ -118,6 +120,10 @@ export function registerBuildWebHandlers(runtime: BuildWebSessionLinkRuntime): v
   handle('keepWorktreeSession', BuildWebWorktreeSessionParams, (args) =>
     keepBuildWebWorktreeSession(runtime, args.worktreeId)
   )
+  handle('linkWorktreeSession', BuildWebLinkWorktreeSessionParams, async (args) => ({
+    ok: true as const,
+    value: await linkBuildWebSessionToWorktree(runtime, args)
+  }))
   handle('sessionTranscript', BuildWebSessionTranscriptParams, (args) =>
     readBuildWebSessionTranscript(args)
   )

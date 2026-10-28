@@ -177,7 +177,8 @@ export const NEWER_METHODS: {
     methods: new Set<Method>([
       'agentSessionSettings',
       'setAgentSessionSettings',
-      'keepWorktreeSession'
+      'keepWorktreeSession',
+      'linkWorktreeSession'
     ]),
     capability: BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY,
     refusal: () =>

@@ -137,6 +137,12 @@ export const BuildWebWorktreeSessionParams = z.object({
   worktreeId: z.string().min(1).max(4096)
 })
 
+/** The console's session row, recorded on a worktree of this host made for that task. */
+export const BuildWebLinkWorktreeSessionParams = BuildWebWorktreeSessionParams.extend({
+  issueId: Id,
+  sessionId: required('Missing session id', 200)
+})
+
 const ImageFilters = {
   sort: z.enum(BUILD_WEB_IMAGE_SORTS).optional(),
   dir: z.enum(['asc', 'desc']).optional(),

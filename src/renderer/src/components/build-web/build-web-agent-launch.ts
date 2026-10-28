@@ -5,9 +5,12 @@ import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 import { adoptAgentSessionLaunchVerdict } from '@/lib/agent-session-launch-plan'
 import { findStructuredAgentSessionTab } from '@/lib/agent-session/structured-agent-session-tab-activation'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
+import { runtimeTargetForWorkspaceOwner } from '@/lib/resolve-owner'
+import { ipcOrRuntimeTargetForHostId } from '@/runtime/runtime-client-target'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
+import { worktreeFolderName } from '../../../../shared/build-web-task-session-worktree'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { BuildWebSessionArgs } from '../../../../preload/api/build-web-api'
@@ -22,13 +25,17 @@ const PROVIDER_SESSION_WAIT_MS = 10 * 60_000
 /** Consoles that predate the session route; Orca then stops trying for that address. */
 const sessionUnsupported = new Set<string>()
 
+/**
+ * Records the session on the task: the console's row id, `null` when the console names none or the
+ * write failed, `false` for a console without the session route.
+ */
 async function writeSession(
   target: RuntimeClientTarget,
   baseUrl: string,
   issue: BuildWebIssueRow,
   session: BuildWebSessionArgs,
   worktreeId: string
-): Promise<boolean> {
+): Promise<string | null | false> {
   if (sessionUnsupported.has(baseUrl)) {
     return false
   }
@@ -49,8 +56,43 @@ async function writeSession(
         keys: issue.key
       })
     )
+    return null
   }
-  return true
+  return typeof result.value === 'string' ? result.value : null
+}
+
+/** The host that owns the worktree; null when its rows name none. */
+function worktreeOwnerTarget(worktree: Worktree): RuntimeClientTarget | null {
+  return worktree.hostId
+    ? ipcOrRuntimeTargetForHostId(worktree.hostId)
+    : runtimeTargetForWorkspaceOwner(useAppStore.getState(), { workspaceId: worktree.id })
+}
+
+const sameTarget = (a: RuntimeClientTarget, b: RuntimeClientTarget): boolean =>
+  a.kind === 'local'
+    ? b.kind === 'local'
+    : b.kind === 'environment' && a.environmentId === b.environmentId
+
+/**
+ * The build-web host links the session only to a worktree of its own; a worktree on another host
+ * is linked by that host, which refuses one not made for the task. An older host lacks the call;
+ * its watcher heals the link only where it holds a build-web token.
+ */
+function linkOnWorktreeHost(
+  target: RuntimeClientTarget,
+  worktree: Worktree,
+  issue: BuildWebIssueRow,
+  sessionId: string
+): void {
+  const owner = worktreeOwnerTarget(worktree)
+  if (!owner || sameTarget(owner, target)) {
+    return
+  }
+  void callBuildWeb(owner, 'linkWorktreeSession', {
+    worktreeId: worktree.id,
+    issueId: issue.id,
+    sessionId
+  }).catch(() => {})
 }
 
 /** Once the hook server learns Claude's own session id for this tab, record it on the task. */
@@ -90,10 +132,7 @@ function noteProviderSessionLater(
 
 /** The console keeps a task worktree's folder name, never its label (the task's title). */
 function sessionWorktreeName(worktree: Worktree): string {
-  const folder = worktree.buildWebTask
-    ? worktree.path.split(/[\\/]/).findLast((part) => part !== '')
-    : ''
-  return folder || worktree.displayName
+  return (worktree.buildWebTask ? worktreeFolderName(worktree.path) : '') || worktree.displayName
 }
 
 /** A chat takes no launch label, so its tab is renamed once it exists. */
@@ -202,8 +241,11 @@ export async function launchBuildWebTask(args: {
     },
     worktree.id
   )
-  if (!written) {
+  if (written === false) {
     return true
+  }
+  if (written) {
+    linkOnWorktreeHost(target, worktree, issue, written)
   }
   const delivery = result.promptDeliveryResult
     ? await result.promptDeliveryResult.catch(() => null)

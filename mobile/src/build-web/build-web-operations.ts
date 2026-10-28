@@ -80,6 +80,7 @@ const BUILD_WEB_OPERATIONS = {
   jiraTransition: buildWebOperation('buildWeb.jiraTransition'),
   jiraTransitions: buildWebOperation('buildWeb.jiraTransitions'),
   lastBuilt: buildWebOperation('buildWeb.lastBuilt'),
+  linkWorktreeSession: buildWebOperation('buildWeb.linkWorktreeSession'),
   listAssignees: buildWebOperation('buildWeb.listAssignees'),
   listImageBuilds: buildWebOperation('buildWeb.listImageBuilds'),
   listImages: buildWebOperation('buildWeb.listImages'),
