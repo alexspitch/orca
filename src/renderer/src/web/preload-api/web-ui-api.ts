@@ -29,17 +29,15 @@ import { readLocalWebUIState } from './web-preferences-store'
 import { callRuntimeResult } from './web-runtime-calls'
 import { requireActiveEnvironmentOrNull } from './web-runtime-session'
 import { UI_STORAGE_KEY, noopUnsubscribe, writeJson } from './web-storage'
-import { withoutUnsupportedTaskSessionUiFields } from './web-task-session-ui-fields'
+import { sendHostUiUpdates } from './web-task-session-ui-fields'
 
 /** Combines browser-local preferences with host persistence; acknowledged writes remain distinct from best-effort writes. */
 export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
   const explorerRoots = createWebExplorerRootSync()
   /** Captures the target host and strips browser-local or unsupported fields before sending a UI update. */
-  const prepareHostUpdates = async (updates: Parameters<PreloadApi['ui']['set']>[0]) => {
+  const prepareHostUpdates = (updates: Parameters<PreloadApi['ui']['set']>[0]) => {
     const environmentId = requireActiveEnvironmentOrNull()?.id
-    const hostUpdates = await withoutUnsupportedTaskSessionUiFields(
-      omitPairingLocalUiFields(updates)
-    )
+    const hostUpdates = omitPairingLocalUiFields(updates)
     explorerRoots.prepare(environmentId, hostUpdates)
     return { environmentId, hostUpdates }
   }
@@ -85,9 +83,8 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       zoomLevel = next.uiZoomLevel
       // Older hosts lack stripping; sending browser runtime:web-* keys would overwrite desktop order.
       try {
-        const { environmentId, hostUpdates } = await prepareHostUpdates(updates)
-        await callRuntimeResult('ui.set', hostUpdates, 15_000)
-        explorerRoots.acknowledge(environmentId, hostUpdates)
+        const { environmentId, hostUpdates } = prepareHostUpdates(updates)
+        explorerRoots.acknowledge(environmentId, await sendHostUiUpdates(hostUpdates))
       } catch {
         // Why: unpaired/offline web clients still need local UI persistence.
       }
@@ -97,9 +94,8 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       const next = mergeWebUIState(readLocalWebUIState(), updates)
       writeJson(UI_STORAGE_KEY, next)
       zoomLevel = next.uiZoomLevel
-      const { environmentId, hostUpdates } = await prepareHostUpdates(updates)
-      await callRuntimeResult('ui.set', hostUpdates, 15_000)
-      explorerRoots.acknowledge(environmentId, hostUpdates)
+      const { environmentId, hostUpdates } = prepareHostUpdates(updates)
+      explorerRoots.acknowledge(environmentId, await sendHostUiUpdates(hostUpdates))
       if (
         updates.explorerDisplayRootByWorktree !== undefined &&
         hostUpdates.explorerDisplayRootByWorktree === undefined
