@@ -7,6 +7,7 @@ import {
 } from '../../../../shared/execution-host'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { isWebClient } from './worktree-card-model'
 
 // IS-147: only a host announcing `build-web-worktree-task.v1` reports task sessions and accepts the
 // «By task» UI keys. This app's own main process always does; a paired server may predate it.
@@ -24,12 +25,20 @@ export function runtimeEnvironmentKnowsTaskSessions(
   )
 }
 
-/** Whether the host holding this client's UI state takes `groupBy: 'task'` and the session filter. */
-export function selectTaskSessionUiAvailable(
-  state: CapabilityState & Pick<AppState, 'settings'>
-): boolean {
-  const environmentId = state.settings?.activeRuntimeEnvironmentId?.trim()
-  return environmentId ? runtimeEnvironmentKnowsTaskSessions(state, environmentId) : true
+/**
+ * Whether the host holding this client's UI state takes `groupBy: 'task'` and the session filter:
+ * this app's own main process does; a browser client's paired server must announce it.
+ */
+export function selectTaskSessionUiAvailable(state: CapabilityState): boolean {
+  if (!isWebClient()) {
+    return true
+  }
+  for (const environmentId of state.runtimeStatusByEnvironmentId?.keys() ?? []) {
+    if (runtimeEnvironmentKnowsTaskSessions(state, environmentId)) {
+      return true
+    }
+  }
+  return false
 }
 
 /** Whether a row's host reports tasks: local and SSH rows come from this app's main process. */

@@ -15,6 +15,7 @@ export function buildVisibleWorktreeOptionsFromState(
   state: ReturnType<typeof useAppStore.getState>,
   repoMap: Map<string, Repo>
 ): VisibleWorktreeOptions {
+  const defaultHostId = getSettingsFocusedExecutionHostId(state.settings)
   return {
     filterRepoIds: state.filterRepoIds,
     showSleepingWorkspaces: state.showSleepingWorkspaces,
@@ -45,14 +46,11 @@ export function buildVisibleWorktreeOptionsFromState(
     repoMap,
     workspaceHostScope: state.workspaceHostScope,
     visibleWorkspaceHostIds: state.visibleWorkspaceHostIds,
-    defaultHostId: getSettingsFocusedExecutionHostId(state.settings),
+    defaultHostId,
     worktreeLineageById: state.worktreeLineageById,
     preserveLineageParentOrder: state.sortBy === 'manual',
     hiddenSessionStates: state.hiddenSessionStates,
     keepArchivedTaskAttention: state.groupBy === 'task',
-    taskSessionHostKnown: createTaskSessionHostReader(
-      state,
-      getSettingsFocusedExecutionHostId(state.settings)
-    )
+    taskSessionHostKnown: createTaskSessionHostReader(state, defaultHostId)
   }
 }
