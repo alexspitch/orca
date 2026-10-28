@@ -13,6 +13,12 @@ import {
   isDetachedHeadWorkspace
 } from '../../../src/shared/worktree/workspace-kinds'
 import type { Worktree as DesktopWorktree } from '../../../src/shared/worktree/types'
+import type { WorktreeBuildWebSessionState } from '../../../src/shared/build-web-session-types'
+import {
+  HIDEABLE_TASK_SESSION_GROUPS,
+  isTaskSessionAttention,
+  type HideableTaskSessionGroup
+} from '../../../src/shared/sidebar-list/task-session-groups'
 import { filterWorktrees, type Worktree } from './workspace-list-sections'
 
 // Compare all filter combinations with desktop facts mirrored here because mobile cannot resolve renderer aliases.
@@ -57,6 +63,14 @@ function fixture(id: string, fields: Partial<Fixture> = {}): Fixture {
   }
 }
 
+// IS-147: a task with no state yet is unknown, so no session filter hides it.
+function task(key: string, state?: WorktreeBuildWebSessionState): Partial<Fixture> {
+  return {
+    buildWebTask: { issueId: key, key, consoleHost: 'https://console', branch: key.toLowerCase() },
+    ...(state ? { buildWebSession: { state, at: 0 } } : {})
+  }
+}
+
 const FIXTURES: Fixture[] = [
   fixture('main', { isMainWorktree: true, branch: 'refs/heads/main' }),
   fixture('main-detached', { isMainWorktree: true, branch: '' }),
@@ -87,11 +101,18 @@ const FIXTURES: Fixture[] = [
     branch: '',
     head: '',
     folderWorkspace: true
-  })
+  }),
+  fixture('task-active', { ...task('IS-1', 'active'), sleeping: false }),
+  fixture('task-waiting', task('IS-2', 'waiting')),
+  fixture('task-closing', { ...task('IS-3', 'closing'), sleeping: false }),
+  fixture('task-unknown', task('IS-4')),
+  fixture('task-attention', task('IS-5', 'attention')),
+  fixture('task-attention-archived', { ...task('IS-6', 'attention'), isArchived: true })
 ]
 
-const DESKTOP_FACTS: WorkspaceRowFactReader<Fixture> = {
-  isArchived: (w) => w.isArchived,
+/** The desktop's reader (desktop-workspace-row-facts.ts) for a host that reports tasks. */
+const desktopFacts = (keepArchivedTaskAttention: boolean): WorkspaceRowFactReader<Fixture> => ({
+  isArchived: (w) => w.isArchived && !(keepArchivedTaskAttention && isTaskSessionAttention(w)),
   isFolderWorkspace: (w) => w.folderWorkspace === true,
   repoId: (w) => w.repoId,
   hostId: () => 'local',
@@ -101,8 +122,9 @@ const DESKTOP_FACTS: WorkspaceRowFactReader<Fixture> = {
   isCliCreated: isCliCreatedWorkspace,
   isDetachedHead: isDetachedHeadWorkspace,
   isMainWorktree: (w) => w.isMainWorktree,
-  isSleeping: (w) => w.sleeping
-}
+  isSleeping: (w) => w.sleeping,
+  taskSession: (w) => w
+})
 
 /** The row the phone receives for this workspace from a current host. */
 function served(w: Fixture): Worktree {
@@ -120,6 +142,8 @@ function served(w: Fixture): Worktree {
     hasHostSidebarActivity: !w.sleeping,
     ...(w.otherClient ? { desktopOtherClient: true } : {}),
     ...getWorkspaceRowKindFacts(w, repoMap.get(w.repoId)),
+    buildWebTask: w.buildWebTask,
+    buildWebSession: w.buildWebSession,
     liveTerminalCount: 0,
     hasAttachedPty: false,
     unread: false,
@@ -127,6 +151,11 @@ function served(w: Fixture): Worktree {
     linkedPR: null
   }
 }
+
+const EVERY_SESSION_FILTER = HIDEABLE_TASK_SESSION_GROUPS.reduce<HideableTaskSessionGroup[][]>(
+  (subsets, group) => subsets.concat(subsets.map((subset) => [...subset, group])),
+  [[]]
+)
 
 function* everyFilterCombination(): Generator<Omit<WorkspaceRowFilters, 'visibleHostIds'>> {
   const bools = [false, true]
@@ -138,15 +167,18 @@ function* everyFilterCombination(): Generator<Omit<WorkspaceRowFilters, 'visible
             for (const hideDetachedHeadWorkspaces of bools) {
               for (const hideWorkspacesFromOtherDevices of bools) {
                 for (const filterRepoIds of [[], ['git'], ['folder-repo']]) {
-                  yield {
-                    hideSleepingWorkspaces,
-                    alwaysShowDefaultBranchWorkspace,
-                    hideDefaultBranchWorkspace,
-                    hideAutomationGeneratedWorkspaces,
-                    hideCliCreatedWorkspaces,
-                    hideDetachedHeadWorkspaces,
-                    hideWorkspacesFromOtherDevices,
-                    filterRepoIds
+                  for (const hiddenSessionStates of EVERY_SESSION_FILTER) {
+                    yield {
+                      hideSleepingWorkspaces,
+                      alwaysShowDefaultBranchWorkspace,
+                      hideDefaultBranchWorkspace,
+                      hideAutomationGeneratedWorkspaces,
+                      hideCliCreatedWorkspaces,
+                      hideDetachedHeadWorkspaces,
+                      hideWorkspacesFromOtherDevices,
+                      filterRepoIds,
+                      hiddenSessionStates
+                    }
                   }
                 }
               }
@@ -159,24 +191,36 @@ function* everyFilterCombination(): Generator<Omit<WorkspaceRowFilters, 'visible
 }
 
 describe('the phone shows what the desktop sidebar shows', () => {
-  it('under every Workspace options filter combination, folder projects included', () => {
-    const phoneRows = FIXTURES.map(served)
-    let combinations = 0
-    for (const filters of everyFilterCombination()) {
-      combinations += 1
-      const desktop = filterWorkspaceRows(
-        FIXTURES,
-        { ...filters, visibleHostIds: null },
-        DESKTOP_FACTS
-      )
-      const phone = filterWorktrees(phoneRows, { ...filters, visibleHostIds: null }, '')
-      expect(
-        phone.map((w) => w.worktreeId),
-        JSON.stringify(filters)
-      ).toEqual(desktop.map((w) => w.id))
+  it.each([false, true])(
+    'under every Workspace options filter combination, folder projects and tasks included (By task: %s)',
+    (byTask) => {
+      const phoneRows = FIXTURES.map(served)
+      let combinations = 0
+      for (const filters of everyFilterCombination()) {
+        combinations += 1
+        const desktop = filterWorkspaceRows(
+          FIXTURES,
+          { ...filters, visibleHostIds: null },
+          desktopFacts(byTask)
+        )
+        const phone = filterWorktrees(
+          phoneRows,
+          { ...filters, visibleHostIds: null },
+          '',
+          new Map(),
+          {
+            hostKnowsTasks: true,
+            keepArchivedAttention: byTask
+          }
+        )
+        expect(
+          phone.map((w) => w.worktreeId),
+          JSON.stringify(filters)
+        ).toEqual(desktop.map((w) => w.id))
+      }
+      expect(combinations).toBe(2 * 3 * 2 ** 5 * 3 * 2 ** 3)
     }
-    expect(combinations).toBe(2 * 3 * 2 ** 5 * 3)
-  })
+  )
 
   it('keeps every row an older host sends, whatever kind filter is on', () => {
     const legacy: Worktree[] = FIXTURES.filter((w) => !w.isArchived && !w.otherClient).map((w) => ({
@@ -200,7 +244,9 @@ describe('the phone shows what the desktop sidebar shows', () => {
       hideDetachedHeadWorkspaces: true,
       hideWorkspacesFromOtherDevices: true,
       filterRepoIds: [],
-      visibleHostIds: null
+      visibleHostIds: null,
+      // A host that predates task sessions reports no task, which must not read as «no task».
+      hiddenSessionStates: [...HIDEABLE_TASK_SESSION_GROUPS]
     }
     expect(filterWorktrees(legacy, kindFiltersOn, '')).toHaveLength(legacy.length)
   })

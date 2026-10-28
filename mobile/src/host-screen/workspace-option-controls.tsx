@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from 'react'
+import { useState, type ComponentType, type ReactNode } from 'react'
 import { Text, View } from 'react-native'
 import { MobileSearchField } from '../components/MobileSearchField'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
@@ -22,6 +22,8 @@ import {
 } from '../../../src/shared/workspace-view/workspace-host-visibility'
 import type { ExecutionHostId } from '../../../src/shared/execution-host'
 import type { WorktreeCardProperty } from '../../../src/shared/ui-chrome-types'
+import { HIDEABLE_TASK_SESSION_GROUPS } from '../../../src/shared/sidebar-list/task-session-groups'
+import { BUILD_WEB_TASK_FILTER_LABELS } from '../../../src/shared/build-web-session-labels'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import {
   phoneCardPropertyChoices,
@@ -267,6 +269,32 @@ function filterSwitch(
   }
 }
 
+/**
+ * IS-147: the session filter's switches, offered only by a host that takes `hiddenSessionStates`.
+ * Why keep an active filter: it must stay reachable to turn it off.
+ */
+export function taskSessionFilterRows(controller: HostScreenController): ReactNode[] {
+  const hidden = controller.state.view.filters.hiddenSessionStates
+  if (!controller.hostKnowsTasks && hidden.length === 0) {
+    return []
+  }
+  return HIDEABLE_TASK_SESSION_GROUPS.map((group) => (
+    <SwitchRow
+      key={`hiddenSessionStates:${group}`}
+      label={BUILD_WEB_TASK_FILTER_LABELS[group].text}
+      value={hidden.includes(group)}
+      onChange={(next) =>
+        controller.settings.setFilter(
+          'hiddenSessionStates',
+          HIDEABLE_TASK_SESSION_GROUPS.filter((candidate) =>
+            candidate === group ? next : hidden.includes(candidate)
+          )
+        )
+      }
+    />
+  ))
+}
+
 export const WORKSPACE_OPTION_CONTROLS: Record<WorkspaceViewOptionKey, WorkspaceOptionControl> = {
   hosts: { kind: 'page', value: hostsValue, Page: HostsPage },
   projects: { kind: 'page', value: projectsValue, Page: ProjectsPage },
@@ -275,7 +303,11 @@ export const WORKSPACE_OPTION_CONTROLS: Record<WorkspaceViewOptionKey, Workspace
     framed: false,
     Row: ({ controller }) => (
       <MobileSegmentedControl
-        segments={WORKSPACE_GROUP_BY_CHOICES.map(({ id, label }) => ({ value: id, label }))}
+        segments={WORKSPACE_GROUP_BY_CHOICES.filter(
+          // Why keep a chosen Task: the current choice must stay visible to switch away from it.
+          ({ id }) =>
+            id !== 'task' || controller.hostKnowsTasks || controller.state.view.groupBy === id
+        ).map(({ id, label }) => ({ value: id, label }))}
         selected={controller.state.view.groupBy}
         onSelect={controller.settings.handleGroupChange}
         fill

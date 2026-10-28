@@ -152,6 +152,16 @@ describe('host screen reply schemas', () => {
     expect(hostViewSettingsSchema.parse({ ui })).toEqual(ui)
   })
 
+  it('keeps the hidden task lanes it knows and salvages the rest', () => {
+    const lanes = (hiddenSessionStates: unknown) =>
+      hostViewSettingsSchema.parse({ ui: { hiddenSessionStates } }).hiddenSessionStates
+    expect(lanes(['release', 'a-lane-from-a-newer-desktop', 7, 'none'])).toEqual([
+      'none',
+      'release'
+    ])
+    expect(lanes('release')).toBeUndefined()
+  })
+
   it('reads a desktop that predates them as absent, which keeps the local value', () => {
     const parsed = hostViewSettingsSchema.parse({
       ui: { groupBy: 'repo', projectOrderBy: 'alphabetical', agentActivityDisplayMode: 7 }

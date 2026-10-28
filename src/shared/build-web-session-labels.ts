@@ -103,11 +103,12 @@ export const BUILD_WEB_TASK_GROUP_LABELS = {
 } as const
 
 /** The session filter's switches in Workspace options. */
-export const BUILD_WEB_TASK_FILTER_LABELS: Record<HideableTaskSessionGroup, BuildWebSessionLabel> = {
-  none: label('filter.none', 'Hide workspaces without a task'),
-  progress: label('filter.progress', 'Hide in progress'),
-  release: label('filter.release', 'Hide awaiting release')
-}
+export const BUILD_WEB_TASK_FILTER_LABELS: Record<HideableTaskSessionGroup, BuildWebSessionLabel> =
+  {
+    none: label('filter.none', 'Hide workspaces without a task'),
+    progress: label('filter.progress', 'Hide in progress'),
+    release: label('filter.release', 'Hide awaiting release')
+  }
 
 /** What a closed task's leftover offers from its row's menu. */
 export const BUILD_WEB_SESSION_ACTION_LABELS = {

@@ -8,6 +8,7 @@ import type {
 import {
   buildSectionRepoMap,
   buildMobileWorkspacePlan,
+  collapseSections,
   type FilterState,
   type ProjectSectionCatalog,
   type Section,
@@ -31,6 +32,8 @@ export function useWorkspaceSections(args: {
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   /** Each repo's host, for rows that predate their own hostId. */
   repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId>
+  /** The connected host announces `build-web-worktree-task.v1`. */
+  hostKnowsTasks: boolean
 }): {
   sections: Section[]
   rawSections: Section[]
@@ -49,7 +52,8 @@ export function useWorkspaceSections(args: {
     filterCatalogRepos,
     collapsedGroups,
     workspaceStatuses,
-    repoHostIdByRepoId
+    repoHostIdByRepoId,
+    hostKnowsTasks
   } = args
 
   const uniqueRepos = useMemo(
@@ -75,10 +79,12 @@ export function useWorkspaceSections(args: {
         workspaceStatuses,
         undefined,
         showPinnedInGroups,
-        repoHostIdByRepoId
+        repoHostIdByRepoId,
+        hostKnowsTasks
       ),
     [
       repoHostIdByRepoId,
+      hostKnowsTasks,
       displayWorktrees,
       sortMode,
       filters,
@@ -94,11 +100,7 @@ export function useWorkspaceSections(args: {
   const rawSections = useMemo(() => plan.render(collapsedGroups), [plan, collapsedGroups])
 
   const sections = useMemo(
-    () =>
-      rawSections.map((s) => ({
-        ...s,
-        data: collapsedGroups.has(s.key) ? [] : s.data
-      })),
+    () => collapseSections(rawSections, collapsedGroups),
     [rawSections, collapsedGroups]
   )
 

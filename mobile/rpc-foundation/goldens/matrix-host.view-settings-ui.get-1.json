@@ -4,6 +4,146 @@
   "family": "host.view-settings",
   "namedDeltas": [],
   "values": {
+    "09a3da76f39a": {
+      "view": {
+        "agentActivityDisplayMode": "compact",
+        "collapsedGroups": [],
+        "compactWorktreeCards": true,
+        "filters": {
+          "alwaysShowDefaultBranchWorkspace": true,
+          "filterRepoIds": [],
+          "hiddenSessionStates": [],
+          "hideAutomationGeneratedWorkspaces": false,
+          "hideCliCreatedWorkspaces": false,
+          "hideDefaultBranchWorkspace": false,
+          "hideDetachedHeadWorkspaces": false,
+          "hideSleepingWorkspaces": false,
+          "hideWorkspacesFromOtherDevices": false,
+          "visibleHostIds": {
+            "$rpc": "null"
+          }
+        },
+        "groupBy": "repo",
+        "newCardStyle": false,
+        "projectOrderBy": {
+          "$rpc": "null"
+        },
+        "sharesOtherClientFilter": {
+          "$rpc": "null"
+        },
+        "sortBy": "name",
+        "workspaceStatuses": [
+          {
+            "color": "neutral",
+            "icon": "circle",
+            "id": "todo",
+            "label": "Todo"
+          },
+          {
+            "color": "conductor-progress",
+            "icon": "conductor-progress",
+            "id": "in-progress",
+            "label": "In progress"
+          },
+          {
+            "color": "conductor-review",
+            "icon": "conductor-review",
+            "id": "in-review",
+            "label": "In review"
+          },
+          {
+            "color": "conductor-done",
+            "icon": "conductor-done",
+            "id": "completed",
+            "label": "Done"
+          }
+        ],
+        "worktreeCardProperties": [
+          "status",
+          "unread",
+          "issue",
+          "linear-issue",
+          "jira-issue",
+          "pr",
+          "automation",
+          "cli",
+          "comment",
+          "ports",
+          "inline-agents",
+          "host"
+        ]
+      }
+    },
+    "09c7994c0a66": {
+      "name": "view",
+      "ordinal": 7,
+      "value": {
+        "agentActivityDisplayMode": "compact",
+        "collapsedGroups": [],
+        "compactWorktreeCards": true,
+        "filters": {
+          "alwaysShowDefaultBranchWorkspace": true,
+          "filterRepoIds": [],
+          "hiddenSessionStates": [],
+          "hideAutomationGeneratedWorkspaces": false,
+          "hideCliCreatedWorkspaces": false,
+          "hideDefaultBranchWorkspace": false,
+          "hideDetachedHeadWorkspaces": false,
+          "hideSleepingWorkspaces": true,
+          "hideWorkspacesFromOtherDevices": false,
+          "visibleHostIds": {
+            "$rpc": "null"
+          }
+        },
+        "groupBy": "repo",
+        "newCardStyle": false,
+        "projectOrderBy": {
+          "$rpc": "null"
+        },
+        "sharesOtherClientFilter": false,
+        "sortBy": "name",
+        "workspaceStatuses": [
+          {
+            "color": "neutral",
+            "icon": "circle",
+            "id": "todo",
+            "label": "Todo"
+          },
+          {
+            "color": "conductor-progress",
+            "icon": "conductor-progress",
+            "id": "in-progress",
+            "label": "In progress"
+          },
+          {
+            "color": "conductor-review",
+            "icon": "conductor-review",
+            "id": "in-review",
+            "label": "In review"
+          },
+          {
+            "color": "conductor-done",
+            "icon": "conductor-done",
+            "id": "completed",
+            "label": "Done"
+          }
+        ],
+        "worktreeCardProperties": [
+          "status",
+          "unread",
+          "issue",
+          "linear-issue",
+          "jira-issue",
+          "pr",
+          "automation",
+          "cli",
+          "comment",
+          "ports",
+          "inline-agents",
+          "host"
+        ]
+      }
+    },
     "19da51d77d45": {
       "name": "ui.get#1",
       "ordinal": 1,
@@ -36,21 +176,92 @@
         }
       }
     },
+    "1a4b0dc857cf": {
+      "name": "view",
+      "ordinal": 6,
+      "value": {
+        "agentActivityDisplayMode": "compact",
+        "collapsedGroups": [],
+        "compactWorktreeCards": true,
+        "filters": {
+          "alwaysShowDefaultBranchWorkspace": true,
+          "filterRepoIds": [],
+          "hiddenSessionStates": [],
+          "hideAutomationGeneratedWorkspaces": false,
+          "hideCliCreatedWorkspaces": false,
+          "hideDefaultBranchWorkspace": false,
+          "hideDetachedHeadWorkspaces": false,
+          "hideSleepingWorkspaces": false,
+          "hideWorkspacesFromOtherDevices": false,
+          "visibleHostIds": {
+            "$rpc": "null"
+          }
+        },
+        "groupBy": "repo",
+        "newCardStyle": false,
+        "projectOrderBy": {
+          "$rpc": "null"
+        },
+        "sharesOtherClientFilter": {
+          "$rpc": "null"
+        },
+        "sortBy": "recent",
+        "workspaceStatuses": [
+          {
+            "color": "neutral",
+            "icon": "circle",
+            "id": "todo",
+            "label": "Todo"
+          },
+          {
+            "color": "conductor-progress",
+            "icon": "conductor-progress",
+            "id": "in-progress",
+            "label": "In progress"
+          },
+          {
+            "color": "conductor-review",
+            "icon": "conductor-review",
+            "id": "in-review",
+            "label": "In review"
+          },
+          {
+            "color": "conductor-done",
+            "icon": "conductor-done",
+            "id": "completed",
+            "label": "Done"
+          }
+        ],
+        "worktreeCardProperties": [
+          "status",
+          "unread",
+          "issue",
+          "linear-issue",
+          "jira-issue",
+          "pr",
+          "automation",
+          "cli",
+          "comment",
+          "ports",
+          "inline-agents",
+          "host"
+        ]
+      }
+    },
     "1c2564f1daca": {
       "name": "settings.get#1",
       "ordinal": 4,
       "json": "{\"id\":\"frame-2\",\"deviceToken\":\"recording-device\",\"method\":\"settings.get\"}"
     },
-    "238b10afd803": {
-      "name": "view",
-      "ordinal": 6,
-      "value": {
+    "2d2932c4824e": {
+      "view": {
         "agentActivityDisplayMode": "compact",
         "collapsedGroups": [],
         "compactWorktreeCards": false,
         "filters": {
           "alwaysShowDefaultBranchWorkspace": true,
           "filterRepoIds": [],
+          "hiddenSessionStates": [],
           "hideAutomationGeneratedWorkspaces": false,
           "hideCliCreatedWorkspaces": false,
           "hideDefaultBranchWorkspace": false,
@@ -181,73 +392,6 @@
         }
       }
     },
-    "424e4d52d6fa": {
-      "view": {
-        "agentActivityDisplayMode": "compact",
-        "collapsedGroups": [],
-        "compactWorktreeCards": true,
-        "filters": {
-          "alwaysShowDefaultBranchWorkspace": true,
-          "filterRepoIds": [],
-          "hideAutomationGeneratedWorkspaces": false,
-          "hideCliCreatedWorkspaces": false,
-          "hideDefaultBranchWorkspace": false,
-          "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": true,
-          "hideWorkspacesFromOtherDevices": false,
-          "visibleHostIds": {
-            "$rpc": "null"
-          }
-        },
-        "groupBy": "repo",
-        "newCardStyle": false,
-        "projectOrderBy": {
-          "$rpc": "null"
-        },
-        "sharesOtherClientFilter": false,
-        "sortBy": "name",
-        "workspaceStatuses": [
-          {
-            "color": "neutral",
-            "icon": "circle",
-            "id": "todo",
-            "label": "Todo"
-          },
-          {
-            "color": "conductor-progress",
-            "icon": "conductor-progress",
-            "id": "in-progress",
-            "label": "In progress"
-          },
-          {
-            "color": "conductor-review",
-            "icon": "conductor-review",
-            "id": "in-review",
-            "label": "In review"
-          },
-          {
-            "color": "conductor-done",
-            "icon": "conductor-done",
-            "id": "completed",
-            "label": "Done"
-          }
-        ],
-        "worktreeCardProperties": [
-          "status",
-          "unread",
-          "issue",
-          "linear-issue",
-          "jira-issue",
-          "pr",
-          "automation",
-          "cli",
-          "comment",
-          "ports",
-          "inline-agents",
-          "host"
-        ]
-      }
-    },
     "443c5731ec35": {
       "name": "ui.get#1",
       "ordinal": 1,
@@ -307,6 +451,74 @@
       "settlement": {
         "status": "pending",
         "startedAt": 0
+      }
+    },
+    "5df9e5ac0561": {
+      "view": {
+        "agentActivityDisplayMode": "compact",
+        "collapsedGroups": [],
+        "compactWorktreeCards": true,
+        "filters": {
+          "alwaysShowDefaultBranchWorkspace": true,
+          "filterRepoIds": [],
+          "hiddenSessionStates": [],
+          "hideAutomationGeneratedWorkspaces": false,
+          "hideCliCreatedWorkspaces": false,
+          "hideDefaultBranchWorkspace": false,
+          "hideDetachedHeadWorkspaces": false,
+          "hideSleepingWorkspaces": true,
+          "hideWorkspacesFromOtherDevices": false,
+          "visibleHostIds": {
+            "$rpc": "null"
+          }
+        },
+        "groupBy": "repo",
+        "newCardStyle": false,
+        "projectOrderBy": {
+          "$rpc": "null"
+        },
+        "sharesOtherClientFilter": false,
+        "sortBy": "name",
+        "workspaceStatuses": [
+          {
+            "color": "neutral",
+            "icon": "circle",
+            "id": "todo",
+            "label": "Todo"
+          },
+          {
+            "color": "conductor-progress",
+            "icon": "conductor-progress",
+            "id": "in-progress",
+            "label": "In progress"
+          },
+          {
+            "color": "conductor-review",
+            "icon": "conductor-review",
+            "id": "in-review",
+            "label": "In review"
+          },
+          {
+            "color": "conductor-done",
+            "icon": "conductor-done",
+            "id": "completed",
+            "label": "Done"
+          }
+        ],
+        "worktreeCardProperties": [
+          "status",
+          "unread",
+          "issue",
+          "linear-issue",
+          "jira-issue",
+          "pr",
+          "automation",
+          "cli",
+          "comment",
+          "ports",
+          "inline-agents",
+          "host"
+        ]
       }
     },
     "651e8014c9ff": {
@@ -387,6 +599,76 @@
       "ordinal": 5,
       "value": false
     },
+    "6e1e57b98872": {
+      "name": "view",
+      "ordinal": 6,
+      "value": {
+        "agentActivityDisplayMode": "compact",
+        "collapsedGroups": [],
+        "compactWorktreeCards": true,
+        "filters": {
+          "alwaysShowDefaultBranchWorkspace": true,
+          "filterRepoIds": [],
+          "hiddenSessionStates": [],
+          "hideAutomationGeneratedWorkspaces": false,
+          "hideCliCreatedWorkspaces": false,
+          "hideDefaultBranchWorkspace": false,
+          "hideDetachedHeadWorkspaces": false,
+          "hideSleepingWorkspaces": true,
+          "hideWorkspacesFromOtherDevices": false,
+          "visibleHostIds": {
+            "$rpc": "null"
+          }
+        },
+        "groupBy": "repo",
+        "newCardStyle": false,
+        "projectOrderBy": {
+          "$rpc": "null"
+        },
+        "sharesOtherClientFilter": false,
+        "sortBy": "name",
+        "workspaceStatuses": [
+          {
+            "color": "neutral",
+            "icon": "circle",
+            "id": "todo",
+            "label": "Todo"
+          },
+          {
+            "color": "conductor-progress",
+            "icon": "conductor-progress",
+            "id": "in-progress",
+            "label": "In progress"
+          },
+          {
+            "color": "conductor-review",
+            "icon": "conductor-review",
+            "id": "in-review",
+            "label": "In review"
+          },
+          {
+            "color": "conductor-done",
+            "icon": "conductor-done",
+            "id": "completed",
+            "label": "Done"
+          }
+        ],
+        "worktreeCardProperties": [
+          "status",
+          "unread",
+          "issue",
+          "linear-issue",
+          "jira-issue",
+          "pr",
+          "automation",
+          "cli",
+          "comment",
+          "ports",
+          "inline-agents",
+          "host"
+        ]
+      }
+    },
     "754a5e5d6868": {
       "name": "ui.get#1",
       "ordinal": 1,
@@ -421,21 +703,22 @@
         }
       }
     },
-    "8369a6f35fda": {
+    "75e13aaf2bdc": {
       "name": "view",
       "ordinal": 6,
       "value": {
         "agentActivityDisplayMode": "compact",
         "collapsedGroups": [],
-        "compactWorktreeCards": true,
+        "compactWorktreeCards": false,
         "filters": {
           "alwaysShowDefaultBranchWorkspace": true,
           "filterRepoIds": [],
+          "hiddenSessionStates": [],
           "hideAutomationGeneratedWorkspaces": false,
           "hideCliCreatedWorkspaces": false,
           "hideDefaultBranchWorkspace": false,
           "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": true,
+          "hideSleepingWorkspaces": false,
           "hideWorkspacesFromOtherDevices": false,
           "visibleHostIds": {
             "$rpc": "null"
@@ -446,7 +729,9 @@
         "projectOrderBy": {
           "$rpc": "null"
         },
-        "sharesOtherClientFilter": false,
+        "sharesOtherClientFilter": {
+          "$rpc": "null"
+        },
         "sortBy": "name",
         "workspaceStatuses": [
           {
@@ -524,75 +809,6 @@
         }
       }
     },
-    "918022e415be": {
-      "view": {
-        "agentActivityDisplayMode": "compact",
-        "collapsedGroups": [],
-        "compactWorktreeCards": true,
-        "filters": {
-          "alwaysShowDefaultBranchWorkspace": true,
-          "filterRepoIds": [],
-          "hideAutomationGeneratedWorkspaces": false,
-          "hideCliCreatedWorkspaces": false,
-          "hideDefaultBranchWorkspace": false,
-          "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": false,
-          "hideWorkspacesFromOtherDevices": false,
-          "visibleHostIds": {
-            "$rpc": "null"
-          }
-        },
-        "groupBy": "repo",
-        "newCardStyle": false,
-        "projectOrderBy": {
-          "$rpc": "null"
-        },
-        "sharesOtherClientFilter": {
-          "$rpc": "null"
-        },
-        "sortBy": "name",
-        "workspaceStatuses": [
-          {
-            "color": "neutral",
-            "icon": "circle",
-            "id": "todo",
-            "label": "Todo"
-          },
-          {
-            "color": "conductor-progress",
-            "icon": "conductor-progress",
-            "id": "in-progress",
-            "label": "In progress"
-          },
-          {
-            "color": "conductor-review",
-            "icon": "conductor-review",
-            "id": "in-review",
-            "label": "In review"
-          },
-          {
-            "color": "conductor-done",
-            "icon": "conductor-done",
-            "id": "completed",
-            "label": "Done"
-          }
-        ],
-        "worktreeCardProperties": [
-          "status",
-          "unread",
-          "issue",
-          "linear-issue",
-          "jira-issue",
-          "pr",
-          "automation",
-          "cli",
-          "comment",
-          "ports",
-          "inline-agents",
-          "host"
-        ]
-      }
-    },
     "9270aeb7d9c6": {
       "status": "pending",
       "startedAt": 0
@@ -623,16 +839,20 @@
         "startedAt": 0
       }
     },
-    "a9b819fe5a27": {
-      "name": "view",
-      "ordinal": 7,
-      "value": {
+    "aa1089f2edc0": {
+      "name": "ui.set#1",
+      "ordinal": 8,
+      "json": "{\"id\":\"frame-3\",\"deviceToken\":\"recording-device\",\"method\":\"ui.set\",\"params\":{\"sortBy\":\"name\"}}"
+    },
+    "c235b4d35f64": {
+      "view": {
         "agentActivityDisplayMode": "compact",
         "collapsedGroups": [],
-        "compactWorktreeCards": true,
+        "compactWorktreeCards": false,
         "filters": {
           "alwaysShowDefaultBranchWorkspace": true,
           "filterRepoIds": [],
+          "hiddenSessionStates": [],
           "hideAutomationGeneratedWorkspaces": false,
           "hideCliCreatedWorkspaces": false,
           "hideDefaultBranchWorkspace": false,
@@ -651,7 +871,7 @@
         "sharesOtherClientFilter": {
           "$rpc": "null"
         },
-        "sortBy": "name",
+        "sortBy": "recent",
         "workspaceStatuses": [
           {
             "color": "neutral",
@@ -693,11 +913,6 @@
           "host"
         ]
       }
-    },
-    "aa1089f2edc0": {
-      "name": "ui.set#1",
-      "ordinal": 8,
-      "json": "{\"id\":\"frame-3\",\"deviceToken\":\"recording-device\",\"method\":\"ui.set\",\"params\":{\"sortBy\":\"name\"}}"
     },
     "c40ad123c151": {
       "name": "ui.get#1",
@@ -734,7 +949,7 @@
         }
       }
     },
-    "c49dcad120d2": {
+    "c6a75b1e9d23": {
       "name": "view",
       "ordinal": 7,
       "value": {
@@ -744,11 +959,12 @@
         "filters": {
           "alwaysShowDefaultBranchWorkspace": true,
           "filterRepoIds": [],
+          "hiddenSessionStates": [],
           "hideAutomationGeneratedWorkspaces": false,
           "hideCliCreatedWorkspaces": false,
           "hideDefaultBranchWorkspace": false,
           "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": true,
+          "hideSleepingWorkspaces": false,
           "hideWorkspacesFromOtherDevices": false,
           "visibleHostIds": {
             "$rpc": "null"
@@ -759,7 +975,9 @@
         "projectOrderBy": {
           "$rpc": "null"
         },
-        "sharesOtherClientFilter": false,
+        "sharesOtherClientFilter": {
+          "$rpc": "null"
+        },
         "sortBy": "name",
         "workspaceStatuses": [
           {
@@ -839,75 +1057,6 @@
         }
       }
     },
-    "dc007face350": {
-      "view": {
-        "agentActivityDisplayMode": "compact",
-        "collapsedGroups": [],
-        "compactWorktreeCards": false,
-        "filters": {
-          "alwaysShowDefaultBranchWorkspace": true,
-          "filterRepoIds": [],
-          "hideAutomationGeneratedWorkspaces": false,
-          "hideCliCreatedWorkspaces": false,
-          "hideDefaultBranchWorkspace": false,
-          "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": false,
-          "hideWorkspacesFromOtherDevices": false,
-          "visibleHostIds": {
-            "$rpc": "null"
-          }
-        },
-        "groupBy": "repo",
-        "newCardStyle": false,
-        "projectOrderBy": {
-          "$rpc": "null"
-        },
-        "sharesOtherClientFilter": {
-          "$rpc": "null"
-        },
-        "sortBy": "recent",
-        "workspaceStatuses": [
-          {
-            "color": "neutral",
-            "icon": "circle",
-            "id": "todo",
-            "label": "Todo"
-          },
-          {
-            "color": "conductor-progress",
-            "icon": "conductor-progress",
-            "id": "in-progress",
-            "label": "In progress"
-          },
-          {
-            "color": "conductor-review",
-            "icon": "conductor-review",
-            "id": "in-review",
-            "label": "In review"
-          },
-          {
-            "color": "conductor-done",
-            "icon": "conductor-done",
-            "id": "completed",
-            "label": "Done"
-          }
-        ],
-        "worktreeCardProperties": [
-          "status",
-          "unread",
-          "issue",
-          "linear-issue",
-          "jira-issue",
-          "pr",
-          "automation",
-          "cli",
-          "comment",
-          "ports",
-          "inline-agents",
-          "host"
-        ]
-      }
-    },
     "e55533c6e358": {
       "name": "settings.get#1",
       "ordinal": 2,
@@ -944,75 +1093,6 @@
         }
       }
     },
-    "e96acdd915c3": {
-      "view": {
-        "agentActivityDisplayMode": "compact",
-        "collapsedGroups": [],
-        "compactWorktreeCards": false,
-        "filters": {
-          "alwaysShowDefaultBranchWorkspace": true,
-          "filterRepoIds": [],
-          "hideAutomationGeneratedWorkspaces": false,
-          "hideCliCreatedWorkspaces": false,
-          "hideDefaultBranchWorkspace": false,
-          "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": false,
-          "hideWorkspacesFromOtherDevices": false,
-          "visibleHostIds": {
-            "$rpc": "null"
-          }
-        },
-        "groupBy": "repo",
-        "newCardStyle": false,
-        "projectOrderBy": {
-          "$rpc": "null"
-        },
-        "sharesOtherClientFilter": {
-          "$rpc": "null"
-        },
-        "sortBy": "name",
-        "workspaceStatuses": [
-          {
-            "color": "neutral",
-            "icon": "circle",
-            "id": "todo",
-            "label": "Todo"
-          },
-          {
-            "color": "conductor-progress",
-            "icon": "conductor-progress",
-            "id": "in-progress",
-            "label": "In progress"
-          },
-          {
-            "color": "conductor-review",
-            "icon": "conductor-review",
-            "id": "in-review",
-            "label": "In review"
-          },
-          {
-            "color": "conductor-done",
-            "icon": "conductor-done",
-            "id": "completed",
-            "label": "Done"
-          }
-        ],
-        "worktreeCardProperties": [
-          "status",
-          "unread",
-          "issue",
-          "linear-issue",
-          "jira-issue",
-          "pr",
-          "automation",
-          "cli",
-          "comment",
-          "ports",
-          "inline-agents",
-          "host"
-        ]
-      }
-    },
     "eb79a9b3682a": {
       "status": "fulfilled",
       "startedAt": 0,
@@ -1025,77 +1105,6 @@
       "name": "ui.get#1",
       "ordinal": 3,
       "json": "{\"id\":\"frame-1\",\"deviceToken\":\"recording-device\",\"method\":\"ui.get\"}"
-    },
-    "ec949dc49cb9": {
-      "name": "view",
-      "ordinal": 6,
-      "value": {
-        "agentActivityDisplayMode": "compact",
-        "collapsedGroups": [],
-        "compactWorktreeCards": true,
-        "filters": {
-          "alwaysShowDefaultBranchWorkspace": true,
-          "filterRepoIds": [],
-          "hideAutomationGeneratedWorkspaces": false,
-          "hideCliCreatedWorkspaces": false,
-          "hideDefaultBranchWorkspace": false,
-          "hideDetachedHeadWorkspaces": false,
-          "hideSleepingWorkspaces": false,
-          "hideWorkspacesFromOtherDevices": false,
-          "visibleHostIds": {
-            "$rpc": "null"
-          }
-        },
-        "groupBy": "repo",
-        "newCardStyle": false,
-        "projectOrderBy": {
-          "$rpc": "null"
-        },
-        "sharesOtherClientFilter": {
-          "$rpc": "null"
-        },
-        "sortBy": "recent",
-        "workspaceStatuses": [
-          {
-            "color": "neutral",
-            "icon": "circle",
-            "id": "todo",
-            "label": "Todo"
-          },
-          {
-            "color": "conductor-progress",
-            "icon": "conductor-progress",
-            "id": "in-progress",
-            "label": "In progress"
-          },
-          {
-            "color": "conductor-review",
-            "icon": "conductor-review",
-            "id": "in-review",
-            "label": "In review"
-          },
-          {
-            "color": "conductor-done",
-            "icon": "conductor-done",
-            "id": "completed",
-            "label": "Done"
-          }
-        ],
-        "worktreeCardProperties": [
-          "status",
-          "unread",
-          "issue",
-          "linear-issue",
-          "jira-issue",
-          "pr",
-          "automation",
-          "cli",
-          "comment",
-          "ports",
-          "inline-agents",
-          "host"
-        ]
-      }
     },
     "efd2522b079c": {
       "name": "ui.get#1",
@@ -1213,7 +1222,7 @@
             "mount": "eb79a9b3682a",
             "sync": "9270aeb7d9c6"
           },
-          "state": "dc007face350",
+          "state": "c235b4d35f64",
           "effects": []
         }
       },
@@ -1227,8 +1236,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "424e4d52d6fa",
-          "effects": ["6bab186637b0", "8369a6f35fda", "c49dcad120d2"]
+          "state": "5df9e5ac0561",
+          "effects": ["6bab186637b0", "6e1e57b98872", "09c7994c0a66"]
         }
       },
       {
@@ -1241,8 +1250,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "e96acdd915c3",
-          "effects": ["6bab186637b0", "238b10afd803"]
+          "state": "2d2932c4824e",
+          "effects": ["6bab186637b0", "75e13aaf2bdc"]
         }
       },
       {
@@ -1255,8 +1264,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "e96acdd915c3",
-          "effects": ["6bab186637b0", "238b10afd803"]
+          "state": "2d2932c4824e",
+          "effects": ["6bab186637b0", "75e13aaf2bdc"]
         }
       },
       {
@@ -1269,8 +1278,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "e96acdd915c3",
-          "effects": ["6bab186637b0", "238b10afd803"]
+          "state": "2d2932c4824e",
+          "effects": ["6bab186637b0", "75e13aaf2bdc"]
         }
       },
       {
@@ -1283,8 +1292,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "e96acdd915c3",
-          "effects": ["6bab186637b0", "238b10afd803"]
+          "state": "2d2932c4824e",
+          "effects": ["6bab186637b0", "75e13aaf2bdc"]
         }
       },
       {
@@ -1297,8 +1306,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "e96acdd915c3",
-          "effects": ["6bab186637b0", "238b10afd803"]
+          "state": "2d2932c4824e",
+          "effects": ["6bab186637b0", "75e13aaf2bdc"]
         }
       },
       {
@@ -1311,8 +1320,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "918022e415be",
-          "effects": ["6bab186637b0", "ec949dc49cb9", "a9b819fe5a27"]
+          "state": "09a3da76f39a",
+          "effects": ["6bab186637b0", "1a4b0dc857cf", "c6a75b1e9d23"]
         }
       },
       {
@@ -1325,8 +1334,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "918022e415be",
-          "effects": ["6bab186637b0", "ec949dc49cb9", "a9b819fe5a27"]
+          "state": "09a3da76f39a",
+          "effects": ["6bab186637b0", "1a4b0dc857cf", "c6a75b1e9d23"]
         }
       },
       {
@@ -1339,8 +1348,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "918022e415be",
-          "effects": ["6bab186637b0", "ec949dc49cb9", "a9b819fe5a27"]
+          "state": "09a3da76f39a",
+          "effects": ["6bab186637b0", "1a4b0dc857cf", "c6a75b1e9d23"]
         }
       },
       {
@@ -1353,8 +1362,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "918022e415be",
-          "effects": ["6bab186637b0", "ec949dc49cb9", "a9b819fe5a27"]
+          "state": "09a3da76f39a",
+          "effects": ["6bab186637b0", "1a4b0dc857cf", "c6a75b1e9d23"]
         }
       },
       {
@@ -1367,8 +1376,8 @@
             "sync": "eb79a9b3682a",
             "sort": "eb79a9b3682a"
           },
-          "state": "918022e415be",
-          "effects": ["6bab186637b0", "ec949dc49cb9", "a9b819fe5a27"]
+          "state": "09a3da76f39a",
+          "effects": ["6bab186637b0", "1a4b0dc857cf", "c6a75b1e9d23"]
         }
       }
     ]

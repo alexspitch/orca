@@ -1,4 +1,19 @@
-import { NO_WORKSPACE_ROW_FILTERS } from '../../../src/shared/workspace-view/workspace-row-filters'
+import {
+  NO_WORKSPACE_ROW_FILTERS,
+  filterWorkspaceRows,
+  type WorkspaceRowFactReader
+} from '../../../src/shared/workspace-view/workspace-row-filters'
+import type { Repo } from '../../../src/shared/repo-types'
+import type { WorktreeBuildWebSessionState } from '../../../src/shared/build-web-session-types'
+import type { WorktreeLineage } from '../../../src/shared/worktree/lineage-types'
+import type { Worktree as DesktopWorktree } from '../../../src/shared/worktree/types'
+import { planSidebarRows } from '../../../src/shared/sidebar-list/sidebar-row-plan'
+import { compareSidebarText } from '../../../src/shared/sidebar-list/text-order'
+import {
+  isTaskSessionAttention,
+  type HideableTaskSessionGroup
+} from '../../../src/shared/sidebar-list/task-session-groups'
+import { DEFAULT_WORKSPACE_STATUSES } from '../../../src/shared/workspace-statuses'
 import { describe, expect, it } from 'vitest'
 import { getRepoExecutionHostId } from '../../../src/shared/execution-host'
 import {
@@ -12,7 +27,13 @@ import {
   readServedProjectSections,
   type ServedProjectSections
 } from './project-sections-operations'
-import { buildSections, type Worktree } from './workspace-list-sections'
+import {
+  NO_PROJECT_SECTION_CATALOG,
+  buildMobileWorkspacePlan,
+  buildSections,
+  collapseSections,
+  type Worktree
+} from './workspace-list-sections'
 
 // Counterpart: renderer sidebar/worktree-list-groups-mobile-parity.test.ts uses the same served project fixtures.
 
@@ -142,5 +163,255 @@ describe('readServedProjectSections', () => {
       })
     ).toEqual({ kind: 'kept' })
     expect(readServedProjectSections(null)).toEqual({ kind: 'kept' })
+  })
+})
+
+// IS-147: the cast of the desktop golden group-by-task.txt; feat-a's lineage spreads over three lanes.
+type TaskSpec = {
+  name: string
+  task?: string
+  state?: WorktreeBuildWebSessionState
+  pinned?: true
+  archived?: true
+  parent?: string
+  main?: true
+}
+
+const TASK_SPECS: TaskSpec[] = [
+  { name: 'orca', main: true },
+  { name: 'feat-a', task: 'IS-1', state: 'active', pinned: true },
+  { name: 'feat-b', task: 'IS-2', state: 'waiting', parent: 'feat-a' },
+  { name: 'feat-c', task: 'IS-3', state: 'attention', pinned: true },
+  { name: 'gitlab-mr', task: 'IS-6', state: 'active', parent: 'feat-a' },
+  { name: 'api-y', task: 'IS-5', state: 'closing' },
+  // A task whose state the host has not reported yet reads as in progress.
+  { name: 'same', task: 'IS-7' },
+  { name: 'zeta' },
+  { name: 'archived', task: 'IS-4', state: 'attention', archived: true },
+  { name: 'old', archived: true }
+]
+
+const ORCA_REPO: Repo = {
+  id: 'orca',
+  path: '/orca',
+  displayName: 'orca',
+  badgeColor: '#000',
+  addedAt: 0
+}
+const taskRowId = (name: string) => `orca::/w/${name}`
+
+function desktopTaskRow(spec: TaskSpec): DesktopWorktree {
+  return {
+    id: taskRowId(spec.name),
+    instanceId: `i-${spec.name}`,
+    repoId: 'orca',
+    path: `/w/${spec.name}`,
+    head: 'abc1234',
+    branch: `refs/heads/${spec.name}`,
+    isBare: false,
+    isMainWorktree: spec.main === true,
+    displayName: spec.name,
+    comment: '',
+    linkedIssue: null,
+    linkedPR: null,
+    linkedLinearIssue: null,
+    isArchived: spec.archived === true,
+    isUnread: false,
+    isPinned: spec.pinned === true,
+    sortOrder: 0,
+    lastActivityAt: 0,
+    ...(spec.task
+      ? {
+          buildWebTask: {
+            issueId: spec.task,
+            key: spec.task,
+            consoleHost: 'https://console',
+            branch: spec.name
+          }
+        }
+      : {}),
+    ...(spec.state ? { buildWebSession: { state: spec.state, at: 0 } } : {})
+  }
+}
+
+/** What worktree.ps serves the phone for the same workspace. */
+function phoneTaskRow(spec: TaskSpec): Worktree {
+  const row = desktopTaskRow(spec)
+  return {
+    worktreeId: row.id,
+    repoId: row.repoId,
+    repo: 'orca',
+    branch: row.branch,
+    displayName: row.displayName,
+    path: row.path,
+    isArchived: row.isArchived,
+    isMainWorktree: row.isMainWorktree,
+    hasHostSidebarActivity: true,
+    worktreeInstanceId: row.instanceId,
+    ...(spec.parent
+      ? {
+          parentWorktreeId: taskRowId(spec.parent),
+          lineageWorktreeInstanceId: row.instanceId,
+          parentWorktreeInstanceId: `i-${spec.parent}`
+        }
+      : {}),
+    buildWebTask: row.buildWebTask,
+    buildWebSession: row.buildWebSession,
+    liveTerminalCount: 0,
+    hasAttachedPty: false,
+    unread: false,
+    isPinned: row.isPinned,
+    linkedPR: null
+  }
+}
+
+const TASK_LINEAGE: Record<string, WorktreeLineage> = Object.fromEntries(
+  TASK_SPECS.flatMap((spec) =>
+    spec.parent
+      ? [
+          [
+            taskRowId(spec.name),
+            {
+              worktreeId: taskRowId(spec.name),
+              worktreeInstanceId: `i-${spec.name}`,
+              parentWorktreeId: taskRowId(spec.parent),
+              parentWorktreeInstanceId: `i-${spec.parent}`,
+              origin: 'manual',
+              capture: { source: 'manual-action', confidence: 'explicit' },
+              createdAt: 0
+            } satisfies WorktreeLineage
+          ]
+        ]
+      : []
+  )
+)
+
+type TaskView = {
+  groupBy: 'task' | 'none'
+  pinnedInGroups: boolean
+  collapsed: string[]
+  hidden: HideableTaskSessionGroup[]
+}
+
+type DrawnSection = { key: string; count: number; rows: [string, number][] }
+
+/** The desktop sidebar: its row filter (desktop-workspace-row-facts.ts), name sort, then its planner. */
+function desktopTaskSections(view: TaskView): DrawnSection[] {
+  const keepArchivedTaskAttention = view.groupBy === 'task'
+  const facts: WorkspaceRowFactReader<DesktopWorktree> = {
+    isArchived: (w) => w.isArchived && !(keepArchivedTaskAttention && isTaskSessionAttention(w)),
+    isFolderWorkspace: () => false,
+    repoId: (w) => w.repoId,
+    hostId: () => 'local',
+    isOtherClient: () => false,
+    isDefaultBranch: () => false,
+    isAutomationCreated: () => false,
+    isCliCreated: () => false,
+    isDetachedHead: () => false,
+    isMainWorktree: (w) => w.isMainWorktree,
+    isSleeping: () => false,
+    taskSession: (w) => w
+  }
+  const all = TASK_SPECS.map(desktopTaskRow)
+  const visible = filterWorkspaceRows(
+    all,
+    { ...NO_WORKSPACE_ROW_FILTERS, hiddenSessionStates: view.hidden },
+    facts
+  ).sort((a, b) => compareSidebarText(a.displayName, b.displayName))
+  const plan = planSidebarRows({
+    groupBy: view.groupBy,
+    worktrees: visible,
+    repoMap: new Map([[ORCA_REPO.id, ORCA_REPO]]),
+    prGroupOf: () => 'in-progress',
+    workspaceStatuses: DEFAULT_WORKSPACE_STATUSES,
+    projectOrderBy: 'manual',
+    lineageById: TASK_LINEAGE,
+    worktreeMap: new Map(all.map((w) => [w.id, w])),
+    nestLineage: true,
+    projectGroups: [],
+    placeholderRepoIds: new Set(),
+    importedWorktreesByRepo: new Map(),
+    newExternalWorktreesInboxByRepo: new Map(),
+    pendingCreations: [],
+    folderWorkspaces: [],
+    defaultHostId: 'local',
+    pinnedDisplayPolicy: view.pinnedInGroups ? 'duplicate-in-groups' : 'single-location',
+    filterRepoIds: []
+  })
+  const sections: DrawnSection[] = []
+  for (const row of plan.render(new Set(view.collapsed))) {
+    if (row.type === 'header') {
+      sections.push({ key: row.key, count: row.count, rows: [] })
+    } else if (row.type === 'item') {
+      sections.at(-1)?.rows.push([row.worktree.id, row.depth])
+    }
+  }
+  return sections
+}
+
+function phoneTaskSections(view: TaskView): DrawnSection[] {
+  const plan = buildMobileWorkspacePlan(
+    TASK_SPECS.map(phoneTaskRow),
+    'name',
+    { ...NO_WORKSPACE_ROW_FILTERS, hiddenSessionStates: view.hidden },
+    '',
+    view.groupBy,
+    new Set(),
+    NO_PROJECT_SECTION_CATALOG,
+    DEFAULT_WORKSPACE_STATUSES,
+    undefined,
+    view.pinnedInGroups,
+    new Map(),
+    true
+  )
+  const raw = plan.render(new Set())
+  return collapseSections(raw, new Set(view.collapsed)).map((section, index) => ({
+    key: section.key,
+    count: raw[index]?.data.length ?? 0,
+    rows: section.data.map((row): [string, number] => [row.worktreeId, row.lineageDepth ?? 0])
+  }))
+}
+
+describe('«By task» on the phone', () => {
+  const views: [string, TaskView][] = [
+    ['plain', { groupBy: 'task', pinnedInGroups: false, collapsed: [], hidden: [] }],
+    ['pinned in groups', { groupBy: 'task', pinnedInGroups: true, collapsed: [], hidden: [] }],
+    [
+      'release opened',
+      { groupBy: 'task', pinnedInGroups: false, collapsed: ['task:release:expanded'], hidden: [] }
+    ],
+    [
+      'in progress collapsed by hand',
+      { groupBy: 'task', pinnedInGroups: true, collapsed: ['task:progress'], hidden: [] }
+    ],
+    [
+      'session filter hides every lane it may',
+      {
+        groupBy: 'task',
+        pinnedInGroups: false,
+        collapsed: [],
+        hidden: ['none', 'progress', 'release']
+      }
+    ],
+    ['another grouping', { groupBy: 'none', pinnedInGroups: false, collapsed: [], hidden: [] }]
+  ]
+
+  it.each(views)("renders the desktop sidebar's lanes and rows (%s)", (_label, view) => {
+    expect(phoneTaskSections(view)).toEqual(desktopTaskSections(view))
+  })
+
+  it('puts attention first, keeps a pinned attention row out of Pinned and opens release on demand', () => {
+    const plain = phoneTaskSections(views[0][1])
+    expect(plain.map((section) => section.key)).toEqual([
+      'task:attention',
+      'pinned',
+      'task:release',
+      'task:progress',
+      'task:none'
+    ])
+    expect(plain[0]?.rows.map(([id]) => id)).toEqual([taskRowId('archived'), taskRowId('feat-c')])
+    expect(plain[2]).toMatchObject({ count: 1, rows: [] })
+    const outside = phoneTaskSections(views[5][1]).flatMap((section) => section.rows)
+    expect(outside.map(([id]) => id)).not.toContain(taskRowId('archived'))
   })
 })

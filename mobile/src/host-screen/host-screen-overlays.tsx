@@ -1,6 +1,6 @@
 import { openExternalLink } from '../platform/external-link'
 import { Pressable, Text, View } from 'react-native'
-import { Moon, Pin, PinOff } from 'lucide-react-native'
+import { Moon, Pin, PinOff, RotateCcw, SquareArrowOutUpRight, Unlink } from 'lucide-react-native'
 import { buildWorktreeNavigationActions } from '../agent-history/worktree-navigation-actions'
 import { workspaceRouteHref } from '../navigation/workspace-execution-host'
 import { useWorkspaceServer } from '../transport/workspace-server'
@@ -10,10 +10,53 @@ import { ConfirmModal } from '../components/ConfirmModal'
 import { NewWorktreeModalController } from '../components/NewWorktreeModalController'
 import { hostNewWorktreeSessionRoute } from '../host-new-worktree-session-route'
 import { isWorktreePinned } from '../worktree/workspace-list-sections'
+import { isTaskSessionAttention } from '../../../src/shared/sidebar-list/task-session-groups'
+import { BUILD_WEB_SESSION_ACTION_LABELS } from '../../../src/shared/build-web-session-labels'
+import { describeTaskAttention } from '../components/WorktreeTaskSession'
+import type { ActionSheetAction } from '../components/ActionSheetModal'
+import type { Worktree } from '../worktree/workspace-list-types'
+import { useTaskAttentionActions } from './use-task-attention-actions'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import { WorkspaceOptionsSheet } from './workspace-options-sheet'
 import { WorkspaceDetailsSheet } from './workspace-details-sheet'
 import type { HostScreenController } from './use-host-screen-controller'
+
+const ACTION = BUILD_WEB_SESSION_ACTION_LABELS
+
+// IS-147: a closed task's leftover leads with what it needs; «Remove anyway…» is its Delete.
+function taskAttentionActions(
+  target: Worktree,
+  run: {
+    open: (item: Worktree) => void
+    confirmRemove: (item: Worktree) => void
+    keep: (item: Worktree) => void
+    reopen: (item: Worktree) => void
+  }
+): ActionSheetAction[] {
+  return [
+    { label: ACTION.open.text, icon: SquareArrowOutUpRight, onPress: () => run.open(target) },
+    {
+      label: ACTION.removeAnyway.text,
+      destructive: true,
+      onPress: () => run.confirmRemove(target)
+    },
+    { label: ACTION.keep.text, icon: Unlink, onPress: () => run.keep(target) },
+    { label: ACTION.backToWork.text, icon: RotateCcw, onPress: () => run.reopen(target) }
+  ]
+}
+
+function deleteConfirmCopy(target: Worktree): { title: string; message: string; confirm: string } {
+  const name = `"${target.displayName || target.repo}" (${target.branch})`
+  if (!isTaskSessionAttention(target)) {
+    return { title: 'Delete Worktree', message: `Delete ${name}?`, confirm: 'Delete' }
+  }
+  const reason = describeTaskAttention(target)
+  return {
+    title: 'Remove anyway',
+    message: [`Remove ${name}?`, reason, ACTION.removeRule.text].filter(Boolean).join('\n\n'),
+    confirm: 'Remove'
+  }
+}
 
 export function HostScreenOverlays({ controller }: { controller: HostScreenController }) {
   const {
@@ -27,6 +70,14 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
     state
   } = controller
   const actionTarget = state.actionTarget
+  const taskActions = useTaskAttentionActions({
+    client,
+    hostCapabilities,
+    fetchWorktrees: catalog.fetchWorktrees,
+    state
+  })
+  const closeActions = () => state.setActionTarget(null)
+  const confirmCopy = state.confirmDelete ? deleteConfirmCopy(state.confirmDelete) : null
   // A server row's screens are offered by what that server supports, not the desktop.
   const actionServer = useWorkspaceServer({
     client,
@@ -47,14 +98,11 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
           state.setActionTarget(null)
         }}
       >
-        {state.confirmDelete ? (
+        {state.confirmDelete && confirmCopy ? (
           <View>
             <View style={styles.confirmContent}>
-              <Text style={styles.confirmTitle}>Delete Worktree</Text>
-              <Text style={styles.confirmMessage}>
-                Delete "{state.confirmDelete.displayName || state.confirmDelete.repo}" (
-                {state.confirmDelete.branch})?
-              </Text>
+              <Text style={styles.confirmTitle}>{confirmCopy.title}</Text>
+              <Text style={styles.confirmMessage}>{confirmCopy.message}</Text>
             </View>
             <View style={styles.confirmButtons}>
               <Pressable
@@ -81,7 +129,7 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                   state.setActionTarget(null)
                 }}
               >
-                <Text style={styles.confirmBtnDestructiveText}>Delete</Text>
+                <Text style={styles.confirmBtnDestructiveText}>{confirmCopy.confirm}</Text>
               </Pressable>
             </View>
           </View>
@@ -90,6 +138,23 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
             actions={
               actionTarget
                 ? [
+                    ...(isTaskSessionAttention(actionTarget)
+                      ? taskAttentionActions(actionTarget, {
+                          open: (item) => {
+                            actions.openWorktreeSession(item)
+                            closeActions()
+                          },
+                          confirmRemove: state.setConfirmDelete,
+                          keep: (item) => {
+                            void taskActions.keepTaskSession(item)
+                            closeActions()
+                          },
+                          reopen: (item) => {
+                            void taskActions.reopenTask(item)
+                            closeActions()
+                          }
+                        })
+                      : []),
                     ...buildWorktreeNavigationActions({
                       hostId,
                       worktreeId: actionTarget.worktreeId,
@@ -121,11 +186,15 @@ export function HostScreenOverlays({ controller }: { controller: HostScreenContr
                         state.setActionTarget(null)
                       }
                     },
-                    {
-                      label: 'Delete',
-                      destructive: true,
-                      onPress: () => state.setConfirmDelete(actionTarget)
-                    }
+                    ...(isTaskSessionAttention(actionTarget)
+                      ? []
+                      : [
+                          {
+                            label: 'Delete',
+                            destructive: true,
+                            onPress: () => state.setConfirmDelete(actionTarget)
+                          }
+                        ])
                   ]
                 : []
             }
