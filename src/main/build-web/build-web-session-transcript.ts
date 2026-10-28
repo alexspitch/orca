@@ -56,18 +56,26 @@ export async function readBuildWebSessionTranscript(
   if (!decode) {
     return { kind: 'unsupported' }
   }
-  const missing = async (): Promise<BuildWebSessionTranscript> => ({
-    kind: 'missing',
-    retentionDays:
-      resolveNativeChatTranscriptAgent(args.agent) === 'claude'
-        ? await claudeLogRetentionDays(locations.claudeProjectsDir ?? claudeProjectsHostDirs()[0])
-        : CLAUDE_DEFAULT_LOG_RETENTION_DAYS
-  })
+  // Why only Claude's: other agents keep their logs by rules this host does not read.
+  const missing = async (): Promise<BuildWebSessionTranscript> =>
+    resolveNativeChatTranscriptAgent(args.agent) === 'claude'
+      ? {
+          kind: 'missing',
+          retentionDays: await claudeLogRetentionDays(
+            locations.claudeProjectsDir ?? claudeProjectsHostDirs()[0]
+          )
+        }
+      : { kind: 'missing' }
+  // Why a failed search throws: a search that did not finish cannot say the log is gone.
   const filePath = await resolveSessionFilePath(
     args.agent,
     args.providerSessionId,
     locations.claudeProjectsDir ? { claudeProjectsDir: locations.claudeProjectsDir } : {}
-  ).catch(() => null)
+  ).catch((error: unknown) => {
+    throw new Error(
+      `Could not search this host's session logs: ${error instanceof Error ? error.message : String(error)}`
+    )
+  })
   if (!filePath) {
     return missing()
   }

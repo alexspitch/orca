@@ -112,7 +112,7 @@ export function BuildWebIssueDrawer({
             </p>
           ) : !detail ? null : (
             <>
-              <BuildWebTaskSessions detail={detail} />
+              <BuildWebTaskSessions target={target} detail={detail} />
               <EditableTitle
                 detail={detail}
                 saving={saving}

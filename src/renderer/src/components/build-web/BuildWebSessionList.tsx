@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {
-  BUILD_WEB_AGENT_SESSION_STATE_LABELS,
-  BUILD_WEB_SESSION_REASON_LABELS,
   BUILD_WEB_SESSION_STATE_LABELS,
+  sessionHistoryLabel,
+  sessionReasonLabels,
   type BuildWebSessionLabel
 } from '../../../../shared/build-web-session-labels'
 import type { BuildWebSessionRow } from '../../../../shared/build-web-session-rows'
@@ -32,9 +32,11 @@ function SessionRow({
   const { record, worktree, attention } = row
   const state = attention
     ? word(BUILD_WEB_SESSION_STATE_LABELS.attention.full)
-    : word(BUILD_WEB_AGENT_SESSION_STATE_LABELS[record.state])
+    : word(sessionHistoryLabel(record.state))
   const note = attention?.reason
-    ? word(BUILD_WEB_SESSION_REASON_LABELS[attention.reason].full)
+    ? word(
+        sessionReasonLabels(attention.reason)?.full ?? BUILD_WEB_SESSION_STATE_LABELS.attention.full
+      )
     : record.removal_note
   const ended = record.ended_at ?? record.agent_finished_at
   const who = [record.agent, record.by ? loginOf(record.by) : ''].filter(Boolean).join(' · ')

@@ -1,7 +1,9 @@
-import type {
-  BuildWebAgentSessionState,
-  BuildWebSessionAttentionReason,
-  WorktreeBuildWebSessionState
+import {
+  BUILD_WEB_AGENT_SESSION_STATES,
+  BUILD_WEB_SESSION_ATTENTION_REASONS,
+  type BuildWebAgentSessionState,
+  type BuildWebSessionAttentionReason,
+  type WorktreeBuildWebSessionState
 } from './build-web-session-types'
 import type { HideableTaskSessionGroup } from './sidebar-list/task-session-groups'
 
@@ -79,6 +81,14 @@ export const BUILD_WEB_SESSION_REASON_LABELS: Record<
   }
 }
 
+/** A reason's words; null for one this client does not know (a newer host's) or none. */
+export function sessionReasonLabels(
+  reason: string | null | undefined
+): (typeof BUILD_WEB_SESSION_REASON_LABELS)[BuildWebSessionAttentionReason] | null {
+  const known = BUILD_WEB_SESSION_ATTENTION_REASONS.find((r) => r === reason)
+  return known ? BUILD_WEB_SESSION_REASON_LABELS[known] : null
+}
+
 /** The console's history states, as the task card's «Sessions» lists them. */
 export const BUILD_WEB_AGENT_SESSION_STATE_LABELS: Record<
   BuildWebAgentSessionState,
@@ -91,6 +101,12 @@ export const BUILD_WEB_AGENT_SESSION_STATE_LABELS: Record<
   kept: label('history.kept', 'Kept'),
   removed: label('history.removed', 'Worktree removed'),
   abandoned: label('history.abandoned', 'Not started')
+}
+
+/** A history state's words; for a state a newer console added, the console's own word. */
+export function sessionHistoryLabel(state: string): BuildWebSessionLabel {
+  const known = BUILD_WEB_AGENT_SESSION_STATES.find((s) => s === state)
+  return known ? BUILD_WEB_AGENT_SESSION_STATE_LABELS[known] : label(`history.${state}`, state)
 }
 
 /** «By task» group headers. */

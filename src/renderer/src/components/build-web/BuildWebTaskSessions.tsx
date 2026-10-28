@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useAppStore } from '@/store'
 import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import type { BuildWebIssueDetail } from '../../../../shared/build-web-types'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import { joinSessionRows } from '../../../../shared/build-web-session-rows'
 import { BuildWebSessionBadge } from './BuildWebSessionBadge'
 import { BuildWebSessionList, type SessionListRow } from './BuildWebSessionList'
@@ -24,8 +25,11 @@ function openRow({ record, worktree }: SessionListRow): void {
  * A console without session history names only the current one.
  */
 export function BuildWebTaskSessions({
+  target,
   detail
 }: {
+  /** The host holding build-web's token, which the card was read through. */
+  target: RuntimeClientTarget
   detail: Pick<BuildWebIssueDetail, 'id' | 'agent_session' | 'agent_sessions'>
 }): React.JSX.Element | null {
   const worktreesByRepo = useAppStore(selectWorktreesByRepo)
@@ -53,7 +57,11 @@ export function BuildWebTaskSessions({
   return (
     <>
       <BuildWebSessionList rows={rows} onOpen={openRow} onLog={setLogOf} />
-      <BuildWebSessionLogDialog row={logOf} onClose={() => setLogOf(null)} />
+      <BuildWebSessionLogDialog
+        row={logOf}
+        buildWebTarget={target}
+        onClose={() => setLogOf(null)}
+      />
     </>
   )
 }

@@ -5,6 +5,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner'
 import { MobileSearchField } from '../components/MobileSearchField'
 import { MobileSwitch } from '../components/MobileSwitch'
 import { chipTones, colors, spacing, typography } from '../theme/mobile-theme'
+import { CardButton } from './issue/issue-card-ui'
 
 const MAX_MATCHES = 5000
 
@@ -19,7 +20,7 @@ export function LogLinesPanel({
   error,
   note,
   headerAction,
-  before
+  earlier
 }: {
   title: string
   lines: readonly string[]
@@ -28,14 +29,16 @@ export function LogLinesPanel({
   /** A short word about what is not shown, after the follow switch. */
   note?: string
   headerAction?: ReactNode
-  /** Above the lines, e.g. reading the earlier part of the log. */
-  before?: ReactNode
+  /** Reading the part of the log before the lines shown; it lands above them. */
+  earlier?: { loading: boolean; read: () => void }
 }) {
   const { height } = useWindowDimensions()
   const [follow, setFollow] = useState(true)
   const [query, setQuery] = useState('')
   const [current, setCurrent] = useState(0)
   const listRef = useRef<FlatList<string>>(null)
+  // How many lines there were when earlier ones were asked for; they arrive above these.
+  const shownBefore = useRef<number | null>(null)
   const matches = useMemo(() => {
     const needle = query.trim().toLowerCase()
     if (!needle) {
@@ -55,6 +58,27 @@ export function LogLinesPanel({
       listRef.current?.scrollToEnd({ animated: false })
     }
   }, [follow, lines.length, query])
+
+  useEffect(() => {
+    const shown = shownBefore.current
+    if (shown === null || lines.length <= shown) {
+      return
+    }
+    shownBefore.current = null
+    // Why: the earlier lines end right above what was shown, so the reader lands where they meet.
+    listRef.current?.scrollToIndex({
+      index: lines.length - shown,
+      viewPosition: 1,
+      animated: false
+    })
+  }, [lines.length])
+
+  const readEarlier = (): void => {
+    // Why: following the end would carry the reader past the lines just asked for.
+    setFollow(false)
+    shownBefore.current = lines.length
+    earlier?.read()
+  }
 
   const goTo = (index: number) => {
     if (matches.length === 0) {
@@ -110,7 +134,13 @@ export function LogLinesPanel({
         {note ? <Text style={styles.muted}>· {note}</Text> : null}
       </View>
       {error ? <Text style={styles.error}>{error}</Text> : null}
-      {before}
+      {earlier ? (
+        <CardButton
+          label="Read earlier messages"
+          disabled={earlier.loading}
+          onPress={readEarlier}
+        />
+      ) : null}
       <FlatList
         ref={listRef}
         data={lines}
