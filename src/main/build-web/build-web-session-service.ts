@@ -1,5 +1,6 @@
 import type { Store } from '../persistence'
 import type { OrcaRuntimeService } from '../runtime/orca-runtime'
+import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
 import { installBuildWebSessionReports } from './build-web-session-reports'
 import { BuildWebSessionWatcher } from './build-web-session-watcher'
 
@@ -14,15 +15,29 @@ function envMs(name: string, fallback: number): number {
   return Number.isFinite(value) && value > 0 ? value : fallback
 }
 
+/** The delete-report hook; orcad installs it before RPC, so no client delete goes unreported. */
+export function installBuildWebSessionReportHook(): BuildWebSessionReportQueue | null {
+  try {
+    return installBuildWebSessionReports()
+  } catch (error) {
+    console.warn('[build-web] the task session report queue did not start:', error)
+    return null
+  }
+}
+
 export function startBuildWebSessionService(
   store: Store,
   runtime: OrcaRuntimeService
 ): BuildWebSessionWatcher | null {
+  const reports = installBuildWebSessionReportHook()
+  if (!reports) {
+    return null
+  }
   try {
     const watcher = new BuildWebSessionWatcher({
       runtime,
       store,
-      reports: installBuildWebSessionReports(),
+      reports,
       pollMs: envMs('ORCA_BUILD_WEB_SESSION_POLL_MS', POLL_MS),
       stuckMs: envMs('ORCA_BUILD_WEB_SESSION_STUCK_MS', STUCK_MS),
       announceRemoved: (closed) => runtime.announceBuildWebSessionClosed(closed)
