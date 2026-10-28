@@ -27,6 +27,7 @@ import {
   takeToWorkRepos,
   takenWorktreeNames,
   taskWorktreeName,
+  taskWorktreeTitle,
   batchCheckMessage,
   validateBuildWebBatch
 } from './build-web-take-to-work'
@@ -140,6 +141,7 @@ function TakeToWorkForm({
           const created = await createTaskWorktree({
             ...draft,
             name,
+            displayName: taskWorktreeTitle(issue),
             buildWebTask: { issueId: issue.id, key: issue.key, consoleHost: baseUrl }
           })
           if (created) {

@@ -24,6 +24,7 @@ import {
   takeToWorkRepos,
   takenWorktreeNames,
   taskWorktreeName,
+  taskWorktreeTitle,
   validateBuildWebBatch,
   type TakeToWorkWorktree
 } from './build-web-take-to-work'
@@ -202,6 +203,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
           repoId: shownDraft.repoId,
           name,
           baseBranch: shownDraft.baseBranch,
+          displayName: taskWorktreeTitle(issue),
           setupDecision,
           // Why gated: an older host strips the field, and then nothing would say it was dropped.
           ...(baseUrl && hostCapabilities.includes(BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY)

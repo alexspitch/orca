@@ -32,6 +32,8 @@ export async function createTaskWorktree(args: {
   baseBranch: string
   /** The task the worktree is made for; dropped for a host that would not keep it. */
   buildWebTask?: WorktreeBuildWebTaskRequest
+  /** The sidebar label; the folder and branch keep `name`. */
+  displayName?: string
 }): Promise<Worktree | null> {
   const store = useAppStore.getState()
   const owner = resolveDirectLaunchOwnerRow(store.repos, args.repoId)
@@ -63,7 +65,7 @@ export async function createTaskWorktree(args: {
         trust === 'skip' ? 'skip' : decision,
         undefined,
         'unknown',
-        args.name,
+        args.displayName ?? args.name,
         undefined,
         undefined,
         undefined,

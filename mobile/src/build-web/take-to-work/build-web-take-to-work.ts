@@ -11,6 +11,7 @@ export {
   takeToWorkRepos,
   takenWorktreeNames,
   taskWorktreeName,
+  taskWorktreeTitle,
   validateBuildWebBatch,
   type TakeToWorkFlags
 } from '../../../../src/shared/build-web-take-to-work'

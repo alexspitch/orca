@@ -88,6 +88,14 @@ function noteProviderSessionLater(
   check(useAppStore.getState())
 }
 
+/** The console keeps a task worktree's folder name, never its label (the task's title). */
+function sessionWorktreeName(worktree: Worktree): string {
+  const folder = worktree.buildWebTask
+    ? worktree.path.split(/[\\/]/).findLast((part) => part !== '')
+    : ''
+  return folder || worktree.displayName
+}
+
 /** A chat takes no launch label, so its tab is renamed once it exists. */
 function nameStructuredTab(worktreeId: string, sessionId: string, name: string): void {
   const state = useAppStore.getState()
@@ -187,7 +195,7 @@ export async function launchBuildWebTask(args: {
     issue,
     {
       ...surface,
-      worktree_name: worktree.displayName,
+      worktree_name: sessionWorktreeName(worktree),
       execution_host_id: worktree.hostId ?? '',
       agent: 'claude',
       started_at: startedAt

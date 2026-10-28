@@ -137,6 +137,11 @@ export function taskWorktreeName(key: string, taken: ReadonlySet<string> = new S
   }
 }
 
+/** A task worktree's label: the task's title, as the sidebar shows it next to the number. */
+export function taskWorktreeTitle(issue: Pick<BuildWebIssueRow, 'key' | 'title'>): string {
+  return issue.title.replace(/\s+/g, ' ').trim().slice(0, 120) || issue.key
+}
+
 /** The active worktree when it is a candidate, else the last one used, else the first. */
 export function defaultTakeToWorkWorktree(
   candidateIds: readonly string[],

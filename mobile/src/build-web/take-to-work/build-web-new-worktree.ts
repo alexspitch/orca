@@ -17,6 +17,8 @@ export async function createTaskWorktree(args: {
   setupDecision: 'inherit' | 'run' | 'skip'
   /** The task the worktree is made for; only for a host that announces it keeps one. */
   buildWebTask?: WorktreeBuildWebTaskRequest
+  /** The sidebar label; the folder and branch keep `name`. */
+  displayName?: string
 }): Promise<{ worktreeId: string; name: string } | { error: string }> {
   const created = await createWorktreeWithNameRetry({
     client: args.client,
@@ -29,7 +31,7 @@ export async function createTaskWorktree(args: {
     buildParams: (name) => ({
       repo: `id:${args.repoId}`,
       name,
-      displayName: args.name,
+      displayName: args.displayName ?? args.name,
       displayNameKind: 'user',
       baseBranch: args.baseBranch.trim(),
       setupDecision: args.setupDecision,

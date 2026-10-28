@@ -14,6 +14,7 @@ export {
   takeToWorkRepos,
   takenWorktreeNames,
   taskWorktreeName,
+  taskWorktreeTitle,
   validateBuildWebBatch,
   type BatchCheck,
   type TakeToWorkFlags
