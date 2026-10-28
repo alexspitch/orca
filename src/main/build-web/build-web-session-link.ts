@@ -9,7 +9,7 @@ import type {
 // even when the client that started the agent dropped off right after the console answered.
 
 export type BuildWebSessionLinkRuntime = {
-  showManagedWorktree: (selector: string) => Promise<Worktree>
+  showManagedWorktree: (selector: string) => Promise<Pick<Worktree, 'buildWebTask'>>
   updateManagedWorktreeMeta: (
     selector: string,
     updates: {

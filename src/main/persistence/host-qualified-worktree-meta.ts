@@ -103,21 +103,57 @@ export function worktreeRowTarget(
     : resolveWorktreeMetaOwner(store, worktree.id)
 }
 
+export type WorktreeMetaRowRemovedListener = (worktreeId: string, meta: WorktreeMeta) => void
+
+let rowRemovedListener: WorktreeMetaRowRemovedListener | null = null
+
+/** Every runtime and desktop delete ends in removeWorktreeMetaRow; IS-147's session reports listen here. */
+export function setWorktreeMetaRowRemovedListener(
+  listener: WorktreeMetaRowRemovedListener | null
+): void {
+  rowRemovedListener = listener
+}
+
+type RemovableWorktreeMetaStore = {
+  getWorktreeMeta: (worktreeId: string) => WorktreeMeta | undefined
+  getWorktreeMetaForHost?: HostQualifiedWorktreeMetaStore['getWorktreeMetaForHost']
+  removeWorktreeMeta: (target: HostWorktreeTarget) => void
+  removeUnhostedWorktreeMeta?: (worktreeId: string) => boolean
+}
+
+function readRemovedRow(
+  store: RemovableWorktreeMetaStore,
+  worktreeId: string,
+  owner: ExecutionHostId | undefined
+): WorktreeMeta | undefined {
+  if (owner && store.getWorktreeMetaForHost) {
+    return store.getWorktreeMetaForHost(worktreeId, owner)
+  }
+  const meta = store.getWorktreeMeta(worktreeId)
+  return !owner || !meta?.hostId || meta.hostId === owner ? meta : undefined
+}
+
 /** Prefer explicit host, then saved stamp; only unstamped rows may be removed across all hosts. */
 export function removeWorktreeMetaRow(
-  store: {
-    getWorktreeMeta: (worktreeId: string) => WorktreeMeta | undefined
-    removeWorktreeMeta: (target: HostWorktreeTarget) => void
-    removeUnhostedWorktreeMeta?: (worktreeId: string) => boolean
-  },
+  store: RemovableWorktreeMetaStore,
   worktreeId: string,
   hostId: ExecutionHostId | undefined
 ): void {
   const owner = hostId ?? store.getWorktreeMeta(worktreeId)?.hostId
+  const listener = rowRemovedListener
+  const removed = listener ? readRemovedRow(store, worktreeId, owner) : undefined
   if (owner) {
     store.removeWorktreeMeta(hostWorktreeTarget({ id: worktreeId, hostId: owner }))
   } else {
     store.removeUnhostedWorktreeMeta?.(worktreeId)
+  }
+  if (listener && removed) {
+    try {
+      listener(worktreeId, removed)
+    } catch (error) {
+      // Why: a listener's failure must never fail the delete that already happened.
+      console.warn('[worktree-meta] removed-row listener failed:', error)
+    }
   }
 }
 
