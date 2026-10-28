@@ -100,6 +100,12 @@ test('«By task» groups a hundred rows by their task state on a paired client',
     await expect(sidebar.locator('[data-worktree-task-session="waiting"]').first()).toBeVisible()
     await shoot('by-task-compact-release-open')
 
+    // The current workspace's compact row opens with its meta line (branch, host).
+    await page.evaluate((id) => window.__store?.getState().setActiveWorktree(id), active.worktreeId)
+    const activeRow = sidebar.getByRole('option', { name: /Sidebar: active/ })
+    await expect(activeRow.getByText(active.branch, { exact: false }).first()).toBeVisible()
+    await shoot('by-task-compact-selected')
+
     // Elsewhere the row keeps its place, and a counter beside the filter leads back to «By task».
     await page.evaluate(() => window.__store?.getState().setGroupBy('repo'))
     const counter = page.getByRole('button', { name: /1 workspaces need attention/ })

@@ -12,6 +12,7 @@ import {
 } from './WorktreeCardMeta'
 import { WorktreeCardPortsDetails, WorktreeCardPortsTrigger } from './WorktreeCardPorts'
 import type { WorktreeCardController } from './use-worktree-card-controller'
+import { getWorktreeTaskSessionState } from '../../../../shared/sidebar-list/task-session-groups'
 
 function getVisibleContextLabel(
   projectLabel: string | undefined,
@@ -262,8 +263,15 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
   const titleRowIndicators = showTitleRowIndicators ? (
     <div className="ml-auto flex shrink-0 items-center gap-1 pr-1.5">{detailsAndPorts}</div>
   ) : null
+  // Why: the reason line under a Needs attention row is a second line; the status dot stays on the title.
+  const showsAttentionReason =
+    card.inTaskAttentionSection === true && getWorktreeTaskSessionState(worktree) === 'attention'
   const hasSecondaryCardContent =
-    hasMetaRow || !!remoteBranchConflict || showInlineAgentList || showLineageChildChip
+    hasMetaRow ||
+    !!remoteBranchConflict ||
+    showInlineAgentList ||
+    showLineageChildChip ||
+    showsAttentionReason
   const titleOnlyCard = !hasSecondaryCardContent
 
   return {
