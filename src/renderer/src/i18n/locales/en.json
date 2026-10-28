@@ -21472,7 +21472,6 @@
     },
     "list": {
       "select": "Select {{key}}",
-      "session": "Agent session",
       "favorite": "Favorite {{key}}",
       "selection": "Selection",
       "key": "Key",
@@ -21513,10 +21512,8 @@
       "disconnect": "Disconnect"
     },
     "take": {
-      "button": "Take to work ({{count}})",
       "selected": "{{count}} selected",
       "clear": "Clear",
-      "title": "Take to work ({{count}})",
       "description": "A new Claude session in an existing worktree gets only the build-web-tasks skill call.",
       "worktree": "Worktree",
       "worktreeHint": "Worktrees of sa-dc-ap-products. The skill must be up to date in the one you pick.",
@@ -21527,15 +21524,10 @@
       "agentHint": "Another account runs this session only; the host's selected account stays as it is.",
       "auto": "Auto mode",
       "autoHint": "No stop after the plans; only tasks handed to AI",
-      "held": "Already held by a session: {{list}}. Starting replaces it.",
       "cancel": "Cancel",
       "start": "Start session",
-      "mixed": "Tasks of different products or releases: {{groups}}",
-      "tooMany": "At most 20 tasks at once.",
       "badKey": "These keys cannot be sent: {{keys}}",
       "unknownProduct": "Orca does not know the product of {{keys}}.",
-      "existing": "Existing worktree",
-      "createNew": "Create a new worktree",
       "repo": "Repository",
       "pickRepo": "Pick a repository",
       "name": "Name",
@@ -21546,17 +21538,28 @@
       "creating": "Creating the worktree {{name}}…",
       "starting": "Starting the session in {{name}}…",
       "session": "Session",
-      "inThisWorktree": "The skill works in this worktree (-no-worktree) and never makes its own.",
       "pickBase": "Pick the branch the worktree starts from.",
       "chatPlatformWorktree": "Chat Platform tasks: the session runs in this monorepo worktree, and the skill makes the chat-platform worktree itself, beside its clone.",
       "instruction": "Additional instruction",
-      "instructionHint": "Optional: passed to the session after the skill call"
+      "instructionHint": "Optional: passed to the session after the skill call",
+      "buttonOne": "Take to work",
+      "titleOne": "Take {{key}} to work",
+      "descriptionNew": "Orca makes a worktree for this task and starts a Claude session there with only the build-web-tasks skill call.",
+      "heldOne": "A session in {{worktree}} holds this task. The new session takes it over, and that one ends as replaced.",
+      "oneTask": "Take to work takes one task at a time: select just one."
     },
     "session": {
       "label": "Agent session",
       "openHere": "open here",
       "unverifiable": "unverifiable",
-      "open": "Open session"
+      "open": "Open session",
+      "log": "Log",
+      "history": "Sessions",
+      "logEmpty": "The log holds no messages yet.",
+      "logReading": "Reading the log…",
+      "logEarlier": "Read earlier messages",
+      "logWhole": "The whole log is shown.",
+      "logTitle": "Session log"
     },
     "launch": {
       "sessionNotSaved": "Session ID not saved to {{keys}}",
@@ -21585,7 +21588,9 @@
       "updateServerRedosTwin": "This Orca server cannot derive a redos image again yet. Update the server.",
       "updateServerConsoleFeatures": "This Orca server cannot read what the console supports yet. Update the server.",
       "updateServerTwinDecision": "This Orca server cannot build a waiting redos image yet. Update the server.",
-      "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server."
+      "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server.",
+      "updateServerSessions": "This Orca server does not follow task sessions yet. Update the server.",
+      "updateServerTranscript": "This Orca server does not hand out session logs yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -21855,7 +21860,10 @@
       "showStandsInSidebar": "Show Stands in sidebar",
       "showStandsInSidebarHint": "The services, logs and UI logins of each build-web stand",
       "showActivityInTitlebar": "Show notifications and tasks in titlebar",
-      "showActivityInTitlebarHint": "build-web's bell and its running tasks, each with its number"
+      "showActivityInTitlebarHint": "build-web's bell and its running tasks, each with its number",
+      "autoCleanup": "Auto-remove finished task workspaces",
+      "autoCleanupHint": "When a task is closed, its worktree is removed if it holds no changes or commits of its own. Saved in build-web for this account.",
+      "searchAutoCleanup": "auto-remove workspaces"
     },
     "sidebar": {
       "issues": "Issues",
