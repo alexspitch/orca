@@ -33,7 +33,8 @@ test('a task worktree follows its session from work to removal', async () => {
   test.setTimeout(300_000)
   const scratch = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-build-web-sessions-'))
   const host = await launchHeadlessPairedRuntimeHost({
-    extraEnv: { ORCA_BUILD_WEB_SESSION_POLL_MS: String(SESSION_POLL_MS) }
+    extraEnv: { ORCA_BUILD_WEB_SESSION_POLL_MS: String(SESSION_POLL_MS) },
+    pinnedServePort: true
   })
   try {
     const work = makeTaskRepository(scratch)
@@ -78,6 +79,19 @@ test('a task worktree follows its session from work to removal', async () => {
       const task = await createTask('E2E session lifecycle: manual delete')
       const wt = await takeTaskToWork(host, repoId, task, 'e2e-tab-manual')
       await host.client.call('worktree.rm', { worktree: `id:${wt.worktreeId}`, force: true })
+      await expect.poll(() => consoleSessionState(wt.sessionId), poll).toBe('removed')
+    })
+
+    await test.step('a removal report waits on disk through a host restart', async () => {
+      const task = await createTask('E2E session lifecycle: restart')
+      const wt = await takeTaskToWork(host, repoId, task, 'e2e-tab-restart')
+      // Without a credential the report cannot go; it must outlive the process that queued it.
+      await host.client.call('buildWeb.disconnect', {})
+      await host.client.call('worktree.rm', { worktree: `id:${wt.worktreeId}`, force: true })
+      await new Promise((resolve) => setTimeout(resolve, 3 * SESSION_POLL_MS))
+      expect(await consoleSessionState(wt.sessionId)).toBe('active')
+      await host.restartServeProcess()
+      await connectTaskHost(host, work, { addRepo: false })
       await expect.poll(() => consoleSessionState(wt.sessionId), poll).toBe('removed')
     })
 

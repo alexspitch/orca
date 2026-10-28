@@ -87,13 +87,17 @@ export function makeTaskRepository(root: string): string {
 
 export async function connectTaskHost(
   host: HeadlessPairedRuntimeHost,
-  work: string
+  work: string,
+  options: { addRepo?: boolean } = {}
 ): Promise<string> {
   const connected = await host.client.call<{ ok: boolean }>('buildWeb.connect', {
     baseUrl: CONSOLE_URL,
     token: CONSOLE_TOKEN
   })
   expect(connected.result.ok).toBe(true)
+  if (options.addRepo === false) {
+    return ''
+  }
   const added = await host.client.call<{ repo: { id: string } }>('repo.add', {
     path: work,
     kind: 'git'
