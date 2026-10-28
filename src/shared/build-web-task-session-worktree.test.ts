@@ -19,6 +19,7 @@ const session = (over: Partial<BuildWebAgentSession> = {}): BuildWebAgentSession
 
 const worktree = (id: string, task?: Partial<WorktreeBuildWebTask>) => ({
   id,
+  path: `/srv/orca/workspaces/${id}`,
   ...(task
     ? {
         buildWebTask: {
@@ -57,6 +58,15 @@ describe('the worktree «Take to work» opens again', () => {
     expect(findTaskSessionWorktree(issue, [...rows, worktree('fresh', {})], CONSOLE)?.id).toBe(
       'fresh'
     )
+  })
+
+  it('from a console without session ids, is the one named like the session, never a stale one', () => {
+    const stale = [worktree('is-1', {}), worktree('is-1-2', {})]
+    const issue = { id: 'i1', agent_session: session({ worktree_name: 'is-1-2' }) }
+    expect(findTaskSessionWorktree(issue, stale, CONSOLE)?.id).toBe('is-1-2')
+    const unnamed = { id: 'i1', agent_session: session({ worktree_name: 'Fix the login' }) }
+    expect(findTaskSessionWorktree(unnamed, stale, CONSOLE)).toBeNull()
+    expect(findTaskSessionWorktree(unnamed, [worktree('is-1', {})], CONSOLE)?.id).toBe('is-1')
   })
 
   it('belongs to the same console', () => {

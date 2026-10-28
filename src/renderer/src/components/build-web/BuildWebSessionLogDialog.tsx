@@ -15,10 +15,10 @@ import type { BuildWebAgentSessionRecord } from '../../../../shared/build-web-se
 import { parseExecutionHostId } from '../../../../shared/execution-host'
 import {
   missingTranscriptLabel,
-  UNSUPPORTED_TRANSCRIPT_LABEL
+  UNSUPPORTED_TRANSCRIPT_LABEL,
+  type BuildWebSessionTranscript
 } from '../../../../shared/build-web-session-transcript'
 import { callBuildWeb } from './build-web-client'
-import { useBuildWebTarget } from './use-build-web-data'
 import { logLinesOf } from './log-viewer/log-lines'
 import { LogViewer } from './log-viewer/LogViewer'
 import type { SessionListRow } from './BuildWebSessionList'
@@ -38,7 +38,25 @@ function transcriptTarget(row: SessionListRow, fallback: RuntimeClientTarget): R
   return target?.kind === 'environment' ? target : fallback
 }
 
-type Transcript = { text: string; before: number | null; loading: boolean; problem: string | null }
+type Transcript = {
+  text: string
+  before: number | null
+  loading: boolean
+  error: string | null
+  /** The host's word that there is no log, worded at render against the current record. */
+  gone: Exclude<BuildWebSessionTranscript, { kind: 'found' }> | null
+}
+
+function goneLabel(
+  gone: NonNullable<Transcript['gone']>,
+  record: BuildWebAgentSessionRecord
+): string {
+  const label =
+    gone.kind === 'missing'
+      ? missingTranscriptLabel(record, gone.retentionDays, Date.now())
+      : { ...UNSUPPORTED_TRANSCRIPT_LABEL, days: 0 }
+  return translate(label.key, label.text, { days: label.days })
+}
 
 /** The session's agent log through its host, a page at a time from the end. */
 function useSessionTranscript(target: RuntimeClientTarget, record: BuildWebAgentSessionRecord) {
@@ -46,7 +64,8 @@ function useSessionTranscript(target: RuntimeClientTarget, record: BuildWebAgent
     text: '',
     before: null,
     loading: true,
-    problem: null
+    error: null,
+    gone: null
   })
   const targetKey = target.kind === 'local' ? 'local' : target.environmentId
   const read = useCallback(
@@ -61,32 +80,38 @@ function useSessionTranscript(target: RuntimeClientTarget, record: BuildWebAgent
           setState((s) => {
             if (page.kind === 'found') {
               const text = s.text && page.text ? `${page.text}\n\n${s.text}` : page.text || s.text
-              return { text, before: page.before, loading: false, problem: null }
+              return { text, before: page.before, loading: false, error: null, gone: null }
             }
-            const label =
-              page.kind === 'missing'
-                ? missingTranscriptLabel(page.retentionDays, record.started_at, Date.now())
-                : UNSUPPORTED_TRANSCRIPT_LABEL
-            const days = page.kind === 'missing' ? page.retentionDays : 0
-            return { ...s, loading: false, problem: translate(label.key, label.text, { days }) }
+            return { ...s, loading: false, error: null, gone: page }
           }),
         (failure: unknown) =>
           setState((s) => ({
             ...s,
             loading: false,
-            problem: failure instanceof Error ? failure.message : String(failure)
+            error: failure instanceof Error ? failure.message : String(failure)
           }))
       )
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `target` is a fresh object each render; its key names it.
-    [targetKey, record.agent, record.provider_session_id, record.started_at]
+    [targetKey, record.agent, record.provider_session_id]
   )
   useEffect(() => read(), [read])
-  return { ...state, readEarlier: () => state.before !== null && read(state.before) }
+  return {
+    text: state.text,
+    before: state.before,
+    loading: state.loading,
+    problem: state.error ?? (state.gone ? goneLabel(state.gone, record) : null),
+    readEarlier: () => state.before !== null && read(state.before)
+  }
 }
 
-function SessionLogBody({ row }: { row: SessionListRow }): React.JSX.Element {
-  const { target: buildWebTarget } = useBuildWebTarget()
+function SessionLogBody({
+  row,
+  buildWebTarget
+}: {
+  row: SessionListRow
+  buildWebTarget: RuntimeClientTarget
+}): React.JSX.Element {
   const transcript = useSessionTranscript(transcriptTarget(row, buildWebTarget), row.record)
   const log = useMemo(() => logLinesOf(transcript.text, KEEP_LINES), [transcript.text])
   if (transcript.problem && !transcript.text) {
@@ -132,9 +157,12 @@ function SessionLogBody({ row }: { row: SessionListRow }): React.JSX.Element {
 /** A task session's agent log, read on the host that ran it — removed sessions too. */
 export function BuildWebSessionLogDialog({
   row,
+  buildWebTarget,
   onClose
 }: {
   row: SessionListRow | null
+  /** The host holding build-web's token, which the card was read through. */
+  buildWebTarget: RuntimeClientTarget
   onClose: () => void
 }): React.JSX.Element {
   return (
@@ -153,7 +181,9 @@ export function BuildWebSessionLogDialog({
               : ''}
           </DialogDescription>
         </DialogHeader>
-        {row ? <SessionLogBody key={row.record.id} row={row} /> : null}
+        {row ? (
+          <SessionLogBody key={row.record.id} row={row} buildWebTarget={buildWebTarget} />
+        ) : null}
       </DialogContent>
     </Dialog>
   )

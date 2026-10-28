@@ -2,32 +2,43 @@ import { useCallback, useEffect, useState } from 'react'
 import type { BuildWebAgentSessionRecord } from '../../../../src/shared/build-web-session-types'
 import {
   missingTranscriptLabel,
-  UNSUPPORTED_TRANSCRIPT_LABEL
+  UNSUPPORTED_TRANSCRIPT_LABEL,
+  type BuildWebSessionTranscript
 } from '../../../../src/shared/build-web-session-transcript'
 import { BottomDrawer } from '../../components/BottomDrawer'
-import { buildWebErrorMessage } from '../build-web-operations'
-import { useBuildWebScreen } from '../build-web-screen-context'
+import type { RpcClient } from '../../transport/rpc-client'
+import { buildWebErrorMessage, callBuildWeb } from '../build-web-operations'
 import { LogLinesPanel } from '../LogLinesPanel'
-import { CardButton } from './issue-card-ui'
 
 type Transcript = {
   text: string
   before: number | null
   loading: boolean
-  /** Why nothing is shown: an error, or the host's word that the log is gone. */
-  problem: string | null
+  error: string | null
+  /** The host's word that there is no log, worded at render against the current record. */
+  gone: Exclude<BuildWebSessionTranscript, { kind: 'found' }> | null
 }
 
-const START: Transcript = { text: '', before: null, loading: true, problem: null }
+const START: Transcript = { text: '', before: null, loading: true, error: null, gone: null }
 
-/** A session's agent log, read through the host a page at a time from its end. */
-function useSessionTranscript(record: BuildWebAgentSessionRecord) {
-  const { call } = useBuildWebScreen()
+function goneLabel(
+  gone: NonNullable<Transcript['gone']>,
+  record: BuildWebAgentSessionRecord
+): string {
+  const label =
+    gone.kind === 'missing'
+      ? missingTranscriptLabel(record, gone.retentionDays, Date.now())
+      : { ...UNSUPPORTED_TRANSCRIPT_LABEL, days: 0 }
+  return label.text.replace('{{days}}', String(label.days))
+}
+
+/** A session's agent log, read through the host that ran it a page at a time from its end. */
+function useSessionTranscript(client: RpcClient, record: BuildWebAgentSessionRecord) {
   const [state, setState] = useState<Transcript>(START)
   const read = useCallback(
     (before?: number) => {
       setState((s) => ({ ...s, loading: true }))
-      call('sessionTranscript', {
+      callBuildWeb(client, 'sessionTranscript', {
         agent: record.agent,
         providerSessionId: record.provider_session_id,
         ...(before !== undefined ? { before } : {})
@@ -36,57 +47,61 @@ function useSessionTranscript(record: BuildWebAgentSessionRecord) {
           setState((s) => {
             if (page.kind === 'found') {
               const text = s.text && page.text ? `${page.text}\n\n${s.text}` : page.text || s.text
-              return { text, before: page.before, loading: false, problem: null }
+              return { text, before: page.before, loading: false, error: null, gone: null }
             }
-            const label =
-              page.kind === 'missing'
-                ? missingTranscriptLabel(page.retentionDays, record.started_at, Date.now())
-                : UNSUPPORTED_TRANSCRIPT_LABEL
-            const days = page.kind === 'missing' ? String(page.retentionDays) : ''
-            return { ...s, loading: false, problem: label.text.replace('{{days}}', days) }
+            return { ...s, loading: false, error: null, gone: page }
           }),
         (failure: unknown) =>
-          setState((s) => ({ ...s, loading: false, problem: buildWebErrorMessage(failure) }))
+          setState((s) => ({ ...s, loading: false, error: buildWebErrorMessage(failure) }))
       )
     },
-    [call, record.agent, record.provider_session_id, record.started_at]
+    [client, record.agent, record.provider_session_id]
   )
   useEffect(() => read(), [read])
-  return { ...state, readEarlier: () => state.before !== null && read(state.before) }
+  return {
+    text: state.text,
+    before: state.before,
+    loading: state.loading,
+    problem: state.error ?? (state.gone ? goneLabel(state.gone, record) : null),
+    readEarlier: () => state.before !== null && read(state.before)
+  }
 }
 
-function TranscriptBody({ record }: { record: BuildWebAgentSessionRecord }) {
-  const transcript = useSessionTranscript(record)
+function TranscriptBody({
+  client,
+  record
+}: {
+  client: RpcClient
+  record: BuildWebAgentSessionRecord
+}) {
+  const transcript = useSessionTranscript(client, record)
   return (
     <LogLinesPanel
       title={`${record.worktree_name || record.issue_key} · ${record.agent} log`}
       lines={transcript.text ? transcript.text.split('\n') : []}
       loading={transcript.loading}
       error={transcript.problem}
-      before={
-        transcript.before !== null ? (
-          <CardButton
-            label="Read earlier messages"
-            disabled={transcript.loading}
-            onPress={transcript.readEarlier}
-          />
-        ) : null
-      }
+      {...(transcript.before !== null
+        ? { earlier: { loading: transcript.loading, read: transcript.readEarlier } }
+        : {})}
     />
   )
 }
 
 /** The agent's own log of a task session, kept on the host that ran it — removed sessions too. */
 export function SessionTranscriptSheet({
-  record,
+  open,
   onClose
 }: {
-  record: BuildWebAgentSessionRecord | null
+  /** The session and the client of the host that ran it. */
+  open: { record: BuildWebAgentSessionRecord; client: RpcClient } | null
   onClose: () => void
 }) {
   return (
-    <BottomDrawer visible={record !== null} onClose={onClose} fillAvailable>
-      {record ? <TranscriptBody key={record.id} record={record} /> : null}
+    <BottomDrawer visible={open !== null} onClose={onClose} fillAvailable>
+      {open ? (
+        <TranscriptBody key={open.record.id} client={open.client} record={open.record} />
+      ) : null}
     </BottomDrawer>
   )
 }

@@ -45,6 +45,7 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.jiraTransition',
   'buildWeb.jiraTransitions',
   'buildWeb.lastBuilt',
+  'buildWeb.linkWorktreeSession',
   'buildWeb.listAssignees',
   'buildWeb.listImageBuilds',
   'buildWeb.listImages',

@@ -86,7 +86,8 @@ export function revealBuildWebSession(
 
 /**
  * «Take to work» on a task whose current session is still open: its worktree, found by the task's
- * link or, for a session started before tasks had one, by its tab. False when there is none here.
+ * link or, for a session started before tasks had one, by its tab. A console that names no session
+ * row links nothing, so there the tab comes first. False when there is none here.
  */
 export function openTaskSessionWorktree(
   issue: Pick<BuildWebIssueRow, 'id' | 'agent_session' | 'agent_session_state'>,
@@ -96,9 +97,14 @@ export function openTaskSessionWorktree(
   if (!session) {
     return false
   }
-  const linked = findTaskSessionWorktree(issue, knownWorktrees(), consoleHost)
-  const worktree = linked
-    ? { worktreeId: linked.id, ...(linked.hostId ? { hostId: linked.hostId } : {}) }
-    : findBuildWebSessionWorktree(session)
+  const byLink = (): BuildWebSessionWorktree | null => {
+    const linked = findTaskSessionWorktree(issue, knownWorktrees(), consoleHost)
+    return linked
+      ? { worktreeId: linked.id, ...(linked.hostId ? { hostId: linked.hostId } : {}) }
+      : null
+  }
+  const worktree = session.id
+    ? (byLink() ?? findBuildWebSessionWorktree(session))
+    : (findBuildWebSessionWorktree(session) ?? byLink())
   return worktree ? revealBuildWebSession(worktree, session) : false
 }

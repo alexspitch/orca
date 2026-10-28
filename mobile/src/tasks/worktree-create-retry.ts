@@ -33,7 +33,13 @@ import {
 
 // Branches and remote PRs outlive worktrees and escape local preflight dedupe; retry host collision errors with numeric suffixes.
 export type WorktreeCreateResult =
-  | { worktreeId: string; name: string; warning?: string }
+  | {
+      worktreeId: string
+      name: string
+      /** The worktree's folder on the host, when its reply names it. */
+      path?: string
+      warning?: string
+    }
   | { error: string }
 
 export type CreateWorktreeWithNameRetryArgs = {
@@ -99,6 +105,7 @@ export async function createWorktreeWithNameRetry(
         return {
           worktreeId: created.worktreeId,
           name: created.displayName?.trim() ? created.displayName : candidateName,
+          ...(created.path ? { path: created.path } : {}),
           ...(created.warning ? { warning: created.warning } : {})
         }
       }
@@ -127,7 +134,7 @@ async function resolveAgentLaunchRoute(
 function readCreateResult(
   response: RpcResponse,
   launch: { replay: boolean } | null
-): { worktreeId: string; displayName?: string; warning?: string } | null {
+): { worktreeId: string; displayName?: string; path?: string; warning?: string } | null {
   if (launch) {
     const operation = launch.replay ? agentLaunchReplayRun : agentLaunchRun
     return readAgentLaunchCreateOutcome(operation.interpret(response))
@@ -138,11 +145,13 @@ function readCreateResult(
     return null
   }
   const displayName = created.worktree.displayName
+  const path = created.worktree.path
   // A successful create may still fail PTY startup; retain its warning to explain an empty session.
   const warning = typeof created?.warning === 'string' ? created.warning.trim() : ''
   return {
     worktreeId,
     ...(typeof displayName === 'string' ? { displayName } : {}),
+    ...(typeof path === 'string' && path ? { path } : {}),
     ...(warning ? { warning } : {})
   }
 }

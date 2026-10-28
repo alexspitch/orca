@@ -5,7 +5,7 @@ import type {
   WorktreeBuildWebTask
 } from './build-web-session-types'
 import type { BuildWebIssueRow } from './build-web-types'
-import { taskWorktreesOf } from './build-web-task-session-worktree'
+import { taskWorktreesOf, unlinkedSessionWorktree } from './build-web-task-session-worktree'
 
 // A task card's «Sessions» (IS-147): the console's history joined with the worktrees this client
 // knows. The console says what happened; the worktree's own state says when it needs a person.
@@ -13,6 +13,7 @@ import { taskWorktreesOf } from './build-web-task-session-worktree'
 type TaskWorktree = {
   buildWebTask?: WorktreeBuildWebTask
   buildWebSession?: WorktreeBuildWebSession
+  path?: string
 }
 
 export type BuildWebSessionRow<W> = {
@@ -25,7 +26,7 @@ export type BuildWebSessionRow<W> = {
 
 /**
  * Newest first, as the console lists them. A worktree joins the row its link names; one not
- * linked yet joins the newest session still open, the only one its link could still name.
+ * linked yet can join only the newest session still open (see `unlinkedSessionWorktree`).
  */
 export function joinSessionRows<W extends TaskWorktree>(
   records: readonly BuildWebAgentSessionRecord[],
@@ -39,7 +40,7 @@ export function joinSessionRows<W extends TaskWorktree>(
     const worktree = record.worktree_removed_at
       ? null
       : (ours.find((w) => w.buildWebTask?.sessionId === record.id) ??
-        (record === newestOpen ? ours.find((w) => !w.buildWebTask?.sessionId) : undefined) ??
+        (record === newestOpen ? unlinkedSessionWorktree(record, ours) : undefined) ??
         null)
     const state = worktree?.buildWebSession
     return { record, worktree, attention: state?.state === 'attention' ? state : null }

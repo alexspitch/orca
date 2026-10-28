@@ -3,9 +3,13 @@ import { createWorktreeWithNameRetry } from '../../tasks/worktree-create-retry'
 import { readNewWorktreeRuntimeCapabilities } from '../../tasks/worktree-create-capability'
 import { repoDefaultBaseRefRead } from '../../source-control/mobile-repo-base-ref-operations'
 import type { WorktreeBuildWebTaskRequest } from '../../../../src/shared/build-web-session-types'
+import { worktreeFolderName } from '../../../../src/shared/build-web-task-session-worktree'
 
 // «Take to work» in a new worktree: the host makes it with the repo's own setup policy, then the
 // session is launched in it like in any existing one.
+
+/** A worktree made for a task: `name` is its label, `folder` what the console keeps. */
+export type CreatedTaskWorktree = { worktreeId: string; name: string; folder: string }
 
 export async function createTaskWorktree(args: {
   client: RpcClient
@@ -19,7 +23,7 @@ export async function createTaskWorktree(args: {
   buildWebTask?: WorktreeBuildWebTaskRequest
   /** The sidebar label; the folder and branch keep `name`. */
   displayName?: string
-}): Promise<{ worktreeId: string; name: string } | { error: string }> {
+}): Promise<CreatedTaskWorktree | { error: string }> {
   const created = await createWorktreeWithNameRetry({
     client: args.client,
     baseName: args.name,
@@ -43,7 +47,11 @@ export async function createTaskWorktree(args: {
       ? { error: 'This repository asks whether to run its setup script: choose Run or Skip.' }
       : { error: `Could not create the worktree: ${created.error}` }
   }
-  return { worktreeId: created.worktreeId, name: created.name }
+  return {
+    worktreeId: created.worktreeId,
+    name: created.name,
+    folder: worktreeFolderName(created.path) || args.name
+  }
 }
 
 /** The branch a new worktree of the repo starts from: the project's own default, else git's. */

@@ -115,6 +115,12 @@ export type BuildWebApi = {
     args: BuildWebAgentSessionSettings
   ) => Promise<BuildWebMutationResult<BuildWebAgentSessionSettings>>
   keepWorktreeSession: (args: { worktreeId: string }) => Promise<BuildWebMutationResult<true>>
+  /** Records the console's session row on a task worktree of this host; false when it is not one. */
+  linkWorktreeSession: (args: {
+    worktreeId: string
+    issueId: string
+    sessionId: string
+  }) => Promise<BuildWebMutationResult<boolean>>
   /** A session's agent log on this host, a page from its end; `before` reads the page before. */
   sessionTranscript: (args: {
     agent: string

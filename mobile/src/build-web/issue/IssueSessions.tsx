@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { Bot, SquareTerminal } from 'lucide-react-native'
 import type { BuildWebIssueDetail } from '../../../../src/shared/build-web-types'
 import type { BuildWebAgentSessionRecord } from '../../../../src/shared/build-web-session-types'
-import { BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 import {
-  BUILD_WEB_AGENT_SESSION_STATE_LABELS,
-  BUILD_WEB_SESSION_REASON_LABELS,
-  BUILD_WEB_SESSION_STATE_LABELS
+  BUILD_WEB_SESSION_STATE_LABELS,
+  sessionHistoryLabel,
+  sessionReasonLabels
 } from '../../../../src/shared/build-web-session-labels'
 import {
   joinSessionRows,
@@ -15,6 +14,7 @@ import {
 } from '../../../../src/shared/build-web-session-rows'
 import { sessionStateTone } from '../../../../src/renderer/src/components/build-web/build-web-tones'
 import { chipTones, colors, radii, spacing, typography } from '../../theme/mobile-theme'
+import type { RpcClient } from '../../transport/rpc-client'
 import type { Worktree } from '../../worktree/workspace-list-types'
 import { loginOf } from '../build-web-labels'
 import { BuildWebToneChip } from '../BuildWebToneChip'
@@ -22,6 +22,7 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { useOpenBuildWebSession } from '../list/use-open-build-web-session'
 import { ui } from './issue-card-ui'
 import { SessionTranscriptSheet } from './SessionTranscriptSheet'
+import { useSessionLogClients, useSessionWorktrees } from './use-session-hosts'
 
 const when = (iso: string | null): string => (iso ? new Date(iso).toLocaleString() : '')
 
@@ -38,9 +39,10 @@ function SessionRow({
   const { record, worktree, attention } = row
   const state = attention
     ? BUILD_WEB_SESSION_STATE_LABELS.attention.full.text
-    : BUILD_WEB_AGENT_SESSION_STATE_LABELS[record.state].text
+    : sessionHistoryLabel(record.state).text
   const note = attention?.reason
-    ? BUILD_WEB_SESSION_REASON_LABELS[attention.reason].full.text
+    ? (sessionReasonLabels(attention.reason)?.full ?? BUILD_WEB_SESSION_STATE_LABELS.attention.full)
+        .text
     : record.removal_note
   const ended = record.ended_at ?? record.agent_finished_at
   return (
@@ -88,32 +90,19 @@ export function IssueSessions({
     'id' | 'agent_session' | 'agent_session_state' | 'agent_sessions'
   >
 }) {
-  const { status, hostCapabilities } = useBuildWebScreen()
+  const { client, status, hostCapabilities } = useBuildWebScreen()
   const session = useOpenBuildWebSession()
-  const [logOf, setLogOf] = useState<BuildWebAgentSessionRecord | null>(null)
-  const logs = hostCapabilities.includes(BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY)
+  const [logOf, setLogOf] = useState<{
+    record: BuildWebAgentSessionRecord
+    client: RpcClient
+  } | null>(null)
   const records = detail.agent_sessions
-  const [worktrees, setWorktrees] = useState<readonly Worktree[]>([])
-  const { listWorktrees } = session
-  const listed = Boolean(records?.length)
-  useEffect(() => {
-    if (!listed) {
-      return
-    }
-    let live = true
-    void listWorktrees().then(
-      (rows) => live && setWorktrees(rows),
-      // Why: without the host's workspaces the history still reads, only without links.
-      () => {}
-    )
-    return () => {
-      live = false
-    }
-  }, [listWorktrees, listed])
+  const worktrees = useSessionWorktrees(client, session.listWorktrees, Boolean(records?.length))
   const rows = useMemo(
     () => (records ? joinSessionRows(records, worktrees, detail.id, status.baseUrl ?? '') : []),
     [detail.id, records, status.baseUrl, worktrees]
   )
+  const logClients = useSessionLogClients(client, hostCapabilities, rows)
   if (!records) {
     const current = detail.agent_session
     return current ? (
@@ -141,15 +130,20 @@ export function IssueSessions({
         <Bot size={14} color={chipTones.purple} />
         <Text style={ui.sectionTitle}>Sessions</Text>
       </View>
-      {rows.map((row) => (
-        <SessionRow
-          key={row.record.id}
-          row={row}
-          onOpen={(worktree) => session.openWorktree(worktree)}
-          {...(logs && row.record.provider_session_id ? { onLog: () => setLogOf(row.record) } : {})}
-        />
-      ))}
-      <SessionTranscriptSheet record={logOf} onClose={() => setLogOf(null)} />
+      {rows.map((row) => {
+        const logClient = row.record.provider_session_id ? logClients.get(row.record.id) : undefined
+        return (
+          <SessionRow
+            key={row.record.id}
+            row={row}
+            onOpen={(worktree) => session.openWorktree(worktree)}
+            {...(logClient
+              ? { onLog: () => setLogOf({ record: row.record, client: logClient }) }
+              : {})}
+          />
+        )
+      })}
+      <SessionTranscriptSheet open={logOf} onClose={() => setLogOf(null)} />
     </View>
   )
 }
