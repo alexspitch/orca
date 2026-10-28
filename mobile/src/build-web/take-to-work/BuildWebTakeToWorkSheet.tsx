@@ -11,7 +11,7 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { BuildWebToneChip, ProductChip, StatusChip } from '../BuildWebToneChip'
 import { CardButton, ErrorText, MutedText, ui } from '../issue/issue-card-ui'
 import { launchBuildWebTask } from './build-web-agent-launch'
-import { createTaskWorktree } from './build-web-new-worktree'
+import { createTaskWorktree, type CreatedTaskWorktree } from './build-web-new-worktree'
 import {
   batchCheckMessage,
   defaultTakeToWorkWorktree,
@@ -99,7 +99,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
   const [starting, setStarting] = useState(false)
   const [setupDecision, setSetupDecision] = useState<'inherit' | 'run' | 'skip'>('inherit')
   // A worktree this sheet made whose session did not start: Start retries in it, never makes another.
-  const [created, setCreated] = useState<{ worktreeId: string; name: string } | null>(null)
+  const [created, setCreated] = useState<CreatedTaskWorktree | null>(null)
   // The agent may be running: no second launch until the person has looked at the workspace.
   const [unconfirmed, setUnconfirmed] = useState<{
     message: string
@@ -147,7 +147,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
   }
 
   const launchIn = async (
-    target: Pick<TakeToWorkWorktree, 'worktreeId' | 'displayName' | 'hostId'>
+    target: Pick<TakeToWorkWorktree, 'worktreeId' | 'displayName' | 'hostId'> & { folder?: string }
   ) => {
     if (!baseUrl) {
       return
@@ -192,7 +192,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
     setStarting(true)
     try {
       if (created) {
-        await launchIn({ worktreeId: created.worktreeId, displayName: created.name })
+        await launchIn({ ...created, displayName: created.name })
         return
       }
       if (!chatPlatform) {
@@ -214,9 +214,9 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
           notify(made.error, 'error')
           return
         }
-        setCreated({ worktreeId: made.worktreeId, name: made.name })
+        setCreated(made)
         notify(`Starting the session in ${made.name}…`)
-        await launchIn({ worktreeId: made.worktreeId, displayName: made.name })
+        await launchIn({ ...made, displayName: made.name })
         return
       }
       if (worktree) {
