@@ -27,6 +27,7 @@ import { useIssueRowActions } from './use-issue-row-actions'
 import { useOpenBuildWebSession } from './use-open-build-web-session'
 import { useQueryTabs } from './use-query-tabs'
 import { useRecentTasks } from './use-recent-tasks'
+import { useTakeToWork } from '../take-to-work/use-take-to-work'
 
 const NOBODY = '__nobody__'
 
@@ -47,6 +48,7 @@ export function BuildWebIssueListView({
   const recent = useRecentTasks(screen.hostId, consoleUrl)
   const rows = useIssueRowActions(list)
   const session = useOpenBuildWebSession()
+  const takeToWork = useTakeToWork()
   const users = useBuildWebAssignees(list.issues.length > 0)
   const [savedOpen, setSavedOpen] = useState(false)
   const [saving, setSaving] = useState<readonly BuildWebSavedQuery[] | null>(null)
@@ -107,9 +109,7 @@ export function BuildWebIssueListView({
   const { open: openSession } = session
   const openRowSession = useCallback(
     (issue: BuildWebIssueRow) => {
-      if (issue.agent_session) {
-        void openSession(issue.agent_session)
-      }
+      void openSession(issue)
     },
     [openSession]
   )
@@ -282,11 +282,7 @@ export function BuildWebIssueListView({
       />
       <IssueListFilters list={list} onOpenSavedQueries={() => setSavedOpen(true)} />
       <View style={styles.grow}>{body()}</View>
-      <IssueSelectionBar
-        picked={picked}
-        onClear={list.clearSelection}
-        onTakeToWork={screen.takeToWork}
-      />
+      <IssueSelectionBar picked={picked} onClear={list.clearSelection} onTakeToWork={takeToWork} />
       <SavedQueriesSheet
         visible={savedOpen}
         tabs={queryTabs}

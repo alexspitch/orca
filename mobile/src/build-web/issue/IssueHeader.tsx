@@ -18,6 +18,7 @@ import {
 } from '../BuildWebToneChip'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { useOpenBuildWebSession } from '../list/use-open-build-web-session'
+import { useTakeToWork } from '../take-to-work/use-take-to-work'
 import { CardButton, ui } from './issue-card-ui'
 import { blockedBySubtasks } from './IssueSubtasksTab'
 import type { IssueArchiveState } from './use-issue-archive'
@@ -115,7 +116,8 @@ export function IssueHeader({
   onSave: (patch: BuildWebIssuePatch) => void
   archive: IssueArchiveState
 }) {
-  const { openIssue, closeIssue, takeToWork } = useBuildWebScreen()
+  const { openIssue, closeIssue } = useBuildWebScreen()
+  const takeToWork = useTakeToWork()
   const session = useOpenBuildWebSession()
   const next = nextStatus(detail.status, Boolean(detail.parent_id))
   // The move the open subtasks forbid: build-web answers 409, so the button says so first.
@@ -162,7 +164,7 @@ export function IssueHeader({
           accessibilityRole="button"
           accessibilityLabel="Open the agent session"
           disabled={session.opening}
-          onPress={() => detail.agent_session && void session.open(detail.agent_session)}
+          onPress={() => void session.open(detail)}
           style={({ pressed }) => [styles.session, pressed ? styles.pressed : null]}
         >
           <SquareTerminal size={14} color={chipTones.blue} />
