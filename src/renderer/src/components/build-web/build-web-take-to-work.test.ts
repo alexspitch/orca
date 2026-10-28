@@ -3,12 +3,13 @@ import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {
-  batchWorktreeName,
-  buildWebBatchPrompt,
   isChatPlatformBatch,
   defaultTakeToWorkWorktree,
   takeToWorkCandidates,
+  takeToWorkPrompt,
   takeToWorkRepos,
+  takenWorktreeNames,
+  taskWorktreeName,
   validateBuildWebBatch
 } from './build-web-take-to-work'
 
@@ -36,31 +37,19 @@ const issue = (key: string, over: Partial<BuildWebIssueRow> = {}): BuildWebIssue
   ...over
 })
 
-describe('take to work batch', () => {
-  it('accepts one product and one release', () => {
-    expect(validateBuildWebBatch([issue('IS-1'), issue('IS-2.1')])).toEqual({ ok: true })
-  })
-
-  it('refuses a mix and names the groups', () => {
-    const check = validateBuildWebBatch([
-      issue('IS-1'),
-      issue('IS-2'),
-      issue('IS-3', { product: 'dc', version_id: 'v216', version_name: '2.16' }),
-      issue('IS-4', { version_id: null, version_name: null })
-    ])
-    expect(check).toEqual({
+describe('take to work', () => {
+  it('takes one task, and only one', () => {
+    expect(validateBuildWebBatch([issue('IS-2.1')])).toEqual({ ok: true })
+    expect(validateBuildWebBatch([issue('IS-1'), issue('IS-2')])).toEqual({
       ok: false,
-      reason: 'mixed',
-      groups: ['SA 3.1 (2)', 'DC 2.16 (1)', 'SA — (1)']
+      reason: 'too-many',
+      groups: []
     })
+    expect(validateBuildWebBatch([]).ok).toBe(false)
   })
 
-  it('refuses keys that could carry anything into a terminal, and big batches', () => {
+  it('refuses a key that could carry anything into a terminal', () => {
     expect(validateBuildWebBatch([issue('IS-1\nrm -rf /')]).ok).toBe(false)
-    expect(validateBuildWebBatch(Array.from({ length: 21 }, (_, i) => issue(`IS-${i}`))).ok).toBe(
-      false
-    )
-    expect(validateBuildWebBatch([]).ok).toBe(false)
   })
 
   it('refuses a task whose product Orca does not know', () => {
@@ -73,36 +62,33 @@ describe('take to work batch', () => {
 })
 
 describe('skill call', () => {
-  it('is only the skill, the keys and fixed flags, always in the session’s own worktree', () => {
-    expect(buildWebBatchPrompt(['IS-1', 'SDAP-4242', 'IS-1'], { auto: false })).toBe(
-      '/build-web-tasks batch IS-1 SDAP-4242 -no-worktree'
+  it('codes the one task in the worktree Orca made', () => {
+    expect(takeToWorkPrompt('IS-1', { auto: false })).toBe(
+      '/build-web-tasks code IS-1 -no-worktree'
     )
-    expect(buildWebBatchPrompt(['IS-2.1'], { auto: true })).toBe(
-      '/build-web-tasks batch IS-2.1 -no-worktree -auto'
+    expect(takeToWorkPrompt('IS-2.1', { auto: true })).toBe(
+      '/build-web-tasks code IS-2.1 -no-worktree -auto'
     )
-    expect(() => buildWebBatchPrompt(['IS-1 -auto; whoami'], { auto: false })).toThrow()
+    expect(() => takeToWorkPrompt('IS-1 -auto; whoami', { auto: false })).toThrow()
   })
 
   it('sends the person’s instruction after the skill call, on lines of its own', () => {
     expect(
-      buildWebBatchPrompt(['IS-1'], {
-        auto: false,
-        instruction: '  Keep the API as is.\nNo new deps. '
-      })
+      takeToWorkPrompt('IS-1', { auto: false, instruction: '  Keep the API as is.\nNo new deps. ' })
     ).toBe(
-      '/build-web-tasks batch IS-1 -no-worktree\n\nAdditional instruction from the person who took these tasks to work:\nKeep the API as is.\nNo new deps.'
+      '/build-web-tasks code IS-1 -no-worktree\n\nAdditional instruction from the person who took this task to work:\nKeep the API as is.\nNo new deps.'
     )
-    expect(buildWebBatchPrompt(['IS-1'], { auto: false, instruction: '   ' })).toBe(
-      '/build-web-tasks batch IS-1 -no-worktree'
+    expect(takeToWorkPrompt('IS-1', { auto: false, instruction: '   ' })).toBe(
+      '/build-web-tasks code IS-1 -no-worktree'
     )
   })
 
-  it('lets the skill make chat-platform’s worktree for a batch of Chat Platform tasks', () => {
-    expect(buildWebBatchPrompt(['CPDEV-12'], { auto: true, ownWorktree: true })).toBe(
+  it('keeps a Chat Platform task’s call, which makes chat-platform’s worktree itself', () => {
+    expect(takeToWorkPrompt('CPDEV-12', { auto: true, ownWorktree: true })).toBe(
       '/build-web-tasks batch CPDEV-12 -auto'
     )
-    expect(isChatPlatformBatch([{ product: 'cp' }, { product: 'cp' }])).toBe(true)
-    expect(isChatPlatformBatch([{ product: 'cp' }, { product: 'dc' }])).toBe(false)
+    expect(isChatPlatformBatch([{ product: 'cp' }])).toBe(true)
+    expect(isChatPlatformBatch([{ product: 'dc' }])).toBe(false)
     expect(isChatPlatformBatch([])).toBe(false)
   })
 })
@@ -142,10 +128,14 @@ describe('worktree candidates', () => {
   })
 })
 
-describe('a new worktree for the batch', () => {
-  it('is named after its keys, at most three', () => {
-    expect(batchWorktreeName(['IS-12', 'IS-13.1'])).toBe('is-12-is-13-1')
-    expect(batchWorktreeName(['IS-1', 'IS-2', 'IS-3', 'IS-4'])).toBe('is-1-is-2-is-3-batch')
+describe('the task’s own worktree', () => {
+  it('is named after its key, with a suffix while the name is taken', () => {
+    expect(taskWorktreeName('IS-13.1')).toBe('is-13-1')
+    const taken = takenWorktreeNames([
+      { displayName: 'Something else', path: '/w/is-12', branch: 'refs/heads/alex/is-12-2' },
+      { displayName: 'IS-12-3' }
+    ])
+    expect(taskWorktreeName('IS-12', taken)).toBe('is-12-4')
   })
 
   it('goes into the build-web repository when there is one', () => {

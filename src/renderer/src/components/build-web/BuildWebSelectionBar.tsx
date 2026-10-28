@@ -1,12 +1,11 @@
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { batchCheckMessage, validateBuildWebBatch } from './build-web-take-to-work'
 import { BuildWebToneChip, ProductChip } from './BuildWebToneChip'
 
-/** The picked tasks and «Take to work», refused for a mix of products or releases. */
+/** The picked tasks and «Take to work», which takes one task: with more, the button says why it waits. */
 export function BuildWebSelectionBar({
   onTakeToWork
 }: {
@@ -21,11 +20,6 @@ export function BuildWebSelectionBar({
   }
   const check = validateBuildWebBatch(picked)
   const reason = batchCheckMessage(check)
-  const takeButton = (
-    <Button size="sm" disabled={!check.ok} onClick={() => onTakeToWork(picked)}>
-      {translate('buildWeb.take.button', 'Take to work ({{count}})', { count: picked.length })}
-    </Button>
-  )
   return (
     <div className="m-3 flex flex-wrap items-center gap-3 rounded-md border border-border bg-card px-3 py-2 md:mx-5">
       <span className="text-sm font-medium">
@@ -45,16 +39,10 @@ export function BuildWebSelectionBar({
       <Button variant="ghost" size="sm" onClick={clear}>
         {translate('buildWeb.take.clear', 'Clear')}
       </Button>
-      {reason ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0}>{takeButton}</span>
-          </TooltipTrigger>
-          <TooltipContent>{reason}</TooltipContent>
-        </Tooltip>
-      ) : (
-        takeButton
-      )}
+      {reason ? <span className="text-xs text-muted-foreground">{reason}</span> : null}
+      <Button size="sm" disabled={!check.ok} onClick={() => onTakeToWork(picked)}>
+        {translate('buildWeb.take.buttonOne', 'Take to work')}
+      </Button>
     </div>
   )
 }
