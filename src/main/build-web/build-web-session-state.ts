@@ -41,6 +41,21 @@ export function isFinisherAttention(session: WorktreeBuildWebSession | undefined
   )
 }
 
+// Why: these say only that a closed task's worktree waited too long; a later good look lifts them.
+const WAIT_REASONS: readonly BuildWebSessionAttentionReason[] = [
+  'agent-running',
+  'terminal-busy',
+  'state-unknown'
+]
+
+export function isWaitAttention(session: WorktreeBuildWebSession | undefined): boolean {
+  return (
+    session?.state === 'attention' &&
+    session.reason !== undefined &&
+    WAIT_REASONS.includes(session.reason)
+  )
+}
+
 function liveChange(
   current: WorktreeBuildWebSession | undefined,
   state: 'active' | 'waiting' | 'closing',

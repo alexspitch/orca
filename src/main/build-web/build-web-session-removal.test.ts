@@ -35,11 +35,15 @@ function harness(removed: RemoveWorktreeResult = {}) {
     buildWebTask?: WorktreeBuildWebTask
     buildWebSession?: WorktreeBuildWebSession
     lastActivityAt: number
-  } = { buildWebTask: TASK, lastActivityAt: 10 }
+    isPinned: boolean
+  } = { buildWebTask: TASK, lastActivityAt: 10, isPinned: false }
   let turn: () => void = () => {}
   const queued = new Promise<void>((resolve) => {
     turn = resolve
   })
+  // What lands while the slow scan runs: the window the last checks must still see.
+  let duringScan: () => void = () => {}
+  let agentAwake = false
   const reports = { hold: vi.fn(), release: vi.fn(), enqueue: vi.fn() }
   const deps: BuildWebSessionRemovalDeps = {
     queueDelete: async (_selector, run) => {
@@ -48,26 +52,48 @@ function harness(removed: RemoveWorktreeResult = {}) {
     },
     probe: {
       readMeta: () => meta,
-      activity: async () => ({ kind: 'idle' }),
+      activity: async () =>
+        agentAwake ? { kind: 'busy', reason: 'agent-running' } : { kind: 'idle' },
       readHead: async () => HEAD,
-      scanBlockers: async () => []
+      scanBlockers: async () => {
+        duringScan()
+        return []
+      }
     },
     remove: vi.fn(async () => removed),
     forceDeleteBranch: vi.fn(async () => ({ deleted: true })),
-    reports
+    reports,
+    stopped: () => false
   }
+  let metaWrite: Promise<void> = Promise.resolve()
   const runtime = {
     showManagedWorktree: async () => ({ buildWebTask: meta.buildWebTask }),
     updateManagedWorktreeMeta: async (
       _selector: string,
       updates: { buildWebTask?: WorktreeBuildWebTask | null }
     ) => {
+      await metaWrite
       if (updates.buildWebTask === null) {
         delete meta.buildWebTask
       }
     }
   }
-  return { meta, deps, reports, runtime, turn }
+  return {
+    meta,
+    deps,
+    reports,
+    runtime,
+    turn,
+    onScan: (run: () => void) => {
+      duringScan = run
+    },
+    wakeAgent: () => {
+      agentAwake = true
+    },
+    holdMetaWrites: (until: Promise<void>) => {
+      metaWrite = until
+    }
+  }
 }
 
 describe('removeEmptyBuildWebWorktree', () => {
@@ -91,6 +117,65 @@ describe('removeEmptyBuildWebWorktree', () => {
       consoleHost: 'https://bw.test'
     })
     expect(h.reports.release).toHaveBeenCalledWith('s1', undefined)
+  })
+
+  it('cancels when a Keep starts during the last check, before its write lands', async () => {
+    const h = harness()
+    let landWrite: () => void = () => {}
+    h.holdMetaWrites(new Promise((resolve) => (landWrite = resolve)))
+    let kept: ReturnType<typeof keepBuildWebWorktreeSession> | null = null
+    h.onScan(() => {
+      kept = keepBuildWebWorktreeSession(h.runtime, TARGET.worktreeId, h.reports)
+    })
+    h.turn()
+
+    expect(await removeEmptyBuildWebWorktree(h.deps, TARGET)).toEqual({
+      kind: 'cancelled',
+      why: 'a person is keeping the worktree'
+    })
+    expect(h.deps.remove).not.toHaveBeenCalled()
+    landWrite()
+    expect(await kept).toEqual({ ok: true, value: true })
+    expect(h.meta.buildWebTask).toBeUndefined()
+  })
+
+  it('refuses a Keep once the delete has passed its last check', async () => {
+    const h = harness()
+    let kept: ReturnType<typeof keepBuildWebWorktreeSession> | null = null
+    vi.mocked(h.deps.remove).mockImplementationOnce(async () => {
+      kept = keepBuildWebWorktreeSession(h.runtime, TARGET.worktreeId, h.reports)
+      return {}
+    })
+    h.turn()
+
+    expect(await removeEmptyBuildWebWorktree(h.deps, TARGET)).toEqual({ kind: 'removed' })
+    expect(await kept).toMatchObject({
+      ok: false,
+      error: 'This workspace is already being removed.'
+    })
+    expect(h.reports.enqueue).not.toHaveBeenCalled()
+  })
+
+  it('cancels when the worktree is pinned or an agent wakes during the slow scan', async () => {
+    const pinned = harness()
+    pinned.onScan(() => {
+      pinned.meta.isPinned = true
+    })
+    pinned.turn()
+    expect(await removeEmptyBuildWebWorktree(pinned.deps, TARGET)).toEqual({
+      kind: 'cancelled',
+      why: 'the worktree was pinned'
+    })
+
+    const woke = harness()
+    woke.onScan(woke.wakeAgent)
+    woke.turn()
+    expect(await removeEmptyBuildWebWorktree(woke.deps, TARGET)).toEqual({
+      kind: 'cancelled',
+      why: 'something runs in the worktree'
+    })
+    expect(pinned.deps.remove).not.toHaveBeenCalled()
+    expect(woke.deps.remove).not.toHaveBeenCalled()
   })
 
   it('cancels when the worktree was used while the deletion waited', async () => {

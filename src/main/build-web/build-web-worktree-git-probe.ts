@@ -34,11 +34,16 @@ export type BuildWebTaskWorktreeRef = {
   branch: string
 }
 
+export type BuildWebWorktreeGitProbe = BuildWebEmptyContainerProbe<RemoteTrackingBase> & {
+  /** The top-most ignored entries (an ignored folder is one), or null when Git could not say. */
+  readIgnored: () => Promise<string[] | null>
+}
+
 export function createBuildWebWorktreeGitProbe(
   runtime: BuildWebWorktreeGitRuntime,
   store: Store,
   target: BuildWebTaskWorktreeRef
-): BuildWebEmptyContainerProbe<RemoteTrackingBase> {
+): BuildWebWorktreeGitProbe {
   const { repo, meta } = target
   const gitOptions = getLocalProjectWorktreeGitOptions(store, repo)
   const git = (argv: string[], cwd: string) => gitExecFileAsync(argv, { cwd, ...gitOptions })
@@ -84,6 +89,18 @@ export function createBuildWebWorktreeGitProbe(
         refreshActivity: true
       }).catch(() => null)
       return scan?.candidates.find((c) => c.worktreeId === target.worktreeId)?.blockers ?? null
+    },
+    readIgnored: async () => {
+      try {
+        // Why --directory: an ignored folder is one entry, and Git does not walk into it.
+        const { stdout } = await git(
+          ['ls-files', '--others', '--ignored', '--exclude-standard', '--directory', '-z'],
+          target.path
+        )
+        return stdout.split('\0').filter(Boolean)
+      } catch {
+        return null
+      }
     }
   }
 }
