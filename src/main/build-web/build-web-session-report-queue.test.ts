@@ -103,12 +103,16 @@ describe('build-web session report queue', () => {
     expect(queue().q.pending()).toEqual([])
   })
 
-  it('waits for the console the session belongs to', async () => {
+  it('waits for the console the session belongs to, however its URL is spelled', async () => {
     const { q, send } = queue({ consoleHost: () => 'https://other.test' })
     q.enqueue(REMOVED)
     await q.drain()
     expect(send).not.toHaveBeenCalled()
     expect(q.pending()).toEqual([REMOVED])
+
+    const same = queue({ consoleHost: () => 'https://BW.test:443/' })
+    await same.q.drain()
+    expect(same.send).toHaveBeenCalledWith(REMOVED)
   })
 
   it('holds a removal until the finisher names the branch it kept', async () => {

@@ -1,15 +1,17 @@
-import { access } from 'node:fs/promises'
 import {
   getRepoExecutionHostId,
   getRepoRoutingConnectionId,
   LOCAL_EXECUTION_HOST_ID
 } from '../../shared/execution-host'
 import type { WorktreeBuildWebTask } from '../../shared/build-web-session-types'
+import { sameBuildWebConsole } from '../../shared/build-web-console-origin'
 import { isFolderRepo } from '../../shared/repo-kind'
 import { splitWorktreeId } from '../../shared/worktree/id'
 import type { Store } from '../persistence'
 import { readAllWorktreeMetaForHost } from '../persistence/host-qualified-worktree-meta'
 import { listWorktreesStrictAllowingTrueEmpty } from '../git/worktree-listing'
+import { areWorktreePathsEqual } from '../git/worktree-path-comparison'
+import { isWorktreePathMissing } from '../worktree-removal-safety'
 import { getLocalProjectWorktreeGitOptions } from '../project-runtime-git-options'
 import type { ProjectRuntimeResolutionStore } from '../local-project-runtime-resolution'
 import type { BuildWebTaskWorktreeRef } from './build-web-worktree-git-probe'
@@ -52,7 +54,7 @@ export function listLocalBuildWebTaskWorktrees(
     const task = meta.buildWebTask
     const parsed = splitWorktreeId(worktreeId)
     const repo = parsed ? repos.find((r) => r.id === parsed.repoId) : undefined
-    if (!task || task.consoleHost !== consoleHost || !parsed || !repo) {
+    if (!task || !sameBuildWebConsole(task.consoleHost, consoleHost) || !parsed || !repo) {
       continue
     }
     rows.push({ worktreeId, path: parsed.worktreePath, repo, meta, branch: task.branch, task })
@@ -60,21 +62,13 @@ export function listLocalBuildWebTaskWorktrees(
   return rows
 }
 
-async function pathExists(path: string): Promise<boolean> {
-  try {
-    await access(path)
-    return true
-  } catch {
-    return false
-  }
-}
-
 /** Gone behind Orca's back: the folder is missing and Git no longer lists a live registration. */
 export async function isBuildWebTaskWorktreeGone(
   store: ProjectRuntimeResolutionStore,
   row: BuildWebTaskWorktree
 ): Promise<boolean> {
-  if (await pathExists(row.path)) {
+  // Why only ENOENT/ENOTDIR: an unreadable folder (EACCES, a stalled mount) is not a removal.
+  if (!(await isWorktreePathMissing(row.path))) {
     return false
   }
   const listed = await listWorktreesStrictAllowingTrueEmpty(
@@ -85,6 +79,6 @@ export async function isBuildWebTaskWorktreeGone(
     return false
   }
   return !listed.some(
-    (worktree) => `${row.repo.id}::${worktree.path}` === row.worktreeId && !worktree.prunable
+    (worktree) => areWorktreePathsEqual(worktree.path, row.path) && !worktree.prunable
   )
 }

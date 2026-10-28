@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync } from 'node:fs'
 import { dirname } from 'node:path'
+import { sameBuildWebConsole } from '../../shared/build-web-console-origin'
 import { durableWriteTempPath, writeFileDurableSync } from '../durable-file-write'
 import { BuildWebApiError } from './build-web-request'
 import { recordOf, textOf } from './build-web-response-fields'
@@ -168,7 +169,11 @@ export function createBuildWebSessionReportQueue(
         changed = true
         continue
       }
-      if (report.consoleHost !== host || report.nextAt > at || held.has(report.sessionId)) {
+      if (
+        !sameBuildWebConsole(report.consoleHost, host) ||
+        report.nextAt > at ||
+        held.has(report.sessionId)
+      ) {
         continue
       }
       try {
