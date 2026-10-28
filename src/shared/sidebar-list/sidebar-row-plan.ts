@@ -191,11 +191,6 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
   const naturalWorktrees = orderedGroups.flatMap(([, group]) => group.items)
   const render = (collapsedGroups: Set<string>): Row[] => {
     const result: Row[] = []
-    if (groupBy !== 'repo') {
-      for (const creation of pendingCreations) {
-        result.push(buildPendingCreationRow(creation, repoMap))
-      }
-    }
     // Include pinned-only rows when testing mixed hosts or pinned remotes lose host labels.
     const mixedWorktreeHostContextLabels = getMixedWorktreeHostContextLabels(
       worktrees,
@@ -240,6 +235,12 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
     // Needs attention sits above Pinned; it is the only lane emitted before it.
     const leadingGroups = orderedGroups.filter(([key]) => key === TASK_ATTENTION_GROUP_KEY)
     appendOrderedGroups(sectionContext, leadingGroups)
+    // Why after Needs attention: a closed task's leftover outranks a workspace still being made.
+    if (groupBy !== 'repo') {
+      for (const creation of pendingCreations) {
+        result.push(buildPendingCreationRow(creation, repoMap))
+      }
+    }
     const laterGroups =
       leadingGroups.length > 0
         ? orderedGroups.filter(([key]) => key !== TASK_ATTENTION_GROUP_KEY)

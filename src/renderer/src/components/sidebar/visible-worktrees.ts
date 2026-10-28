@@ -11,6 +11,7 @@ import {
   worktreeMatchesVisibleHost
 } from './visible-worktree-host-scope'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { isHiddenArchivedRow } from '../../../../shared/sidebar-list/task-session-groups'
 import {
   buildWorktreeComparator,
   sortWorktreesSmart
@@ -60,7 +61,10 @@ export function getVisibleWorktreeIds(): string[] {
   }
 
   const state = useAppStore.getState()
-  const allWorktrees = getAllWorktreesFromState(state).filter((w) => !w.isArchived)
+  // Why the shared rule: «By task» lists an archived attention row, so Cmd+1..9 must count it.
+  const allWorktrees = getAllWorktreesFromState(state).filter(
+    (w) => !isHiddenArchivedRow(w, state.groupBy)
+  )
 
   const repoMap = getRepoMapFromState(state)
 
@@ -118,7 +122,7 @@ export function getVisibleWorktreeShortcutTargets(): VisibleWorktreeShortcutTarg
   const worktrees = getAllWorktreesFromState(state)
     .filter(
       (worktree) =>
-        !worktree.isArchived &&
+        !isHiddenArchivedRow(worktree, state.groupBy) &&
         visibleIdRank.has(worktree.id) &&
         worktreeMatchesVisibleHost(worktree, visibleHostIds, repoMap, defaultHostId)
     )
