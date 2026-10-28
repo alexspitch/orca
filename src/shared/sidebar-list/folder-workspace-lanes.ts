@@ -5,6 +5,7 @@ import { getWorkspaceStatus, getWorkspaceStatusGroupKey } from '../workspace-sta
 import { ALL_GROUP_KEY, getPRLaneKey } from './group-keys'
 import { compareCodePoints, compareSidebarText } from './text-order'
 import type { WorktreeGroupBy } from './row-types'
+import { getTaskLaneKey } from './task-session-groups'
 
 /** Carry the owning ProjectGroup through emission: FolderWorkspaceRow requires it and emitters cannot resolve owners. */
 export type RenderableFolderWorkspace = {
@@ -44,6 +45,9 @@ export function getFolderWorkspaceLaneKey(
       return getPRLaneKey('in-progress')
     case 'none':
       return ALL_GROUP_KEY
+    case 'task':
+      // A folder carries no task.
+      return getTaskLaneKey('none')
   }
 }
 

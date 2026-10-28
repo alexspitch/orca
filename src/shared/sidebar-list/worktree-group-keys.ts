@@ -10,6 +10,7 @@ import { ALL_GROUP_KEY, getPRLaneKey, getProjectGroupHeaderKey } from './group-k
 import { buildProjectGroupingIndex, getProjectGroupingForRepo } from '../project-section-grouping'
 import type { ProjectSectionModel } from '../project-section-grouping'
 import type { SidebarPRGroupReader, WorktreeGroupBy } from './row-types'
+import { getTaskLaneKey, getWorktreeTaskGroup } from './task-session-groups'
 
 export function getGroupKeyForWorktree(
   groupBy: WorktreeGroupBy,
@@ -25,6 +26,9 @@ export function getGroupKeyForWorktree(
   }
   if (groupBy === 'workspace-status') {
     return getWorkspaceStatusGroupKey(getWorkspaceStatus(worktree, workspaceStatuses))
+  }
+  if (groupBy === 'task') {
+    return getTaskLaneKey(getWorktreeTaskGroup(worktree))
   }
   if (groupBy === 'repo') {
     return getProjectGroupingForRepo(

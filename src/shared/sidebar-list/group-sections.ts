@@ -11,6 +11,8 @@ import {
   getMixedHostContextLabels
 } from './host-labels'
 import type { OrderedGroupEntry } from './worktree-group-entry'
+import { isSidebarGroupCollapsed } from './default-collapsed-groups'
+import { getTaskGroupFromLaneKey } from './task-session-groups'
 import type { ProjectGroupingIndex } from '../project-section-grouping'
 import {
   appendWorktreeRows,
@@ -69,7 +71,7 @@ export function appendOrderedGroups(
     occurrencePlan
   } = ctx
   for (const [key, group] of groupsToAppend) {
-    const isCollapsed = collapsedGroups.has(key)
+    const isCollapsed = isSidebarGroupCollapsed(collapsedGroups, key)
     const repo = group.repo
     const folderPairs = group.folderWorkspaces ?? []
     const header =
@@ -112,12 +114,14 @@ export function appendOrderedGroups(
               }
             })()
           : (() => {
-              const prGroup = key.replace(/^pr:/, '') as PRGroupKey
+              const taskGroup = groupBy === 'task' ? getTaskGroupFromLaneKey(key) : null
               return {
                 type: 'header' as const,
                 key,
                 count: group.items.length + folderPairs.length,
-                icon: { kind: 'pr-status' as const, prGroup },
+                icon: taskGroup
+                  ? { kind: 'task' as const, taskGroup }
+                  : { kind: 'pr-status' as const, prGroup: key.replace(/^pr:/, '') as PRGroupKey },
                 hostWorktreeCounts: getLaneHostWorktreeCounts(
                   group.items,
                   folderPairs,

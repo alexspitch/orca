@@ -20,7 +20,9 @@ export const WORKSPACE_GROUP_BY_CHOICES = [
   { id: 'none', label: 'None' },
   { id: 'workspace-status', label: 'Status' },
   { id: 'pr-status', label: 'PR' },
-  { id: 'repo', label: 'Project' }
+  { id: 'repo', label: 'Project' },
+  // IS-147: offered only where the host announces `build-web-worktree-task.v1`.
+  { id: 'task', label: 'Task' }
 ] as const satisfies readonly WorkspaceViewChoice<PersistedUIState['groupBy']>[]
 
 export const WORKSPACE_SORT_BY_CHOICES = [

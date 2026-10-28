@@ -40,7 +40,11 @@ export function selectVisibleSidebarWorktrees({
   // Keep valid nonarchived ancestors despite ordinary filters so children retain their hierarchy.
   const selectedRepoIds = filterRepoIds.length > 0 ? new Set(filterRepoIds) : null
 
-  let all = filterWorkspaceRows(rows, filters, facts)
+  // Why the default: a catalog row carries its own task facts (IS-147).
+  let all = filterWorkspaceRows(rows, filters, {
+    ...facts,
+    taskSession: facts.taskSession ?? ((worktree) => worktree)
+  })
 
   if (forcedVisibleWorktreeIds && forcedVisibleWorktreeIds.length > 0) {
     const includedIds = new Set(all.map((worktree) => worktree.id))

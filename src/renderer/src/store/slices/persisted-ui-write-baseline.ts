@@ -1,3 +1,4 @@
+import type { HideableTaskSessionGroup } from '../../../../shared/sidebar-list/task-session-groups'
 import type { PersistedUIState } from '../../../../shared/persisted-ui-state-types'
 
 /** Capture hydrated baseline and persist only locally changed fields: shared desktop/web/mobile UI snapshots otherwise overwrite peers’ disjoint updates (STA-5781). */
@@ -22,6 +23,7 @@ export type PersistedUIWriteBaseline = {
   hideAutomationGeneratedWorkspaces: boolean
   hideCliCreatedWorkspaces: boolean
   hideDetachedHeadWorkspaces: boolean
+  hiddenSessionStates: HideableTaskSessionGroup[]
   hideWorkspacesFromOtherDevices: boolean
   alwaysShowDefaultBranchWorkspace: boolean
   explorerDisplayRootByWorktree: Record<string, string>
@@ -54,6 +56,7 @@ const PERSISTED_UI_WRITE_BASELINE_FIELD_SET = {
   hideAutomationGeneratedWorkspaces: true,
   hideCliCreatedWorkspaces: true,
   hideDetachedHeadWorkspaces: true,
+  hiddenSessionStates: true,
   hideWorkspacesFromOtherDevices: true,
   alwaysShowDefaultBranchWorkspace: true,
   explorerDisplayRootByWorktree: true,
@@ -99,7 +102,7 @@ function stringArrayEqual(a: readonly string[], b: readonly string[]): boolean {
 
 /** Compares collection fields by value so hydration does not produce redundant persistence writes from new identities. */
 function writeFieldEqual(field: keyof PersistedUIWriteBaseline, a: unknown, b: unknown): boolean {
-  if (field === 'filterRepoIds') {
+  if (field === 'filterRepoIds' || field === 'hiddenSessionStates') {
     return stringArrayEqual(a as readonly string[], b as readonly string[])
   }
   if (field === 'visibleWorkspaceHostIds') {

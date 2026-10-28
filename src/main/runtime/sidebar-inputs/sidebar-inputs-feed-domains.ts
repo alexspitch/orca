@@ -53,6 +53,7 @@ const SIDEBAR_VIEW_UI_FIELDS = [
   'hideAutomationGeneratedWorkspaces',
   'hideCliCreatedWorkspaces',
   'hideDetachedHeadWorkspaces',
+  'hiddenSessionStates',
   'hideWorkspacesFromOtherDevices',
   'filterRepoIds',
   'collapsedGroups',

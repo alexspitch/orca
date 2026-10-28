@@ -9,6 +9,7 @@ import { selectVisibleSidebarWorktrees } from '../../../../shared/sidebar-list/v
 import { buildDesktopWorkspaceRowFactReader } from './desktop-workspace-row-facts'
 import { sidebarWorkspaceRowFilters } from './sidebar-filter-actions'
 import { getLineageAncestorIndex, getSortedWorktreeRankIndex } from './visible-worktree-indexes'
+import type { HideableTaskSessionGroup } from '../../../../shared/sidebar-list/task-session-groups'
 
 // Separate store binding avoids attention-slice import cycles; shared builders retain the filter rules.
 
@@ -39,6 +40,10 @@ export type VisibleWorktreeOptions = {
   sortedByHostIdentity?: boolean
   /** Exempt from the sleeping sweep only; unlike forcedVisibleWorktreeIds, every other filter still applies. */
   sleepingSweepExemptWorktreeIds?: ReadonlySet<string>
+  /** IS-147: the lanes the session filter hides; absent hides none. */
+  hiddenSessionStates?: readonly HideableTaskSessionGroup[]
+  keepArchivedTaskAttention?: boolean
+  taskSessionHostKnown?: (worktree: Worktree, repo: Repo | undefined) => boolean
 }
 
 export function computeVisibleWorktrees(

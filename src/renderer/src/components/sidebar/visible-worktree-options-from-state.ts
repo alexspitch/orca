@@ -8,6 +8,7 @@ import {
   getPairedDeviceIdsByEnvironment
 } from '../../../../shared/workspace-creator-visibility'
 import type { VisibleWorktreeOptions } from './compute-visible-worktrees'
+import { createTaskSessionHostReader } from './task-session-capability'
 
 /** Isolate store reads so sidebar, palette and keyboard shortcuts can share the pure visibility filter. */
 export function buildVisibleWorktreeOptionsFromState(
@@ -46,6 +47,12 @@ export function buildVisibleWorktreeOptionsFromState(
     visibleWorkspaceHostIds: state.visibleWorkspaceHostIds,
     defaultHostId: getSettingsFocusedExecutionHostId(state.settings),
     worktreeLineageById: state.worktreeLineageById,
-    preserveLineageParentOrder: state.sortBy === 'manual'
+    preserveLineageParentOrder: state.sortBy === 'manual',
+    hiddenSessionStates: state.hiddenSessionStates,
+    keepArchivedTaskAttention: state.groupBy === 'task',
+    taskSessionHostKnown: createTaskSessionHostReader(
+      state,
+      getSettingsFocusedExecutionHostId(state.settings)
+    )
   }
 }

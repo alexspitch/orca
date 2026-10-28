@@ -99,8 +99,13 @@ it('defers only lane collapse and retains unrelated project/lineage collapse', (
     'repo:1',
     'lineage:local|parent'
   ])
-  expect([...deferHostSectionCollapse(groups)]).toEqual(['repo:1', 'lineage:local|parent'])
+  // Why the marker: a lane that starts collapsed must render so each host can collapse its copy.
+  expect([...deferHostSectionCollapse(groups)]).toEqual([
+    'repo:1',
+    'lineage:local|parent',
+    'task:release:expanded'
+  ])
   expect(groups.size).toBe(6)
-  const unchanged = new Set(['repo:1'])
+  const unchanged = new Set(['repo:1', 'task:release:expanded'])
   expect(deferHostSectionCollapse(unchanged)).toBe(unchanged)
 })

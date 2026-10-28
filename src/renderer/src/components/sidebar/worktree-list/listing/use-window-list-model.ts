@@ -19,7 +19,8 @@ export function useWindowSidebarListModel(args: SidebarListModelArgs): SidebarLi
     repoMap,
     worktreeLineageById: args.worktreeLineageById,
     defaultHostId,
-    agentSendTargetWorktreeId: args.agentSendTargetWorktreeId
+    agentSendTargetWorktreeId: args.agentSendTargetWorktreeId,
+    groupBy: args.groupBy
   })
   const visibleScope = useSidebarHostVisibleScope({
     filterState,

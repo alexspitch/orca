@@ -29,14 +29,17 @@ import { readLocalWebUIState } from './web-preferences-store'
 import { callRuntimeResult } from './web-runtime-calls'
 import { requireActiveEnvironmentOrNull } from './web-runtime-session'
 import { UI_STORAGE_KEY, noopUnsubscribe, writeJson } from './web-storage'
+import { withoutUnsupportedTaskSessionUiFields } from './web-task-session-ui-fields'
 
 /** Combines browser-local preferences with host persistence; acknowledged writes remain distinct from best-effort writes. */
 export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
   const explorerRoots = createWebExplorerRootSync()
   /** Captures the target host and strips browser-local or unsupported fields before sending a UI update. */
-  const prepareHostUpdates = (updates: Parameters<PreloadApi['ui']['set']>[0]) => {
+  const prepareHostUpdates = async (updates: Parameters<PreloadApi['ui']['set']>[0]) => {
     const environmentId = requireActiveEnvironmentOrNull()?.id
-    const hostUpdates = omitPairingLocalUiFields(updates)
+    const hostUpdates = await withoutUnsupportedTaskSessionUiFields(
+      omitPairingLocalUiFields(updates)
+    )
     explorerRoots.prepare(environmentId, hostUpdates)
     return { environmentId, hostUpdates }
   }
@@ -81,8 +84,8 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       writeJson(UI_STORAGE_KEY, next)
       zoomLevel = next.uiZoomLevel
       // Older hosts lack stripping; sending browser runtime:web-* keys would overwrite desktop order.
-      const { environmentId, hostUpdates } = prepareHostUpdates(updates)
       try {
+        const { environmentId, hostUpdates } = await prepareHostUpdates(updates)
         await callRuntimeResult('ui.set', hostUpdates, 15_000)
         explorerRoots.acknowledge(environmentId, hostUpdates)
       } catch {
@@ -94,7 +97,7 @@ export function createWebUiApi(): NonNullable<Partial<PreloadApi>['ui']> {
       const next = mergeWebUIState(readLocalWebUIState(), updates)
       writeJson(UI_STORAGE_KEY, next)
       zoomLevel = next.uiZoomLevel
-      const { environmentId, hostUpdates } = prepareHostUpdates(updates)
+      const { environmentId, hostUpdates } = await prepareHostUpdates(updates)
       await callRuntimeResult('ui.set', hostUpdates, 15_000)
       explorerRoots.acknowledge(environmentId, hostUpdates)
       if (

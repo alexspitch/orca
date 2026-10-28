@@ -10,6 +10,7 @@ import {
 function makeBaseline(overrides: Partial<PersistedUIWriteBaseline> = {}): PersistedUIWriteBaseline {
   return {
     sidebarWidth: 280,
+    hiddenSessionStates: [],
     sidebarOpen: true,
     rightSidebarOpen: true,
     rightSidebarTab: 'explorer',

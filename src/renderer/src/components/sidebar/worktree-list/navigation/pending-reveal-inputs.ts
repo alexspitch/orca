@@ -17,6 +17,7 @@ import type {
 } from '../../../../../../shared/sidebar-list/row-types'
 import { getFolderWorkspaceRevealGroupKeys } from './folder-reveal'
 import { getWorktreeRevealCollapsedGroupKeys } from './worktree-reveal-group-keys'
+import { isSidebarGroupCollapsed } from '../../../../../../shared/sidebar-list/default-collapsed-groups'
 
 export const MAX_REVEAL_RETRIES = 8
 
@@ -73,7 +74,7 @@ export function expandGroupsForWorktreeReveal(
   )
   if (folderGroupKeys.length > 0) {
     for (const groupKey of folderGroupKeys) {
-      if (args.collapsedGroups.has(groupKey)) {
+      if (isSidebarGroupCollapsed(args.collapsedGroups, groupKey)) {
         args.toggleGroup(groupKey)
       }
     }

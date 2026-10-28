@@ -14,6 +14,10 @@ import {
 } from '../../shared/workspace-creator-visibility'
 import type { NotificationSettings } from '../../shared/notification-settings-types'
 import type { RuntimeStore } from './runtime-store-contract'
+import {
+  isHiddenByTaskSessionFilter,
+  normalizeHiddenTaskSessionGroups
+} from '../../shared/sidebar-list/task-session-groups'
 
 export type WorkspaceNotificationMuteDeps = {
   store: Pick<
@@ -50,7 +54,12 @@ export function isWorkspaceHiddenBySidebarFilters(
     hideCliCreatedWorkspaces: ui.hideCliCreatedWorkspaces === true,
     hideDetachedHeadWorkspaces: ui.hideDetachedHeadWorkspaces === true
   }
-  if (!hideOtherClients && !Object.values(switches).some(Boolean)) {
+  const hiddenSessionStates = normalizeHiddenTaskSessionGroups(ui.hiddenSessionStates)
+  if (
+    !hideOtherClients &&
+    !Object.values(switches).some(Boolean) &&
+    hiddenSessionStates.length === 0
+  ) {
     return false
   }
   const folderScope = parseWorkspaceKey(workspaceId)
@@ -79,6 +88,10 @@ export function isWorkspaceHiddenBySidebarFilters(
         EMPTY_PAIRED_DEVICE_IDS_BY_ENVIRONMENT
       )
     ) {
+      return true
+    }
+    // Why the meta: this host writes every task row's session, so an unknown state never mutes.
+    if (isHiddenByTaskSessionFilter(meta ?? {}, hiddenSessionStates, true)) {
       return true
     }
     // Without a Git listing, only provenance filters can apply; branch and HEAD are unknown.

@@ -27,6 +27,7 @@ const args: Parameters<typeof useVisibleSidebarWorktrees>[0] = {
     hideAutomationGeneratedWorkspaces: false,
     hideCliCreatedWorkspaces: false,
     hideDetachedHeadWorkspaces: false,
+    hiddenSessionStates: [],
     hideWorkspacesFromOtherDevices: false,
     alwaysShowDefaultBranchWorkspace: false,
     visibleWorkspaceHostIds: null,

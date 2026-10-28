@@ -2,6 +2,7 @@ import { getDefaultSettings } from '../../../../shared/constants'
 import type { Project, ProjectHostSetup } from '../../../../shared/project-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { DetectedWorktree, Worktree } from '../../../../shared/worktree/types'
+import type { WorktreeBuildWebSessionState } from '../../../../shared/build-web-session-types'
 import { cloneDefaultWorkspaceStatuses } from '../../../../shared/workspace-statuses'
 import type { PendingWorktreeCreation } from '@/lib/pending-worktree-creation'
 import type { AppState } from '@/store/types'
@@ -16,6 +17,14 @@ import {
   wt
 } from './sidebar-list-golden-factories.test-fixture'
 
+// IS-147: task facts touch only «By task»; feat-a's lineage spreads over three lanes.
+function task(key: string, state?: WorktreeBuildWebSessionState): Partial<Worktree> {
+  return {
+    buildWebTask: { issueId: key, key, consoleHost: 'https://console', branch: key.toLowerCase() },
+    ...(state ? { buildWebSession: { state, at: GOLDEN_NOW } } : {})
+  }
+}
+
 const orca = repo('orca', 'orca', { projectGroupId: 'pg-work' })
 const orcaSsh = repo('orca-ssh', 'orca', { connectionId: 'gpu-vm' })
 const api = repo('api', 'api', { executionHostId: 'runtime:env-1' })
@@ -26,36 +35,49 @@ const ext = repo('ext', 'ext', { externalWorktreeVisibility: 'hide', addedAt: GO
 
 const oMain = mainWt(orca, { sortOrder: 10, lastActivityAt: GOLDEN_NOW - 9_000_000 })
 const oA = wt(orca, 'feat-a', {
+  ...task('IS-1', 'active'),
   isPinned: true,
   sortOrder: 50,
   lastActivityAt: GOLDEN_NOW - 1_000,
   linkedPR: 11
 })
 const oB = wt(orca, 'feat-b', {
+  ...task('IS-2', 'waiting'),
   sortOrder: 40,
   workspaceStatus: 'in-review',
   lastActivityAt: GOLDEN_NOW - 5_000
 })
-const oC = wt(orca, 'feat-c', { sortOrder: 30, isPinned: true, manualOrder: 3 })
+const oC = wt(orca, 'feat-c', {
+  ...task('IS-3', 'attention'),
+  sortOrder: 30,
+  isPinned: true,
+  manualOrder: 3
+})
 const oD = wt(orca, 'Zeta', {
   sortOrder: 20,
   manualOrder: 9,
   createdAt: GOLDEN_NOW - 1_000,
   workspaceStatus: 'completed'
 })
-const oArchived = wt(orca, 'archived', { isArchived: true, sortOrder: 99 })
+const oArchived = wt(orca, 'archived', {
+  ...task('IS-4', 'attention'),
+  isArchived: true,
+  sortOrder: 99
+})
 const osMain = mainWt(orcaSsh, { sortOrder: 5 })
 const osX = wt(orcaSsh, 'remote-x', { isPinned: true, sortOrder: 45, hostId: 'ssh:gpu-vm' })
 const aMain = mainWt(api, { sortOrder: 4, hostId: 'runtime:env-1' })
 const aY = wt(api, 'api-y', {
+  ...task('IS-5', 'closing'),
   sortOrder: 35,
   hostId: 'runtime:env-1',
   workspaceStatus: 'completed',
   lastActivityAt: GOLDEN_NOW - 2_000
 })
 const lMain = mainWt(lab, { sortOrder: 3 })
-const lMr = wt(lab, 'gitlab-mr', { sortOrder: 25, linkedGitLabMR: 7 })
-const sLocal = wt(shared, 'same', { sortOrder: 15, hostId: 'local' })
+const lMr = wt(lab, 'gitlab-mr', { ...task('IS-6', 'active'), sortOrder: 25, linkedGitLabMR: 7 })
+// Why no session: a task whose state the host has not reported yet reads as in progress.
+const sLocal = wt(shared, 'same', { ...task('IS-7'), sortOrder: 15, hostId: 'local' })
 const sSsh: Worktree = { ...sLocal, hostId: 'ssh:gpu-vm', isPinned: true, sortOrder: 16 }
 const eMain = mainWt(ext, { sortOrder: 2 })
 

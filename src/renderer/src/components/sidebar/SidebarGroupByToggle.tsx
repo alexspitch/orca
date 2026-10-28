@@ -1,6 +1,8 @@
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import type { WorktreeGroupBy } from '../../../../shared/sidebar-list/row-types'
+import { useAppStore } from '@/store'
 import { GROUP_BY_OPTIONS } from './sidebar-workspace-option-items'
+import { selectTaskSessionUiAvailable } from './task-session-capability'
 
 type SidebarGroupByToggleProps = {
   groupBy: WorktreeGroupBy
@@ -8,6 +10,11 @@ type SidebarGroupByToggleProps = {
 }
 
 export function SidebarGroupByToggle({ groupBy, setGroupBy }: SidebarGroupByToggleProps) {
+  const taskGroupingAvailable = useAppStore(selectTaskSessionUiAvailable)
+  // Why keep a chosen Task: the current choice must stay visible to switch away from it.
+  const options = GROUP_BY_OPTIONS.filter(
+    (option) => option.id !== 'task' || taskGroupingAvailable || groupBy === 'task'
+  )
   return (
     <ToggleGroup
       type="single"
@@ -21,7 +28,7 @@ export function SidebarGroupByToggle({ groupBy, setGroupBy }: SidebarGroupByTogg
       size="sm"
       className="h-6 w-full justify-stretch"
     >
-      {GROUP_BY_OPTIONS.map((option) => (
+      {options.map((option) => (
         <ToggleGroupItem
           key={option.id}
           value={option.id}

@@ -1,8 +1,10 @@
-import { CircleX, FolderTree, List, Pin } from 'lucide-react'
+import { CircleAlert, CircleDashed, CircleX, FolderTree, List, Pin, Timer } from 'lucide-react'
 import type React from 'react'
 import { translate } from '@/i18n/i18n'
 import type { PRGroupKey } from '../../../../../../shared/workspace-view/workspace-pr-groups'
 import type { SidebarHeaderIcon } from '../../../../../../shared/sidebar-list/row-types'
+import type { SidebarTaskGroupKey } from '../../../../../../shared/sidebar-list/task-session-groups'
+import { BUILD_WEB_TASK_GROUP_LABELS } from '../../../../../../shared/build-web-session-labels'
 import type { WorkspaceStatusDefinition } from '../../../../../../shared/worktree/types'
 import {
   ConductorDoneIcon,
@@ -70,6 +72,24 @@ const ALL_GROUP_META = {
   icon: List
 } as const
 
+const TASK_GROUP_LABEL_KEYS: Record<SidebarTaskGroupKey, keyof typeof BUILD_WEB_TASK_GROUP_LABELS> =
+  { attention: 'attention', release: 'release', progress: 'progress', none: 'none' }
+
+const TASK_GROUP_META: Record<
+  SidebarTaskGroupKey,
+  { icon: React.ComponentType<{ className?: string }>; tone: string }
+> = {
+  attention: { icon: CircleAlert, tone: 'text-status-warning' },
+  release: { icon: Timer, tone: 'text-muted-foreground' },
+  progress: { icon: List, tone: 'text-muted-foreground' },
+  none: { icon: CircleDashed, tone: 'text-muted-foreground' }
+}
+
+function getTaskGroupVisual(taskGroup: SidebarTaskGroupKey): SidebarHeaderVisual {
+  const { key, text } = BUILD_WEB_TASK_GROUP_LABELS[TASK_GROUP_LABEL_KEYS[taskGroup]]
+  return { ...TASK_GROUP_META[taskGroup], label: translate(key, text) }
+}
+
 type SidebarHeaderVisual = {
   icon: React.ComponentType<{ className?: string }>
   tone: string
@@ -97,5 +117,7 @@ export function getSidebarHeaderVisual(
       )
       return { icon: statusIcon, tone }
     }
+    case 'task':
+      return getTaskGroupVisual(icon.taskGroup)
   }
 }

@@ -1,3 +1,5 @@
+import type { SidebarTaskGroupKey } from '../../../src/shared/sidebar-list/task-session-groups'
+import { BUILD_WEB_TASK_GROUP_LABELS } from '../../../src/shared/build-web-session-labels'
 import {
   LOCAL_EXECUTION_HOST_ID,
   getWorktreeExecutionHostId,
@@ -28,7 +30,14 @@ export type HostFeedListSources = {
   search: string
 }
 
-// Clients name Pinned/All/PR lanes themselves; the builder names data headers.
+const TASK_GROUP_LABEL_KEY = {
+  attention: 'attention',
+  release: 'release',
+  progress: 'progress',
+  none: 'none'
+} as const satisfies Record<SidebarTaskGroupKey, keyof typeof BUILD_WEB_TASK_GROUP_LABELS>
+
+// Clients name Pinned/All/PR/task lanes themselves; the builder names data headers.
 function headerTitle(row: GroupHeaderRow): string {
   switch (row.icon.kind) {
     case 'pinned':
@@ -40,6 +49,8 @@ function headerTitle(row: GroupHeaderRow): string {
     case 'project':
     case 'workspace-status':
       return row.label ?? ''
+    case 'task':
+      return row.label ?? BUILD_WEB_TASK_GROUP_LABELS[TASK_GROUP_LABEL_KEY[row.icon.taskGroup]].text
   }
 }
 

@@ -14,6 +14,7 @@ import type { ProjectGroupingModel } from '../../../../../../shared/project-sect
 import { getFolderWorkspaceRevealGroupKeys } from '../navigation/folder-reveal'
 import type { FolderWorkspace } from '../../../../../../shared/folder-workspace-types'
 import type { ExecutionHostId } from '../../../../../../shared/execution-host'
+import { expandSidebarGroup } from '../../../../../../shared/sidebar-list/default-collapsed-groups'
 
 // While the agent send picker targets a workspace, force open every section that hides it.
 export function useEffectiveCollapsedGroups(args: {
@@ -74,7 +75,7 @@ export function useEffectiveCollapsedGroups(args: {
       }
       const nextForFolder = new Set(collapsedGroups)
       for (const groupKey of folderKeys) {
-        nextForFolder.delete(groupKey)
+        expandSidebarGroup(nextForFolder, groupKey)
       }
       return nextForFolder
     }
@@ -97,7 +98,7 @@ export function useEffectiveCollapsedGroups(args: {
       projectGroups,
       projectGrouping
     })) {
-      next.delete(groupKey)
+      expandSidebarGroup(next, groupKey)
     }
     return next
   }, [
