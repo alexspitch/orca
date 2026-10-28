@@ -21556,7 +21556,8 @@
       "label": "Agent session",
       "openHere": "open here",
       "unverifiable": "unverifiable",
-      "open": "Open session"
+      "open": "Open session",
+      "closedRemoved": "{{key}} closed: workspace removed"
     },
     "launch": {
       "sessionNotSaved": "Session ID not saved to {{keys}}",
@@ -21585,7 +21586,8 @@
       "updateServerRedosTwin": "This Orca server cannot derive a redos image again yet. Update the server.",
       "updateServerConsoleFeatures": "This Orca server cannot read what the console supports yet. Update the server.",
       "updateServerTwinDecision": "This Orca server cannot build a waiting redos image yet. Update the server.",
-      "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server."
+      "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server.",
+      "updateServerSessions": "This Orca server does not follow task sessions yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",

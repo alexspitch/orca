@@ -50,6 +50,8 @@ export type RuntimeClientEvent =
       identifier: string
       workspaceId: string
     }
+  /** A closed task's empty worktree was removed by its host (IS-147); older clients drop the type. */
+  | { type: 'buildWebSessionClosed'; worktreeId: string; key: string }
   | {
       type: 'activateWorktree'
       repoId: string

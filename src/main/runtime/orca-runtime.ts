@@ -170,6 +170,11 @@ class OrcaRuntimeService extends OrcaRuntimeSidebarBase {
 
   private structuredAgentAvailability?: ReturnType<typeof installStructuredAgentAvailability>
 
+  /** IS-147: paired clients tell «KEY closed: workspace removed» after the host's cleanup. */
+  announceBuildWebSessionClosed(closed: { worktreeId: string; key: string }): void {
+    this.emitClientEvent({ type: 'buildWebSessionClosed', ...closed })
+  }
+
   /** Subscribe from first use; returns the release function. */
   subscribeStructuredAgentAvailability(read: StructuredAgentAvailabilityReader): () => void {
     this.structuredAgentAvailability ??= installStructuredAgentAvailability(this.store, this)

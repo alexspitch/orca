@@ -36,6 +36,7 @@ import {
 } from './runtime-environment-subscription-selection'
 import type { WorktreeEventRuntime } from './worktree-event-runtime'
 import { readPublishedSortOrders } from '../../store/slices/worktrees/listing/worktree-sort-order-patch'
+import { showBuildWebSessionClosedToast } from './build-web-session-closed-toast'
 
 export function registerRuntimeClientIpcBridge(
   unsubs: (() => void)[],
@@ -159,6 +160,10 @@ export function registerRuntimeClientIpcBridge(
       void ensureRuntimeEventRepoKnown(environmentId, owned).then(() =>
         worktreeChangeRefreshQueue.enqueue(owned)
       )
+      return
+    }
+    if (event.type === 'buildWebSessionClosed') {
+      showBuildWebSessionClosedToast(event)
       return
     }
     if (event.type === 'linearLinkedIssueUpdated') {

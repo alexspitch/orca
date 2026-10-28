@@ -90,6 +90,7 @@ function isRuntimeClientEvent(
     message.type === 'automationsChanged' ||
     message.type === 'browserProfilesChanged' ||
     message.type === 'linearLinkedIssueUpdated' ||
+    message.type === 'buildWebSessionClosed' ||
     message.type === 'activateWorktree' ||
     message.type === 'worktreeTerminalSleepState'
   )

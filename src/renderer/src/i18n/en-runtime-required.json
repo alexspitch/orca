@@ -3085,6 +3085,9 @@
       "priority": "Prio",
       "shownOf": "{{shown}} of {{total}}"
     },
+    "run": {
+      "copied": "Copied"
+    },
     "sidebar": {
       "issuesBlockers": "{{label}}, {{count}} blockers"
     },
