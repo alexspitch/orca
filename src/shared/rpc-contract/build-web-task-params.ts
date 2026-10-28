@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { BUILD_WEB_PUSH_AFTER, BUILD_WEB_TESTING_STATUSES } from '../build-web-run-types'
 import { BUILD_WEB_PRODUCTS } from '../build-web-types'
+import { BUILD_WEB_TASK_STATES } from '../build-web-activity-types'
 
 // The task card's Build, Guide and Properties calls. Same rules as build-web-params: one object
 // per call, and an id never becomes `.` or `..` inside a URL path.
@@ -34,6 +35,19 @@ export const BuildWebRedosTwinParams = z.object({
   branch: Branch
 })
 export const BuildWebRunCombosParams = z.object({ runId: Id, combos: Combos })
+const TaskKind = z.string().regex(/^[a-z][a-z-]*$/)
+const Day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/)
+/** IS-10: the console's page of all tasks — its limits, so a bad filter is refused here, not there. */
+export const BuildWebTaskPageParams = z.object({
+  offset: z.number().int().min(0),
+  limit: z.number().int().min(1).max(200),
+  kinds: z.array(TaskKind).max(32).optional(),
+  states: z.array(z.enum(BUILD_WEB_TASK_STATES)).max(6).optional(),
+  user: ShortText.optional(),
+  from: Day.optional(),
+  to: Day.optional(),
+  q: ShortText.optional()
+})
 export const BuildWebFreshnessParams = z.object({ runId: Id, fetch: z.boolean() })
 export const BuildWebTestingParams = z.object({ runId: Id, testingStatus: Testing })
 export const BuildWebAdoptParams = z.object({ id: Id, testingStatus: Testing })

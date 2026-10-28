@@ -18,7 +18,7 @@ import { useBuildLog } from './use-build-log'
 // Why: useBuildLog already keeps the tail by characters; this only bounds the line count.
 const KEEP_LINES = 100_000
 
-function LogBody({
+export function BuildLogBody({
   target,
   url,
   test,
@@ -88,7 +88,7 @@ export function BuildLogDialog({ target }: { target: RuntimeClientTarget }): Rea
           </DialogDescription>
         </DialogHeader>
         {log ? (
-          <LogBody
+          <BuildLogBody
             key={log.url}
             target={target}
             url={log.url}

@@ -23,8 +23,12 @@ vi.mock('./build-web-request', async (importOriginal) => ({
 }))
 
 const { BuildWebApiError } = await import('./build-web-request')
-const { clearBuildWebNotifications, markBuildWebNotificationsSeen, readBuildWebActivity } =
-  await import('./build-web-activity')
+const {
+  clearBuildWebNotifications,
+  markBuildWebNotificationsSeen,
+  readBuildWebActivity,
+  readBuildWebTaskPage
+} = await import('./build-web-activity')
 
 const note = (over: Record<string, unknown>) => ({
   id: 'n1',
@@ -127,6 +131,7 @@ describe('reading the bell and the tasks', () => {
       detail: 'IS-10',
       status: 'running',
       active: true,
+      user: 'qa@box.test',
       created_at: '2026-10-21T09:00:00Z',
       started_at: '2026-10-21T09:00:05Z',
       finished_at: null,
@@ -153,6 +158,27 @@ describe('reading the bell and the tasks', () => {
       ['redos:r1:dc/app|master', '/api/agent-jobs/a1/log'],
       ['build:r2', null]
     ])
+  })
+
+  it('asks the console for a page of all tasks with only the filters set', async () => {
+    mocks.request.mockResolvedValue({
+      tasks: [task({}), task({ key: 'x:1', source: 'chat' })],
+      total: 41,
+      users: ['qa@box.test', 7]
+    })
+    const page = await readBuildWebTaskPage({
+      offset: 25,
+      limit: 25,
+      kinds: ['build', 'redos'],
+      states: [],
+      user: ' qa@box.test ',
+      q: ''
+    })
+    expect(mocks.request.mock.calls[0][0].path).toBe(
+      '/api/tasks/page?offset=25&limit=25&kind=build%2Credos&user=qa%40box.test'
+    )
+    expect(page).toMatchObject({ total: 41, users: ['qa@box.test'] })
+    expect(page.tasks.map((t) => t.key)).toEqual(['deploy:j1'])
   })
 
   it('hides a list the console lacks or refuses, and keeps the other', async () => {

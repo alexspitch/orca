@@ -18,6 +18,8 @@ export type ActivityTarget =
   | { kind: 'job'; jobId: string }
   /** A console path, opened in the browser. */
   | { kind: 'console'; path: string }
+  /** A test run, in the Testing page's history. */
+  | { kind: 'test-run'; runId: string }
 
 /** A target that is a page, in Orca or the browser — everything but a job's log. */
 export type PageTarget = Exclude<ActivityTarget, { kind: 'job' }>
@@ -46,13 +48,10 @@ export function taskTarget(task: BuildWebConsoleTask): ActivityTarget | null {
     return { kind: 'run', runId: task.id, tab: 'build' }
   }
   if (task.source === 'test') {
-    return { kind: 'console', path: `/tests/runs/${encodeURIComponent(task.id)}` }
+    return { kind: 'test-run', runId: task.id }
   }
   return task.has_log ? { kind: 'job', jobId: task.id } : null
 }
-
-/** The console's page of all tasks, with its filters and pages (IS-10). */
-export const ALL_TASKS_TARGET: PageTarget = { kind: 'console', path: '/tasks' }
 
 /**
  * IS-10: where a redos build's own page is — Jenkins as is, a console path on the console's origin.

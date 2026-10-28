@@ -1,4 +1,6 @@
+import { toast } from 'sonner'
 import { useAppStore } from '@/store'
+import { translate } from '@/i18n/i18n'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import type { BuildWebRun } from '../../../../../shared/build-web-run-types'
 import { callBuildWeb } from '../build-web-client'
@@ -78,6 +80,10 @@ export async function openActivityTarget(where: PageTarget, host: ActivityHost):
       return openCard(host, where.issueId, where.tab)
     case 'console':
       return window.api.shell.openUrl(`${host.baseUrl}${where.path}`)
+    case 'test-run':
+      await knowHost(host)
+      useBuildWebStore.getState().setFocus({ kind: 'test-run', runId: where.runId })
+      return useAppStore.getState().openBuildWebTestingPage()
     case 'train': {
       const found = where.trainName
         ? await findFailedTrainWindow(host.target, where.trainName, where.at).catch(() => null)
@@ -102,9 +108,16 @@ export async function openActivityTarget(where: PageTarget, host: ActivityHost):
       if (run && where.tab !== 'guide' && (await openRunInOrca(host, run))) {
         return
       }
-      const page = where.tab === 'guide' ? '/guide' : ''
-      return window.api.shell.openUrl(
-        `${host.baseUrl}/runs/${encodeURIComponent(where.runId)}${page}`
+      if (where.tab === 'guide') {
+        return window.api.shell.openUrl(
+          `${host.baseUrl}/runs/${encodeURIComponent(where.runId)}/guide`
+        )
+      }
+      // Why no browser: a run Orca cannot place is said so, not handed to the console's site.
+      toast.error(
+        translate('buildWeb.activity.runNotFound', 'Orca could not open build run {{id}}', {
+          id: where.runId
+        })
       )
     }
   }

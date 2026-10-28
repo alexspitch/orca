@@ -3,12 +3,21 @@ import type {
   BuildWebConsoleTask,
   BuildWebConsoleTaskStatus,
   BuildWebNotification,
-  BuildWebNotificationSeverity
+  BuildWebNotificationSeverity,
+  BuildWebTaskPage,
+  BuildWebTaskPageArgs
 } from '../../shared/build-web-activity-types'
 import type { BuildWebMutationResult } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
 import { BuildWebApiError, buildWebMutation, buildWebRequest } from './build-web-request'
-import { numberOf, recordOf, recordsOf, textOf, textOrNull } from './build-web-response-fields'
+import {
+  numberOf,
+  recordOf,
+  recordsOf,
+  textOf,
+  textOrNull,
+  textsOf
+} from './build-web-response-fields'
 
 // build-web's bell (/api/notifications) and task counter (/api/tasks) for Orca's titlebar.
 
@@ -69,6 +78,7 @@ function taskOf(r: Record<string, unknown>): BuildWebConsoleTask | null {
     detail: textOrNull(r.detail),
     status,
     active: r.active === true,
+    user: textOrNull(r.user),
     created_at: textOf(r.created_at),
     started_at: textOrNull(r.started_at),
     finished_at: textOrNull(r.finished_at),
@@ -110,12 +120,37 @@ export async function readBuildWebActivity(): Promise<BuildWebActivity> {
           unread: Math.max(0, numberOf(noteAnswer.unread))
         }
       : null,
-    tasks:
-      tasks === null
-        ? null
-        : recordsOf(recordOf(tasks)?.tasks)
-            .map(taskOf)
-            .filter((t): t is BuildWebConsoleTask => t !== null)
+    tasks: tasks === null ? null : tasksOf(recordOf(tasks)?.tasks)
+  }
+}
+
+const tasksOf = (value: unknown): BuildWebConsoleTask[] =>
+  recordsOf(value)
+    .map(taskOf)
+    .filter((t): t is BuildWebConsoleTask => t !== null)
+
+/** IS-10: a page of every task, newest first, as the console's /tasks shows it. */
+export async function readBuildWebTaskPage(args: BuildWebTaskPageArgs): Promise<BuildWebTaskPage> {
+  const query = new URLSearchParams({ offset: String(args.offset), limit: String(args.limit) })
+  const lists = { kind: args.kinds, status: args.states }
+  for (const [key, list] of Object.entries(lists)) {
+    if (list?.length) {
+      query.set(key, list.join(','))
+    }
+  }
+  for (const key of ['user', 'from', 'to', 'q'] as const) {
+    const value = args[key]?.trim()
+    if (value) {
+      query.set(key, value)
+    }
+  }
+  const answer = recordOf(
+    await buildWebRequest({ ...requireBuildWebCredential(), path: `/api/tasks/page?${query}` })
+  )
+  return {
+    tasks: tasksOf(answer?.tasks),
+    total: Math.max(0, numberOf(answer?.total)),
+    users: textsOf(answer?.users)
   }
 }
 

@@ -1,13 +1,5 @@
 import { useState } from 'react'
-import { ExternalLink, ListChecks } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
+import { ListChecks, Rows3 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,74 +12,54 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import { formatUiRelativeTimeFromDate } from '@/i18n/relative-time-format'
 import type { BuildWebConsoleTask } from '../../../../../shared/build-web-activity-types'
-import { BuildWebJobPanel } from '../BuildWebJobPanel'
 import { BuildWebToneChip } from '../BuildWebToneChip'
-import { ALL_TASKS_TARGET, buildPageUrl, taskTarget, taskTone } from './activity-targets'
+import { buildPageUrl, taskTarget, taskTone } from './activity-targets'
+import { BuildWebAllTasksDialog } from './BuildWebAllTasksDialog'
 import { ActivityCountBadge } from './ActivityCountBadge'
 import { openActivityTarget, type ActivityHost } from './open-activity-target'
+import { BuildPageButton, TaskViewDialog, type TaskView } from './TaskViewDialog'
 
 // Beyond these a line says how many were left out, as the console's own list does.
 const MAX_ACTIVE = 5
 const MAX_DONE = 12
 
+/** Where a task opens: a console job over Orca as its log, anything else on its page in Orca. */
+function openTask(task: BuildWebConsoleTask, host: ActivityHost, show: (view: TaskView) => void) {
+  const where = taskTarget(task)
+  if (where?.kind === 'job') {
+    show({ kind: 'job', task })
+  } else if (where) {
+    void openActivityTarget(where, host)
+  }
+}
+
 function TaskRow({
   task,
   host,
-  onLog
+  onShow
 }: {
   task: BuildWebConsoleTask
   host: ActivityHost
-  onLog: (task: BuildWebConsoleTask) => void
+  onShow: (view: TaskView) => void
 }): React.JSX.Element {
-  const where = taskTarget(task)
   const page = buildPageUrl(task, host.baseUrl)
   const at = task.active ? task.started_at || task.created_at : task.finished_at || task.created_at
   const line = [task.detail, at ? formatUiRelativeTimeFromDate(at, '') : '']
     .filter(Boolean)
     .join(' · ')
   return (
-    <DropdownMenuItem
-      disabled={!where}
-      onSelect={() => {
-        if (where?.kind === 'job') {
-          onLog(task)
-        } else if (where) {
-          void openActivityTarget(where, host)
-        }
-      }}
-    >
+    <DropdownMenuItem disabled={!taskTarget(task)} onSelect={() => openTask(task, host, onShow)}>
       <span className="min-w-0 flex-1">
         <span className="block truncate">{task.title}</span>
         {line ? (
           <span className="block truncate text-2xs text-muted-foreground">{line}</span>
         ) : null}
       </span>
-      {page ? <BuildPageButton url={page} /> : null}
+      {page ? (
+        <BuildPageButton onOpen={() => onShow({ kind: 'build-page', task, url: page })} />
+      ) : null}
       <BuildWebToneChip label={task.status} tone={taskTone(task.status)} />
     </DropdownMenuItem>
-  )
-}
-
-/** A redos build's own page in the browser; the row itself still opens the run's card. */
-function BuildPageButton({ url }: { url: string }): React.JSX.Element {
-  const label = translate('buildWeb.activity.buildPage', 'Build page')
-  // Why every pointer event: the menu item selects on pointer-up as well as on click.
-  const keep = (event: React.SyntheticEvent) => event.stopPropagation()
-  return (
-    <Button
-      variant="ghost"
-      size="icon-xs"
-      aria-label={label}
-      title={label}
-      onPointerDown={keep}
-      onPointerUp={keep}
-      onClick={(event) => {
-        keep(event)
-        void window.api.shell.openUrl(url)
-      }}
-    >
-      <ExternalLink />
-    </Button>
   )
 }
 
@@ -109,7 +81,8 @@ export function BuildWebTaskMenu({
   /** Open is when somebody watches a status change: the parent reads faster then. */
   onOpenChange: (open: boolean) => void
 }): React.JSX.Element {
-  const [logOf, setLogOf] = useState<BuildWebConsoleTask | null>(null)
+  const [view, setView] = useState<TaskView | null>(null)
+  const [allOpen, setAllOpen] = useState(false)
   const active = tasks.filter((t) => t.active)
   const done = tasks.filter((t) => !t.active)
   const label =
@@ -119,7 +92,7 @@ export function BuildWebTaskMenu({
         })
       : translate('buildWeb.activity.tasks', 'build-web tasks')
   const row = (task: BuildWebConsoleTask) => (
-    <TaskRow key={task.key} task={task} host={host} onLog={setLogOf} />
+    <TaskRow key={task.key} task={task} host={host} onShow={setView} />
   )
 
   return (
@@ -163,30 +136,23 @@ export function BuildWebTaskMenu({
             />
           ) : null}
           <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => void openActivityTarget(ALL_TASKS_TARGET, host)}>
-            <ExternalLink />
+          <DropdownMenuItem onSelect={() => setAllOpen(true)}>
+            <Rows3 />
             {translate('buildWeb.activity.allTasks', 'All tasks')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Dialog open={logOf !== null} onOpenChange={(open) => !open && setLogOf(null)}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>{logOf?.title}</DialogTitle>
-            {logOf?.detail ? <DialogDescription>{logOf.detail}</DialogDescription> : null}
-          </DialogHeader>
-          {logOf ? (
-            <BuildWebJobPanel
-              key={logOf.id}
-              target={host.target}
-              jobId={logOf.id}
-              label={logOf.kind}
-              onJob={() => {}}
-              onDone={() => {}}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <BuildWebAllTasksDialog
+        open={allOpen}
+        host={host}
+        onOpenChange={setAllOpen}
+        onTask={(task) => {
+          setAllOpen(false)
+          openTask(task, host, setView)
+        }}
+        onBuildPage={(task, url) => setView({ kind: 'build-page', task, url })}
+      />
+      <TaskViewDialog view={view} host={host} onClose={() => setView(null)} />
     </>
   )
 }

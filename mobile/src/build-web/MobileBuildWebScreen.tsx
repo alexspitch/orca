@@ -32,14 +32,16 @@ import { BuildWebIssueScreen } from './issue/BuildWebIssueScreen'
 import { BuildWebTakeToWorkSheet } from './take-to-work/BuildWebTakeToWorkSheet'
 import { BuildWebNoticeBanner, type BuildWebNotice } from './BuildWebNoticeBanner'
 import { BuildWebImagesView } from './images/BuildWebImagesView'
+import { BuildWebTasksView } from './tasks/BuildWebTasksView'
 import { ImageTrackingContext, useImageTrackingState } from './images/image-tracking'
 
 type OpenCard = { id: string; tab: BuildWebCardTab }
-type Section = 'issues' | 'images'
+type Section = 'issues' | 'images' | 'tasks'
 
 const SECTIONS: { value: Section; label: string }[] = [
   { value: 'issues', label: 'Issues' },
-  { value: 'images', label: 'Images' }
+  { value: 'images', label: 'Images' },
+  { value: 'tasks', label: 'Tasks' }
 ]
 
 const NOTICE_MS = 4000
@@ -70,6 +72,7 @@ export function MobileBuildWebScreen() {
   const [section, setSection] = useState<Section>('issues')
   // Why remembered: the Images section stays mounted once opened, so its filters survive a switch.
   const [imagesOpened, setImagesOpened] = useState(false)
+  const [tasksOpened, setTasksOpened] = useState(false)
   const [image, setImage] = useState<string | null>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -211,6 +214,8 @@ export function MobileBuildWebScreen() {
                     setSection(next)
                     if (next === 'images') {
                       setImagesOpened(true)
+                    } else if (next === 'tasks') {
+                      setTasksOpened(true)
                     }
                   }}
                   fill
@@ -224,6 +229,22 @@ export function MobileBuildWebScreen() {
                   active={section === 'images'}
                   reloadToken={reloadToken}
                   onOpenImage={setImage}
+                />
+              </View>
+            ) : null}
+            {tasksOpened ? (
+              <View style={[styles.fill, section === 'tasks' ? null : styles.hidden]}>
+                <BuildWebTasksView
+                  active={section === 'tasks'}
+                  onOpenIssue={(id) => {
+                    setSection('issues')
+                    openIssue(id, 'build')
+                  }}
+                  onOpenImage={(next) => {
+                    setSection('images')
+                    setImagesOpened(true)
+                    setImage(next)
+                  }}
                 />
               </View>
             ) : null}
@@ -283,7 +304,7 @@ export function MobileBuildWebScreen() {
         <View style={styles.titleWrap}>
           <View style={styles.titleLine}>
             <StatusDot state={connState} />
-            <Text style={styles.title}>{section === 'images' ? 'Images' : 'Issues'}</Text>
+            <Text style={styles.title}>{SECTIONS.find((s) => s.value === section)?.label}</Text>
           </View>
           {connected ? (
             <Text style={styles.subtitle} numberOfLines={1}>

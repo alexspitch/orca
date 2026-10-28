@@ -46,6 +46,8 @@ export type BuildWebConsoleTask = {
   detail: string | null
   status: BuildWebConsoleTaskStatus
   active: boolean
+  /** Who started it; null from a console that does not say. */
+  user: string | null
   created_at: string
   started_at: string | null
   finished_at: string | null
@@ -63,4 +65,54 @@ export type BuildWebActivity = {
   baseUrl: string
   notifications: { items: BuildWebNotification[]; unread: number } | null
   tasks: BuildWebConsoleTask[] | null
+}
+
+/** IS-10: what the console's /tasks narrows by; the lists are any-of, the days `YYYY-MM-DD`, both included. */
+export type BuildWebTaskPageArgs = {
+  offset: number
+  limit: number
+  kinds?: string[]
+  /** `active` is queued or running. */
+  states?: BuildWebTaskState[]
+  user?: string
+  from?: string
+  to?: string
+  q?: string
+}
+
+export const BUILD_WEB_TASK_STATES = [
+  'active',
+  'stale',
+  'success',
+  'partial',
+  'failed',
+  'cancelled'
+] as const
+export type BuildWebTaskState = (typeof BUILD_WEB_TASK_STATES)[number]
+
+/** The kinds the console's filter offers, after its web/src/task-view.ts. */
+export const BUILD_WEB_TASK_KINDS = [
+  'build',
+  'redos',
+  'deploy',
+  'generate',
+  'up',
+  'restart',
+  'apply',
+  'shots',
+  'guide',
+  'tms',
+  'tms-script',
+  'tms-scripts',
+  'automation',
+  'test'
+] as const
+
+export const BUILD_WEB_TASK_PAGE_SIZES = [25, 50, 100] as const
+
+/** One page of every task, newest first; `users` are every author, for the filter. */
+export type BuildWebTaskPage = {
+  tasks: BuildWebConsoleTask[]
+  total: number
+  users: string[]
 }

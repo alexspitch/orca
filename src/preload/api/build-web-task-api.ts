@@ -11,7 +11,11 @@ import type {
   BuildWebTrainsRolling
 } from '../../shared/build-web-train-types'
 import type { BuildWebWatchCheck, BuildWebWatchState } from '../../shared/build-web-watch-types'
-import type { BuildWebActivity } from '../../shared/build-web-activity-types'
+import type {
+  BuildWebActivity,
+  BuildWebTaskPage,
+  BuildWebTaskPageArgs
+} from '../../shared/build-web-activity-types'
 import type {
   BuildWebRecapPage,
   BuildWebRecapQuery,
@@ -169,6 +173,8 @@ export type BuildWebTaskApi = {
   testCase: (args: { key: string }) => Promise<BuildWebTestCaseHistory>
   testNightly: () => Promise<BuildWebLastNightly | null>
   activity: () => Promise<BuildWebActivity>
+  /** IS-10: a page of every task, as the console's /tasks; a host predating it answers with an unknown method. */
+  taskPage: (args: BuildWebTaskPageArgs) => Promise<BuildWebTaskPage>
   notificationsSeen: () => Promise<BuildWebMutationResult<true>>
   notificationsClear: () => Promise<BuildWebMutationResult<true>>
 }

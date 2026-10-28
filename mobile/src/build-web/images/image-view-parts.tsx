@@ -106,15 +106,17 @@ export function ImagePager({
   of,
   page,
   loading,
+  pageSize = IMAGE_PAGE_SIZE,
   onPageChange
 }: {
   total: number
   of: number
   page: number
   loading: boolean
+  pageSize?: number
   onPageChange: (page: number) => void
 }) {
-  const pages = Math.ceil(total / IMAGE_PAGE_SIZE)
+  const pages = Math.ceil(total / pageSize)
   return (
     <View style={styles.pager}>
       <Text style={styles.muted}>

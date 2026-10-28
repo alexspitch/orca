@@ -24,7 +24,7 @@ import {
 } from './recap-filters'
 
 /** A date bound as a pill, like the Linear project dates; empty means no bound. */
-function DateBound({
+export function DateBound({
   label,
   value,
   min,

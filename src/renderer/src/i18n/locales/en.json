@@ -21584,7 +21584,8 @@
       "updateServerImageGroupBuild": "This Orca server cannot build several images at once yet. Update the server.",
       "updateServerRedosTwin": "This Orca server cannot derive a redos image again yet. Update the server.",
       "updateServerConsoleFeatures": "This Orca server cannot read what the console supports yet. Update the server.",
-      "updateServerTwinDecision": "This Orca server cannot build a waiting redos image yet. Update the server."
+      "updateServerTwinDecision": "This Orca server cannot build a waiting redos image yet. Update the server.",
+      "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -22651,7 +22652,8 @@
       "alertMany": "build-web: {{count}} new notifications",
       "alertOpen": "Open",
       "buildPage": "Build page",
-      "allTasks": "All tasks"
+      "allTasks": "All tasks",
+      "runNotFound": "Orca could not open build run {{id}}"
     },
     "notifications": {
       "label": "build-web",
@@ -22711,6 +22713,42 @@
     "copy": {
       "both": "rhel + redos",
       "which": "References of which distribution"
+    },
+    "tasks": {
+      "allTitle": "All tasks",
+      "found": "{{count}} found",
+      "search": "Search: ticket, branch, stand, image…",
+      "everybody": "Everybody",
+      "from": "From",
+      "to": "To",
+      "reset": "Reset",
+      "task": "Task",
+      "date": "Date",
+      "kind": "Kind",
+      "status": "Status",
+      "author": "Author",
+      "none": "No tasks match",
+      "perPage": "{{count}} per page",
+      "kindBuild": "Build",
+      "kindRedos": "Redos",
+      "kindDeploy": "Deploy",
+      "kindGenerate": "Config generation",
+      "kindUp": "Services up",
+      "kindRestart": "Services restart",
+      "kindApply": "Settings apply",
+      "kindShots": "Screenshots",
+      "kindGuide": "Guide",
+      "kindTms": "Applicability analysis",
+      "kindTmsScript": "Test script",
+      "kindTmsScripts": "Test scripts",
+      "kindAutomation": "Automations",
+      "kindTest": "Tests",
+      "stateActive": "running",
+      "stateStale": "went quiet",
+      "stateSuccess": "success",
+      "statePartial": "partial",
+      "stateFailed": "failed",
+      "stateCancelled": "cancelled"
     }
   },
   "gitLog": {

@@ -32,6 +32,7 @@ import type {
   BuildWebRunId,
   BuildWebStandParams,
   BuildWebTestCaseParams,
+  BuildWebTaskPageParams,
   BuildWebTestingParams,
   BuildWebTestWorkspaceParams,
   BuildWebTmsStandsParams
@@ -73,7 +74,8 @@ import { listBuildWebRecaps, readBuildWebRecapReport } from '../build-web/build-
 import {
   clearBuildWebNotifications,
   markBuildWebNotificationsSeen,
-  readBuildWebActivity
+  readBuildWebActivity,
+  readBuildWebTaskPage
 } from '../build-web/build-web-activity'
 import {
   getBuildWebLastNightly,
@@ -333,6 +335,10 @@ export class RuntimeBuildWebTaskCommands {
 
   buildWebActivity() {
     return readBuildWebActivity()
+  }
+
+  buildWebTaskPage(args: In<typeof BuildWebTaskPageParams>) {
+    return readBuildWebTaskPage(args)
   }
 
   buildWebNotificationsSeen() {

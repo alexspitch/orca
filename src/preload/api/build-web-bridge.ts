@@ -100,6 +100,7 @@ export const buildWebApi = {
   testCase: (args) => ipcRenderer.invoke('buildWeb:testCase', args),
   testNightly: () => ipcRenderer.invoke('buildWeb:testNightly'),
   activity: () => ipcRenderer.invoke('buildWeb:activity'),
+  taskPage: (args) => ipcRenderer.invoke('buildWeb:taskPage', args),
   notificationsSeen: () => ipcRenderer.invoke('buildWeb:notificationsSeen'),
   notificationsClear: () => ipcRenderer.invoke('buildWeb:notificationsClear'),
   standGroups: () => ipcRenderer.invoke('buildWeb:standGroups'),

@@ -232,6 +232,14 @@ function TestingTabs({
     setTab(next)
     setHistorySeen((seen) => seen || next === 'history')
   }
+  // A test run from the task list: the history opens on it.
+  const toRun = useBuildWebStore((s) => s.focus?.kind === 'test-run')
+  useEffect(() => {
+    if (toRun) {
+      setTab('history')
+      setHistorySeen(true)
+    }
+  }, [toRun])
   return (
     <Tabs value={tab} onValueChange={pick} className="min-h-0 flex-1">
       <div className="px-3 md:px-5">

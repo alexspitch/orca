@@ -77,6 +77,7 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.startImageBuild',
   'buildWeb.startImageGroupBuild',
   'buildWeb.status',
+  'buildWeb.taskPage',
   'buildWeb.testConnection',
   'buildWeb.tmsStands',
   'buildWeb.updateIssue',

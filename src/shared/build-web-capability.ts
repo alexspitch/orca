@@ -50,4 +50,7 @@ export const BUILD_WEB_REDOS_TWIN_RUNTIME_CAPABILITY = 'build-web-redos-twin.v1'
 export const BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY = 'build-web-console-features.v1'
 
 /** A runtime that builds several images in one run: `buildWeb.startImageGroupBuild`. */
+/** A runtime that reads the console's page of all tasks (IS-10): `buildWeb.taskPage`. */
+export const BUILD_WEB_TASK_PAGE_RUNTIME_CAPABILITY = 'build-web-task-page.v1'
+
 export const BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY = 'build-web-image-group-build.v1'

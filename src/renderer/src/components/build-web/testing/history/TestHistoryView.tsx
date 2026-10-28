@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebTestJobBreakdown } from '../../../../../../shared/build-web-test-history-types'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { BuildWebListState } from '../../BuildWebListState'
+import { useBuildWebStore } from '../../build-web-store'
 import { useBuildLogViewer } from '../../images/build-log-viewer'
 import { ResizableSplit } from '../../issue/ResizableSplit'
 import {
@@ -28,6 +29,15 @@ export function TestHistoryView({
   const runs = useTestRuns(target)
   const [kind, setKind] = useState<TestRunKind>(() => readTestingViewPrefs().kind)
   const [picked, setPicked] = useState<string | null>(null)
+  // A test run from the task list: every kind is shown, so the run is in the list to pick.
+  const focus = useBuildWebStore((s) => (s.focus?.kind === 'test-run' ? s.focus : null))
+  useEffect(() => {
+    if (focus) {
+      setKind('all')
+      setPicked(focus.runId)
+      useBuildWebStore.getState().setFocus(null)
+    }
+  }, [focus])
   const shown = useMemo(() => runsOfKind(runs.data ?? [], kind), [runs.data, kind])
   // Why the newest by default: the run a person comes for is almost always the last one.
   const selectedId = picked && shown.some((r) => r.id === picked) ? picked : (shown[0]?.id ?? null)

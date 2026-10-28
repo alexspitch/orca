@@ -34,6 +34,7 @@ const task = (over: Partial<BuildWebConsoleTask>): BuildWebConsoleTask => ({
   finished_at: null,
   has_log: true,
   build_url: null,
+  user: null,
   ...over
 })
 
@@ -76,15 +77,15 @@ describe('where a notification leads', () => {
 })
 
 describe('where a task leads', () => {
-  it('sends a build run to its card and a test run to the console', () => {
+  it('sends a build run to its card and a test run to the Testing page', () => {
     expect(taskTarget(task({ source: 'build', id: 'r1', kind: 'build' }))).toEqual({
       kind: 'run',
       runId: 'r1',
       tab: 'build'
     })
     expect(taskTarget(task({ source: 'test', id: 't/1', kind: 'test' }))).toEqual({
-      kind: 'console',
-      path: '/tests/runs/t%2F1'
+      kind: 'test-run',
+      runId: 't/1'
     })
   })
 

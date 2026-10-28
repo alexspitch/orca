@@ -1,3 +1,4 @@
+import { BuildWebTaskPageParams } from '../../../../shared/rpc-contract/build-web-task-params'
 import { defineMethod } from '../core'
 
 // The titlebar's bell and task counter: build-web's own, behind the same host token as Issues.
@@ -7,6 +8,12 @@ export const BUILD_WEB_ACTIVITY_METHODS = [
     permission: 'workspace',
     params: null,
     handler: async (_params, { runtime }) => runtime.buildWebActivity()
+  }),
+  defineMethod({
+    name: 'buildWeb.taskPage',
+    permission: 'workspace',
+    params: BuildWebTaskPageParams,
+    handler: async (params, { runtime }) => runtime.buildWebTaskPage(params)
   }),
   defineMethod({
     name: 'buildWeb.notificationsSeen',

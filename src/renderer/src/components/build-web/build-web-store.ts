@@ -54,6 +54,8 @@ export type BuildWebListFilters = {
 export type BuildWebFocus =
   | { kind: 'train'; trainId: string; run: BuildWebTrainRun | null }
   | { kind: 'image'; image: string }
+  /** IS-10: a test run from the task list, picked in the Testing page's history. */
+  | { kind: 'test-run'; runId: string }
 
 export function sameStatuses(set: ReadonlySet<BuildWebStatus>, list: readonly BuildWebStatus[]) {
   return set.size === list.length && list.every((s) => set.has(s))

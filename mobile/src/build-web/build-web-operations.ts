@@ -35,6 +35,7 @@ function buildWebOperation<M extends RpcMethodName & `buildWeb.${keyof BuildWebA
 
 const BUILD_WEB_OPERATIONS = {
   activity: buildWebOperation('buildWeb.activity'),
+  taskPage: buildWebOperation('buildWeb.taskPage'),
   addComment: buildWebOperation('buildWeb.addComment'),
   addRunImages: buildWebOperation('buildWeb.addRunImages'),
   adoptBuilt: buildWebOperation('buildWeb.adoptBuilt'),
