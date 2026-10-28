@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "1.4.244-custom.1793181608000",
+      "date": "2026-10-28",
+      "commit": "19c25478be76",
+      "features": [
+        "Redos image builds in the build-web task menu now have a «Build page» button that opens the build's page in your browser.",
+        "The build-web task menu gains an «All tasks» entry at the bottom that opens the console's full task list."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.244-custom.1793170755000",
       "date": "2026-10-28",
       "commit": "1e7b74fc9753",
