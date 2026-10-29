@@ -65,6 +65,7 @@ export class BuildWebSessionWatcher {
   /** How many looks in a row found each session's folder gone. */
   private readonly goneLooks = new Map<string, number>()
   private readonly healTriedAt = new Map<string, number>()
+  private readonly unlinkedNoted = new Set<string>()
 
   constructor(private readonly deps: BuildWebSessionWatcherDeps) {
     this.finisher = new BuildWebSessionFinisher({
@@ -164,13 +165,23 @@ export class BuildWebSessionWatcher {
       if (this.stopped) {
         return
       }
-      if (now - (this.healTriedAt.get(row.worktreeId) ?? 0) < HEAL_RETRY_MS) {
+      const triedAt = this.healTriedAt.get(row.worktreeId)
+      if (now - (triedAt ?? 0) < HEAL_RETRY_MS) {
         continue
       }
       this.healTriedAt.set(row.worktreeId, now)
-      await healBuildWebSessionLink(this.deps.runtime, row, readIssueInBackground).catch(
-        () => false
-      )
+      const linked = await healBuildWebSessionLink(
+        this.deps.runtime,
+        row,
+        readIssueInBackground
+      ).catch(() => false)
+      // Why the second miss: the first may race the launch that is still recording the session.
+      if (!linked && triedAt !== undefined && !this.unlinkedNoted.has(row.worktreeId)) {
+        this.unlinkedNoted.add(row.worktreeId)
+        console.warn(
+          `[build-web] ${row.task.key}: no console session names this worktree's tabs; it is not cleaned up`
+        )
+      }
     }
   }
 

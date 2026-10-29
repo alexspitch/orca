@@ -171,7 +171,10 @@ describe('a new tab whose chat route waits on the host agent list', () => {
     expect(relaunch).not.toHaveBeenCalled()
     await vi.advanceTimersByTimeAsync(1)
 
-    await expect(result?.structuredSettlement).resolves.toEqual({ kind: 'terminal' })
+    await expect(result?.structuredSettlement).resolves.toEqual({
+      kind: 'terminal',
+      terminal: { tabId: 'tab-1' }
+    })
     expect(relaunch.mock.calls[0]?.[0]).toMatchObject({
       agentSessionLaunchPlan: { route: 'terminal-tui' }
     })

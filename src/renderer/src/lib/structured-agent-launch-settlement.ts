@@ -7,6 +7,7 @@ import {
   type StructuredAgentLaunchOptions
 } from '@/lib/structured-agent-session-launch'
 import type { StructuredPromptDeliveryResult } from '@/lib/structured-agent-session-launch-prompt'
+import type { StructuredLaunchTerminal } from '@/lib/structured-agent-session-launch-admission'
 import { StructuredAgentSessionCreateAbandonedError } from './structured-agent-session-launch-errors'
 
 export type StructuredAgentLaunchSettlement =
@@ -24,7 +25,7 @@ export type StructuredAgentLaunchSettlement =
   /** `notified`: the launch already told the user, so a caller adds no message of its own. */
   | { kind: 'failed'; error: unknown; notified?: true }
   /** The owning host declined the chat before anything was created; its terminal opened instead. */
-  | { kind: 'terminal' }
+  | { kind: 'terminal'; terminal?: Pick<StructuredLaunchTerminal, 'tabId' | 'completion'> }
 
 export type StructuredAgentLaunchHooks = {
   activate?: boolean

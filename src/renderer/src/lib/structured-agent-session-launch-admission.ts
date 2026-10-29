@@ -273,7 +273,15 @@ export function beginHostAdmittedStructuredLaunch(args: {
           terminal.promptDeliveryResult ??
           Promise.resolve(terminal.opened ? DELIVERED : NOT_DELIVERED)
         ).then(resolveDelivery, () => resolveDelivery(NOT_DELIVERED))
-        return terminal.opened ? { kind: 'terminal' } : { kind: 'cancelled', sessionId: null }
+        return terminal.opened
+          ? {
+              kind: 'terminal',
+              terminal: {
+                ...(terminal.tabId ? { tabId: terminal.tabId } : {}),
+                ...(terminal.completion ? { completion: terminal.completion } : {})
+              }
+            }
+          : { kind: 'cancelled', sessionId: null }
       }
       // A host that would run the chat with more access than asked for gets nothing to start.
       const permission = paired

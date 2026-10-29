@@ -210,6 +210,13 @@ describe('agent launch caller routing', () => {
     ])
     await useActualAdmission()
     mockCreateSupport.mockResolvedValue({ supported: false, reason: 'wsl' })
+    const opened = {
+      delivered: true,
+      failureNotified: false,
+      outcome: { status: 'created' },
+      tabId: 'web-terminal-host-tab'
+    }
+    mockLaunchAgentInWebHostTab.mockResolvedValue(opened)
     const { launchAgentInNewTab } = await import('./launch-agent-in-new-tab')
 
     const result = launchAgentInNewTab({
@@ -222,8 +229,12 @@ describe('agent launch caller routing', () => {
     })
 
     expect(result?.surface).toEqual({ kind: 'host-published' })
-    await expect(result?.structuredSettlement).resolves.toEqual({ kind: 'terminal' })
-    await expect(result?.promptDeliveryResult).resolves.toEqual({
+    const settled = await result?.structuredSettlement
+    // The server's tab id reaches the caller, which records it (a build-web task's session).
+    await expect(settled?.kind === 'terminal' ? settled.terminal?.completion : null).resolves.toBe(
+      opened
+    )
+    await expect(result?.promptDeliveryResult).resolves.toMatchObject({
       delivered: true,
       failureNotified: false
     })
@@ -259,7 +270,10 @@ describe('agent launch caller routing', () => {
 
     expect(result?.surface).toEqual({ kind: 'host-published' })
     expect(store.createTab).not.toHaveBeenCalled()
-    await expect(result?.structuredSettlement).resolves.toEqual({ kind: 'terminal' })
+    await expect(result?.structuredSettlement).resolves.toEqual({
+      kind: 'terminal',
+      terminal: { tabId: 'tab-1' }
+    })
     expect(store.createTab).toHaveBeenCalledOnce()
     expect(store.createTab.mock.calls[0]?.slice(0, 2)).toEqual(['wt-1', 'group-1'])
     expect(queuedStartupCommand(store)).toBe("claude '--model' 'sonnet'")
@@ -290,7 +304,7 @@ describe('agent launch caller routing', () => {
       onStructuredHostDeclined
     })
 
-    await expect(result?.structuredSettlement).resolves.toEqual({ kind: 'terminal' })
+    await expect(result?.structuredSettlement).resolves.toEqual({ kind: 'terminal', terminal: {} })
     expect(onStructuredHostDeclined).toHaveBeenCalledOnce()
     expect(store.createTab).not.toHaveBeenCalled()
   })

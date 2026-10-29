@@ -24,6 +24,28 @@ import {
 } from './mirror-settle'
 import { handleGlobalSessionInventoryEvent } from './global-session-inventory-event'
 import type { VisibilityResumeCoordinator } from './visibility-resume-coordinator'
+import { tabsSyncDebug, tabsSyncDebugWorktree } from './tabs-sync-debug'
+import { selectWorktreeAgentActivitySummary } from '@/components/sidebar/worktree-agent-activity-summary'
+
+function debugWorktreeStatus(worktreeId: string): void {
+  // Why a timer: the store patch may land after this frame's handler returns.
+  setTimeout(() => {
+    const state = useAppStore.getState()
+    const rows = Object.entries(state.agentStatusByPaneKey)
+      .filter(([, entry]) => entry.worktreeId === worktreeId)
+      .map(([paneKey, entry]) => `${paneKey.slice(0, 22)}=${entry.state}`)
+    const summary = selectWorktreeAgentActivitySummary(state, worktreeId)
+    tabsSyncDebug('global-applied', {
+      wt: tabsSyncDebugWorktree(worktreeId),
+      rows,
+      hasPermission: summary.hasPermission,
+      hasLiveWorking: summary.hasLiveWorking,
+      hasLiveDone: summary.hasLiveDone,
+      tabs: (state.tabsByWorktree[worktreeId] ?? []).length,
+      activeWorktree: tabsSyncDebugWorktree(state.activeWorktreeId ?? '')
+    })
+  }, 0)
+}
 
 export type GlobalSessionEventArgs = {
   environmentId: string
@@ -51,6 +73,7 @@ export function handleGlobalSessionEvent(args: GlobalSessionEventArgs): void {
     coordinator
   } = args
   if (!isCurrent()) {
+    tabsSyncDebug('global-drop', { env: environmentId, reason: 'not-current' })
     return
   }
   if (response.ok === false) {
@@ -59,6 +82,7 @@ export function handleGlobalSessionEvent(args: GlobalSessionEventArgs): void {
   }
   const runtimeId = getSessionTabsRuntimeIdFromResponse(response)
   if (runtimeId && !acceptSessionTabsRuntimeId(environmentId, runtimeId)) {
+    tabsSyncDebug('global-drop', { env: environmentId, reason: 'runtime-id-rejected', runtimeId })
     return
   }
   const event = args.event as
@@ -122,23 +146,40 @@ export function handleGlobalSessionEvent(args: GlobalSessionEventArgs): void {
     getCurrentState: () => useAppStore.getState()
   })
     .then((recovered) => {
+      const debugBase = {
+        env: environmentId,
+        wt: tabsSyncDebugWorktree(event.worktree),
+        v: event.snapshotVersion,
+        receivedFrame
+      }
+      if (!isCurrent()) {
+        tabsSyncDebug('global-drop', { ...debugBase, reason: 'not-current-after-recovery' })
+        return
+      }
+      if (!recovered) {
+        tabsSyncDebug('global-drop', { ...debugBase, reason: 'recovery-returned-null' })
+        return
+      }
       if (
-        !isCurrent() ||
-        !recovered ||
         !shouldApplyRecoveredWebSessionTabsSnapshot(
           environmentId,
           recovered,
           receivedFrame,
           runtimeId
-        ) ||
-        !coordinator.shouldApplySnapshot(environmentId, recovered, receivedFrame, runtimeId)
+        )
       ) {
+        tabsSyncDebug('global-drop', { ...debugBase, reason: 'stale-received-frame' })
+        return
+      }
+      if (!coordinator.shouldApplySnapshot(environmentId, recovered, receivedFrame, runtimeId)) {
+        tabsSyncDebug('global-drop', { ...debugBase, reason: 'visibility-coordinator' })
         return
       }
       if (replayed) {
         acceptReplayedWebSessionTabsSnapshot(environmentId, recovered.worktree)
       }
       const decision = decideWebSessionTabsSnapshot(recovered, environmentId, runtimeId)
+      tabsSyncDebug('global-decision', { ...debugBase, replayed, ...decision })
       if (decision.apply) {
         settleHydration = applyWebSessionTabsStorePatch(
           (state) => applyWebSessionTabsSnapshot(state, recovered, environmentId),
@@ -159,6 +200,7 @@ export function handleGlobalSessionEvent(args: GlobalSessionEventArgs): void {
           event.type === 'updated' && !replayed
         )
         coordinator.recordSnapshot(environmentId, recovered, receivedFrame, runtimeId)
+        debugWorktreeStatus(recovered.worktree)
       } else {
         settleHydration = hostSessionMirrorSettleForPatchlessFrame(
           decision,
@@ -173,6 +215,11 @@ export function handleGlobalSessionEvent(args: GlobalSessionEventArgs): void {
       }
     })
     .catch((error) => {
+      tabsSyncDebug('global-drop', {
+        env: environmentId,
+        reason: 'recovery-threw',
+        message: error instanceof Error ? error.message : String(error)
+      })
       if (isCurrent()) {
         console.warn('[web-session-tabs-sync] snapshot recovery failed:', error)
       }

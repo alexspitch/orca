@@ -20,6 +20,7 @@ import {
   replayableSessionTabsSnapshotByWorktree
 } from './state'
 import { applyWebSessionTabsStorePatch } from './store-patch'
+import { tabsSyncDebug, tabsSyncDebugWorktree } from './tabs-sync-debug'
 import { isHostMirroredWorktree } from './visibility-types'
 import type { VisibilityResumeCoordinator } from './visibility-resume-coordinator'
 
@@ -101,6 +102,7 @@ export function handleGlobalSessionInventoryEvent({
   )
     .then((recovered) => {
       if (!isCurrent()) {
+        tabsSyncDebug('inventory-drop', { env: environmentId, reason: 'not-current' })
         return
       }
       const applicable = recovered.flatMap((snapshot, index) =>
@@ -130,6 +132,16 @@ export function handleGlobalSessionInventoryEvent({
       const freshSnapshots = applicable.flatMap(({ snapshot }, index) =>
         decisions[index]!.apply ? [snapshot] : []
       )
+      tabsSyncDebug('inventory', {
+        env: environmentId,
+        visibilityGeneration,
+        replayed,
+        received: recovered.length,
+        recoveredNull: recovered.filter((snapshot) => snapshot === null).length,
+        applicable: applicable.length,
+        applied: freshSnapshots.map((snapshot) => tabsSyncDebugWorktree(snapshot.worktree)),
+        unchanged: applicable.filter(({ index }) => unchanged[index]).length
+      })
       settleHydration = applyWebSessionTabsStorePatch(
         (state) => applyWebSessionTabsSnapshots(state, freshSnapshots, environmentId),
         {
