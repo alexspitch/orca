@@ -9,7 +9,11 @@ import {
   View
 } from 'react-native'
 import { ExternalLink } from 'lucide-react-native'
-import { filesWithRole } from '../../../../../src/renderer/src/components/build-web/issue/plan/issue-file-roles'
+import type { BuildWebIssueFile } from '../../../../../src/shared/build-web-types'
+import {
+  filesWithRole,
+  followFile
+} from '../../../../../src/renderer/src/components/build-web/issue/plan/issue-file-roles'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
 import { MobileHtmlPreview } from '../../../components/MobileHtmlPreview'
 import { openExternalLink } from '../../../platform/external-link'
@@ -39,8 +43,8 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
  */
 export function IssueMockupsTab({ detail }: BuildWebIssueTabProps) {
   const mockups = filesWithRole(detail.files, 'mockup')
-  const [chosenId, setChosenId] = useState<string | null>(null)
-  const chosen = mockups.find((m) => m.id === chosenId) ?? mockups[0] ?? null
+  const [picked, setPicked] = useState<Pick<BuildWebIssueFile, 'id' | 'name'> | null>(null)
+  const chosen = followFile(mockups, picked)
   const [screen, setScreen] = useState<string | null>(null)
   const { view, viewError, preview, previewLoading, previewError } = useIssueMockup(
     detail.id,
@@ -72,7 +76,7 @@ export function IssueMockupsTab({ detail }: BuildWebIssueTabProps) {
                 label={m.name}
                 active={m.id === chosen.id}
                 onPress={() => {
-                  setChosenId(m.id)
+                  setPicked(m)
                   setScreen(null)
                 }}
               />

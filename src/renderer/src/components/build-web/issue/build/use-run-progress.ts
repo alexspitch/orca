@@ -74,6 +74,8 @@ export function useRunProgress(
   // Why the twins too: the console leaves them out of the run's status while they go.
   const twinGoing = hasLiveTwin(Object.values(cells))
   const polling = status === 'building' || watching || twinGoing
+  const pollingRef = useRef(polling)
+  pollingRef.current = polling
   useEffect(() => {
     if (!polling) {
       return
@@ -105,6 +107,15 @@ export function useRunProgress(
     setNow(at)
     setWatchUntil((until) => Math.max(until, at + ms))
   }, [])
+
+  const runStatus = run.status
+  // The card's own reading says the run moved elsewhere (a build started or ended): read it here
+  // too. Why not lay that reading over the rows: it may predate a row this view just removed.
+  useEffect(() => {
+    if (!pollingRef.current && runStatus !== statusRef.current) {
+      watch(POLL_MS)
+    }
+  }, [runStatus, watch])
 
   return { cells, setCells, status, now, apply, watch, watching }
 }

@@ -1,15 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ExternalLink, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type {
   BuildWebIssueDetail,
+  BuildWebIssueFile,
   BuildWebMockupView
 } from '../../../../../../shared/build-web-types'
 import type { RuntimeClientTarget } from '../../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../../build-web-client'
-import { filesWithRole } from './issue-file-roles'
+import { filesWithRole, followFile } from './issue-file-roles'
 import { AttachHint } from './IssuePlanTab'
 
 const ROW =
@@ -28,35 +29,58 @@ export function IssueMockupsTab({
   detail: BuildWebIssueDetail
 }): React.JSX.Element {
   const mockups = filesWithRole(detail.files, 'mockup')
-  const [chosenId, setChosenId] = useState<string | null>(null)
-  const chosen = mockups.find((m) => m.id === chosenId) ?? mockups[0] ?? null
-  const [view, setView] = useState<BuildWebMockupView | null>(null)
+  const [picked, setPicked] = useState<Pick<BuildWebIssueFile, 'id' | 'name'> | null>(null)
+  const chosen = followFile(mockups, picked)
+  const [opened, setOpened] = useState<{
+    name: string
+    view: BuildWebMockupView | null
+    error: string | null
+  } | null>(null)
   const [screen, setScreen] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const openedName = useRef<string | null>(null)
 
   // A fresh address each time a mockup is opened: one works for a few hours only.
   const chosenFileId = chosen?.id ?? null
+  const chosenName = chosen?.name ?? ''
   useEffect(() => {
     if (!chosenFileId) {
       return
     }
     let alive = true
-    setView(null)
-    setScreen(null)
-    setError(null)
     callBuildWeb(target, 'issueMockupView', { id: detail.id, fileId: chosenFileId }).then(
       (next) => {
         if (alive) {
-          setView(next)
-          setScreen(next.screens[0]?.path ?? null)
+          // Why keep the screen: the mockup attached again under its name is the same pages.
+          const again = openedName.current === chosenName
+          openedName.current = chosenName
+          setOpened({ name: chosenName, view: next, error: null })
+          setScreen((shown) =>
+            again && next.screens.some((s) => s.path === shown)
+              ? shown
+              : (next.screens[0]?.path ?? null)
+          )
         }
       },
-      (failure) => alive && setError(failure instanceof Error ? failure.message : String(failure))
+      (failure) =>
+        alive &&
+        setOpened((shown) =>
+          shown?.name === chosenName && shown.view
+            ? shown
+            : {
+                name: chosenName,
+                view: null,
+                error: failure instanceof Error ? failure.message : String(failure)
+              }
+        )
     )
     return () => {
       alive = false
     }
-  }, [target, detail.id, chosenFileId])
+  }, [target, detail.id, chosenFileId, chosenName])
+  // Why by name: the one attached again stays in its frame until the new one is opened.
+  const openedNow = opened?.name === chosenName ? opened : null
+  const view = openedNow?.view ?? null
+  const error = openedNow?.error ?? null
 
   if (!chosen) {
     return (
@@ -85,7 +109,7 @@ export function IssueMockupsTab({
               <button
                 type="button"
                 aria-current={m.id === chosen.id ? 'true' : undefined}
-                onClick={() => setChosenId(m.id)}
+                onClick={() => setPicked(m)}
                 className={cn(ROW, 'font-mono', m.id === chosen.id && 'bg-accent')}
                 title={m.name}
               >

@@ -5,8 +5,15 @@ import type {
   BuildWebUser,
   BuildWebVersion
 } from '../../../../src/shared/build-web-types'
+import {
+  afterLiveReading,
+  createLiveReads,
+  createLiveReplyGuard,
+  sameReading
+} from '../../../../src/shared/build-web-live-reads'
 import { buildWebErrorMessage, callBuildWeb } from '../build-web-operations'
 import { useBuildWebScreen } from '../build-web-screen-context'
+import { useLiveRead } from '../use-live-read'
 import { confirmStatusMove, notifyJiraOutcome, patchRefusal } from './issue-status-move'
 import type { IssueConfirm } from './use-issue-confirm'
 
@@ -32,6 +39,8 @@ function withDetailLists(detail: BuildWebIssueDetail): BuildWebIssueDetail {
   }
 }
 
+const issueReads = createLiveReads<BuildWebIssueDetail>()
+
 export type IssueDetailState = {
   detail: BuildWebIssueDetail | null
   error: string | null
@@ -45,9 +54,13 @@ export type IssueDetailState = {
   patchLocal: (patch: Partial<BuildWebIssueDetail>) => void
 }
 
-/** The open task's card, its pickers, and field writes (status without optimism: it moves Jira). */
+/**
+ * The open task's card, its pickers, and field writes (status without optimism: it moves Jira).
+ * Read again every few seconds while the screen is shown; a reading never replaces the card while
+ * a save is out, and an editor keeps its own draft whatever is read.
+ */
 export function useIssueDetail(id: string, confirm: IssueConfirm): IssueDetailState {
-  const { client, hostCapabilities, notify, listSync } = useBuildWebScreen()
+  const { client, hostId, hostCapabilities, notify, listSync } = useBuildWebScreen()
   const [loaded, setDetail] = useState<BuildWebIssueDetail | null>(null)
   const [failed, setFailed] = useState<{ id: string; message: string } | null>(null)
   const detail = loaded && loaded.id === id ? loaded : null
@@ -60,15 +73,17 @@ export function useIssueDetail(id: string, confirm: IssueConfirm): IssueDetailSt
   const versions = detail && releases?.product === detail.product ? releases.list : []
   const [saving, setSaving] = useState(false)
   const generation = useRef(0)
+  const [guard] = useState(createLiveReplyGuard)
 
   const load = useCallback(async () => {
     const mine = ++generation.current
+    guard.mark()
     try {
       const next = withDetailLists(await callBuildWeb(client, 'getIssue', { id }))
       if (mine !== generation.current) {
         return
       }
-      setDetail(next)
+      setDetail((shown) => (shown?.id === next.id && sameReading(shown, next) ? shown : next))
       setFailed(null)
       const [users, list] = await Promise.all([
         callBuildWeb(client, 'listAssignees').catch(() => []),
@@ -85,11 +100,28 @@ export function useIssueDetail(id: string, confirm: IssueConfirm): IssueDetailSt
         setFailed({ id, message: buildWebErrorMessage(failure) })
       }
     }
-  }, [client, id])
+  }, [client, guard, id])
 
   useEffect(() => {
     void load()
   }, [load])
+
+  // Why always in sight: the card is mounted only while it is the screen shown.
+  useLiveRead(
+    issueReads,
+    `${hostId}|${id}`,
+    true,
+    async () => withDetailLists(await callBuildWeb(client, 'getIssue', { id })),
+    (next, issuedAt) => {
+      const accepted = guard.accepts(issuedAt)
+      // Why read it whole: the last read failed and the console answers again.
+      if (accepted && error) {
+        void load()
+        return
+      }
+      setDetail((shown) => afterLiveReading(shown, next, accepted))
+    }
+  )
 
   const save = useCallback(
     async (patch: BuildWebIssuePatch): Promise<boolean> => {
@@ -107,6 +139,7 @@ export function useIssueDetail(id: string, confirm: IssueConfirm): IssueDetailSt
       if (!(await confirmStatusMove(confirm, current, patch))) {
         return false
       }
+      const endWrite = guard.startWrite()
       const optimistic = patch.status === undefined
       if (optimistic) {
         onOwnCard(() => ({ ...current, ...patch }))
@@ -135,16 +168,19 @@ export function useIssueDetail(id: string, confirm: IssueConfirm): IssueDetailSt
         notify(buildWebErrorMessage(failure), 'error')
         return false
       } finally {
+        endWrite()
         setSaving(false)
       }
     },
-    [client, confirm, detail, hostCapabilities, listSync, load, notify, saving]
+    [client, confirm, detail, guard, hostCapabilities, listSync, load, notify, saving]
   )
 
   const patchLocal = useCallback(
-    (patch: Partial<BuildWebIssueDetail>) =>
-      setDetail((shown) => (shown && shown.id === id ? { ...shown, ...patch } : shown)),
-    [id]
+    (patch: Partial<BuildWebIssueDetail>) => {
+      guard.mark()
+      setDetail((shown) => (shown && shown.id === id ? { ...shown, ...patch } : shown))
+    },
+    [guard, id]
   )
   const reload = useCallback(() => void load(), [load])
   return { detail, error, assignees, versions, saving, save, reload, patchLocal }

@@ -130,7 +130,7 @@ export function EditorContent({
   if (activeFile.mode === 'build-web-task') {
     return activeFile.buildWebTask ? (
       <Suspense fallback={<div className="h-full" />}>
-        <BuildWebTaskTabPanel task={activeFile.buildWebTask} />
+        <BuildWebTaskTabPanel task={activeFile.buildWebTask} worktreeId={activeFile.worktreeId} />
       </Suspense>
     ) : (
       <div className="flex h-full items-center justify-center text-sm text-muted-foreground">

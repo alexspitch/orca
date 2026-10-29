@@ -14,6 +14,22 @@ export const filesWithRole = (
   files.filter((f) => f.comment_id === null && f.role === role).sort(newestFirst)
 
 /**
+ * The file a tab shows: the one picked, else the one that replaced it — attaching again under the
+ * same name gives a new id — else the newest.
+ */
+export function followFile(
+  files: readonly BuildWebIssueFile[],
+  picked: Pick<BuildWebIssueFile, 'id' | 'name'> | null
+): BuildWebIssueFile | null {
+  return (
+    files.find((f) => f.id === picked?.id) ??
+    files.find((f) => f.name === picked?.name) ??
+    files[0] ??
+    null
+  )
+}
+
+/**
  * The steps of a plan: its task-list items, ticked and all. A fenced block is skipped — a plan
  * quoting a checklist in an example is not those steps.
  */

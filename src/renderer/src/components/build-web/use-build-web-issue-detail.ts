@@ -6,11 +6,18 @@ import type {
   BuildWebUser,
   BuildWebVersion
 } from '../../../../shared/build-web-types'
+import {
+  afterLiveReading,
+  createLiveReads,
+  createLiveReplyGuard,
+  sameReading
+} from '../../../../shared/build-web-live-reads'
 import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebTarget } from './use-build-web-data'
 import { toastJiraOutcome, useConfirmStatusMove } from './use-build-web-issue-write'
 import { labelIssuePage } from './page-history/page-history-store'
+import { useLiveRead } from './use-live-read'
 
 const CARD_FIELDS = [
   'product',
@@ -23,6 +30,9 @@ const CARD_FIELDS = [
   'steps'
 ] as const
 
+// Why one per renderer: a task shown in a workspace's tab and on the page is read once.
+const issueReads = createLiveReads<BuildWebIssueDetail>()
+
 export type IssueDetailState = {
   detail: BuildWebIssueDetail | null
   error: string | null
@@ -33,9 +43,13 @@ export type IssueDetailState = {
   reload: () => void
 }
 
-/** The open task's card, its pickers, and field writes (status without optimism: it moves Jira). */
-export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
-  const { target } = useBuildWebTarget()
+/**
+ * The open task's card, its pickers, and field writes (status without optimism: it moves Jira).
+ * Read again every few seconds while `visible`; a reading never replaces the card while a save is
+ * out, and an editor keeps its own draft whatever is read.
+ */
+export function useBuildWebIssueDetail(id: string | null, visible = true): IssueDetailState {
+  const { target, contextKey } = useBuildWebTarget()
   const confirmStatusMove = useConfirmStatusMove()
   const patchRow = useBuildWebStore((s) => s.patchIssue)
   const [loaded, setDetail] = useState<BuildWebIssueDetail | null>(null)
@@ -52,10 +66,12 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
   const [savingId, setSavingId] = useState<string | null>(null)
   const saving = savingId !== null && savingId === id
   const generation = useRef(0)
+  const [guard] = useState(createLiveReplyGuard)
 
   const load = useCallback(async () => {
     // Why: bump even with no id, so a late reply for the task just closed is dropped.
     const mine = ++generation.current
+    guard.mark()
     if (!id) {
       return
     }
@@ -64,7 +80,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       if (mine !== generation.current) {
         return
       }
-      setDetail(next)
+      setDetail((shown) => (shown?.id === next.id && sameReading(shown, next) ? shown : next))
       setFailed(null)
       labelIssuePage(next.id, `${next.key} · ${next.title}`)
       const [users, list] = await Promise.all([
@@ -82,11 +98,30 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
         setFailed({ id, message: failure instanceof Error ? failure.message : String(failure) })
       }
     }
-  }, [id, target])
+  }, [guard, id, target])
 
   useEffect(() => {
     void load()
   }, [load])
+
+  useLiveRead(
+    issueReads,
+    id ? `${contextKey}|${id}` : null,
+    visible,
+    () => callBuildWeb(target, 'getIssue', { id: id ?? '' }),
+    (next, issuedAt) => {
+      const accepted = guard.accepts(issuedAt)
+      // Why read it whole: the card failed to open and the console answers again.
+      if (accepted && error) {
+        void load()
+        return
+      }
+      setDetail((shown) => afterLiveReading(shown, next, accepted))
+      if (accepted && loaded?.id === next.id) {
+        labelIssuePage(next.id, `${next.key} · ${next.title}`)
+      }
+    }
+  )
 
   const save = useCallback(
     async (patch: BuildWebIssuePatch) => {
@@ -100,6 +135,7 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
       if (!(await confirmStatusMove(current, patch))) {
         return
       }
+      const endWrite = guard.startWrite()
       const optimistic = patch.status === undefined
       if (optimistic) {
         onOwnCard(() => ({ ...current, ...patch }))
@@ -127,10 +163,11 @@ export function useBuildWebIssueDetail(id: string | null): IssueDetailState {
         onOwnCard(() => current)
         toast.error(failure instanceof Error ? failure.message : String(failure))
       } finally {
+        endWrite()
         setSavingId((busy) => (busy === current.id ? null : busy))
       }
     },
-    [confirmStatusMove, detail, load, patchRow, saving, target]
+    [confirmStatusMove, detail, guard, load, patchRow, saving, target]
   )
 
   const reload = useCallback(() => void load(), [load])

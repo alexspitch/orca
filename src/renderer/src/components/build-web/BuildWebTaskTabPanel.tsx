@@ -18,11 +18,17 @@ function openOnPage(issueId: string | null): void {
 }
 
 export default function BuildWebTaskTabPanel({
-  task
+  task,
+  worktreeId
 }: {
   task: OpenBuildWebTaskState
+  /** The workspace the tab belongs to: the card reads its task only while that one is shown. */
+  worktreeId: string
 }): React.JSX.Element {
   const { target, contextKey } = useBuildWebTarget()
+  const visible = useAppStore(
+    (s) => s.activeView === 'terminal' && s.activeWorktreeId === worktreeId
+  )
   useBuildWebStatus()
   const status = useBuildWebStore((s) => (s.contextKey === contextKey ? s.status : null))
   const { taking, takeToWork, closeTaking } = useTakeToWork()
@@ -59,6 +65,7 @@ export default function BuildWebTaskTabPanel({
         onTakeToWork={takeToWork}
         inWorkspaceTab={{
           issueId: task.issueId,
+          visible,
           onOpenIssue: (id) => openOnPage(id),
           onBackToList: () => openOnPage(null)
         }}

@@ -8,9 +8,20 @@ import type {
   BuildWebCommitList
 } from '../../../../../shared/build-web-run-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
+import {
+  createLiveReads,
+  createLiveReplyGuard,
+  sameReading
+} from '../../../../../shared/build-web-live-reads'
 import { callBuildWeb } from '../build-web-client'
 import { BuildWebListState } from '../BuildWebListState'
+import { useBuildWebTarget } from '../use-build-web-data'
+import { useLiveRead } from '../use-live-read'
 import { diffFilesOf, type DiffCell } from './commit-diff-rows'
+
+// Why slower than the card: each reading runs git over the task's branches on the console.
+const COMMITS_LIVE_MS = 30_000
+const commitReads = createLiveReads<BuildWebCommitList>()
 
 const CELL_TONE: Record<DiffCell['kind'], string> = {
   same: '',
@@ -37,11 +48,16 @@ function Cell({ cell }: { cell: DiffCell }): React.JSX.Element {
 
 export function IssueCommitsTab({
   target,
-  issueId
+  issueId,
+  visible
 }: {
   target: RuntimeClientTarget
   issueId: string
+  /** The tab is shown: the list is read again now and then, without git's fetch. */
+  visible: boolean
 }): React.JSX.Element {
+  const { contextKey } = useBuildWebTarget()
+  const [guard] = useState(createLiveReplyGuard)
   const [list, setList] = useState<BuildWebCommitList | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [fetching, setFetching] = useState(false)
@@ -54,6 +70,7 @@ export function IssueCommitsTab({
 
   const load = useCallback(
     async (fetchFirst: boolean) => {
+      guard.mark()
       setFetching(fetchFirst)
       try {
         setList(await callBuildWeb(target, 'issueCommits', { id: issueId, fetch: fetchFirst }))
@@ -64,11 +81,24 @@ export function IssueCommitsTab({
         setFetching(false)
       }
     },
-    [issueId, target]
+    [guard, issueId, target]
   )
   useEffect(() => {
     void load(false)
   }, [load])
+  useLiveRead(
+    commitReads,
+    `${contextKey}|${issueId}`,
+    visible,
+    () => callBuildWeb(target, 'issueCommits', { id: issueId, fetch: false }),
+    (next, issuedAt) => {
+      if (guard.accepts(issuedAt)) {
+        setList((shown) => (shown && sameReading(shown, next) ? shown : next))
+        setError(null)
+      }
+    },
+    COMMITS_LIVE_MS
+  )
   useEffect(() => {
     if (!sha) {
       return

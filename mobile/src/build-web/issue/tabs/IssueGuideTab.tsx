@@ -54,6 +54,15 @@ function GuideOfRun({
     setGuide(run.guide_markdown ?? '')
     dirty.current = false
   }, [run.id])
+  // A guide saved elsewhere shows here, unless this one has edits of its own or is being written.
+  const stored = run.guide_markdown ?? ''
+  const busyRef = useRef(false)
+  busyRef.current = streaming || refreshing
+  useEffect(() => {
+    if (!dirty.current && !busyRef.current) {
+      setGuide(stored)
+    }
+  }, [stored])
 
   const store = useCallback(async (): Promise<boolean> => {
     const result = await call('saveGuide', { runId: run.id, guide })
