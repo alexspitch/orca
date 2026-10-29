@@ -29,8 +29,8 @@ export type AgentStatusStoreView = Pick<
   | 'subscribeStatusRowMutations'
   | 'subscribeStatusFreshness'
 > &
-  /** The hook server's enriched rows, which main's generated titles follow. */
-  Partial<Pick<AgentHookServer, 'subscribeEnrichedStatus'>>
+  /** The hook server's enriched rows, which main's generated titles follow; its Claude dialog lease. */
+  Partial<Pick<AgentHookServer, 'subscribeEnrichedStatus' | 'renewClaudeDialogStatus'>>
 
 const AGENT_FRESHNESS_DEADLINE = 'agent-freshness'
 
