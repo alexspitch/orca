@@ -126,8 +126,8 @@ export async function openTaskByKey(key: string): Promise<void> {
 }
 
 /**
- * A task worktree's card (IS-147) as a tab of the workspace the user is in, or the tab it already
- * has there; only when this client's console is the one the task lives on.
+ * A task worktree's card (IS-147) as a tab of that worktree, shown there, or the tab it already has;
+ * only when this client's console is the one the task lives on.
  */
 export async function openBuildWebTaskCard(
   task: {
@@ -136,8 +136,8 @@ export async function openBuildWebTaskCard(
     title: string
     consoleHost: string
   },
-  /** Where the tab opens when no workspace is open: the row's own. */
-  fallbackWorktreeId: string
+  /** The task's own workspace: the tab opens there. */
+  ownerWorktreeId: string
 ): Promise<void> {
   const host = taskHost()
   const store = useBuildWebStore.getState()
@@ -160,13 +160,12 @@ export async function openBuildWebTaskCard(
     store.setStatus(host.contextKey, status)
   }
   const app = useAppStore.getState()
-  const worktreeId = app.activeWorktreeId
-  if (!worktreeId) {
-    activateAndRevealWorktree(fallbackWorktreeId)
+  if (app.activeWorktreeId !== ownerWorktreeId) {
+    activateAndRevealWorktree(ownerWorktreeId)
   } else if (app.activeView !== 'terminal') {
     app.setActiveView('terminal')
   }
-  useAppStore.getState().openBuildWebTaskTab(worktreeId ?? fallbackWorktreeId, {
+  useAppStore.getState().openBuildWebTaskTab(ownerWorktreeId, {
     contextKey: host.contextKey,
     issueId: task.issueId,
     key: task.key,
