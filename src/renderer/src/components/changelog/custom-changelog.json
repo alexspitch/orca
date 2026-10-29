@@ -1,6 +1,37 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793257154000",
+      "date": "2026-10-29",
+      "commit": "02287c7f88b8",
+      "features": [
+        "Sidebar → workspace options adds «By task» grouping: Needs attention, Pinned, Awaiting release (collapsed), In progress and No task sections.",
+        "Sidebar → filter menu adds task-state switches that hide workspaces with no task, in progress, or awaiting release; attention rows always stay visible.",
+        "Sidebar task workspaces show the task number and title, plus their session state such as Awaiting release, Closing soon, or why they need attention.",
+        "Sidebar → a Needs attention workspace's context menu offers Open, Remove anyway…, Keep and Back to work.",
+        "Sidebar → Remove anyway… confirms first, listing the branch's own commits, unsaved editor text and any linked workspaces removed with it.",
+        "Sidebar → a counter next to the options button shows how many workspaces need attention and switches to «By task» when clicked.",
+        "Sidebar → workspace context menu and the Cmd-J palette add «Open task», which opens the task's card.",
+        "Issues → «Take to work» now codes one task in its own new workspace named after the task; selecting several tasks disables it.",
+        "Issues → taking a task again reopens its workspace only while its session is open; otherwise it starts a new session in a new workspace.",
+        "Orca now removes a closed task's workspace automatically when nothing would be lost, and flags it as needing attention otherwise.",
+        "Workspaces whose folder was deleted outside Orca are now cleaned up automatically once the folder stays missing.",
+        "A paired desktop shows a notification when a closed task's workspace is removed.",
+        "Issues → a task card lists its sessions with state, workspace, agent, start and end times, and why a workspace was removed.",
+        "Issues → the task list marks tasks whose session is in progress, awaiting release or closing.",
+        "Issues → a session in a task card's Sessions list opens the agent's log, read from the machine that ran it.",
+        "Mobile app → workspaces can be grouped «By task» with the task-state filter, an attention counter and long-press attention actions.",
+        "Mobile app → taking a task again now reopens its open session instead of always starting a new one.",
+        "Sidebar → the current workspace's compact row shows its details and running agents, and the hover details card appears after a short pause."
+      ],
+      "settings": [
+        "Settings → Build Web and the mobile app's build-web menu add «Auto-remove finished task workspaces»; with it off, closed tasks' workspaces wait for you."
+      ],
+      "fixes": [
+        "Sidebar → moving through compact rows with ↑/↓ keeps the selected row in place instead of letting it jump or slip below the fold."
+      ]
+    },
+    {
       "version": "1.4.244-custom.1793182962000",
       "date": "2026-10-28",
       "commit": "8d29c7cbb317",
