@@ -14,6 +14,7 @@ import { getWorktreeMetaGlyphPresence } from '../worktree/worktree-meta-glyph-pr
 import { AgentSpinner } from './AgentSpinner'
 import { HostKindIcon } from './HostKindIcon'
 import { MobileRepoIcon } from './MobileRepoIcon'
+import { WorktreeAgentCount } from './WorktreeAgentCount'
 import { WorktreeAgentList } from './WorktreeAgentList'
 import { WorktreeMetaGlyphs, prStateColor } from './WorktreeMetaGlyphs'
 import {
@@ -158,7 +159,11 @@ function WorktreeListRowComponent({
             </View>
           )}
           <WorktreeMetaGlyphs presence={getWorktreeMetaGlyphPresence(item, cardDetails)} />
-          {!inTaskAttention && <WorktreeTaskSessionChip row={item} />}
+          {/* Why one end group: two auto margins would split the free space between them. */}
+          <View style={styles.nameRowEnd}>
+            {!inTaskAttention && <WorktreeTaskSessionChip row={item} />}
+            <WorktreeAgentCount count={item.agents?.length ?? 0} />
+          </View>
         </View>
         {inTaskAttention && <WorktreeTaskAttentionReason row={item} />}
         {cardDetails.metaRow && (
@@ -284,6 +289,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm
+  },
+  nameRowEnd: {
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginLeft: 'auto'
   },
   worktreeName: {
     fontSize: 14,

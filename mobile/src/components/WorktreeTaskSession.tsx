@@ -127,13 +127,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: colors.textPrimary
   },
-  // Why the auto margin: the chip sits at the row's right edge, after the title and its badges.
   chip: {
     flexShrink: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
-    marginLeft: 'auto'
+    gap: 3
   },
   chipText: {
     fontSize: 11
