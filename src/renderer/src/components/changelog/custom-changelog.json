@@ -1,6 +1,24 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793267363000",
+      "date": "2026-10-29",
+      "commit": "b23acca17f2e",
+      "features": [
+        "Sidebar → compact mode now shows tasks as one-line «By task» groups with counts, and the selected row expands to show project, branch, PR, host and agents.",
+        "Sidebar → hovering a task number opens its details card, and clicking it opens the task as a tab in the current workspace.",
+        "Sidebar → hovering a workspace's «Project on …» label shows its host, live ports and, for task rows, the task details.",
+        "Sidebar → a new «Input required» group lists workspaces whose agent is waiting for you, right after Needs attention.",
+        "Sidebar → workspaces whose deletion failed are now marked with a «Delete failed» label."
+      ],
+      "settings": [
+        "Workspace options → a new switch turns the «Input required» sidebar group on or off; it is on by default."
+      ],
+      "fixes": [
+        "«Take to work» into a paired server's worktree now links the agent's session to the task, so the worktree is tracked and cleaned up properly."
+      ]
+    },
+    {
       "version": "1.4.245-custom.1793257154000",
       "date": "2026-10-29",
       "commit": "02287c7f88b8",
