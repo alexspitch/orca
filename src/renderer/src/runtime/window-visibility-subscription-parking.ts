@@ -7,6 +7,7 @@ import {
   createWindowVisibilitySubscriptionEntry,
   type SubscriptionEntry
 } from './window-visibility-subscription-entry'
+import { tabsSyncDebug } from './web-session-tabs-sync/tabs-sync-debug'
 
 // Why: the same app-switch grace every park site uses; the backoff below is what makes this one adaptive.
 export const WINDOW_VISIBILITY_SUBSCRIPTION_PARK_DELAY_MS = WINDOW_HIDE_PARK_GRACE_MS
@@ -32,6 +33,8 @@ export type WindowVisibilitySubscriptionSpec = {
 }
 
 export type WindowVisibilitySubscriptionParkingOptions = {
+  /** TEMP DEBUG: logs park/resume/end for this installation. */
+  debugLabel?: string
   getVisibilityResumePriority?: (specIndex: number) => number
   parkDelayMs?: number
   visibilityResumeStaggerMs?: number
@@ -59,6 +62,12 @@ export function installWindowVisibilitySubscriptionParking(
   let currentParkDelayMs = parkDelayMs
   let hiddenSinceMs: number | null = null
   const entries = specs.map(createWindowVisibilitySubscriptionEntry)
+  const debug = (event: string, data: Record<string, unknown> = {}): void => {
+    if (options.debugLabel) {
+      tabsSyncDebug(`parking:${options.debugLabel}`, { event, ...data })
+    }
+  }
+  debug('install', { specs: specs.length, visible: effectiveVisible })
 
   const clearRetry = (entry: SubscriptionEntry): void => {
     if (entry.retryTimer !== null) {
@@ -97,6 +106,7 @@ export function installWindowVisibilitySubscriptionParking(
     )
     const jitter = Math.floor(Math.random() * WINDOW_VISIBILITY_SUBSCRIPTION_RETRY_JITTER_MS)
     entry.retryAttempt += 1
+    debug('retry-scheduled', { delayMs: exponentialDelay + jitter })
     entry.retryTimer = setTimeout(() => {
       entry.retryTimer = null
       startEntry(entry, spec)
@@ -111,6 +121,7 @@ export function installWindowVisibilitySubscriptionParking(
     if (disposed || !entry.desired || entry.generation !== generation) {
       return
     }
+    debug('ended', { livedMs: entry.establishedAt > 0 ? Date.now() - entry.establishedAt : 0 })
     // Fence late frames with a new generation and unsubscribe failed streams so reconnect cannot replay both old and replacement subscriptions.
     entry.generation += 1
     unsubscribeEntry(entry, spec)
@@ -193,6 +204,7 @@ export function installWindowVisibilitySubscriptionParking(
   }
 
   const startAll = (isVisibilityResume: boolean): void => {
+    debug('start-all', { isVisibilityResume, visibilityGeneration })
     const restartingSpecIndexes = entries.flatMap((entry, index) => (entry.desired ? [] : [index]))
     if (isVisibilityResume && restartingSpecIndexes.length > 0) {
       options.onVisibilityResume?.({ visibilityGeneration, restartingSpecIndexes })
@@ -236,6 +248,7 @@ export function installWindowVisibilitySubscriptionParking(
     startNext(0)
   }
   const stopAll = (): void => {
+    debug('stop-all (parked or disposed)', { visibilityGeneration })
     entries.forEach((entry, index) => {
       entry.desired = false
       entry.generation += 1
@@ -273,6 +286,7 @@ export function installWindowVisibilitySubscriptionParking(
       return
     }
     hiddenSinceMs = Date.now()
+    debug('window-hidden', { parkInMs: currentParkDelayMs })
     parkTimer = setTimeout(() => {
       parkTimer = null
       if (getWindowParkVisible()) {
