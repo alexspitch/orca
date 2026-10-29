@@ -7,6 +7,7 @@ import { getConnectionIdFromState } from '@/lib/connection-context'
 import { statRuntimePath } from '@/runtime/runtime-file-metadata-client'
 import {
   getRuntimeTargetForFileOwner,
+  getRuntimeTargetForWorktreeOwner,
   requireRuntimeTargetForFileOwner
 } from '@/lib/file-owner-runtime-target'
 import type { MarkdownViewMode, OpenFile } from '@/store/slices/editor'
@@ -109,7 +110,10 @@ export function useMarkdownDocuments(
           },
           worktreeId
         ) ||
-        (connectionId === undefined && target.kind === 'local')
+        (connectionId === undefined && target.kind === 'local') ||
+        // A file staged here for a paired server's worktree (a build-web task file) can't list that worktree locally.
+        (target.kind === 'local' &&
+          getRuntimeTargetForWorktreeOwner(state, worktreeId)?.kind === 'environment')
       ) {
         return
       }
