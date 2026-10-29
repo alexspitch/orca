@@ -8,6 +8,10 @@ import { isAgentTurnOutcome } from './agent-turn-outcome'
 import type { OrchestrationFleetAttention } from './orchestration-fleet-attention'
 import type { AgentStatusRowFacets } from './agent-status-observation'
 import type { AgentChildWorkView } from './agent-status-child-work-view'
+import {
+  normalizeAgentBackgroundCommandsField,
+  type AgentBackgroundCommand
+} from './agent-background-commands'
 import type { TerminalAgent } from './terminal-agent'
 import {
   AGENT_MODEL_MAX_LENGTH,
@@ -135,6 +139,8 @@ export type AgentStatusEntry = {
   /** Live in-process subagents/teammates of this pane's session. Absent when
    *  none are tracked; the sidebar derives indented child rows from it. */
   subagents?: AgentSubagentSnapshot[]
+  /** Commands the main agent left running in the background, for display only. Absent from old hosts. */
+  backgroundCommands?: AgentBackgroundCommand[]
   /** The main agent's own state; absent from old hosts and from writers that carry no main agent fact
    *  (OSC, launch seeds), where readers fall back to `state`. */
   mainAgent?: AgentMainAgentStatus
@@ -183,6 +189,8 @@ export type AgentStatusPayload = {
   turnCompletedAt?: number
   /** Live in-process children of the reporting session. See AgentStatusEntry. */
   subagents?: AgentSubagentSnapshot[]
+  /** See AgentStatusEntry. Never read for state. */
+  backgroundCommands?: AgentBackgroundCommand[]
   /** The main agent's own state and last-turn verdict. See AgentMainAgentStatus. Producers publish it
    *  beside the combined `state`; a reader that predates it keeps reading `state`. */
   mainAgent?: AgentMainAgentStatus
@@ -217,6 +225,7 @@ export function pickParsedAgentStatusPayload(
     ...(row.sessionBoundary !== undefined ? { sessionBoundary: row.sessionBoundary } : {}),
     ...(row.turnCompletedAt !== undefined ? { turnCompletedAt: row.turnCompletedAt } : {}),
     ...(row.subagents !== undefined ? { subagents: row.subagents } : {}),
+    ...(row.backgroundCommands !== undefined ? { backgroundCommands: row.backgroundCommands } : {}),
     ...(row.mainAgent !== undefined ? { mainAgent: row.mainAgent } : {}),
     ...(row.claudeTaskWakeupPending !== undefined
       ? { claudeTaskWakeupPending: row.claudeTaskWakeupPending }
@@ -334,6 +343,7 @@ function normalizeAgentStatusObject(parsed: unknown): ParsedAgentStatusPayload |
     sessionBoundary: obj.sessionBoundary === true && state === 'done' ? true : undefined,
     turnCompletedAt: normalizeTurnCompletedAtField(obj.turnCompletedAt, state),
     subagents: normalizeAgentSubagentsField(obj.subagents),
+    backgroundCommands: normalizeAgentBackgroundCommandsField(obj.backgroundCommands),
     mainAgent: normalizeMainAgentStatusField(obj.mainAgent),
     ...(obj.agentType === 'claude' &&
     state !== 'done' &&

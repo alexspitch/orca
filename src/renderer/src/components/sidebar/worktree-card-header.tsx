@@ -14,6 +14,7 @@ import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSshHostControl } from './WorktreeCardSshHostControl'
 import { WorktreeTitleInlineRename } from './WorktreeTitleInlineRename'
 import { WorktreeTaskSessionBadge } from './WorktreeCardTaskSession'
+import { WorktreeCardAgentIndicators } from './worktree-card-agent-indicators'
 import {
   describeWorktreeCardHost,
   WorktreeCardHostHover,
@@ -279,6 +280,7 @@ export function WorktreeCardHeader({
               compact={compactCards}
             />
           )}
+          <WorktreeCardAgentIndicators worktreeId={worktree.id} />
         </div>
       </div>
 

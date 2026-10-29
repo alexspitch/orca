@@ -6293,7 +6293,10 @@
           "runtimeHostFallbackLabel": "Orca server"
         },
         "WorktreeCardAgents": {
-          "1b0a156717": "Agents"
+          "1b0a156717": "Agents",
+          "runningCount": "{{count}} agents running",
+          "testsRunning": "Tests running",
+          "backgroundCommands": "Running in the background"
         },
         "WorktreeCardReviewDetailSection": {
           "copyLink": "Copy link",

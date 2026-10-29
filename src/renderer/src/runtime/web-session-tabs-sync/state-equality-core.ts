@@ -6,6 +6,7 @@ import {
 import { agentProviderSessionsEqual } from '../../../../shared/agent-session-resume'
 import { mainAgentStatusEqual } from '../../../../shared/main-agent-status'
 import { programStatusFacetsEqual } from '../../../../shared/program-status/facet'
+import { agentBackgroundCommandsEqual } from '../../../../shared/agent-background-commands'
 import type {
   WebSessionTabsBatchContext,
   WebSessionTabsBatchRecordKey,
@@ -67,6 +68,7 @@ export function agentStatusEntryEqual(
     a.promptInteractionKey === b.promptInteractionKey &&
     a.restoredUnconfirmed === b.restoredUnconfirmed &&
     programStatusFacetsEqual(a.programStatus, b.programStatus) &&
+    agentBackgroundCommandsEqual(a.backgroundCommands, b.backgroundCommands) &&
     agentProviderSessionsEqual(a.agentType, a.providerSession, b.providerSession) &&
     sameAgentStateHistory(a.stateHistory, b.stateHistory)
   )

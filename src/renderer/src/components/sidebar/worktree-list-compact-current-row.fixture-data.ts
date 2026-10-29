@@ -1,10 +1,12 @@
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import type { WorkspacePort } from '../../../../shared/workspace-ports'
 import type { AppState } from '@/store/types'
+import type { AgentStatusEntry } from '../../../../shared/agent-status-types'
+import { makePaneKey } from '../../../../shared/stable-pane-id'
 import { taskSessionStore, worktreeIdOfTask } from './worktree-list-task-sessions.fixture-data'
 
-// IS-147: the mockup's opened compact row — IS-166 on the Orca server «dev», with Claude working,
-// Codex at rest and a live port — and IS-158's two commits, so the rows read as the mockup's.
+// IS-147: the mockup's opened compact row — IS-166 on the Orca server «dev», with Claude waiting
+// on a background test run, Codex at rest and a live port — and IS-158's two commits, so the rows read as the mockup's.
 
 const CURRENT_ID = worktreeIdOfTask('IS-166') ?? ''
 // Why: the host counts the commits it keeps; the base names where they are missing.
@@ -44,6 +46,33 @@ function agentLayouts(): NonNullable<AppState['terminalLayoutsByTabId']> {
   return layouts
 }
 
+// Why an entry: Claude finished its turn and waits on the test run it left in the background.
+function claudeMonitoringEntry(): AgentStatusEntry {
+  const now = Date.now()
+  const tabId = 'tab-166-claude'
+  return {
+    paneKey: makePaneKey(tabId, AGENT_LEAF_IDS[tabId]),
+    tabId,
+    worktreeId: CURRENT_ID,
+    state: 'working',
+    workingMode: 'monitoring',
+    agentType: 'claude',
+    prompt: 'статус',
+    updatedAt: now,
+    stateStartedAt: now - 14 * 60_000,
+    stateHistory: [],
+    mainAgent: { state: 'done', outcome: 'success', stateStartedAt: now - 60_000 },
+    backgroundCommands: [
+      {
+        id: 'bash-166',
+        description: 'Run the offline tier of all impacted workspaces',
+        command: 'npm run tests:impacted -- --run',
+        startedAt: now - 14 * 60_000
+      }
+    ]
+  }
+}
+
 const DEV_SERVER_PORT: WorkspacePort = {
   id: 'port-166-5173',
   kind: 'workspace',
@@ -79,6 +108,7 @@ export function compactCurrentRowStore(): Partial<AppState> {
     }
     return worktree
   })
+  const claude = claudeMonitoringEntry()
   const ptyIdsByTabId: Record<string, string[]> = { ...base.ptyIdsByTabId }
   for (const tab of AGENT_TABS) {
     ptyIdsByTabId[tab.id] = [`pty-${tab.id}`]
@@ -87,6 +117,10 @@ export function compactCurrentRowStore(): Partial<AppState> {
     ...base,
     worktreesByRepo,
     tabsByWorktree: { ...base.tabsByWorktree, [CURRENT_ID]: AGENT_TABS },
+    agentStatusByPaneKey: {
+      ...base.agentStatusByPaneKey,
+      [claude.paneKey]: claude
+    },
     ptyIdsByTabId,
     terminalLayoutsByTabId: { ...base.terminalLayoutsByTabId, ...agentLayouts() },
     runtimeEnvironments: [

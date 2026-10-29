@@ -9,13 +9,16 @@ export function SidebarCountBadge({
   count,
   tone,
   hint,
-  wideHint
+  wideHint,
+  small
 }: {
   count: string | number
   tone: 'red' | 'amber' | 'neutral'
   hint: React.ReactNode
   /** For a hint that lists lines too long for the usual width. */
   wideHint?: boolean
+  /** Sized for a workspace row's title line rather than a sidebar item. */
+  small?: boolean
 }): React.JSX.Element {
   return (
     <Tooltip>
@@ -23,7 +26,8 @@ export function SidebarCountBadge({
         <span
           aria-hidden="true"
           className={cn(
-            'min-w-5 rounded-full px-1.5 text-center text-2xs leading-5 tabular-nums',
+            'rounded-full text-center tabular-nums',
+            small ? 'min-w-4 px-1 text-[10px] leading-4' : 'min-w-5 px-1.5 text-2xs leading-5',
             tone === 'red' && 'bg-chip-tone-red/15 text-chip-tone-red',
             tone === 'amber' && 'bg-chip-tone-amber/15 text-chip-tone-amber',
             tone === 'neutral' && 'bg-worktree-sidebar-foreground/10'

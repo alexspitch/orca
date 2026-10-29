@@ -54,6 +54,9 @@ export function attachRuntimeWorktreeAgentRows(args: {
       updatedAt: source.updatedAt,
       ...(source.children !== undefined ? { children: source.children } : {}),
       ...(source.subagents !== undefined ? { subagents: source.subagents } : {}),
+      ...(source.backgroundCommands !== undefined
+        ? { backgroundCommands: source.backgroundCommands }
+        : {}),
       ...(source.structuredHost === 'owned' ? { structuredHostOwned: true as const } : {}),
       ...(source.programStatus ? { programStatus: source.programStatus } : {})
     }

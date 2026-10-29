@@ -5,6 +5,7 @@ import {
   type ParsedAgentStatusPayload
 } from '../../agent-status-types'
 import { claudeRosterToSnapshots } from '../../claude-subagent-roster'
+import { claudeRunningBackgroundCommands } from '../../claude-owed-task-notifications'
 import { resolvePrompt, resolveToolState } from '../prompt-fields'
 import { extractToolFields, isNewTurnEvent } from '../provider-event-routing'
 import type { HookListenerState } from '../listener-state'
@@ -53,6 +54,9 @@ export function buildClaudeStatusPayload(
     sessionBoundary: options.sessionBoundary,
     turnCompletedAt: mainAgentRecord?.turnCompletedAt,
     subagents: claudeRosterToSnapshots(state.claudeSubagentRosterByPaneKey.get(paneKey)),
+    backgroundCommands: claudeRunningBackgroundCommands(
+      state.claudeLaunchedBackgroundTasksByPaneKey.get(paneKey)
+    ),
     mainAgent: mainAgentRecord ? claudeMainAgentStatusForPayload(mainAgentRecord) : undefined
   })
 }

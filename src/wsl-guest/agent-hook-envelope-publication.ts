@@ -10,7 +10,13 @@ import type { RelayDispatcher } from './dispatcher'
 
 // Shed reconstructible fields first; keep state/paneKey and preserve interactivePrompt longest so waiting panes remain answerable.
 // Mark shed rosters on the wire so clients restore cached subagents instead of permitting hibernation.
-const SHED_ORDER = ['lastAssistantMessage', 'subagents', 'interactivePrompt'] as const
+// Background commands are display only; the next event names them again.
+const SHED_ORDER = [
+  'backgroundCommands',
+  'lastAssistantMessage',
+  'subagents',
+  'interactivePrompt'
+] as const
 
 // Snapshots have no ack; briefly retry queue-full rejection so stale state need not wait for reattach replay.
 const REDELIVERY_INTERVAL_MS = 250

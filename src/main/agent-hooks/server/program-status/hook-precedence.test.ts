@@ -80,6 +80,20 @@ describe('programStatusHookYieldEndsAt', () => {
     expect(programStatusHookYieldEndsAt(hook, heldOpen, NOW + 1)).toBe(Infinity)
   })
 
+  it("keeps a lead held open by its background shell from the program's done", () => {
+    const hook = row({
+      state: 'working',
+      workingMode: 'monitoring',
+      agentType: 'claude',
+      mainAgent: { state: 'done', outcome: 'success', stateStartedAt: NOW }
+    })
+    const done = report({ state: 'done', agentType: 'claude' })
+    expect(programStatusHookYieldEndsAt(hook, done)).toBe(Infinity)
+    expect(programStatusHookYieldEndsAt(hook, { ...done, sessionBoundary: true })).toBe(
+      NOW + SILENCE
+    )
+  })
+
   it('keeps a question the hooks raised only from a working report that began before it', () => {
     for (const state of ['waiting', 'blocked'] as const) {
       const hook = row({ state, agentType: 'pi' })

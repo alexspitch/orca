@@ -1,3 +1,4 @@
+import { readAgentBackgroundCommandLabel } from '../../agent-background-commands'
 import type { readClaudeBackgroundAgentTasks } from '../../claude-background-task-inventory'
 import {
   forgetStoppedClaudeShellTask,
@@ -27,7 +28,13 @@ export function trackClaudeTaskNotificationDelivery(
     if (launch) {
       const launched = tasks ?? new Map()
       state.claudeLaunchedBackgroundTasksByPaneKey.set(paneKey, launched)
-      recordClaudeBackgroundTaskLaunch(launched, launch)
+      recordClaudeBackgroundTaskLaunch(
+        launched,
+        launch,
+        launch.kind === 'shell'
+          ? (readAgentBackgroundCommandLabel(hookPayload['tool_input'], Date.now()) ?? undefined)
+          : undefined
+      )
     } else if (tasks && toolName === 'TaskStop' && typeof response === 'object' && response) {
       const stoppedId = readString({ ...response }, 'task_id')
       if (stoppedId) {

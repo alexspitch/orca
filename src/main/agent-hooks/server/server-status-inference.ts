@@ -176,8 +176,9 @@ export abstract class AgentHookServerStatusInference extends AgentHookServerRowO
         ...(payload.model ? { model: payload.model } : {}),
         // Older readers use interrupted on done rows; monitoring rows keep cancellation on mainAgent.outcome.
         ...(state === 'done' ? { interrupted: true } : {}),
-        // Idle children remain display state across inferred cancellation.
+        // Idle children remain display state across inferred cancellation; background shells survive it.
         ...(payload.subagents ? { subagents: payload.subagents } : {}),
+        ...(payload.backgroundCommands ? { backgroundCommands: payload.backgroundCommands } : {}),
         mainAgent: local?.mainAgent ?? {
           state: 'done',
           outcome: 'cancellation',
@@ -281,6 +282,7 @@ export abstract class AgentHookServerStatusInference extends AgentHookServerRowO
           ? { turnCompletedAt: restored.turnCompletedAt }
           : {}),
         ...(payload.subagents ? { subagents: payload.subagents } : {}),
+        ...(payload.backgroundCommands ? { backgroundCommands: payload.backgroundCommands } : {}),
         mainAgent: restored.mainAgent
       }
     })

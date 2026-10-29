@@ -27,6 +27,16 @@ export function programStatusHookYieldEndsAt(
   ) {
     return Infinity
   }
+  // Why: a lead held open by its own shells or subagents sends no hooks until they end, and the
+  // program's done is that lead's own; only the children's end or the session's may settle the row.
+  if (
+    sameAgent &&
+    payload.state === 'done' &&
+    payload.sessionBoundary !== true &&
+    isAgentStatusHeldOpenByChildWork(previous.payload)
+  ) {
+    return Infinity
+  }
   // Settled turns are naturally silent; a later wait must prove intervening program work.
   if (previous.payload.state === 'done' && payload.state === 'waiting') {
     return programWorkingSince !== undefined && programWorkingSince > previous.receivedAt
