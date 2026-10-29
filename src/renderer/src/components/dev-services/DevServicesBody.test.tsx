@@ -83,18 +83,19 @@ describe('DevServicesBody', () => {
     expect(html).toContain('dc-ui: node_modules missing')
   })
 
-  it('offers each profile when the worktree has never started a service', () => {
+  it('shows every profile expanded with its services when the worktree has never started one', () => {
     const html = render({
       api: 1,
       ok: true,
       worktree: { path: '/srv/wt', slot: null, label: 'no slot' },
-      profiles: [{ id: 'common' }, { id: 'dc' }],
+      profiles: [{ id: 'common' }, { id: 'dc', services: ['dc-backend'], total: 1 }],
       services: [{ id: 'dc-backend', profile: 'dc', state: 'stopped', ports: [] }]
     })
 
     expect(html).toContain('haven&#x27;t run in this worktree yet')
     expect(html).toContain('common')
-    expect(html).not.toContain('dc-backend')
+    expect(html).toContain('dc-backend')
+    expect(html).toContain('aria-label="Start"')
   })
 
   it('keeps the last known states visible when the host stops answering', () => {

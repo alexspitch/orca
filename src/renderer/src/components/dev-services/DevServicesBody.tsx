@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react'
-import { AlertTriangle, MoreHorizontal, Play, RefreshCw, Square, Unplug } from 'lucide-react'
+import { AlertTriangle, MoreHorizontal, RefreshCw, Square, Unplug } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { translate } from '@/i18n/i18n'
 import { Button } from '@/components/ui/button'
@@ -209,45 +209,14 @@ function CommandRows({
   )
 }
 
-function EmptySlot({
-  status,
-  actions
-}: {
-  status: DevServicesStatus
-  actions: DevServicesActions
-}): React.JSX.Element {
+function EmptySlotHint(): React.JSX.Element {
   return (
-    <div className="flex flex-col items-center gap-3 px-4 py-6 text-center text-xs text-muted-foreground">
-      <p>
-        {translate(
-          'devServices.empty',
-          "Services haven't run in this worktree yet. Starting a profile reserves its ports."
-        )}
-      </p>
-      <div className="flex flex-wrap justify-center gap-1.5">
-        {status.profiles.map((profile) => (
-          <Button
-            key={profile.id}
-            type="button"
-            variant="outline"
-            size="xs"
-            disabled={actions.pending.has(devServicesActionKey('start', [profile.id]))}
-            onClick={() =>
-              actions.run({
-                verb: 'start',
-                args: [profile.id],
-                label: translate('devServices.profile.start', 'Start {{value0}}', {
-                  value0: profile.title ?? profile.id
-                })
-              })
-            }
-          >
-            <Play />
-            {profile.title ?? profile.id}
-          </Button>
-        ))}
-      </div>
-    </div>
+    <p className="px-3 pt-2 text-2xs text-muted-foreground">
+      {translate(
+        'devServices.empty',
+        "Services haven't run in this worktree yet. Starting a profile or a service reserves its ports."
+      )}
+    </p>
   )
 }
 
@@ -267,10 +236,10 @@ export function DevServicesBody({
 }): React.JSX.Element {
   const groups = useMemo(() => (status ? groupDevServices(status) : null), [status])
   const [expanded, setExpanded] = useState<Record<string, boolean>>({})
-  const isCollapsed = (id: string, runningInside: boolean): boolean =>
-    !(expanded[id] ?? runningInside)
-  const toggle = (id: string, runningInside: boolean): void =>
-    setExpanded((prev) => ({ ...prev, [id]: !(prev[id] ?? runningInside) }))
+  const isCollapsed = (id: string, openByDefault: boolean): boolean =>
+    !(expanded[id] ?? openByDefault)
+  const toggle = (id: string, openByDefault: boolean): void =>
+    setExpanded((prev) => ({ ...prev, [id]: !(prev[id] ?? openByDefault) }))
   const neverStarted = status?.worktree?.slot === null && !status.services.some(isDevServiceRunning)
 
   return (
@@ -290,29 +259,26 @@ export function DevServicesBody({
       {status && status.supported !== false && (
         <>
           <CommandRows status={status} actions={actions} />
-          {neverStarted ? (
-            <EmptySlot status={status} actions={actions} />
-          ) : (
-            groups?.profiles.map(({ profile, services }) => (
-              <DevServicesSection
-                key={profile.id}
-                id={`profile-${profile.id}`}
-                title={profile.title ?? profile.id}
-                count={`${profile.ready}/${profile.total}`}
-                collapsed={isCollapsed(profile.id, profile.running > 0)}
-                onToggle={() => toggle(profile.id, profile.running > 0)}
-                profile={profile}
-                services={services}
-                actions={actions}
-              />
-            ))
-          )}
+          {neverStarted && <EmptySlotHint />}
+          {groups?.profiles.map(({ profile, services }) => (
+            <DevServicesSection
+              key={profile.id}
+              id={`profile-${profile.id}`}
+              title={profile.title ?? profile.id}
+              count={`${profile.ready}/${profile.total}`}
+              collapsed={isCollapsed(profile.id, true)}
+              onToggle={() => toggle(profile.id, true)}
+              profile={profile}
+              services={services}
+              actions={actions}
+            />
+          ))}
           {groups && groups.other.length > 0 && (
             <DevServicesSection
               id="other-services"
               title={translate('devServices.otherServices', 'Other Services')}
-              collapsed={isCollapsed('other-services', groups.other.some(isDevServiceRunning))}
-              onToggle={() => toggle('other-services', groups.other.some(isDevServiceRunning))}
+              collapsed={isCollapsed('other-services', true)}
+              onToggle={() => toggle('other-services', true)}
               services={groups.other}
               actions={actions}
             />
