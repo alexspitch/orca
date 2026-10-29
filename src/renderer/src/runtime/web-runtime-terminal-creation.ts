@@ -7,6 +7,7 @@ import { createWebRuntimeSessionTerminalResult } from './web-runtime-terminal-cr
 import { notifyWebRuntimeTerminalCreateFailure } from './web-runtime-terminal-create-failure-notice'
 import { toWebTerminalSurfaceTabId } from '../../../shared/terminal-surface-id'
 import type {
+  CreatedWebRuntimeSessionTerminal,
   CreateWebRuntimeSessionTerminalArgs,
   WebRuntimeTerminalCreateOutcome
 } from './web-runtime-session-types'
@@ -40,6 +41,7 @@ export async function createWebRuntimeAgentSessionTerminal(
 ): Promise<{
   outcome: WebRuntimeTerminalCreateOutcome
   promptDelivered: boolean
+  hostTabId?: string
 }> {
   const created = await createWebRuntimeSessionTerminalResult(args)
   if (created.outcome.status === 'failed' || !created.hostTabId) {
@@ -53,7 +55,8 @@ export async function createWebRuntimeAgentSessionTerminal(
     submit: args.submitPrompt,
     forcePaste: args.forcePromptPaste
   })
-  return { outcome: created.outcome, promptDelivered }
+  // Why the tab: a launch that names no tab records no build-web session (IS-227).
+  return { outcome: created.outcome, promptDelivered, hostTabId: created.hostTabId }
 }
 
 /** Argv-prefill carries draft in the command without post-ready paste; seed the composer once mirrored host tab ID is known. */
@@ -62,7 +65,7 @@ export async function createWebRuntimeAgentSessionTerminalWithLaunchDraft(
     agent: TuiAgent
     launchDraft: string
   }
-): Promise<WebRuntimeTerminalCreateOutcome> {
+): Promise<CreatedWebRuntimeSessionTerminal> {
   const created = await createWebRuntimeSessionTerminalResult(args)
   if (created.outcome.status !== 'failed' && created.hostTabId) {
     seedNativeChatLaunchDraftForAgentTab({
@@ -71,5 +74,5 @@ export async function createWebRuntimeAgentSessionTerminalWithLaunchDraft(
       text: args.launchDraft
     })
   }
-  return created.outcome
+  return created
 }
