@@ -65,7 +65,13 @@ export function launchOnceHostAnswered(
     (result): Promise<StructuredAgentLaunchSettlement> | StructuredAgentLaunchSettlement =>
       !result
         ? { kind: 'cancelled', sessionId: null }
-        : (result.structuredSettlement ?? { kind: 'terminal' }),
+        : (result.structuredSettlement ?? {
+            kind: 'terminal',
+            terminal: {
+              ...(result.surface.kind === 'local-terminal' ? { tabId: result.surface.tabId } : {}),
+              ...(result.terminalCompletion ? { completion: result.terminalCompletion } : {})
+            }
+          }),
     (error: unknown): StructuredAgentLaunchSettlement => {
       args.focusIntent?.cancel()
       return { kind: 'failed', error }

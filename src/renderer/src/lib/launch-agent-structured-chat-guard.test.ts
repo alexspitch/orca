@@ -395,7 +395,10 @@ describe('structured chat adoption guard on the launch path', () => {
     })
 
     expect(mockCreateTab).not.toHaveBeenCalled()
-    await expect(result?.structuredSettlement).resolves.toEqual({ kind: 'terminal' })
+    await expect(result?.structuredSettlement).resolves.toEqual({
+      kind: 'terminal',
+      terminal: { tabId: 'tab-1' }
+    })
     await expect(result?.promptDeliveryResult).resolves.toEqual({
       delivered: true,
       failureNotified: false

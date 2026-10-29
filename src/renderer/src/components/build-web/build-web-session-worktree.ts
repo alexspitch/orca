@@ -9,6 +9,8 @@ import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import type { BuildWebAgentSession, BuildWebIssueRow } from '../../../../shared/build-web-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { parseExecutionHostId, type ExecutionHostId } from '../../../../shared/execution-host'
+import { toHostSessionTabId } from '../../../../shared/terminal-surface-id'
+import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import {
   currentOpenSession,
   findTaskSessionWorktree
@@ -18,6 +20,14 @@ import { recordBuildWebCardVisit } from './build-web-card-history'
 export type BuildWebSessionWorktree = { worktreeId: string; hostId?: ExecutionHostId }
 
 type SessionSurface = Pick<BuildWebAgentSession, 'surface_kind' | 'surface_id'>
+
+/** The session's terminal tab here; a paired host's tab carries the host's id the session records. */
+function sessionTerminalTab(
+  tabs: readonly TerminalTab[] | undefined,
+  surfaceId: string
+): TerminalTab | undefined {
+  return (tabs ?? []).find((tab) => toHostSessionTabId(tab.id) === surfaceId)
+}
 
 /** Every worktree this client knows, of every repo and host. */
 export function knownWorktrees(): Worktree[] {
@@ -42,7 +52,7 @@ export function findBuildWebSessionWorktree(
   }
   if (session.surface_kind === 'terminal') {
     for (const [worktreeId, tabs] of Object.entries(state.tabsByWorktree)) {
-      if ((tabs ?? []).some((tab) => tab.id === session.surface_id)) {
+      if (sessionTerminalTab(tabs, session.surface_id)) {
         return found(worktreeId)
       }
     }
@@ -75,10 +85,9 @@ export function revealBuildWebSession(
   }
   const state = useAppStore.getState()
   if (session.surface_kind === 'terminal') {
-    if (
-      (state.tabsByWorktree[worktree.worktreeId] ?? []).some((t) => t.id === session.surface_id)
-    ) {
-      activateTabAndFocusPane(session.surface_id, null)
+    const tab = sessionTerminalTab(state.tabsByWorktree[worktree.worktreeId], session.surface_id)
+    if (tab) {
+      activateTabAndFocusPane(tab.id, null)
     }
     return true
   }

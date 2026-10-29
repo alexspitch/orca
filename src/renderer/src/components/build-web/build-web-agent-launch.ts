@@ -4,6 +4,7 @@ import { launchAgentInNewTab } from '@/lib/launch-agent-in-new-tab'
 import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 import { adoptAgentSessionLaunchVerdict } from '@/lib/agent-session-launch-plan'
 import { findStructuredAgentSessionTab } from '@/lib/agent-session/structured-agent-session-tab-activation'
+import type { StructuredLaunchTerminal } from '@/lib/structured-agent-session-launch-admission'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { runtimeTargetForWorkspaceOwner } from '@/lib/resolve-owner'
 import { ipcOrRuntimeTargetForHostId } from '@/runtime/runtime-client-target'
@@ -12,6 +13,7 @@ import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { worktreeFolderName } from '../../../../shared/build-web-task-session-worktree'
 import { recordedSessionHostId } from '../../../../shared/build-web-session-host'
+import { toHostSessionTabId } from '../../../../shared/terminal-surface-id'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { BuildWebSessionArgs } from '../../../../preload/api/build-web-api'
@@ -106,7 +108,8 @@ function linkOnWorktreeHost(
 function noteProviderSessionLater(
   target: RuntimeClientTarget,
   issue: BuildWebIssueRow,
-  tabId: string
+  tabId: string,
+  surfaceId: string
 ): void {
   let done = false
   const finish = () => {
@@ -128,13 +131,27 @@ function noteProviderSessionLater(
     finish()
     void callBuildWeb(target, 'noteProviderSession', {
       id: issue.id,
-      surfaceId: tabId,
+      surfaceId,
       providerSessionId
     }).catch(() => {})
   }
   const unsubscribe = useAppStore.subscribe(check)
   const timer = window.setTimeout(finish, PROVIDER_SESSION_WAIT_MS)
   check(useAppStore.getState())
+}
+
+/**
+ * This client's tab of a terminal the launch opened; a paired host's tab is known once the host
+ * made it. Null when the host failed it (and said so), undefined when no tab is named.
+ */
+async function openedTerminalTabId(
+  terminal: Pick<StructuredLaunchTerminal, 'tabId' | 'completion'>
+): Promise<string | null | undefined> {
+  if (terminal.tabId || !terminal.completion) {
+    return terminal.tabId
+  }
+  const completed = await terminal.completion.catch(() => null)
+  return completed?.outcome.status === 'failed' ? null : completed?.tabId
 }
 
 /** The console keeps a task worktree's folder name, never its label (the task's title). */
@@ -216,22 +233,34 @@ export async function launchBuildWebTask(args: {
     surface_kind: 'unknown',
     surface_id: ''
   }
+  let terminalTabId: string | null | undefined
   if (result.surface.kind === 'local-terminal') {
     focusTerminalTabSurface(result.surface.tabId)
-    surface = { surface_kind: 'terminal', surface_id: result.surface.tabId }
+    terminalTabId = result.surface.tabId
+  } else if (result.terminalCompletion) {
+    terminalTabId = await openedTerminalTabId({ completion: result.terminalCompletion })
   } else if (result.structuredSettlement) {
     const settled = await result.structuredSettlement.catch(() => null)
     if (settled && (settled.kind === 'structured' || settled.kind === 'visibility-unknown')) {
       surface = { surface_kind: 'structured', surface_id: settled.sessionId }
       nameStructuredTab(worktree.id, settled.sessionId, sessionName)
-    } else if (!settled || settled.kind === 'cancelled' || settled.kind === 'failed') {
+    } else if (settled?.kind === 'terminal') {
+      terminalTabId = await openedTerminalTabId(settled.terminal ?? {})
+    } else {
       if (settled?.kind === 'failed' && !settled.notified) {
         toast.error(translate('buildWeb.launch.failed', 'Could not start the agent.'))
       }
       return false
     }
   }
-  // Why: with no surface id (the host opened its own terminal) a record could never be cleared.
+  if (terminalTabId === null) {
+    return false
+  }
+  if (terminalTabId) {
+    // Why the host's id: the host's watcher, the skill and every client name the tab by it.
+    surface = { surface_kind: 'terminal', surface_id: toHostSessionTabId(terminalTabId) }
+  }
+  // Why: with no surface id a record could never be cleared.
   if (!surface.surface_id) {
     return true
   }
@@ -266,8 +295,8 @@ export async function launchBuildWebTask(args: {
     }).catch(() => {})
     return false
   }
-  if (surface.surface_kind === 'terminal') {
-    noteProviderSessionLater(target, issue, surface.surface_id)
+  if (terminalTabId) {
+    noteProviderSessionLater(target, issue, terminalTabId, surface.surface_id)
   }
   return true
 }
