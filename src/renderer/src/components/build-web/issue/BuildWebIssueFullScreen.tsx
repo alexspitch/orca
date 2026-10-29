@@ -173,7 +173,6 @@ export function BuildWebIssueFullScreen({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <IssueHeader
-        target={target}
         detail={detail}
         saving={state.saving}
         onSave={(patch) => void state.save(patch)}

@@ -1,6 +1,11 @@
 import { defineFixture } from '../../component-fixtures/component-fixture'
 import type { BuildWebAgentSessionRecord } from '../../../../shared/build-web-session-types'
-import { BuildWebSessionList, type SessionListRow } from './BuildWebSessionList'
+import {
+  BuildWebSessionList,
+  BuildWebSessionRows,
+  type SessionListRow
+} from './BuildWebSessionList'
+import { OverviewPanel } from './issue/IssueOverviewCards'
 
 const record = (
   id: string,
@@ -77,5 +82,19 @@ export const history = defineFixture({
       onOpen={() => {}}
       logFor={(row) => (row.record.provider_session_id ? () => {} : null)}
     />
+  )
+})
+
+/** The card in the overview's side column, under Jira, at its default width. */
+export const sideColumn = defineFixture({
+  width: 380,
+  render: () => (
+    <OverviewPanel title="Sessions">
+      <BuildWebSessionRows
+        rows={rows}
+        onOpen={() => {}}
+        logFor={(row) => (row.record.provider_session_id ? () => {} : null)}
+      />
+    </OverviewPanel>
   )
 })

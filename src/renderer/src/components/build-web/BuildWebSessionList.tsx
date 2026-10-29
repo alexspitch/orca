@@ -78,29 +78,34 @@ function SessionRow({
   )
 }
 
-/** A task card's «Sessions», newest first: what each became, where it ran, and its log. */
-export function BuildWebSessionList({
-  rows,
-  onOpen,
-  logFor
-}: {
+type SessionListProps = {
   rows: readonly SessionListRow[]
   /** Brings a row's worktree forward; only rows whose worktree is here offer it. */
   onOpen: (row: SessionListRow) => void
   /** The row's «Log»; null where the agent's session id is unknown or no host hands its log out. */
   logFor: (row: SessionListRow) => (() => void) | null
-}): React.JSX.Element {
+}
+
+/** The sessions' rows alone, for a card that draws its own frame and title. */
+export function BuildWebSessionRows({ rows, onOpen, logFor }: SessionListProps): React.JSX.Element {
+  return (
+    <ul className="flex flex-col gap-2 text-xs">
+      {rows.map((row) => (
+        <SessionRow key={row.record.id} row={row} onOpen={onOpen} onLog={logFor(row)} />
+      ))}
+    </ul>
+  )
+}
+
+/** A task card's «Sessions», newest first: what each became, where it ran, and its log. */
+export function BuildWebSessionList(props: SessionListProps): React.JSX.Element {
   return (
     <section className="flex flex-col gap-1.5 rounded-md border border-border px-3 py-2 text-xs">
       <h3 className="flex items-center gap-2 text-muted-foreground">
         <Bot className="size-3.5 text-chip-tone-purple" />
         {translate('buildWeb.session.history', 'Sessions')}
       </h3>
-      <ul className="flex flex-col gap-2">
-        {rows.map((row) => (
-          <SessionRow key={row.record.id} row={row} onOpen={onOpen} onLog={logFor(row)} />
-        ))}
-      </ul>
+      <BuildWebSessionRows {...props} />
     </section>
   )
 }

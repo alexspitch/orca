@@ -12,6 +12,7 @@ import { EditableDescription, EditableSteps } from '../BuildWebIssueEditors'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { BuildSummaryCard, JiraCard, OverviewPanel } from './IssueOverviewCards'
 import { IssueCommentComposer } from './IssueCommentComposer'
+import { BuildWebTaskSessions } from '../BuildWebTaskSessions'
 
 export function IssueOverviewTab({
   target,
@@ -79,6 +80,7 @@ export function IssueOverviewTab({
             </p>
           </OverviewPanel>
           <JiraCard target={target} detail={detail} canCreate onCreated={state.reload} />
+          <BuildWebTaskSessions target={target} detail={detail} panel />
         </aside>
       }
     >
