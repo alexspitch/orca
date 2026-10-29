@@ -22,7 +22,6 @@ import type {
 } from './visibility-resume-types'
 import { isSessionTabsStreamEnd, WEB_SESSION_TABS_VISIBILITY_RESUME_STAGGER_MS } from './state'
 import { subscribeRuntimeEnvironment } from '../runtime-environment-pairing-refresh'
-import { describeSessionTabsFrame, tabsSyncDebug } from './tabs-sync-debug'
 
 type Ref<T> = { current: T }
 
@@ -91,10 +90,6 @@ export function installGlobalSessionTabsSubscriptions({
       refs.visibilityResumeOmissions.current.delete(key)
     }
   }
-  tabsSyncDebug('global-install', {
-    workspaceSessionReady,
-    environments: environments.map((environment) => environment.environmentId)
-  })
   if (!workspaceSessionReady || environments.length === 0) {
     return undefined
   }
@@ -129,12 +124,7 @@ export function installGlobalSessionTabsSubscriptions({
     const expectedTrackingGeneration = getWebSessionTabsTrackingGeneration(environmentId)
     environmentIdBySpec.push(environmentId)
     subscriptionSpecs.push({
-      subscribe: (isCurrent, { visibilityGeneration, ended: endStream }) => {
-        tabsSyncDebug('global-subscribe', { env: environmentId, visibilityGeneration })
-        const ended = (): void => {
-          tabsSyncDebug('global-ended', { env: environmentId })
-          endStream()
-        }
+      subscribe: (isCurrent, { visibilityGeneration, ended }) => {
         const awaitingVisibilityResumeInventory = { value: visibilityGeneration > 0 }
         if (!requestedInitialLoad) {
           requestedInitialLoad = true
@@ -156,16 +146,6 @@ export function installGlobalSessionTabsSubscriptions({
           },
           {
             onResponse: (response) => {
-              tabsSyncDebug('global-frame', {
-                env: environmentId,
-                current: isCurrent(),
-                revisionMatches:
-                  getRuntimeEnvironmentRevision(environmentId) ===
-                  expectedEnvironmentPairingRevision,
-                ...(response.ok
-                  ? { frame: describeSessionTabsFrame(response.result) }
-                  : { error: response.error })
-              })
               if (
                 !isCurrent() ||
                 getRuntimeEnvironmentRevision(environmentId) !== expectedEnvironmentPairingRevision
@@ -192,13 +172,11 @@ export function installGlobalSessionTabsSubscriptions({
               })
             },
             onError: (error) => {
-              tabsSyncDebug('global-error', { env: environmentId, message: error.message })
               if (isCurrent()) {
                 console.warn('[web-session-tabs-sync] global subscription error:', error.message)
               }
             },
             onClose: () => {
-              tabsSyncDebug('global-close', { env: environmentId, current: isCurrent() })
               if (isCurrent()) {
                 ended()
               }
@@ -219,7 +197,6 @@ export function installGlobalSessionTabsSubscriptions({
   }
 
   const dispose = installWindowVisibilitySubscriptionParking(subscriptionSpecs, {
-    debugLabel: 'global',
     getVisibilityResumePriority: (index) =>
       environmentIdBySpec[index] === refs.activeRuntimeEnvironmentId.current ? 0 : 1,
     visibilityResumeStaggerMs: WEB_SESSION_TABS_VISIBILITY_RESUME_STAGGER_MS,
