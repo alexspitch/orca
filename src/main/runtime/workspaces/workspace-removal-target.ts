@@ -38,6 +38,8 @@ import {
   retryFailedWorktreeRemoval,
   waitForPendingWorktreeRemoval
 } from '../../worktree-background-removal'
+import { failedWorktreeRemovals } from '../../worktree-removal-table'
+import { preservedBranchCleanupScopeKey } from '../../../shared/preserved-branch-cleanup'
 import { interruptedLocalWorktreeRemovalJob } from '../runtime-interrupted-local-worktree-removal'
 import { ORCA_LAYOUT_OWNER_IS_MAIN } from '../../../shared/layout-owner-switch'
 import { retryFailedRemovalUnlessRegistered } from '../../worktree-removal-leftover'
@@ -77,6 +79,19 @@ export abstract class OrcaRuntimeWithResolveWorktreeRemovalTarget extends OrcaRu
     }
     resumeInterruptedWorktreeRemovals((record) =>
       interruptedLocalWorktreeRemovalJob(record, this.localRemovalJobHost(store))
+    )
+  }
+
+  /** A delete of this local workspace runs, or failed and waits for a person to retry it. */
+  isLocalWorktreeRemovalUnderway(worktreeId: string): boolean {
+    // Why both scopes: a caller may name the local host or leave the host out.
+    const running = ([undefined, LOCAL_EXECUTION_HOST_ID] as const).some((hostId) =>
+      this.removeManagedWorktreeInFlight.has(preservedBranchCleanupScopeKey({ worktreeId, hostId }))
+    )
+    return (
+      running ||
+      waitForPendingWorktreeRemoval(worktreeId) !== undefined ||
+      failedWorktreeRemovals.has(worktreeId)
     )
   }
 

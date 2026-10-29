@@ -30,6 +30,8 @@ export type BuildWebGoneRemovalDeps = Pick<
   readMeta: () => Pick<WorktreeMeta, 'buildWebTask'> | undefined
   /** The folder is still missing and Git lists no live registration of it. */
   isGone: () => Promise<boolean>
+  /** A delete through Orca runs or failed: that delete reports itself. */
+  removalUnderway: () => boolean
   git: Pick<
     BuildWebWorktreeGitProbe,
     'readTaskBranch' | 'taskBranchAddsNothing' | 'deleteTaskBranch'
@@ -71,9 +73,11 @@ export async function removeGoneBuildWebWorktree(
       (await deps.isGone().catch(() => false)) ? null : 'the folder is back',
     lastChecks: () =>
       whyNotRemoveNow(deps, target.worktreeId, () =>
-        deps.readMeta()?.buildWebTask?.sessionId === target.sessionId
-          ? null
-          : 'the worktree no longer holds this session'
+        deps.removalUnderway()
+          ? 'a delete through Orca is under way'
+          : deps.readMeta()?.buildWebTask?.sessionId === target.sessionId
+            ? null
+            : 'the worktree no longer holds this session'
       ),
     notes: async (selector, result) => {
       const preserved = result.preservedBranch

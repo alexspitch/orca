@@ -13,7 +13,8 @@ export type LifecycleDeleteOptions = {
   label: string
   /**
    * The host's own cleanup, which may still step aside: it cancels and refuses nothing, and what
-   * arrives meanwhile waits behind it. It shows as deleting once it calls `committed`.
+   * arrives while it runs waits behind it; a person's delete replaces it while it has not started.
+   * It shows as deleting once it calls `committed`.
    */
   tentative?: boolean
 }

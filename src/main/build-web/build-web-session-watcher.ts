@@ -23,6 +23,7 @@ import type { BuildWebSessionReportQueue } from './build-web-session-report-queu
 import { watchedBuildWebSessionChange } from './build-web-session-state'
 import {
   hasBuildWebSession,
+  isBuildWebTaskWorktreeBeingRemoved,
   isBuildWebTaskWorktreeGone,
   listLocalBuildWebTaskWorktrees,
   type BuildWebLinkedTaskWorktree,
@@ -49,6 +50,8 @@ export type BuildWebSessionWatcherDeps = Pick<
 
 const HEAL_RETRY_MS = 10 * 60_000
 const CONFIRM_TIMEOUT_MS = 10_000
+// Why several: a folder missing once may be a volume still mounting; the cleanup is not undone.
+const GONE_LOOKS = 3
 
 const readIssueInBackground = (issueId: string): Promise<BuildWebIssueDetail> =>
   getBuildWebIssue(issueId, undefined, { background: true })
@@ -59,6 +62,8 @@ export class BuildWebSessionWatcher {
   private stopped = false
   private readonly finisher: BuildWebSessionFinisher
   private readonly goneTried = new Set<string>()
+  /** How many looks in a row found each session's folder gone. */
+  private readonly goneLooks = new Map<string, number>()
   private readonly healTriedAt = new Map<string, number>()
 
   constructor(private readonly deps: BuildWebSessionWatcherDeps) {
@@ -173,23 +178,40 @@ export class BuildWebSessionWatcher {
     rows: BuildWebLinkedTaskWorktree[]
   ): Promise<BuildWebLinkedTaskWorktree[]> {
     const present: BuildWebLinkedTaskWorktree[] = []
+    for (const sessionId of this.goneLooks.keys()) {
+      if (!rows.some((row) => row.task.sessionId === sessionId)) {
+        this.goneLooks.delete(sessionId)
+      }
+    }
     for (const row of rows) {
       const { sessionId } = row.task
-      // Why the finisher's rows are skipped: its own delete is not a removal behind Orca's back.
-      if (this.goneTried.has(sessionId) || this.finisher.isWorking(row.worktreeId)) {
+      // Why skipped: a delete through Orca or the finisher is not a removal behind Orca's back.
+      if (
+        this.goneTried.has(sessionId) ||
+        this.finisher.isWorking(row.worktreeId) ||
+        isBuildWebTaskWorktreeBeingRemoved(this.deps.runtime, row.worktreeId)
+      ) {
+        this.goneLooks.delete(sessionId)
         continue
       }
-      if ((await isBuildWebTaskWorktreeGone(this.deps.store, row)) && !this.stopped) {
-        // Why marked before it ends: one try per run; a step aside is looked at again next tick.
-        this.goneTried.add(sessionId)
-        void this.finisher.finishGone(row).then((outcome) => {
-          if (outcome === 'cancelled') {
-            this.goneTried.delete(sessionId)
-          }
-        })
+      if (!(await isBuildWebTaskWorktreeGone(this.deps.store, row)) || this.stopped) {
+        this.goneLooks.delete(sessionId)
+        present.push(row)
         continue
       }
-      present.push(row)
+      const looks = (this.goneLooks.get(sessionId) ?? 0) + 1
+      this.goneLooks.set(sessionId, looks)
+      if (looks < GONE_LOOKS) {
+        continue
+      }
+      this.goneLooks.delete(sessionId)
+      // Why marked before it ends: one try per run; a step aside is looked at again next tick.
+      this.goneTried.add(sessionId)
+      void this.finisher.finishGone(row).then((outcome) => {
+        if (outcome === 'cancelled') {
+          this.goneTried.delete(sessionId)
+        }
+      })
     }
     return present
   }

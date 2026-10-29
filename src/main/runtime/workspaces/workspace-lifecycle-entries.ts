@@ -47,13 +47,10 @@ function deletedAttempt(): LifecycleAttempt {
   return { outcome: 'settled', error: new Error(WORKSPACE_DELETED_ERROR), threw: true }
 }
 
-/** Takes the queued entries `which` picks out of line, each refused as deleted. */
-export function cancelQueued(
-  queue: WorkspaceQueue,
-  which: (entry: LifecycleEntry) => boolean = () => true
-): void {
-  const cancelled = queue.entries.filter((entry) => entry.state === 'queued' && which(entry))
-  queue.entries = queue.entries.filter((entry) => !cancelled.includes(entry))
+/** Takes every queued entry out of line, each refused as deleted. */
+export function cancelQueued(queue: WorkspaceQueue): void {
+  const cancelled = queue.entries.filter((entry) => entry.state === 'queued')
+  queue.entries = queue.entries.filter((entry) => entry.state !== 'queued')
   for (const entry of cancelled) {
     entry.settle(deletedAttempt())
   }

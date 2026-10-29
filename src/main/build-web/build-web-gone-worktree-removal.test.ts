@@ -38,6 +38,7 @@ function harness(removed: RemoveWorktreeResult = {}) {
   })
   const meta: { buildWebTask?: WorktreeBuildWebTask } = { buildWebTask: TASK }
   let gone = true
+  let underway = false
   const deps: BuildWebGoneRemovalDeps = {
     queueDelete: async (_selector, run) => run(() => {}),
     // The delete drops the row, whose hook reports the removal while the cleanup holds it.
@@ -51,6 +52,7 @@ function harness(removed: RemoveWorktreeResult = {}) {
     reports,
     readMeta: () => meta,
     isGone: async () => gone,
+    removalUnderway: () => underway,
     git: {
       readTaskBranch: vi.fn(async () => 'abc'),
       taskBranchAddsNothing: vi.fn(async () => true),
@@ -62,6 +64,9 @@ function harness(removed: RemoveWorktreeResult = {}) {
     reports,
     folderBack: () => {
       gone = false
+    },
+    personDeletes: () => {
+      underway = true
     }
   }
 }
@@ -109,6 +114,17 @@ describe('removeGoneBuildWebWorktree', () => {
     expect(await removeGoneBuildWebWorktree(h.deps, TARGET)).toEqual({
       kind: 'cancelled',
       why: 'the folder is back'
+    })
+    expect(h.deps.remove).not.toHaveBeenCalled()
+    expect(h.reports.pending()).toEqual([])
+  })
+
+  it('leaves a delete through Orca to report itself', async () => {
+    const h = harness()
+    h.personDeletes()
+    expect(await removeGoneBuildWebWorktree(h.deps, TARGET)).toEqual({
+      kind: 'cancelled',
+      why: 'a delete through Orca is under way'
     })
     expect(h.deps.remove).not.toHaveBeenCalled()
     expect(h.reports.pending()).toEqual([])

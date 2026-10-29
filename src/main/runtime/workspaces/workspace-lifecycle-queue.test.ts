@@ -458,6 +458,22 @@ describe('WorkspaceLifecycleQueue tentative deletes', () => {
     expect(log).toEqual(['start cleanup', 'delete'])
   })
 
+  it('a person’s delete replaces a tentative one that has not started, with its own options', async () => {
+    const queue = new WorkspaceLifecycleQueue()
+    const log: string[] = []
+    const sleep = gated(log, 'sleep', 'sleep', 'slept')
+    const sleeping = queue.submit(KEY, sleep.command)
+    const waiting = queue.submit(KEY, cleanup(log).command)
+    const manual = gated(log, 'delete', 'delete', 'deleted', deleteOptions('hooks'))
+    const deleting = queue.submit(KEY, manual.command)
+    await expect(waiting).rejects.toThrow(WORKSPACE_DELETED_ERROR)
+    sleep.release()
+    expect(await sleeping).toBe('slept')
+    manual.release()
+    expect(await deleting).toBe('deleted')
+    expect(log).toEqual(['start sleep', 'end sleep', 'start delete', 'end delete'])
+  })
+
   it('steps aside for a person’s delete already pending, and a forced delete replaces it waiting', async () => {
     const queue = new WorkspaceLifecycleQueue()
     const log: string[] = []

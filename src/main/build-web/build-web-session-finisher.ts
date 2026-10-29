@@ -29,7 +29,10 @@ import {
   sameBuildWebSessionState,
   watchedBuildWebSessionChange
 } from './build-web-session-state'
-import { isBuildWebTaskWorktreeGone } from './build-web-task-worktrees'
+import {
+  isBuildWebTaskWorktreeGone,
+  type BuildWebRemovalUnderwayRuntime
+} from './build-web-task-worktrees'
 import {
   createBuildWebWorktreeGitProbe,
   type BuildWebTaskWorktreeRef,
@@ -43,11 +46,12 @@ import {
 export type BuildWebSessionFinisherRuntime = BuildWebWorktreeActivityRuntime &
   BuildWebWorktreeGitRuntime &
   Parameters<typeof queueWorkspaceDelete>[0] &
+  BuildWebRemovalUnderwayRuntime &
   Pick<BuildWebSessionLinkRuntime, 'updateManagedWorktreeMeta'> & {
     removeManagedWorktree: (
       selector: string,
       options: RemoveManagedWorktreeOptions
-    ) => Promise<RemoveWorktreeResult>
+    ) => Promise<RemoveWorktreeResult & { warning?: string }>
     forceDeletePreservedBranch: (
       selector: string,
       branchName: string,
@@ -112,12 +116,16 @@ export class BuildWebSessionFinisher {
           (_removal, control) => run(control.committed),
           { tentative: true }
         ),
-      remove: (selector) =>
-        runtime.removeManagedWorktree(selector, {
+      remove: async (selector) => {
+        // Why without the warning: a person's delete waiting behind this one gets this result, and
+        // the archive hook skipped here was skipped by this host, not by their request.
+        const { warning: _skippedHook, ...result } = await runtime.removeManagedWorktree(selector, {
           runHooks: false,
           waitForBackgroundRemoval: true,
           hostId: LOCAL
-        }),
+        })
+        return result
+      },
       forceDeleteBranch: (selector, branchName, expectedHead) =>
         runtime.forceDeletePreservedBranch(selector, branchName, expectedHead, LOCAL),
       stopped: () => this.stopped
@@ -293,6 +301,7 @@ export class BuildWebSessionFinisher {
           reports: this.deps.reports,
           readMeta: () => readWorktreeMetaForHost(store, worktreeId, LOCAL),
           isGone: () => isBuildWebTaskWorktreeGone(store, target),
+          removalUnderway: () => runtime.isLocalWorktreeRemovalUnderway(worktreeId),
           git: createBuildWebWorktreeGitProbe(runtime, store, target)
         },
         {
@@ -303,7 +312,9 @@ export class BuildWebSessionFinisher {
         }
       )
       if (outcome.kind === 'failed') {
+        // Why no retry this run: the attention puts it before a person; a restart tries once more.
         console.warn(`[build-web] dropping ${task.key}'s deleted worktree failed:`, outcome.error)
+        await this.attention(target, 'remove-failed')
       } else if (outcome.kind === 'cancelled') {
         console.info(`[build-web] ${task.key}'s deleted worktree stays: ${outcome.why}`)
       }

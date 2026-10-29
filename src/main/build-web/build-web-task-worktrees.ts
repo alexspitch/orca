@@ -1,3 +1,6 @@
+import { constants } from 'node:fs'
+import { access, stat } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import {
   getRepoExecutionHostId,
   getRepoRoutingConnectionId,
@@ -14,6 +17,8 @@ import { areWorktreePathsEqual } from '../git/worktree-path-comparison'
 import { isWorktreePathMissing } from '../worktree-removal-safety'
 import { getLocalProjectWorktreeGitOptions } from '../project-runtime-git-options'
 import type { ProjectRuntimeResolutionStore } from '../local-project-runtime-resolution'
+import { workspaceLifecycleKey } from '../runtime/workspaces/workspace-lifecycle-commands'
+import type { WorkspaceLifecycleQueue } from '../runtime/workspaces/workspace-lifecycle-queue'
 import type { BuildWebTaskWorktreeRef } from './build-web-worktree-git-probe'
 
 // This host's own «Take to work» worktrees (IS-147): local Git worktrees only. SSH and folder
@@ -62,13 +67,32 @@ export function listLocalBuildWebTaskWorktrees(
   return rows
 }
 
-/** Gone behind Orca's back: the folder is missing and Git no longer lists a live registration. */
+async function isReadableDirectory(path: string): Promise<boolean> {
+  try {
+    if (!(await stat(path)).isDirectory()) {
+      return false
+    }
+    await access(path, constants.R_OK | constants.X_OK)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Gone behind Orca's back: the folder is missing from a folder that is there, and Git no longer
+ * lists a live registration. One look proves nothing; the watcher asks again before acting.
+ */
 export async function isBuildWebTaskWorktreeGone(
   store: ProjectRuntimeResolutionStore,
   row: BuildWebTaskWorktree
 ): Promise<boolean> {
   // Why only ENOENT/ENOTDIR: an unreadable folder (EACCES, a stalled mount) is not a removal.
   if (!(await isWorktreePathMissing(row.path))) {
+    return false
+  }
+  // Why the parent: a volume not mounted (yet) hides the folder without removing it.
+  if (!(await isReadableDirectory(dirname(row.path)))) {
     return false
   }
   const listed = await listWorktreesStrictAllowingTrueEmpty(
@@ -80,5 +104,22 @@ export async function isBuildWebTaskWorktreeGone(
   }
   return !listed.some(
     (worktree) => areWorktreePathsEqual(worktree.path, row.path) && !worktree.prunable
+  )
+}
+
+export type BuildWebRemovalUnderwayRuntime = {
+  readonly workspaceLifecycle: Pick<WorkspaceLifecycleQueue, 'hasPendingDelete'> | null
+  isLocalWorktreeRemovalUnderway: (worktreeId: string) => boolean
+}
+
+/** A delete through Orca waits or runs: it takes the folder first and reports itself. */
+export function isBuildWebTaskWorktreeBeingRemoved(
+  runtime: BuildWebRemovalUnderwayRuntime,
+  worktreeId: string
+): boolean {
+  const key = workspaceLifecycleKey(LOCAL_EXECUTION_HOST_ID, worktreeId)
+  return (
+    runtime.isLocalWorktreeRemovalUnderway(worktreeId) ||
+    runtime.workspaceLifecycle?.hasPendingDelete(key) === true
   )
 }

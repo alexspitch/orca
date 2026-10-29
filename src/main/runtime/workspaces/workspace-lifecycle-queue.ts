@@ -39,7 +39,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms).unref?.())
 }
 
-/** Serialize commands per host/workspace without merging. Delete cancels queued work and awaits running work (a tentative delete cancels nothing: what arrives waits behind it); unconfirmed outcomes pause until owner observation, never replay. Pending state is lost on restart. */
+/** Serialize commands per host/workspace without merging. Delete cancels queued work and awaits running work (a tentative delete cancels nothing: what arrives while it runs waits behind it); unconfirmed outcomes pause until owner observation, never replay. Pending state is lost on restart. */
 export class WorkspaceLifecycleQueue {
   readonly revision = new ProducerRevision()
   private readonly queues = new Map<string, WorkspaceQueue>()
@@ -51,7 +51,7 @@ export class WorkspaceLifecycleQueue {
   private readonly creations = new WorkspaceLifecycleCreations<LifecycleEntry>({
     revision: this.revision,
     membership: () => this.membership,
-    deletePending: (key) => this.deletePending(key),
+    deletePending: (key) => this.hasPendingDelete(key),
     bind: (key) => this.bindCreate(key),
     finish: (key, entry) => this.finishEntry(key, entry)
   })
@@ -146,9 +146,8 @@ export class WorkspaceLifecycleQueue {
       }
     }
     if (command.kind === 'delete' && !tentative) {
-      // A tentative delete ahead keeps its place, unless a forced delete must get past a pause.
-      const force = command.delete?.force === true
-      cancelQueued(queue, (entry) => force || !entry.tentative)
+      // A tentative delete not yet started goes too: the person's own options decide the delete.
+      cancelQueued(queue)
     }
     let settle!: (attempt: LifecycleAttempt) => void
     const reply = new Promise<unknown>((resolve, reject) => {
@@ -177,7 +176,8 @@ export class WorkspaceLifecycleQueue {
     return reply as Promise<T>
   }
 
-  private deletePending(key: string): boolean {
+  /** A delete of this workspace waits or runs, tentative ones included. */
+  hasPendingDelete(key: string): boolean {
     return this.queues.get(key)?.entries.some((entry) => entry.kind === 'delete') === true
   }
 
