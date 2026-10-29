@@ -176,10 +176,13 @@ export function renewRuntimeMobileAgentStatusFromPtyTitle(
         : pty.lastAgentStatus === 'permission'
           ? 'blocked'
           : 'done'
+    // Why the later stamp: program activity reclassifies the title without a new one, and a
+    // client keeps the newer row, so the title's own time would lose to the working row before it.
+    const titleStatusStartedAt = pty.lastAgentStatusStartedAtEpochMs ?? titleEvidenceAt
     return buildTitleOnlyStatus(
       titleState,
-      titleEvidenceAt,
-      pty.lastAgentStatusStartedAtEpochMs ?? titleEvidenceAt
+      Math.max(titleEvidenceAt, titleStatusStartedAt),
+      titleStatusStartedAt
     )
   }
   const richStatusOwnsCurrentState =

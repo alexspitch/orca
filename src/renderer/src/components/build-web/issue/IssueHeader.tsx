@@ -3,11 +3,9 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueDetail, BuildWebIssuePatch } from '../../../../../shared/build-web-types'
-import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { loginOf, productLabel, statusLabel } from '../build-web-labels'
 import { BuildWebToneChip, PriorityChip, ProductChip, TypeChip } from '../BuildWebToneChip'
 import { StatusPicker } from '../BuildWebRowPickers'
-import { BuildWebTaskSessions } from '../BuildWebTaskSessions'
 import { EditableTitle } from '../BuildWebIssueEditors'
 import { nextStatus } from './issue-card-facts'
 import { blockedBySubtasks } from '../BuildWebIssueSubtasks'
@@ -58,7 +56,6 @@ function ArchivedNote({
 
 /** The full-screen card's head: where it is, what it is, and the moves out of it. */
 export function IssueHeader({
-  target,
   detail,
   saving,
   onSave,
@@ -68,8 +65,6 @@ export function IssueHeader({
   onOpenIssue,
   archive
 }: {
-  /** The host holding build-web's token, which the card was read through. */
-  target: RuntimeClientTarget
   detail: BuildWebIssueDetail
   /** «Archive» on a live task, «Restore» on the note of an archived one. */
   archive: IssueArchiveState
@@ -146,7 +141,6 @@ export function IssueHeader({
               })}
             </span>
           </div>
-          <BuildWebTaskSessions target={target} detail={detail} />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button
