@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793281688000",
+      "date": "2026-10-29",
+      "commit": "6c066fecbc08",
+      "features": [
+        "Issues → task overview now shows the task's sessions in their own Sessions card in the side column, below Jira, hidden when there are none."
+      ],
+      "settings": [],
+      "fixes": [
+        "Claude agent sessions no longer stay shown as working on paired clients after the turn has finished."
+      ]
+    },
+    {
       "version": "1.4.245-custom.1793275642000",
       "date": "2026-10-29",
       "commit": "79bc2abdcc49",
