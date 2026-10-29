@@ -1,6 +1,17 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793302081000",
+      "date": "2026-10-29",
+      "commit": "47d67f98b047",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "Opening a task's Markdown file from a worktree on a paired server no longer shows an «Access denied: unknown repository or worktree path» error.",
+        "Agent status rows for Claude now stay marked as waiting while a question or permission prompt is still on screen, instead of reverting to active."
+      ]
+    },
+    {
       "version": "1.4.245-custom.1793281688000",
       "date": "2026-10-29",
       "commit": "6c066fecbc08",
