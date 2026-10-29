@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793275642000",
+      "date": "2026-10-29",
+      "commit": "79bc2abdcc49",
+      "features": [
+        "The sidebar shows a flask or terminal icon when an agent left commands running in the background, listing each command and how long it has run.",
+        "An opened compact workspace row in the sidebar shows the agent's background command on a line under the agent, on desktop and phone.",
+        "A workspace running two or more agents shows their count in a small circle at the end of its title line in the sidebar, on desktop and phone."
+      ],
+      "settings": [],
+      "fixes": [
+        "A Claude agent whose background command, such as a test suite, is still running no longer shows as done in the sidebar after two minutes."
+      ]
+    },
+    {
       "version": "1.4.245-custom.1793271432000",
       "date": "2026-10-29",
       "commit": "00f2830ecd85",
