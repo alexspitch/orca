@@ -121,8 +121,13 @@ export function installPaneHostCapabilityFlags(session: ConnectPanePtySession): 
     const authoritativePaneAgent = session.getAuthoritativePaneAgent()
     const agentType = resolveCompatibleAgentTypeForOwner(payload.agentType, authoritativePaneAgent)
     const statusPayload = agentType === payload.agentType ? payload : { ...payload, agentType }
+    const existing = currentState.agentStatusByPaneKey[session.cacheKey]
     const observedStatusPayload = {
       ...statusPayload,
+      // Bytes never name child work; keep what the host's hooks last mirrored.
+      subagents: existing?.subagents,
+      children: existing?.children,
+      backgroundCommands: existing?.backgroundCommands,
       observation: rendererAgentStatusObservations.observe(session.cacheKey, {
         origin: 'osc',
         observedAt: Date.now(),
