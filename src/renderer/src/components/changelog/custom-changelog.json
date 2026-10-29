@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793271432000",
+      "date": "2026-10-29",
+      "commit": "00f2830ecd85",
+      "features": [],
+      "settings": [],
+      "fixes": [
+        "Take to work on a paired host now links the task's agent session and worktree, so the worktree is removed once the task is done."
+      ]
+    },
+    {
       "version": "1.4.245-custom.1793270405000",
       "date": "2026-10-29",
       "commit": "e987552e13b1",
