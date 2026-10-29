@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793306746000",
+      "date": "2026-10-29",
+      "commit": "9df9cca79cca",
+      "features": [
+        "The Dev Services panel now shows every service group expanded by default, so each service can be started on its own, even in a fresh worktree."
+      ],
+      "settings": [],
+      "fixes": [
+        "In the sidebar, a paired remote agent's row now lists its subagents, child views and background commands as reported by the host."
+      ]
+    },
+    {
       "version": "1.4.245-custom.1793302081000",
       "date": "2026-10-29",
       "commit": "47d67f98b047",
