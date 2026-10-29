@@ -4,7 +4,10 @@ import { AgentStateDot } from '@/components/AgentStateDot'
 import { buildAgentRowLineageTree } from '@/components/dashboard/agent-row-lineage-model'
 import { RepoIconGlyph } from '@/components/repo/repo-icon'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
 import { formatAgentTypeLabel } from '../../../../shared/agent-type-label'
+import { stripLeadingAgentTitleDecoration } from '../../../../shared/agent-title-decoration'
+import { resolveTerminalTabTitle } from '../../../../shared/tab-title-resolution'
 import { resolveRepoHeaderColor } from './project-header-color'
 import { RepoIdentityChip } from './worktree-card-header'
 import { WorktreeCardCompactHost } from './worktree-card-hover-cards'
@@ -20,6 +23,7 @@ import type { WorktreeCardPresentation } from './worktree-card-presentation'
 
 function CompactAgentLines({ worktreeId }: { worktreeId: string }): React.JSX.Element | null {
   const agents = useWorktreeAgentRows(worktreeId)
+  const generatedTitlesEnabled = useAppStore((s) => s.settings?.tabAutoGenerateTitle === true)
   const rootAgents = useMemo(() => buildAgentRowLineageTree(agents).rootRows, [agents])
   if (rootAgents.length === 0) {
     return null
@@ -33,7 +37,14 @@ function CompactAgentLines({ worktreeId }: { worktreeId: string }): React.JSX.El
     >
       {rootAgents.map((agent) => {
         const state = getAgentDotState(agent)
-        const name = formatAgentTypeLabel(agent.agentType)
+        // Why the tab's title without its glyph: the line names the agent as its tab does, beside its own dot.
+        const name = stripLeadingAgentTitleDecoration(
+          resolveTerminalTabTitle(
+            agent.tab,
+            generatedTitlesEnabled,
+            formatAgentTypeLabel(agent.agentType)
+          )
+        )
         // Why inert: a retained row is completion evidence; opening it would wake a sleeping session.
         const retained = agent.rowSource === 'retained'
         return (
