@@ -556,7 +556,11 @@ describe('createWebRuntimeSessionTerminal', () => {
         submitPrompt: true,
         forcePromptPaste: true
       })
-    ).resolves.toEqual({ outcome: { status: 'created' }, promptDelivered: true })
+    ).resolves.toEqual({
+      outcome: { status: 'created' },
+      promptDelivered: true,
+      hostTabId: 'host-tab-2'
+    })
 
     const createRequest = runtimeCall.mock.calls.find(
       ([request]) => request.method === 'terminal.createAgentSession'
@@ -614,7 +618,7 @@ describe('createWebRuntimeSessionTerminal', () => {
         command: "claude --prefill 'https://github.com/o/r/issues/12'",
         launchDraft: 'https://github.com/o/r/issues/12'
       })
-    ).resolves.toEqual({ status: 'created' })
+    ).resolves.toEqual({ outcome: { status: 'created' }, hostTabId: 'host-tab-2' })
 
     // Argv-prefill sends no paste, so only this seeds the mirrored composer.
     expect(mocks.deliverLaunchPromptToAgentTab).not.toHaveBeenCalled()
