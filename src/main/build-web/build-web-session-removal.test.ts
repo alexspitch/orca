@@ -45,10 +45,11 @@ function harness(removed: RemoveWorktreeResult = {}) {
   let duringScan: () => void = () => {}
   let agentAwake = false
   const reports = { hold: vi.fn(), release: vi.fn(), enqueue: vi.fn() }
+  const committed = vi.fn()
   const deps: BuildWebSessionRemovalDeps = {
     queueDelete: async (_selector, run) => {
       await queued
-      return run()
+      return run(committed)
     },
     probe: {
       readMeta: () => meta,
@@ -82,6 +83,7 @@ function harness(removed: RemoveWorktreeResult = {}) {
     meta,
     deps,
     reports,
+    committed,
     runtime,
     turn,
     onScan: (run: () => void) => {
@@ -111,12 +113,14 @@ describe('removeEmptyBuildWebWorktree', () => {
       why: 'the worktree no longer holds this session'
     })
     expect(h.deps.remove).not.toHaveBeenCalled()
+    // Why: the sidebar never showed it deleting.
+    expect(h.committed).not.toHaveBeenCalled()
     expect(h.reports.enqueue).toHaveBeenCalledWith({
       kind: 'keep',
       sessionId: 's1',
       consoleHost: 'https://bw.test'
     })
-    expect(h.reports.release).toHaveBeenCalledWith('s1', undefined)
+    expect(h.reports.release).toHaveBeenCalledWith('s1', undefined, undefined)
   })
 
   it('cancels when a Keep starts during the last check, before its write lands', async () => {
@@ -191,9 +195,10 @@ describe('removeEmptyBuildWebWorktree', () => {
     const h = harness({ preservedBranch: { branchName: 'is-147', head: 'abc' } })
     h.turn()
     expect(await removeEmptyBuildWebWorktree(h.deps, TARGET)).toEqual({ kind: 'removed' })
+    expect(h.committed).toHaveBeenCalledTimes(1)
     expect(h.deps.forceDeleteBranch).toHaveBeenCalledWith('id:repo::/wt', 'is-147', 'abc')
     expect(h.reports.hold).toHaveBeenCalledWith('s1')
-    expect(h.reports.release).toHaveBeenCalledWith('s1', undefined)
+    expect(h.reports.release).toHaveBeenCalledWith('s1', undefined, undefined)
   })
 
   it('names the branch in the report when it cannot prove or finish the delete', async () => {
@@ -212,7 +217,18 @@ describe('removeEmptyBuildWebWorktree', () => {
       kind: 'removed',
       note: 'branch kept: is-147'
     })
-    expect(refused.reports.release).toHaveBeenCalledWith('s1', 'branch kept: is-147')
+    expect(refused.reports.release).toHaveBeenCalledWith('s1', 'branch kept: is-147', undefined)
+  })
+
+  it('steps aside, with nothing to report, when the queue settles it unrun', async () => {
+    const h = harness()
+    h.deps.queueDelete = async () => {
+      throw new Error('Worktree deletion already in progress: repo::/wt')
+    }
+    expect(await removeEmptyBuildWebWorktree(h.deps, TARGET)).toEqual({
+      kind: 'cancelled',
+      why: 'Worktree deletion already in progress: repo::/wt'
+    })
   })
 
   it('reports a failed removal without retrying it', async () => {

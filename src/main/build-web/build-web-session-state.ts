@@ -5,7 +5,8 @@ import type {
 } from '../../shared/build-web-session-types'
 
 // The watcher's half of a task worktree's state (IS-147): what the console says, under the rule that
-// an attention the finisher wrote stays until the task leaves the closed states.
+// an attention the finisher wrote stays until the task leaves the closed states. With the owner's
+// auto-remove off, a closed task's worktree waits for a person.
 
 export type BuildWebSessionStateChange =
   | { kind: 'none' }
@@ -15,8 +16,12 @@ export type BuildWebSessionStateChange =
   /** Someone kept it elsewhere: the link to the task goes too. */
   | { kind: 'clear-task' }
 
-// Why: these two come from the console's answer, so a later answer may replace them.
-const WATCHER_REASONS: readonly BuildWebSessionAttentionReason[] = ['replaced', 'skill-unfinished']
+// Why: these come from the console's answer, so a later answer may replace them.
+const WATCHER_REASONS: readonly BuildWebSessionAttentionReason[] = [
+  'replaced',
+  'skill-unfinished',
+  'cleanup-off'
+]
 
 const NONE: BuildWebSessionStateChange = { kind: 'none' }
 
@@ -66,9 +71,20 @@ function liveChange(
     : changeTo(current, { state })
 }
 
+/** Nothing will finish the worktree: what it waited on and the skill's lateness give way to this. */
+function cleanupOffChange(
+  current: WorktreeBuildWebSession | undefined
+): BuildWebSessionStateChange {
+  return isFinisherAttention(current) && !isWaitAttention(current)
+    ? NONE
+    : changeTo(current, { state: 'attention', reason: 'cleanup-off' })
+}
+
+/** `autoCleanup`: the owner's auto-remove setting from the same answer. */
 export function watchedBuildWebSessionChange(
   current: WorktreeBuildWebSession | undefined,
-  status: Pick<BuildWebAgentSessionStatus, 'state' | 'finish_overdue'>
+  status: Pick<BuildWebAgentSessionStatus, 'state' | 'finish_overdue'>,
+  autoCleanup = true
 ): BuildWebSessionStateChange {
   switch (status.state) {
     case 'kept':
@@ -82,6 +98,9 @@ export function watchedBuildWebSessionChange(
     case 'replaced':
       return changeTo(current, { state: 'attention', reason: 'replaced' })
     case 'closing':
+      if (!autoCleanup) {
+        return cleanupOffChange(current)
+      }
       if (isFinisherAttention(current)) {
         return NONE
       }

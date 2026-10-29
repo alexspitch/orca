@@ -1,5 +1,7 @@
+import { lstatSync } from 'node:fs'
 import { join } from 'node:path'
 import type { WorktreeMeta } from '../../shared/worktree/meta-types'
+import { splitWorktreeId } from '../../shared/worktree/id'
 import { getProfileUserDataPath } from '../orca-profiles/profile-storage-paths'
 import { setWorktreeMetaRowRemovedListener } from '../persistence/host-qualified-worktree-meta'
 import { keepBuildWebAgentSession, reportBuildWebWorktreeRemoved } from './build-web-agent-sessions'
@@ -36,15 +38,35 @@ export function buildWebSessionReports(): BuildWebSessionReportQueue {
   return queue
 }
 
-/** A removed task worktree's report, for every delete path that ends in removeWorktreeMetaRow. */
+/** Synchronous: the report is enqueued inside the removal. Unreadable is not missing. */
+function worktreeFolderExists(worktreeId: string): boolean {
+  const path = splitWorktreeId(worktreeId)?.worktreePath
+  if (!path) {
+    return false
+  }
+  try {
+    lstatSync(path)
+    return true
+  } catch (error) {
+    const code = error instanceof Error && 'code' in error ? error.code : undefined
+    return code !== 'ENOENT' && code !== 'ENOTDIR'
+  }
+}
+
+/**
+ * A dropped task worktree's report, for every path that ends in removeWorktreeMetaRow. Deletes
+ * remove the folder before the row; Forget and an untracked project's cleanup leave it, which is a Keep.
+ */
 export function reportRemovedBuildWebWorktree(
   reports: Pick<BuildWebSessionReportQueue, 'enqueue'>,
-  meta: Pick<WorktreeMeta, 'buildWebTask'>
+  worktreeId: string,
+  meta: Pick<WorktreeMeta, 'buildWebTask'>,
+  folderExists: (worktreeId: string) => boolean = worktreeFolderExists
 ): void {
   const task = meta.buildWebTask
   if (task?.sessionId) {
     reports.enqueue({
-      kind: 'worktree-removed',
+      kind: folderExists(worktreeId) ? 'keep' : 'worktree-removed',
       sessionId: task.sessionId,
       consoleHost: task.consoleHost
     })
@@ -53,8 +75,8 @@ export function reportRemovedBuildWebWorktree(
 
 export function installBuildWebSessionReports(): BuildWebSessionReportQueue {
   const reports = buildWebSessionReports()
-  setWorktreeMetaRowRemovedListener((_worktreeId, meta) =>
-    reportRemovedBuildWebWorktree(reports, meta)
+  setWorktreeMetaRowRemovedListener((worktreeId, meta) =>
+    reportRemovedBuildWebWorktree(reports, worktreeId, meta)
   )
   return reports
 }

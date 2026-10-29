@@ -26,7 +26,8 @@ export type BuildWebSessionReportQueue = {
   enqueue: (report: BuildWebSessionReport) => void
   /** The finisher holds a session's report until it knows the note (a kept branch). */
   hold: (sessionId: string) => void
-  release: (sessionId: string, note?: string) => void
+  /** `external`: the removal it held cleaned up after a folder deleted behind Orca's back. */
+  release: (sessionId: string, note?: string, external?: boolean) => void
   drain: () => Promise<void>
   pending: () => readonly BuildWebSessionReport[]
 }
@@ -144,7 +145,7 @@ export function createBuildWebSessionReportQueue(
     held.set(sessionId, (held.get(sessionId) ?? 0) + 1)
   }
 
-  const release = (sessionId: string, note?: string): void => {
+  const release = (sessionId: string, note?: string, external?: boolean): void => {
     const count = (held.get(sessionId) ?? 1) - 1
     if (count > 0) {
       held.set(sessionId, count)
@@ -152,8 +153,16 @@ export function createBuildWebSessionReportQueue(
       held.delete(sessionId)
     }
     const removal = reports.find((r) => r.kind === 'worktree-removed' && r.sessionId === sessionId)
+    let changed = false
     if (note && removal && !removal.note) {
       removal.note = note
+      changed = true
+    }
+    if (external && removal && !removal.external) {
+      removal.external = true
+      changed = true
+    }
+    if (changed) {
       persist()
     }
     kick()

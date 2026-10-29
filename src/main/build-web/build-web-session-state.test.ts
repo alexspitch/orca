@@ -71,4 +71,37 @@ describe('watchedBuildWebSessionChange', () => {
       kind: 'none'
     })
   })
+
+  it('marks a closed task cleanup-off when auto-remove is off, over a wait or a late skill', () => {
+    const cleanupOff = { kind: 'set', session: { state: 'attention', reason: 'cleanup-off' } }
+    const agentRunning: WorktreeBuildWebSession = {
+      state: 'attention',
+      reason: 'agent-running',
+      at
+    }
+    expect(watchedBuildWebSessionChange({ state: 'closing', at }, live('closing'), false)).toEqual(
+      cleanupOff
+    )
+    expect(watchedBuildWebSessionChange(agentRunning, live('closing'), false)).toEqual(cleanupOff)
+    expect(watchedBuildWebSessionChange(overdue, live('closing', true), false)).toEqual(cleanupOff)
+    // What the finisher found in the worktree stays as it is.
+    expect(watchedBuildWebSessionChange(commits, live('closing'), false)).toEqual({ kind: 'none' })
+    // Only a closed task waits on the setting.
+    expect(watchedBuildWebSessionChange(undefined, live('active'), false)).toEqual({
+      kind: 'set',
+      session: { state: 'active' }
+    })
+  })
+
+  it('lets cleanup-off give way to the console once auto-remove is back on', () => {
+    const off: WorktreeBuildWebSession = { state: 'attention', reason: 'cleanup-off', at }
+    expect(watchedBuildWebSessionChange(off, live('closing'))).toEqual({
+      kind: 'set',
+      session: { state: 'closing' }
+    })
+    expect(watchedBuildWebSessionChange(off, live('closing', true))).toEqual({
+      kind: 'set',
+      session: { state: 'attention', reason: 'skill-unfinished' }
+    })
+  })
 })

@@ -1,10 +1,8 @@
 import { ProducerRevision } from '../sidebar-inputs/producer-revision'
-import type {
-  WorkspaceLifecycleHint,
-  WorkspaceLifecycleKind
-} from '../../../shared/sidebar-list/workspace-lifecycle-hints'
+import type { WorkspaceLifecycleHint } from '../../../shared/sidebar-list/workspace-lifecycle-hints'
 import type { WorkspaceCreationsSnapshot } from '../../../shared/sidebar-list/workspace-creations'
 import {
+  UNQUEUED_RUN,
   WORKSPACE_DELETED_ERROR,
   attemptLifecycleCommand,
   type LifecycleAttempt,
@@ -15,29 +13,15 @@ import {
   WorkspaceLifecycleCreations,
   type WorkspaceCreationHandle
 } from './workspace-lifecycle-creations'
-
-type Entry = {
-  kind: WorkspaceLifecycleKind
-  /** Arrival order across every workspace, so a command waiting on its lookup keeps its place. */
-  seq: number
-  state: 'queued' | 'running'
-  /** Null for a create, which runs outside the queue between open and close. */
-  command: LifecycleCommand<unknown> | null
-  reply: Promise<unknown> | null
-  settle: (attempt: LifecycleAttempt) => void
-}
-
-type Pause = { kind: WorkspaceLifecycleKind; observe: (() => Promise<void>) | null }
-
-type WorkspaceQueue = {
-  entries: Entry[]
-  paused: Pause | null
-  /** A finished create or delete, held until a fresh listing shows its membership. */
-  settling: number
-  draining: boolean
-  /** Ends a wait on the pause early: a forced delete arrived. */
-  wake: (() => void) | null
-}
+import {
+  cancelQueued,
+  isFinalDelete,
+  settleBehindDelete,
+  workspaceQueueHint,
+  type LifecycleEntry,
+  type LifecyclePause,
+  type WorkspaceQueue
+} from './workspace-lifecycle-entries'
 
 type Signal = { promise: Promise<void>; notify: () => void }
 
@@ -55,7 +39,7 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms).unref?.())
 }
 
-/** Serialize commands per host/workspace without merging. Delete cancels queued work and awaits running work; unconfirmed outcomes pause until owner observation, never replay. Pending state is lost on restart. */
+/** Serialize commands per host/workspace without merging. Delete cancels queued work and awaits running work (a tentative delete cancels nothing: what arrives waits behind it); unconfirmed outcomes pause until owner observation, never replay. Pending state is lost on restart. */
 export class WorkspaceLifecycleQueue {
   readonly revision = new ProducerRevision()
   private readonly queues = new Map<string, WorkspaceQueue>()
@@ -64,7 +48,7 @@ export class WorkspaceLifecycleQueue {
   /** Bound waits for earlier unresolved lookups so one dead host cannot stall every workspace. */
   private readonly resolving = new Map<number, number>()
   private resolved: Signal = signal()
-  private readonly creations = new WorkspaceLifecycleCreations<Entry>({
+  private readonly creations = new WorkspaceLifecycleCreations<LifecycleEntry>({
     revision: this.revision,
     membership: () => this.membership,
     deletePending: (key) => this.deletePending(key),
@@ -109,11 +93,11 @@ export class WorkspaceLifecycleQueue {
       this.resolved = signal()
       resolved.notify()
     }
-    return key === null ? command.run() : this.enqueue(key, command, seq)
+    return key === null ? command.run(UNQUEUED_RUN) : this.enqueue(key, command, seq)
   }
 
   openCreate(
-    start: Parameters<WorkspaceLifecycleCreations<Entry>['open']>[0]
+    start: Parameters<WorkspaceLifecycleCreations<LifecycleEntry>['open']>[0]
   ): WorkspaceCreationHandle {
     return this.creations.open(start)
   }
@@ -121,20 +105,9 @@ export class WorkspaceLifecycleQueue {
   hints(): Record<string, WorkspaceLifecycleHint> {
     const hints: Record<string, WorkspaceLifecycleHint> = {}
     for (const [key, queue] of this.queues) {
-      const deleting = queue.entries.some((entry) => entry.kind === 'delete')
-      const head = queue.entries[0]
-      const kind = deleting ? 'delete' : (head?.kind ?? queue.paused?.kind)
-      if (kind === undefined) {
-        // Only a settling delete is left: it shows until its row leaves the listing.
-        if (queue.settling > 0) {
-          hints[key] = { kind: 'delete', queuedBehind: 0 }
-        }
-        continue
-      }
-      hints[key] = {
-        kind,
-        queuedBehind: deleting ? 0 : Math.max(0, queue.entries.length - 1),
-        ...(queue.paused ? { paused: true as const } : {})
+      const hint = workspaceQueueHint(queue)
+      if (hint) {
+        hints[key] = hint
       }
     }
     for (const key of this.creations.settlingKeys()) {
@@ -153,24 +126,29 @@ export class WorkspaceLifecycleQueue {
 
   private enqueue<T>(key: string, command: LifecycleCommand<T>, seq: number): Promise<T> {
     const queue = this.queueFor(key)
-    const pendingDelete = queue.entries.find((entry) => entry.kind === 'delete')
+    const tentative = command.delete?.tentative === true
+    const pendingDelete = queue.entries.find(isFinalDelete)
     if (pendingDelete) {
       const pending = pendingDelete.command?.delete
       if (command.kind !== 'delete') {
         return Promise.reject(new Error(WORKSPACE_DELETED_ERROR))
       }
-      if (pendingDelete.reply && pending?.key === command.delete?.key) {
+      // A tentative delete never joins: a person's delete is already on its way.
+      if (!tentative && pendingDelete.reply && pending?.key === command.delete?.key) {
         // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: an equal delete shares the pending delete's reply, as a removal in flight always has.
         return pendingDelete.reply as Promise<T>
       }
       // A forced delete replaces an unforced one still waiting (behind a pause); never a running one.
-      if (!command.delete?.force || pendingDelete.state === 'running') {
+      // A tentative one steps aside.
+      if (tentative || !command.delete?.force || pendingDelete.state === 'running') {
         const label = command.delete?.label ?? key
         return Promise.reject(new Error(`Worktree deletion already in progress: ${label}`))
       }
     }
-    if (command.kind === 'delete') {
-      this.cancelQueued(queue)
+    if (command.kind === 'delete' && !tentative) {
+      // A tentative delete ahead keeps its place, unless a forced delete must get past a pause.
+      const force = command.delete?.force === true
+      cancelQueued(queue, (entry) => force || !entry.tentative)
     }
     let settle!: (attempt: LifecycleAttempt) => void
     const reply = new Promise<unknown>((resolve, reject) => {
@@ -178,13 +156,14 @@ export class WorkspaceLifecycleQueue {
     })
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: widened only to be stored; run's result is handed back to this command's own caller.
     const stored = command as LifecycleCommand<unknown>
-    const entry: Entry = {
+    const entry: LifecycleEntry = {
       kind: command.kind,
       seq,
       state: 'queued',
       command: stored,
       reply,
-      settle
+      settle,
+      ...(tentative ? { tentative: { committed: false } } : {})
     }
     // Late lookup results retain arrival order among queued entries.
     const after = queue.entries.findIndex((queued) => queued.state === 'queued' && queued.seq > seq)
@@ -211,9 +190,9 @@ export class WorkspaceLifecycleQueue {
     return queue
   }
 
-  private bindCreate(key: string): Entry {
+  private bindCreate(key: string): LifecycleEntry {
     const queue = this.queueFor(key)
-    const entry: Entry = {
+    const entry: LifecycleEntry = {
       kind: 'create',
       seq: this.nextSeq++,
       state: 'running',
@@ -227,21 +206,13 @@ export class WorkspaceLifecycleQueue {
     return entry
   }
 
-  private finishEntry(key: string, entry: Entry): void {
+  private finishEntry(key: string, entry: LifecycleEntry): void {
     const queue = this.queues.get(key)
     const index = queue?.entries.indexOf(entry) ?? -1
     if (queue && index !== -1) {
       queue.entries.splice(index, 1)
       this.revision.bump()
       void this.drain(key)
-    }
-  }
-
-  private cancelQueued(queue: WorkspaceQueue): void {
-    const cancelled = queue.entries.filter((entry) => entry.state === 'queued')
-    queue.entries = queue.entries.filter((entry) => entry.state !== 'queued')
-    for (const entry of cancelled) {
-      entry.settle({ outcome: 'settled', error: new Error(WORKSPACE_DELETED_ERROR), threw: true })
     }
   }
 
@@ -277,18 +248,26 @@ export class WorkspaceLifecycleQueue {
   private async runHead(
     key: string,
     queue: WorkspaceQueue,
-    head: Entry,
+    head: LifecycleEntry,
     command: LifecycleCommand<unknown>
   ): Promise<void> {
     head.state = 'running'
     this.revision.bump()
-    const result = await attemptLifecycleCommand(command)
+    const result = await attemptLifecycleCommand(command, {
+      committed: () => {
+        if (head.tentative && !head.tentative.committed) {
+          head.tentative.committed = true
+          this.revision.bump()
+        }
+      }
+    })
     queue.entries.splice(queue.entries.indexOf(head), 1)
     if (result.outcome === 'unverifiable') {
       queue.paused = { kind: head.kind, observe: command.observe ?? null }
     } else if (head.kind === 'delete' && !result.threw) {
-      // Deleted: nothing is left to observe.
+      // Deleted: nothing is left to observe, and nothing waiting behind it has a workspace to act on.
       queue.paused = null
+      settleBehindDelete(queue, result)
       queue.settling += 1
       this.membership(() => {
         queue.settling -= 1
@@ -301,7 +280,7 @@ export class WorkspaceLifecycleQueue {
   }
 
   /** Wait for owner observation before lifting the pause; forced delete returns early, silent owners retry later. */
-  private async awaitOwner(queue: WorkspaceQueue, paused: Pause): Promise<void> {
+  private async awaitOwner(queue: WorkspaceQueue, paused: LifecyclePause): Promise<void> {
     if (!paused.observe) {
       queue.paused = null
       this.revision.bump()

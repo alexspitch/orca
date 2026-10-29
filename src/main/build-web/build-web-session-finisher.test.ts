@@ -61,7 +61,7 @@ function harness() {
     store: { getWorktreeMetaForHost: () => meta } as unknown as Store,
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: an ineligible session never reaches the delete queue.
     runtime: { updateManagedWorktreeMeta } as unknown as BuildWebSessionFinisherRuntime,
-    reports: { hold: vi.fn(), release: vi.fn() },
+    reports: { hold: vi.fn(), release: vi.fn(), enqueue: vi.fn() },
     confirmEligible: async () => false,
     announceRemoved: vi.fn(),
     stuckMs: DAY,

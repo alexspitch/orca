@@ -19,10 +19,12 @@ import {
 
 import { hostSleepKey } from '../terminal/stop/worktree-terminal-sleep-key'
 import { resolveWorktreeHostRouting, type LaunchHostRepo } from '../worktree-launch-host-repo'
-import type {
-  LifecycleCommand,
-  LifecycleDeleteOptions,
-  LifecycleOutcome
+import {
+  UNQUEUED_RUN,
+  type LifecycleCommand,
+  type LifecycleDeleteOptions,
+  type LifecycleOutcome,
+  type LifecycleRunControl
 } from './workspace-lifecycle-command'
 import type { WorkspaceLifecycleQueue } from './workspace-lifecycle-queue'
 
@@ -53,7 +55,7 @@ export function runWorkspaceLifecycleCommand<T>(
   key: string,
   command: LifecycleCommand<T>
 ): Promise<T> {
-  return queue ? queue.submit(key, command) : command.run()
+  return queue ? queue.submit(key, command) : command.run(UNQUEUED_RUN)
 }
 
 const LIVENESS_UNAVAILABLE = 'terminal_liveness_unavailable'
@@ -148,7 +150,7 @@ export function queueTerminalWorkspaceCommand<T>(
 ): Promise<T> {
   const queue = runtime.workspaceLifecycle
   if (!queue) {
-    return command.run()
+    return command.run(UNQUEUED_RUN)
   }
   const key = explicitKey(runtime.listRepos(), selector)
   return key
@@ -162,7 +164,11 @@ export function queueWorkspaceDelete<T>(
   selector: string,
   hostId: string | undefined,
   requested: Partial<Record<RemovalFlag, boolean>>,
-  run: (removal: Record<RemovalFlag, boolean> & { hostId?: string }) => Promise<T>
+  run: (
+    removal: Record<RemovalFlag, boolean> & { hostId?: string },
+    control: LifecycleRunControl
+  ) => Promise<T>,
+  mode: Pick<LifecycleDeleteOptions, 'tentative'> = {}
 ): Promise<T> {
   const removal: Record<RemovalFlag, boolean> = {
     force: requested.force === true,
@@ -173,18 +179,19 @@ export function queueWorkspaceDelete<T>(
   const options: LifecycleDeleteOptions = {
     key: getRuntimeWorktreeRemovalOptionsKey(removal),
     force: removal.allowUnverifiedPtyStop,
-    label: getExplicitWorktreeIdSelector(selector) ?? selector
+    label: getExplicitWorktreeIdSelector(selector) ?? selector,
+    ...(mode.tentative ? { tentative: true } : {})
   }
   const command: LifecycleCommand<T> = {
     kind: 'delete',
-    run: () => run({ ...removal, ...(hostId ? { hostId } : {}) }),
+    run: (control) => run({ ...removal, ...(hostId ? { hostId } : {}) }, control),
     lostContact: deleteLostContact,
     observe: observeTerminals(runtime, selector),
     delete: options
   }
   const queue = runtime.workspaceLifecycle
   if (!queue) {
-    return command.run()
+    return command.run(UNQUEUED_RUN)
   }
   const key = explicitKey(runtime.listRepos(), selector, hostId)
   return key

@@ -1,6 +1,7 @@
 import { displayNameUpdatePinsLabel } from '../../../../shared/worktree/display-name-provenance'
 import { getWorkspaceStatusWarning } from '../../../../shared/workspace-status-warning'
 import { WorktreeSet } from '../../../../shared/rpc-contract/worktree-params'
+import { keepBuildWebTaskLink } from '../../../build-web/build-web-session-keep'
 import { hostBuildWebTaskLink } from '../../../build-web/build-web-task-worktree'
 import { defineMethod } from '../core'
 
@@ -9,9 +10,14 @@ export const WORKTREE_SET_METHOD = defineMethod({
   permission: 'workspace',
   params: WorktreeSet,
   handler: async (params, { runtime }) => {
+    if (params.buildWebTask === null) {
+      // Why: dropping a task link is «Keep», so the console's session ends instead of hanging.
+      const { id } = await runtime.showManagedWorktree(params.worktree)
+      await keepBuildWebTaskLink(runtime, id)
+    }
     const buildWebTask = params.buildWebTask
       ? await hostBuildWebTaskLink(runtime, params.worktree, params.buildWebTask)
-      : params.buildWebTask
+      : undefined
     const worktree = await runtime.updateManagedWorktreeMeta(params.worktree, {
       displayName: params.displayName,
       ...(params.displayName !== undefined

@@ -16,7 +16,12 @@ import {
   type BuildWebWorktreeActivityRuntime
 } from './build-web-session-activity'
 import { checkBuildWebEmptyContainer } from './build-web-empty-container'
-import { removeEmptyBuildWebWorktree } from './build-web-session-removal'
+import { removeGoneBuildWebWorktree } from './build-web-gone-worktree-removal'
+import {
+  removeEmptyBuildWebWorktree,
+  type BuildWebSessionRemovalDeps,
+  type BuildWebSessionRemovalOutcome
+} from './build-web-session-removal'
 import type { BuildWebSessionLinkRuntime } from './build-web-session-link'
 import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
 import {
@@ -24,6 +29,7 @@ import {
   sameBuildWebSessionState,
   watchedBuildWebSessionChange
 } from './build-web-session-state'
+import { isBuildWebTaskWorktreeGone } from './build-web-task-worktrees'
 import {
   createBuildWebWorktreeGitProbe,
   type BuildWebTaskWorktreeRef,
@@ -31,7 +37,8 @@ import {
 } from './build-web-worktree-git-probe'
 
 // The finisher (IS-147, plan 2.1): a closed task's worktree, once nothing runs in it and nothing is
-// in it, is removed; anything else gets attention for a person, with no repair of its own.
+// in it, is removed; anything else gets attention for a person, with no repair of its own. It also
+// drops what is left of a worktree whose folder was deleted behind Orca's back.
 
 export type BuildWebSessionFinisherRuntime = BuildWebWorktreeActivityRuntime &
   BuildWebWorktreeGitRuntime &
@@ -56,7 +63,7 @@ export type BuildWebFinisherTarget = BuildWebTaskWorktreeRef & {
 export type BuildWebSessionFinisherDeps = {
   runtime: BuildWebSessionFinisherRuntime
   store: Store
-  reports: Pick<BuildWebSessionReportQueue, 'hold' | 'release'>
+  reports: Pick<BuildWebSessionReportQueue, 'hold' | 'release' | 'enqueue'>
   /** A fresh `eligible` from the console, asked with a timeout just before the delete queue. */
   confirmEligible: (sessionId: string) => Promise<boolean>
   announceRemoved: (removed: { worktreeId: string; key: string }) => void
@@ -87,6 +94,34 @@ export class BuildWebSessionFinisher {
 
   private now(): number {
     return (this.deps.now ?? Date.now)()
+  }
+
+  /** This host's deletes wait their turn as tentative ones: anything a person asks comes first. */
+  private removalDeps(): Pick<
+    BuildWebSessionRemovalDeps,
+    'queueDelete' | 'remove' | 'forceDeleteBranch' | 'stopped'
+  > {
+    const { runtime } = this.deps
+    return {
+      queueDelete: (selector, run) =>
+        queueWorkspaceDelete(
+          runtime,
+          selector,
+          LOCAL,
+          {},
+          (_removal, control) => run(control.committed),
+          { tentative: true }
+        ),
+      remove: (selector) =>
+        runtime.removeManagedWorktree(selector, {
+          runHooks: false,
+          waitForBackgroundRemoval: true,
+          hostId: LOCAL
+        }),
+      forceDeleteBranch: (selector, branchName, expectedHead) =>
+        runtime.forceDeletePreservedBranch(selector, branchName, expectedHead, LOCAL),
+      stopped: () => this.stopped
+    }
   }
 
   private readMeta(target: BuildWebFinisherTarget) {
@@ -214,23 +249,14 @@ export class BuildWebSessionFinisher {
     }
     const outcome = await removeEmptyBuildWebWorktree(
       {
-        queueDelete: (selector, run) => queueWorkspaceDelete(runtime, selector, LOCAL, {}, run),
+        ...this.removalDeps(),
         probe: {
           readMeta: () => readWorktreeMetaForHost(store, target.worktreeId, LOCAL),
           activity: () => readBuildWebWorktreeActivity(runtime, target.worktreeId),
           readHead: probe.readHead,
           scanBlockers: probe.scanBlockers
         },
-        remove: (selector) =>
-          runtime.removeManagedWorktree(selector, {
-            runHooks: false,
-            waitForBackgroundRemoval: true,
-            hostId: LOCAL
-          }),
-        forceDeleteBranch: (selector, branchName, expectedHead) =>
-          runtime.forceDeletePreservedBranch(selector, branchName, expectedHead, LOCAL),
-        reports: this.deps.reports,
-        stopped: () => this.stopped
+        reports: this.deps.reports
       },
       {
         worktreeId: target.worktreeId,
@@ -249,6 +275,45 @@ export class BuildWebSessionFinisher {
       await this.attention(target, 'remove-failed')
     } else {
       console.info(`[build-web] ${target.task.key}'s worktree stays: ${outcome.why}`)
+    }
+  }
+
+  /** A worktree whose folder went behind Orca's back: what is left of it goes. Never throws. */
+  async finishGone(target: BuildWebFinisherTarget): Promise<BuildWebSessionRemovalOutcome['kind']> {
+    const { worktreeId, task } = target
+    if (this.stopped || this.running.has(worktreeId)) {
+      return 'cancelled'
+    }
+    this.running.add(worktreeId)
+    try {
+      const { runtime, store } = this.deps
+      const outcome = await removeGoneBuildWebWorktree(
+        {
+          ...this.removalDeps(),
+          reports: this.deps.reports,
+          readMeta: () => readWorktreeMetaForHost(store, worktreeId, LOCAL),
+          isGone: () => isBuildWebTaskWorktreeGone(store, target),
+          git: createBuildWebWorktreeGitProbe(runtime, store, target)
+        },
+        {
+          worktreeId,
+          sessionId: task.sessionId,
+          consoleHost: task.consoleHost,
+          branch: task.branch
+        }
+      )
+      if (outcome.kind === 'failed') {
+        console.warn(`[build-web] dropping ${task.key}'s deleted worktree failed:`, outcome.error)
+      } else if (outcome.kind === 'cancelled') {
+        console.info(`[build-web] ${task.key}'s deleted worktree stays: ${outcome.why}`)
+      }
+      return outcome.kind
+    } catch (error) {
+      // Why cancelled: nothing was attempted, so the next look tries again.
+      console.warn(`[build-web] dropping ${task.key}'s deleted worktree failed:`, error)
+      return 'cancelled'
+    } finally {
+      this.running.delete(worktreeId)
     }
   }
 }

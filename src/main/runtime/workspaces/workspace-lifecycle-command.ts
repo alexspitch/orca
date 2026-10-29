@@ -11,11 +11,25 @@ export type LifecycleDeleteOptions = {
   /** Force Delete/--force explicitly bypasses a paused queue. */
   force: boolean
   label: string
+  /**
+   * The host's own cleanup, which may still step aside: it cancels and refuses nothing, and what
+   * arrives meanwhile waits behind it. It shows as deleting once it calls `committed`.
+   */
+  tentative?: boolean
 }
+
+/** Handed to a running command. */
+export type LifecycleRunControl = {
+  /** A tentative delete passed its last check; from here the workspace shows as deleting. */
+  committed: () => void
+}
+
+/** For a command run with no queue: there is no hint to update. */
+export const UNQUEUED_RUN: LifecycleRunControl = { committed: () => {} }
 
 export type LifecycleCommand<T> = {
   kind: Exclude<WorkspaceLifecycleKind, 'create'>
-  run: () => Promise<T>
+  run: (control: LifecycleRunControl) => Promise<T>
   outcome?: (result: T) => LifecycleOutcome
   /** Whether a thrown error means contact was lost mid-run rather than a definite failure. */
   lostContact?: (error: unknown) => boolean
@@ -33,10 +47,11 @@ export type LifecycleAttempt = {
 }
 
 export async function attemptLifecycleCommand(
-  command: LifecycleCommand<unknown>
+  command: LifecycleCommand<unknown>,
+  control: LifecycleRunControl
 ): Promise<LifecycleAttempt> {
   try {
-    const value = await command.run()
+    const value = await command.run(control)
     return { outcome: command.outcome?.(value) ?? 'settled', value, threw: false }
   } catch (error) {
     return {

@@ -353,6 +353,142 @@ describe('WorkspaceLifecycleQueue', () => {
   })
 })
 
+describe('WorkspaceLifecycleQueue tentative deletes', () => {
+  const tentative = {
+    delete: { key: 'normal', force: false, label: 'repo-1::/wt', tentative: true }
+  }
+
+  /** A tentative delete that passes its last check when told, then removes or steps aside. */
+  function cleanup(log: string[]) {
+    const check = deferred()
+    const finish = deferred<'removed' | 'cancelled'>()
+    const command: LifecycleCommand<string> = {
+      kind: 'delete',
+      run: async (control) => {
+        log.push('start cleanup')
+        await check.promise
+        control.committed()
+        if ((await finish.promise) === 'cancelled') {
+          throw new Error('the worktree was used')
+        }
+        return 'removed'
+      },
+      ...tentative
+    }
+    return { command, commit: () => check.resolve(), finish: finish.resolve }
+  }
+
+  it('cancels and refuses nothing; what arrives waits, and runs once it steps aside', async () => {
+    const queue = new WorkspaceLifecycleQueue()
+    const log: string[] = []
+    const sleep = gated(log, 'sleep', 'sleep', 'slept')
+    const sleeping = queue.submit(KEY, sleep.command)
+    const removal = cleanup(log)
+    const removing = queue.submit(KEY, removal.command)
+    const waking = queue.submit(KEY, gated(log, 'wake', 'wake', 'woken').command)
+    await flush()
+    // Until its last check passes, the sidebar shows what it would without it.
+    expect(queue.hints()).toEqual({ [KEY]: { kind: 'sleep', queuedBehind: 1 } })
+
+    sleep.release()
+    expect(await sleeping).toBe('slept')
+    await flush()
+    expect(log).toEqual(['start sleep', 'end sleep', 'start cleanup'])
+    removal.commit()
+    await flush()
+    expect(queue.hints()).toEqual({ [KEY]: { kind: 'delete', queuedBehind: 0 } })
+    removal.finish('cancelled')
+    await expect(removing).rejects.toThrow('the worktree was used')
+    await flush()
+    expect(log).toContain('start wake')
+    void waking
+  })
+
+  it('once it removed the workspace, refuses what waited, and a person’s delete shares its result', async () => {
+    const queue = new WorkspaceLifecycleQueue()
+    const log: string[] = []
+    const removal = cleanup(log)
+    const removing = queue.submit(KEY, removal.command)
+    const waking = queue.submit(KEY, gated(log, 'wake', 'wake', 'woken').command)
+    await flush()
+    const manual = gated(log, 'delete', 'delete', 'deleted', deleteOptions('normal'))
+    const deleting = queue.submit(KEY, manual.command)
+    // A person's delete cancels the wake as always, then waits behind the cleanup.
+    await expect(waking).rejects.toThrow(WORKSPACE_DELETED_ERROR)
+    expect(queue.hints()).toEqual({ [KEY]: { kind: 'delete', queuedBehind: 0 } })
+    const sleeping = queue.submit(KEY, gated(log, 'sleep', 'sleep', 'slept').command)
+    await expect(sleeping).rejects.toThrow(WORKSPACE_DELETED_ERROR)
+
+    removal.commit()
+    removal.finish('removed')
+    expect(await removing).toBe('removed')
+    expect(await deleting).toBe('removed')
+    expect(log).toEqual(['start cleanup'])
+  })
+
+  it('refuses a non-delete that waited behind a tentative delete that removed the workspace', async () => {
+    const queue = new WorkspaceLifecycleQueue()
+    const log: string[] = []
+    const removal = cleanup(log)
+    const removing = queue.submit(KEY, removal.command)
+    const waking = queue.submit(KEY, gated(log, 'wake', 'wake', 'woken').command)
+    removal.commit()
+    removal.finish('removed')
+    expect(await removing).toBe('removed')
+    await expect(waking).rejects.toThrow(WORKSPACE_DELETED_ERROR)
+    expect(log).toEqual(['start cleanup'])
+  })
+
+  it('a person’s delete runs itself when the tentative one steps aside', async () => {
+    const queue = new WorkspaceLifecycleQueue()
+    const log: string[] = []
+    const removal = cleanup(log)
+    void queue.submit(KEY, removal.command).catch(() => {})
+    const deleting = queue.submit(KEY, {
+      kind: 'delete',
+      run: async () => {
+        log.push('delete')
+        return 'deleted'
+      },
+      ...deleteOptions('normal')
+    })
+    removal.commit()
+    removal.finish('cancelled')
+    expect(await deleting).toBe('deleted')
+    expect(log).toEqual(['start cleanup', 'delete'])
+  })
+
+  it('steps aside for a person’s delete already pending, and a forced delete replaces it waiting', async () => {
+    const queue = new WorkspaceLifecycleQueue()
+    const log: string[] = []
+    const manual = gated(log, 'delete', 'delete', 'deleted', deleteOptions('normal'))
+    const deleting = queue.submit(KEY, manual.command)
+    await expect(queue.submit(KEY, cleanup(log).command)).rejects.toThrow(
+      'Worktree deletion already in progress'
+    )
+    manual.release()
+    expect(await deleting).toBe('deleted')
+
+    const paused = manualRetryQueue().queue
+    await paused.submit(KEY, {
+      kind: 'sleep',
+      run: async () => false,
+      outcome: () => 'unverifiable',
+      observe: () => new Promise<void>(() => {})
+    })
+    const waiting = paused.submit(KEY, cleanup(log).command)
+    await flush()
+    const forced = paused.submit(KEY, {
+      kind: 'delete',
+      run: async () => 'forced',
+      ...deleteOptions('force', true)
+    })
+    await expect(waiting).rejects.toThrow(WORKSPACE_DELETED_ERROR)
+    expect(await forced).toBe('forced')
+    expect(log).toEqual(['start delete', 'end delete'])
+  })
+})
+
 describe('WorkspaceLifecycleQueue creates', () => {
   it('lists a creation once opened, names its workspace, and drops it on close', () => {
     const queue = new WorkspaceLifecycleQueue()

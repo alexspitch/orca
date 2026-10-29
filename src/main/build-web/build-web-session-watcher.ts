@@ -30,8 +30,8 @@ import {
 } from './build-web-task-worktrees'
 
 // The host's watch over its task worktrees (IS-147, plan 1.5): it drains the report queue, mirrors
-// the console's session state into worktree meta, heals missing links, notices worktrees removed
-// behind Orca's back, and hands eligible sessions to the finisher.
+// the console's session state into worktree meta, heals missing links, and hands the finisher both
+// eligible sessions and worktrees whose folder was deleted behind Orca's back.
 
 export type BuildWebSessionWatcherRuntime = BuildWebSessionFinisherRuntime &
   BuildWebSessionHealRuntime &
@@ -58,7 +58,7 @@ export class BuildWebSessionWatcher {
   private ticking: Promise<void> | null = null
   private stopped = false
   private readonly finisher: BuildWebSessionFinisher
-  private readonly reportedGone = new Set<string>()
+  private readonly goneTried = new Set<string>()
   private readonly healTriedAt = new Map<string, number>()
 
   constructor(private readonly deps: BuildWebSessionWatcherDeps) {
@@ -129,12 +129,13 @@ export class BuildWebSessionWatcher {
       { background: true }
     )
     const byId = new Map(lookup.sessions.map((session) => [session.id, session]))
+    const autoCleanup = lookup.settings.auto_cleanup
     const eligible: [BuildWebLinkedTaskWorktree, BuildWebAgentSessionStatus][] = []
     for (const row of present) {
       const status = byId.get(row.task.sessionId)
       if (status && !this.stopped) {
-        await this.mirrorState(row, status)
-        if (status.eligible && lookup.settings.auto_cleanup) {
+        await this.mirrorState(row, status, autoCleanup)
+        if (status.eligible && autoCleanup) {
           eligible.push([row, status])
         }
       }
@@ -173,18 +174,18 @@ export class BuildWebSessionWatcher {
   ): Promise<BuildWebLinkedTaskWorktree[]> {
     const present: BuildWebLinkedTaskWorktree[] = []
     for (const row of rows) {
-      const { sessionId, consoleHost } = row.task
+      const { sessionId } = row.task
       // Why the finisher's rows are skipped: its own delete is not a removal behind Orca's back.
-      if (this.reportedGone.has(sessionId) || this.finisher.isWorking(row.worktreeId)) {
+      if (this.goneTried.has(sessionId) || this.finisher.isWorking(row.worktreeId)) {
         continue
       }
       if ((await isBuildWebTaskWorktreeGone(this.deps.store, row)) && !this.stopped) {
-        this.reportedGone.add(sessionId)
-        this.deps.reports.enqueue({
-          kind: 'worktree-removed',
-          sessionId,
-          consoleHost,
-          external: true
+        // Why marked before it ends: one try per run; a step aside is looked at again next tick.
+        this.goneTried.add(sessionId)
+        void this.finisher.finishGone(row).then((outcome) => {
+          if (outcome === 'cancelled') {
+            this.goneTried.delete(sessionId)
+          }
         })
         continue
       }
@@ -195,14 +196,15 @@ export class BuildWebSessionWatcher {
 
   private async mirrorState(
     row: BuildWebLinkedTaskWorktree,
-    status: BuildWebAgentSessionStatus
+    status: BuildWebAgentSessionStatus,
+    autoCleanup: boolean
   ): Promise<void> {
     // Why fresh: a Keep or the finisher may have written since the tick listed the worktree.
     const meta = readWorktreeMetaForHost(this.deps.store, row.worktreeId, LOCAL_EXECUTION_HOST_ID)
     if (meta?.buildWebTask?.sessionId !== row.task.sessionId) {
       return
     }
-    const change = watchedBuildWebSessionChange(meta.buildWebSession, status)
+    const change = watchedBuildWebSessionChange(meta.buildWebSession, status, autoCleanup)
     if (change.kind === 'none') {
       return
     }

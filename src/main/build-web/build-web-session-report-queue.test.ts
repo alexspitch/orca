@@ -126,4 +126,17 @@ describe('build-web session report queue', () => {
     await q.drain()
     expect(send).toHaveBeenCalledWith({ ...REMOVED, note: 'branch kept: is-147' })
   })
+
+  it('marks a held removal external when it cleaned up after a folder deleted by hand', async () => {
+    const { q, send } = queue()
+    q.hold('s1')
+    q.enqueue(REMOVED)
+    q.release('s1', 'folder deleted outside Orca', true)
+    await q.drain()
+    expect(send).toHaveBeenCalledWith({
+      ...REMOVED,
+      note: 'folder deleted outside Orca',
+      external: true
+    })
+  })
 })

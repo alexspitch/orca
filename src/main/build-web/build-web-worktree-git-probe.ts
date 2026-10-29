@@ -3,6 +3,7 @@ import type { WorktreeMeta } from '../../shared/worktree/meta-types'
 import type { Store } from '../persistence'
 import { gitExecFileAsync } from '../git/runner'
 import { getBaseRefDefault } from '../git/repo'
+import { forceDeleteLocalBranch } from '../git/worktree'
 import { scanWorkspaceCleanup } from '../ipc/workspace-cleanup-scan'
 import { getLocalProjectWorktreeGitOptions } from '../project-runtime-git-options'
 import type {
@@ -37,6 +38,12 @@ export type BuildWebTaskWorktreeRef = {
 export type BuildWebWorktreeGitProbe = BuildWebEmptyContainerProbe<RemoteTrackingBase> & {
   /** The top-most ignored entries (an ignored folder is one), or null when Git could not say. */
   readIgnored: () => Promise<string[] | null>
+  /** The task branch's commit, or null when the branch is gone. */
+  readTaskBranch: () => Promise<string | null>
+  /** Proven: the task branch adds no commit to the remote-tracking base. */
+  taskBranchAddsNothing: () => Promise<boolean>
+  /** Deletes the task branch at `sha`; refused when it moved or is checked out somewhere. */
+  deleteTaskBranch: (sha: string) => Promise<void>
 }
 
 export function createBuildWebWorktreeGitProbe(
@@ -47,6 +54,26 @@ export function createBuildWebWorktreeGitProbe(
   const { repo, meta } = target
   const gitOptions = getLocalProjectWorktreeGitOptions(store, repo)
   const git = (argv: string[], cwd: string) => gitExecFileAsync(argv, { cwd, ...gitOptions })
+  const branchRef = `refs/heads/${target.branch}`
+  const resolveBase = async (): Promise<RemoteTrackingBase | null> => {
+    const base =
+      meta.baseRef ||
+      meta.sparseBaseRef ||
+      repo.worktreeBaseRef ||
+      (await getBaseRefDefault(repo.path, gitOptions).catch(() => null))
+    return base ? runtime.resolveRemoteTrackingBase(repo.path, base, gitOptions) : null
+  }
+  const refreshBase = async (base: RemoteTrackingBase): Promise<boolean> =>
+    (await runtime.getOrStartRemoteTrackingBaseRefresh(repo.path, base, gitOptions)).ok
+  const countCommits = async (baseRef: string, ref: string): Promise<number | null> => {
+    try {
+      const { stdout } = await git(['rev-list', '--count', `${baseRef}..${ref}`], repo.path)
+      const count = Number.parseInt(stdout.trim(), 10)
+      return Number.isFinite(count) ? count : null
+    } catch {
+      return null
+    }
+  }
   return {
     isPinned: meta.isPinned,
     branch: target.branch,
@@ -63,25 +90,9 @@ export function createBuildWebWorktreeGitProbe(
         return null
       }
     },
-    resolveBase: async () => {
-      const base =
-        meta.baseRef ||
-        meta.sparseBaseRef ||
-        repo.worktreeBaseRef ||
-        (await getBaseRefDefault(repo.path, gitOptions).catch(() => null))
-      return base ? runtime.resolveRemoteTrackingBase(repo.path, base, gitOptions) : null
-    },
-    refreshBase: async (base) =>
-      (await runtime.getOrStartRemoteTrackingBaseRefresh(repo.path, base, gitOptions)).ok,
-    countCommits: async (baseRef, branchRef) => {
-      try {
-        const { stdout } = await git(['rev-list', '--count', `${baseRef}..${branchRef}`], repo.path)
-        const count = Number.parseInt(stdout.trim(), 10)
-        return Number.isFinite(count) ? count : null
-      } catch {
-        return null
-      }
-    },
+    resolveBase,
+    refreshBase,
+    countCommits,
     scanBlockers: async () => {
       // Why this scan: it reads status the way Cleanup does (shared links, no ignored files).
       const scan = await scanWorkspaceCleanup(store, {
@@ -101,6 +112,25 @@ export function createBuildWebWorktreeGitProbe(
       } catch {
         return null
       }
-    }
+    },
+    readTaskBranch: async () => {
+      try {
+        const verify = ['rev-parse', '--verify', '--quiet', `${branchRef}^{commit}`]
+        return (await git(verify, repo.path)).stdout.trim() || null
+      } catch {
+        return null
+      }
+    },
+    taskBranchAddsNothing: async () => {
+      const base = await resolveBase().catch(() => null)
+      if (!base) {
+        return false
+      }
+      // Why a failed fetch is no bar: what the last fetched base holds was on the remote.
+      await refreshBase(base).catch(() => false)
+      return (await countCommits(base.ref, branchRef)) === 0
+    },
+    deleteTaskBranch: (sha) =>
+      forceDeleteLocalBranch(repo.path, target.branch, sha, git, gitOptions)
   }
 }
