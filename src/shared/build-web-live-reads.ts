@@ -1,11 +1,13 @@
 // IS-147: the console sends no change feed for a task, so an open card reads what it shows again.
 // One reader per thing read (a task, its run, its subtasks), however many views show it: it reads
-// while one of them is in sight and the page is not hidden, and slower after failures. The desktop
-// and the phone share it.
+// while one of them is in sight and the page is not hidden, at once when it comes into sight or the
+// window gets focus, and slower after failures. The desktop and the phone share it.
 
 /** How often a card in sight reads its task again. */
-export const LIVE_READ_MS = 5_000
+export const LIVE_READ_MS = 10_000
 const LIVE_READ_MAX_MS = 60_000
+// Why a floor: a focus right after a reading has nothing new to show.
+const FOCUS_READ_MIN_GAP_MS = 2_000
 
 /** The wait before the next reading: the beat, doubled after each failure in a row, up to a minute. */
 export function liveReadDelay(everyMs: number, failures: number): number {
@@ -76,6 +78,7 @@ export function createLiveReplyGuard(): LiveReplyGuard {
 export type LiveReadPage = {
   hidden: () => boolean
   onChange: (listener: () => void) => () => void
+  onFocus?: (listener: () => void) => () => void
 }
 
 export type LiveReadTimers = {
@@ -110,6 +113,13 @@ const documentPage: LiveReadPage = {
     }
     document.addEventListener('visibilitychange', listener)
     return () => document.removeEventListener('visibilitychange', listener)
+  },
+  onFocus: (listener) => {
+    if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') {
+      return () => {}
+    }
+    window.addEventListener('focus', listener)
+    return () => window.removeEventListener('focus', listener)
   }
 }
 
@@ -137,9 +147,12 @@ export function createLiveReads<T>(
     busy: boolean
     failures: number
     lastAt: number
+    /** In sight at the last schedule: coming into sight reads at once. */
+    inSight: boolean
   }
   const readers = new Map<string, Reader>()
   let offPage: (() => void) | null = null
+  let offFocus: (() => void) | null = null
 
   const inSight = (reader: Reader): boolean =>
     !page.hidden() && [...reader.views].some((view) => view.visible)
@@ -147,10 +160,15 @@ export function createLiveReads<T>(
   const schedule = (key: string, reader: Reader): void => {
     reader.cancel?.()
     reader.cancel = null
-    if (reader.busy || readers.get(key) !== reader || !inSight(reader)) {
+    const seen = inSight(reader)
+    const cameIntoSight = seen && !reader.inSight
+    reader.inSight = seen
+    if (reader.busy || readers.get(key) !== reader || !seen) {
       return
     }
-    const due = reader.lastAt + liveReadDelay(reader.everyMs, reader.failures)
+    const due = cameIntoSight
+      ? timers.now()
+      : reader.lastAt + liveReadDelay(reader.everyMs, reader.failures)
     reader.cancel = timers.after(Math.max(0, due - timers.now()), () => {
       reader.cancel = null
       void pull(key, reader)
@@ -185,6 +203,20 @@ export function createLiveReads<T>(
     }
   }
 
+  const readAllInSight = (): void => {
+    for (const [key, reader] of readers) {
+      if (
+        !reader.busy &&
+        inSight(reader) &&
+        timers.now() - reader.lastAt >= FOCUS_READ_MIN_GAP_MS
+      ) {
+        reader.cancel?.()
+        reader.cancel = null
+        void pull(key, reader)
+      }
+    }
+  }
+
   return {
     watch: (key, { read, onValue, visible, everyMs = LIVE_READ_MS }) => {
       let reader = readers.get(key)
@@ -195,10 +227,13 @@ export function createLiveReads<T>(
           cancel: null,
           busy: false,
           failures: 0,
-          lastAt: timers.now()
+          lastAt: timers.now(),
+          // Why: the first view has just read it, so being in sight now is no news.
+          inSight: visible && !page.hidden()
         }
         readers.set(key, reader)
         offPage ??= page.onChange(rescheduleAll)
+        offFocus ??= page.onFocus?.(readAllInSight) ?? null
       }
       const own = reader
       const view: View = { read, onValue, visible }
@@ -224,6 +259,8 @@ export function createLiveReads<T>(
           if (readers.size === 0) {
             offPage?.()
             offPage = null
+            offFocus?.()
+            offFocus = null
           }
         }
       }

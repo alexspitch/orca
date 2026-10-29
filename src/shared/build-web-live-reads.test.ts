@@ -8,19 +8,28 @@ import {
   type LiveReadPage
 } from './build-web-live-reads'
 
-function fakePage(): LiveReadPage & { setHidden: (hidden: boolean) => void } {
+function fakePage(): LiveReadPage & {
+  setHidden: (hidden: boolean) => void
+  focus: () => void
+} {
   let hidden = false
   const listeners = new Set<() => void>()
+  const focusListeners = new Set<() => void>()
   return {
     hidden: () => hidden,
     onChange: (listener) => {
       listeners.add(listener)
       return () => listeners.delete(listener)
     },
+    onFocus: (listener) => {
+      focusListeners.add(listener)
+      return () => focusListeners.delete(listener)
+    },
     setHidden: (next) => {
       hidden = next
       listeners.forEach((listener) => listener())
-    }
+    },
+    focus: () => focusListeners.forEach((listener) => listener())
   }
 }
 
@@ -61,6 +70,31 @@ describe('live reads', () => {
     page.setHidden(false)
     await vi.advanceTimersByTimeAsync(0)
     expect(read).toHaveBeenCalledTimes(2)
+  })
+
+  it('reads at once when the card comes back into sight or the window gets focus', async () => {
+    const page = fakePage()
+    const reads = createLiveReads<string>(page)
+    const read = vi.fn(async () => 'fresh')
+    const watch = reads.watch('host|IS-1', { read, onValue: () => {}, visible: true })
+    await vi.advanceTimersByTimeAsync(LIVE_READ_MS)
+    expect(read).toHaveBeenCalledTimes(1)
+
+    // Back in sight before the next beat: no wait for it.
+    watch.setVisible(false)
+    await vi.advanceTimersByTimeAsync(1_000)
+    watch.setVisible(true)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(read).toHaveBeenCalledTimes(2)
+
+    // A focus right after a reading reads nothing; a later one reads at once.
+    page.focus()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(read).toHaveBeenCalledTimes(2)
+    await vi.advanceTimersByTimeAsync(3_000)
+    page.focus()
+    await vi.advanceTimersByTimeAsync(0)
+    expect(read).toHaveBeenCalledTimes(3)
   })
 
   it('backs off after failures and stops when the last view closes', async () => {
