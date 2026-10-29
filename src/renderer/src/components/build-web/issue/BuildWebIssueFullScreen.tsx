@@ -34,6 +34,8 @@ const NO_PERMS: string[] = []
 /** A card shown as a workspace's tab (IS-147): its own task, and where its links lead. */
 export type BuildWebIssueTabPlace = {
   issueId: string
+  /** The tab is on screen: its workspace is the one shown. A hidden one stops reading the task. */
+  visible: boolean
   onOpenIssue: (id: string) => void
   onBackToList: () => void
 }
@@ -64,7 +66,9 @@ export function BuildWebIssueFullScreen({
     }
     storeOpenIssue(id, fullScreen)
   }
-  const state = useBuildWebIssueDetail(issueId)
+  // Why always on the page: it is mounted only while it is the view shown.
+  const inSight = inWorkspaceTab ? inWorkspaceTab.visible : true
+  const state = useBuildWebIssueDetail(issueId, inSight)
   const [tab, setTab] = useState<CardTab>(() =>
     inWorkspaceTab ? 'overview' : useBuildWebStore.getState().openTab
   )
@@ -78,7 +82,13 @@ export function BuildWebIssueFullScreen({
     error: runError,
     setRun,
     reload: reloadRun
-  } = useIssueRun(target, issueId ?? '', Boolean(issueId) && runsVisible)
+  } = useIssueRun(
+    target,
+    issueId ?? '',
+    Boolean(issueId) && runsVisible,
+    // Why not for a subtask: its build is its parent's, and the card shows none.
+    inSight && !state.detail?.parent_id
+  )
   const detail = state.detail
   const keepsPageTabs = !inWorkspaceTab
   useEffect(() => {
@@ -242,7 +252,11 @@ export function BuildWebIssueFullScreen({
           ) : null}
           {visited.has('commits') ? (
             <TabsContent value="commits" forceMount hidden={current !== 'commits'}>
-              <IssueCommitsTab target={target} issueId={detail.id} />
+              <IssueCommitsTab
+                target={target}
+                issueId={detail.id}
+                visible={inSight && current === 'commits'}
+              />
             </TabsContent>
           ) : null}
           {!detail.parent_id && visited.has('subtasks') ? (
@@ -250,6 +264,7 @@ export function BuildWebIssueFullScreen({
               <BuildWebIssueSubtasks
                 target={target}
                 detail={detail}
+                visible={inSight && current === 'subtasks'}
                 onOpen={(id) => openIssue(id, true)}
                 onChanged={state.reload}
               />

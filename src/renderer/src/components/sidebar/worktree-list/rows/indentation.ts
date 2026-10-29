@@ -162,9 +162,9 @@ export function getFlushWorktreeCardPaddingLeft(
     : `${FLUSH_CARD_MIN_CONTENT_INSET}px`
 }
 
-// Why: a compact row's status lane sits under its group header's icon (IS-147 mockup); deeper
-// groups and lineage keep their extra step past the top level's.
-const COMPACT_CARD_CONTENT_INSET = 6
+// Why: a compact row sits a small step past its group header's icon, so it reads as inside the
+// group; deeper groups and lineage keep their extra step past the top level's.
+const COMPACT_CARD_CONTENT_INSET = 14
 
 export function getCompactWorktreeCardPaddingLeft(contentIndent: number): string {
   const topLevelIndent = getWorktreeCardContentIndent({

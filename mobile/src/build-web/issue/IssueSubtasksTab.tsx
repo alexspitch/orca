@@ -5,14 +5,23 @@ import {
   type BuildWebIssueDetail,
   type BuildWebIssueRow
 } from '../../../../src/shared/build-web-types'
+import {
+  createLiveReads,
+  createLiveReplyGuard,
+  sameReading
+} from '../../../../src/shared/build-web-live-reads'
 import { PickerModal } from '../../components/PickerModal'
 import { chipTones, colors, spacing, typography } from '../../theme/mobile-theme'
 import { statusLabel } from '../build-web-labels'
 import { buildWebErrorMessage } from '../build-web-operations'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { StatusChip } from '../BuildWebToneChip'
+import { useCardTabActive } from '../build-web-card-tabs'
 import { useIssueRowActions } from '../list/use-issue-row-actions'
+import { useLiveRead } from '../use-live-read'
 import { ErrorText, MutedText } from './issue-card-ui'
+
+const childReads = createLiveReads<BuildWebIssueRow[]>()
 
 /** What stops the task while subtasks are open; empty when none are. */
 export function blockedBySubtasks(issue: Pick<BuildWebIssueRow, 'children_open'>): string {
@@ -23,7 +32,8 @@ export function blockedBySubtasks(issue: Pick<BuildWebIssueRow, 'children_open'>
 
 /**
  * A task's subtasks, as build-web's card lists them: number, title and status, moved right here.
- * A tap on the number opens the subtask; a move reads the task again, since it may hold it.
+ * A tap on the number opens the subtask; a move reads the task again, since it may hold it. Read
+ * again every few seconds while the tab is shown.
  */
 export function IssueSubtasksTab({
   detail,
@@ -32,26 +42,49 @@ export function IssueSubtasksTab({
   detail: BuildWebIssueDetail
   onChanged: () => void
 }) {
-  const { call, openIssue } = useBuildWebScreen()
+  const { call, hostId, openIssue } = useBuildWebScreen()
+  const active = useCardTabActive()
   const [children, setChildren] = useState<BuildWebIssueRow[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [picking, setPicking] = useState<BuildWebIssueRow | null>(null)
-  const patchChild = useCallback((id: string, patch: Partial<BuildWebIssueRow>) => {
-    setChildren((rows) => rows?.map((row) => (row.id === id ? { ...row, ...patch } : row)) ?? null)
-  }, [])
+  const [guard] = useState(createLiveReplyGuard)
+  const patchChild = useCallback(
+    (id: string, patch: Partial<BuildWebIssueRow>) => {
+      guard.mark()
+      setChildren(
+        (rows) => rows?.map((row) => (row.id === id ? { ...row, ...patch } : row)) ?? null
+      )
+    },
+    [guard]
+  )
   const rows = useIssueRowActions({ patchIssue: patchChild })
 
   const load = useCallback(async () => {
+    guard.mark()
     try {
       setChildren(await call('listIssueChildren', { id: detail.id }))
       setError(null)
     } catch (failure) {
       setError(buildWebErrorMessage(failure))
     }
-  }, [call, detail.id])
+  }, [call, detail.id, guard])
   useEffect(() => {
     void load()
   }, [load])
+  const writing = rows.busy.size > 0
+  useLiveRead(
+    childReads,
+    `${hostId}|${detail.id}`,
+    active,
+    () => call('listIssueChildren', { id: detail.id }),
+    (next, issuedAt) => {
+      // Why not while a move is out: its row shows the move before the console has it.
+      if (!writing && guard.accepts(issuedAt)) {
+        setChildren((shown) => (shown && sameReading(shown, next) ? shown : next))
+        setError(null)
+      }
+    }
+  )
 
   const blocked = blockedBySubtasks(detail)
   return (

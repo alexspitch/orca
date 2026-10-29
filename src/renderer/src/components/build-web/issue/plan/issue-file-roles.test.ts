@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildWebIssueFile } from '../../../../../../shared/build-web-types'
-import { filesWithRole, planProgress } from './issue-file-roles'
+import { filesWithRole, followFile, planProgress } from './issue-file-roles'
 
 const file = (over: Partial<BuildWebIssueFile>): BuildWebIssueFile => ({
   id: 'f',
@@ -26,6 +26,15 @@ describe('filesWithRole', () => {
     ]
     expect(filesWithRole(files, 'plan').map((f) => f.id)).toEqual(['new', 'old'])
     expect(filesWithRole(files, 'mockup').map((f) => f.id)).toEqual(['mockup'])
+  })
+})
+
+describe('followFile', () => {
+  it('stays on the picked file when it is attached again under its name', () => {
+    const files = [file({ id: 'other', name: 'other.md' }), file({ id: 'again', name: 'plan.md' })]
+    expect(followFile(files, { id: 'gone', name: 'plan.md' })?.id).toBe('again')
+    expect(followFile(files, { id: 'other', name: 'other.md' })?.id).toBe('other')
+    expect(followFile(files, null)?.id).toBe('other')
   })
 })
 

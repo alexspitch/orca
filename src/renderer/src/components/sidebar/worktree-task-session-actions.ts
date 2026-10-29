@@ -25,7 +25,7 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-/** The task's card as a tab of the current workspace, only when this client's console holds the task. */
+/** The task's card as a tab of its own workspace, only when this client's console holds the task. */
 export function openWorktreeBuildWebTask(worktree: Worktree): Promise<void> {
   const task = worktree.buildWebTask
   return task

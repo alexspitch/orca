@@ -164,6 +164,7 @@ export function BuildWebIssueDrawer({
                   <BuildWebIssueSubtasks
                     target={target}
                     detail={detail}
+                    visible={open}
                     onOpen={(id) => openIssue(id)}
                     onChanged={reload}
                   />

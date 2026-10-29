@@ -46,8 +46,8 @@ export function SectionHeaderTitle({
       <div className="flex min-w-0 items-center gap-1.5">
         <div
           className={cn(
-            'min-w-0 truncate text-[13px] leading-4',
-            taskLane?.labelWeightClassName ?? 'font-semibold'
+            'min-w-0 truncate font-semibold leading-4',
+            taskLane ? 'text-sm' : 'text-[13px]'
           )}
         >
           {label}
@@ -77,8 +77,6 @@ export type TaskLaneHeaderLook = {
   iconSizeClassName: string
   /** Lanes take the muted icon tone; the fixed section and Input required keep their own. */
   mutedIcon: boolean
-  /** The lanes read in the body weight; only the fixed section stands out. */
-  labelWeightClassName: string
   /** Folding lanes show where they fold; the fixed section does not fold. */
   chevron: boolean
 }
@@ -98,7 +96,6 @@ export function getTaskLaneHeaderLook(
     headerClassName: cn('pr-[7px]', chrome.toneClassName),
     iconSizeClassName: 'size-[13px]',
     mutedIcon: !chrome.fixed && chrome.taskGroup !== 'input',
-    labelWeightClassName: chrome.fixed ? 'font-semibold' : 'font-normal',
     chevron: !chrome.fixed
   }
 }

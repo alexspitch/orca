@@ -143,8 +143,8 @@ export function WorktreeCardStatusSlot({
   const passiveStatusAnnouncement =
     newCardStyle && isUnread ? `${passiveStatusLabel} · Unread` : passiveStatusLabel
   // Working/permission own the lane; retain unread in accessible copy and restore its dot afterward.
-  const showNewCardUnreadAlert =
-    newCardStyle && isUnread && showStatus && status !== 'working' && status !== 'permission'
+  const statusOwnsLane = showStatus && (status === 'working' || status === 'permission')
+  const showNewCardUnreadAlert = newCardStyle && isUnread && showStatus && !statusOwnsLane
   const reviewStatusIconClassName = compactReviewAndBranchStatusIconClassName
   const branchStatusIcon = <GitBranch className={branchStatusIconClassName} aria-hidden="true" />
   const sleepingStatusIcon = <Moon className={sleepingStatusIconClassName} aria-hidden="true" />
@@ -201,7 +201,9 @@ export function WorktreeCardStatusSlot({
 
   const actionLabel = isUnread ? 'Mark as read' : 'Mark as unread'
   const tooltip =
-    showStatus && !isUnread ? `${passiveStatusLabel} · ${unreadTooltip}` : unreadTooltip
+    showStatus && (!isUnread || statusOwnsLane)
+      ? `${passiveStatusLabel} · ${unreadTooltip}`
+      : unreadTooltip
 
   return (
     <>
@@ -239,7 +241,7 @@ export function WorktreeCardStatusSlot({
               ) : (
                 <span className="sr-only">{actionLabel}</span>
               )
-            ) : isUnread ? (
+            ) : isUnread && !statusOwnsLane ? (
               <FilledBellIcon className="size-[13px] text-amber-500 drop-shadow-sm" />
             ) : showStatus ? (
               <>
