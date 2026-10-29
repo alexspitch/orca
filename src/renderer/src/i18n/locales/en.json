@@ -23091,7 +23091,7 @@
       "stopping": "Stopping…"
     },
     "disabled": "This project runs only local commands, so orca.yaml's services command is off.",
-    "empty": "Services haven't run in this worktree yet. Starting a profile reserves its ports.",
+    "empty": "Services haven't run in this worktree yet. Starting a profile or a service reserves its ports.",
     "loading": "Checking services…",
     "more": "More Services Actions",
     "none": "This workspace's project has no services command in orca.yaml.",

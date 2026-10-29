@@ -117,10 +117,10 @@ export function buildMirroredAgentStatusPatch(
               hostIdentityPredatesCurrentTurn || entry.lastAssistantMessage === undefined
                 ? existing.lastAssistantMessageIsToolOutput
                 : entry.lastAssistantMessageIsToolOutput,
-            // Only the hooks of the side that runs the agent name its background commands.
-            backgroundCommands: clientOwnsEntry
-              ? existing.backgroundCommands
-              : entry.backgroundCommands
+            // Only the host's hooks see child work; client bytes never name it, so the host's roster wins.
+            subagents: entry.subagents,
+            children: entry.children,
+            backgroundCommands: entry.backgroundCommands
           }
         : entry
     nextByPaneKey.set(
