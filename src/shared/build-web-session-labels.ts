@@ -78,6 +78,10 @@ export const BUILD_WEB_SESSION_REASON_LABELS: Record<
   replaced: {
     full: label('reason.replaced', 'A newer session took this task'),
     short: label('reason.replacedShort', 'Replaced')
+  },
+  'cleanup-off': {
+    full: label('reason.cleanupOff', 'Task closed, auto-remove is off'),
+    short: label('reason.cleanupOffShort', 'Task closed')
   }
 }
 
@@ -100,7 +104,8 @@ export const BUILD_WEB_AGENT_SESSION_STATE_LABELS: Record<
   replaced: label('history.replaced', 'Replaced'),
   kept: label('history.kept', 'Kept'),
   removed: label('history.removed', 'Worktree removed'),
-  abandoned: label('history.abandoned', 'Not started')
+  abandoned: label('history.abandoned', 'Not started'),
+  migrated: label('history.migrated', 'Before history')
 }
 
 /** A history state's words; for a state a newer console added, the console's own word. */

@@ -76,6 +76,7 @@ export function watchedBuildWebSessionChange(
     case 'abandoned':
       return current ? { kind: 'clear-session' } : NONE
     case 'removed':
+    case 'migrated':
       // Why: the console heard of a removal while this worktree still exists; it shows no state.
       return NONE
     case 'replaced':

@@ -134,6 +134,7 @@ export function sessionStateTone(state: BuildWebAgentSessionState | 'attention')
     case 'replaced':
     case 'kept':
     case 'abandoned':
+    case 'migrated':
       return 'neutral'
   }
 }

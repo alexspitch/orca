@@ -27,13 +27,15 @@ export const BUILD_WEB_AGENT_SESSION_STATES = [
   'replaced',
   'kept',
   'removed',
-  'abandoned'
+  'abandoned',
+  /** A session from before the history, of a task already closed when the console was migrated. */
+  'migrated'
 ] as const
 export type BuildWebAgentSessionState = (typeof BUILD_WEB_AGENT_SESSION_STATES)[number]
 
 export type BuildWebAgentSessionEndedState = Extract<
   BuildWebAgentSessionState,
-  'replaced' | 'kept' | 'removed' | 'abandoned'
+  'replaced' | 'kept' | 'removed' | 'abandoned' | 'migrated'
 >
 
 /** The live states a task row and a worktree show; `null` when the task holds no session. */
@@ -53,7 +55,9 @@ export const BUILD_WEB_SESSION_ATTENTION_REASONS = [
   'terminal-busy',
   'state-unknown',
   'skill-unfinished',
-  'replaced'
+  'replaced',
+  /** Closed while the owner's auto-remove is off: the worktree waits for a person. */
+  'cleanup-off'
 ] as const
 export type BuildWebSessionAttentionReason = (typeof BUILD_WEB_SESSION_ATTENTION_REASONS)[number]
 
