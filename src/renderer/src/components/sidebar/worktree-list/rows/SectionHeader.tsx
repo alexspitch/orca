@@ -8,7 +8,6 @@ import type { RepoSshGateResolver } from '@/hooks/use-repo-ssh-gate-resolver'
 import { RepoIconGlyph } from '@/components/repo/repo-icon'
 import { RepoForkIndicator } from '@/components/repo/repo-fork-indicator'
 import type { FolderWorkspacePathStatus } from '../../../../../../shared/folder-workspace-path-status'
-import { isConfirmedStaleFolderPathStatus } from '../../../../../../shared/folder-workspace-path-status'
 import type { ProjectGroup } from '../../../../../../shared/project-group-types'
 import type { ExecutionHostId } from '../../../../../../shared/execution-host'
 import { getProjectGroupHostId } from '@/store/slices/project-group-owner-routing'
@@ -36,6 +35,7 @@ import {
 import { FolderPathStatusIndicator } from './FolderPathStatusIndicator'
 import { RepoScanUnavailableIndicator } from './RepoScanUnavailableIndicator'
 import {
+  isFolderWorkspaceCreateDisabled,
   ProjectGroupCreateWorkspaceButton,
   ProjectGroupHeaderMenu
 } from './project-group-header-actions'
@@ -78,14 +78,6 @@ export type SectionHeaderRowContext = {
   onWorkspaceStatusDrop: (event: React.DragEvent, status: WorkspaceStatus) => void
 }
 
-// The folder-scan project group whose parent path is gone can't create new workspaces.
-function isFolderWorkspaceCreateDisabled(status: FolderWorkspacePathStatus | null): boolean {
-  return (
-    status?.exists === false &&
-    (isConfirmedStaleFolderPathStatus(status) || status.reason === 'ambiguous-connection')
-  )
-}
-
 export function renderWorktreeSectionHeaderRow(args: {
   ctx: SectionHeaderRowContext
   row: GroupHeaderRow
@@ -93,6 +85,8 @@ export function renderWorktreeSectionHeaderRow(args: {
   isActiveStickyHeader: boolean
   hasStickyHost: boolean
   hasHeaderTopSpacing: boolean
+  /** The top of the «Needs attention» box (TaskAttentionFrame), drawn behind the header. */
+  attentionFrame: React.ReactNode
   measureVirtualRowElement: (element: HTMLDivElement | null) => void
 }): React.JSX.Element {
   const { ctx, row, vItem, isActiveStickyHeader } = args
@@ -215,6 +209,7 @@ export function renderWorktreeSectionHeaderRow(args: {
       )}
       style={isActiveStickyHeader ? undefined : { transform: getVirtualRowTransform(vItem.start) }}
     >
+      {args.attentionFrame}
       <ProjectHeaderHostTooltip label={label} context={hostContext}>
         <div
           id={getWorktreeOptionId(row.key)}

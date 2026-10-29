@@ -2,13 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import { BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 import type { BuildWebSessionRow } from '../../../../src/shared/build-web-session-rows'
+import { recordedSessionServer } from '../../../../src/shared/build-web-session-host'
 import { parseExecutionHostId, type ExecutionHostId } from '../../../../src/shared/execution-host'
 import {
+  relaysToServers,
   rpcClientForExecutionHost,
   scopeRpcClientToExecutionHost
 } from '../../transport/execution-host-scoped-rpc-client'
 import type { RpcClient } from '../../transport/rpc-client'
 import { startRuntimeStatusProbe } from '../../transport/runtime-status-probe'
+import { useRelayHosts } from '../../worktree/relay-hosts-feed'
 import type { Worktree } from '../../worktree/workspace-list-types'
 
 // IS-147: what a task card's «Sessions» reads from the hosts — their workspaces, kept current while
@@ -84,9 +87,24 @@ function serverOf(hostId: string | undefined): ExecutionHostId | null {
   return host?.kind === 'runtime' ? host.id : null
 }
 
-/** The server that ran the session, as the desktop routes its log; null is the connected host. */
-const logServer = (row: BuildWebSessionRow<Worktree>): ExecutionHostId | null =>
-  serverOf(row.worktree ? row.worktree.hostId : row.record.execution_host_id)
+/**
+ * The server that ran the session, as the desktop routes its log; null is the connected host, which
+ * holds build-web's token. A removed session's record names a server only the desktop that ran it
+ * may know, so one the connected host does not relay to reads as its own.
+ */
+function logServer(
+  row: BuildWebSessionRow<Worktree>,
+  relayed: ReadonlySet<string> | null
+): ExecutionHostId | null {
+  if (row.worktree) {
+    return serverOf(row.worktree.hostId)
+  }
+  const server = recordedSessionServer(
+    row.record.execution_host_id,
+    (host) => relayed === null || relayed.has(host.id)
+  )
+  return server?.id ?? null
+}
 
 /** Each server's capabilities, read through the connected host while the card shows its sessions. */
 function useServerCapabilities(
@@ -120,17 +138,17 @@ export function useSessionLogClients(
   hostCapabilities: readonly string[],
   rows: readonly BuildWebSessionRow<Worktree>[]
 ): ReadonlyMap<string, RpcClient> {
-  const routed = useMemo(
-    () =>
-      rows.map((row) => {
-        const server = logServer(row)
-        const serverClient = server
-          ? rpcClientForExecutionHost(client, hostCapabilities, server)
-          : null
-        return { row, server: serverClient ? server : null, serverClient }
-      }),
-    [client, hostCapabilities, rows]
-  )
+  const relayHosts = useRelayHosts(relaysToServers(client, hostCapabilities) ? client : null)
+  const routed = useMemo(() => {
+    const relayed = relayHosts ? new Set<string>(relayHosts.map((host) => host.hostId)) : null
+    return rows.map((row) => {
+      const server = logServer(row, relayed)
+      const serverClient = server
+        ? rpcClientForExecutionHost(client, hostCapabilities, server)
+        : null
+      return { row, server: serverClient ? server : null, serverClient }
+    })
+  }, [client, hostCapabilities, relayHosts, rows])
   const servers = routed.flatMap(({ server }) => (server ? [server] : []))
   const serverCapabilities = useServerCapabilities(client, servers)
   const connectedReads = hostCapabilities.includes(BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY)
@@ -142,7 +160,7 @@ export function useSessionLogClients(
       ) {
         clients.set(row.record.id, serverClient)
       }
-    } else if (connectedReads && !(row.worktree && logServer(row))) {
+    } else if (connectedReads && !(row.worktree && serverOf(row.worktree.hostId))) {
       // Why not for a worktree on a server out of reach: the connected host has no log of it.
       clients.set(row.record.id, client)
     }

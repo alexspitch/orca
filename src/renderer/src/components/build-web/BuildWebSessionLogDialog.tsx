@@ -8,11 +8,9 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { runtimeRpcTargetForAuthorityKey } from '@/runtime/runtime-client-target'
 import { translate } from '@/i18n/i18n'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { BuildWebAgentSessionRecord } from '../../../../shared/build-web-session-types'
-import { parseExecutionHostId } from '../../../../shared/execution-host'
 import {
   missingTranscriptLabel,
   UNSUPPORTED_TRANSCRIPT_LABEL,
@@ -25,18 +23,8 @@ import type { SessionListRow } from './BuildWebSessionList'
 
 const KEEP_LINES = 100_000
 
-/**
- * The host that ran the session: its worktree's while it is here; once removed, the server its
- * launcher named, else the host that holds build-web's token — where task sessions run.
- */
-function transcriptTarget(row: SessionListRow, fallback: RuntimeClientTarget): RuntimeClientTarget {
-  const hostId = row.worktree?.hostId ?? parseExecutionHostId(row.record.execution_host_id)?.id
-  const target = hostId ? runtimeRpcTargetForAuthorityKey(hostId) : null
-  if (row.worktree) {
-    return target ?? fallback
-  }
-  return target?.kind === 'environment' ? target : fallback
-}
+/** A session row and the host that reads its log (see `useSessionLogTargets`). */
+export type SessionLog = { row: SessionListRow; target: RuntimeClientTarget }
 
 type Transcript = {
   text: string
@@ -105,14 +93,8 @@ function useSessionTranscript(target: RuntimeClientTarget, record: BuildWebAgent
   }
 }
 
-function SessionLogBody({
-  row,
-  buildWebTarget
-}: {
-  row: SessionListRow
-  buildWebTarget: RuntimeClientTarget
-}): React.JSX.Element {
-  const transcript = useSessionTranscript(transcriptTarget(row, buildWebTarget), row.record)
+function SessionLogBody({ row, target }: SessionLog): React.JSX.Element {
+  const transcript = useSessionTranscript(target, row.record)
   const log = useMemo(() => logLinesOf(transcript.text, KEEP_LINES), [transcript.text])
   if (transcript.problem && !transcript.text) {
     return (
@@ -156,17 +138,15 @@ function SessionLogBody({
 
 /** A task session's agent log, read on the host that ran it — removed sessions too. */
 export function BuildWebSessionLogDialog({
-  row,
-  buildWebTarget,
+  log,
   onClose
 }: {
-  row: SessionListRow | null
-  /** The host holding build-web's token, which the card was read through. */
-  buildWebTarget: RuntimeClientTarget
+  log: SessionLog | null
   onClose: () => void
 }): React.JSX.Element {
+  const row = log?.row
   return (
-    <Dialog open={row !== null} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={log !== null} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[min(1100px,92vw)]">
         <DialogHeader>
           <DialogTitle>
@@ -181,9 +161,7 @@ export function BuildWebSessionLogDialog({
               : ''}
           </DialogDescription>
         </DialogHeader>
-        {row ? (
-          <SessionLogBody key={row.record.id} row={row} buildWebTarget={buildWebTarget} />
-        ) : null}
+        {log ? <SessionLogBody key={log.row.record.id} row={log.row} target={log.target} /> : null}
       </DialogContent>
     </Dialog>
   )

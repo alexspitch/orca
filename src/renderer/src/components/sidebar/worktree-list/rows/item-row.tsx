@@ -126,6 +126,7 @@ export function renderWorktreeItemRow(
     worktreeId: ctx.activeWorktreeId,
     hostId: ctx.activeWorkspaceExecutionHostId ?? null
   })
+  const inTaskAttentionSection = itemRow.sectionKey === TASK_ATTENTION_GROUP_KEY
   return (
     <div
       key={itemRow.rowKey}
@@ -143,6 +144,8 @@ export function renderWorktreeItemRow(
       className={cn(
         // Why: don't transition 'transform' — it lags/flashes when TanStack Virtual repositions adjacent rows.
         'relative transition-[opacity,filter] duration-150 ease-out',
+        // Why: keeps the card inside the «Needs attention» box (see TaskAttentionFrame).
+        inTaskAttentionSection && !nested && 'pr-1',
         ctx.worktreeDragState.draggingWorktreeId === itemRow.worktree.id &&
           // Why: the fixed drag preview is the affordance; a translucent source row would bleed through sticky headers/footers.
           'pointer-events-none opacity-0'
@@ -202,7 +205,7 @@ export function renderWorktreeItemRow(
         hostContextLabel={itemRow.hostContextLabel}
         showProjectName={itemRow.showProjectName}
         inPinnedSection={itemRow.sectionKey === PINNED_GROUP_KEY}
-        inTaskAttentionSection={itemRow.sectionKey === TASK_ATTENTION_GROUP_KEY}
+        inTaskAttentionSection={inTaskAttentionSection}
         renameRowKey={itemRow.rowKey}
         lineageChildCount={itemRow.lineageChildCount}
         lineageCollapsed={itemRow.lineageCollapsed}

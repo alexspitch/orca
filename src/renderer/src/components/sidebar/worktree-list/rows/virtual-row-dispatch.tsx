@@ -10,6 +10,7 @@ import type { WorktreeGroupBy } from '../../../../../../shared/sidebar-list/row-
 import {
   getVirtualRowTransform,
   getWorktreeVirtualRowTransform,
+  SECONDARY_GROUP_HEADER_TOP_MARGIN,
   shouldUseHeaderTopSpacing
 } from '../viewport/virtual-rows'
 import type { RenderRow } from '../listing/render-row'
@@ -29,6 +30,7 @@ import {
   type WorktreeItemRowContext
 } from './item-row'
 import { renderWorktreeSectionHeaderRow, type SectionHeaderRowContext } from './SectionHeader'
+import { getTaskAttentionFramePiece, TaskAttentionFrame } from './task-attention-frame'
 import type { WorktreeRowDragState } from '../drag/row-state'
 
 export type WorktreeVirtualRowContext = {
@@ -113,6 +115,7 @@ function renderLineageGroupVirtualRow(
   const parentPreviewOffset = parent
     ? (ctx.worktreeDragState.previewOffsetsByWorktreeId.get(parent.worktree.id) ?? 0)
     : 0
+  const attentionFrame = getTaskAttentionFramePiece(ctx.renderRows, vItem.index)
   return (
     <div
       key={vItem.key}
@@ -130,6 +133,7 @@ function renderLineageGroupVirtualRow(
       )}
       style={{ transform: getWorktreeVirtualRowTransform(vItem.start, parentPreviewOffset) }}
     >
+      {attentionFrame ? <TaskAttentionFrame piece={attentionFrame} /> : null}
       <div className="overflow-visible">
         {parent
           ? renderWorktreeItemRow(
@@ -156,17 +160,29 @@ export function renderWorktreeVirtualRow(
   }
 
   if (row.type === 'header') {
+    const isActiveStickyHeader = ctx.activeStickyHeaderIndexRef.current === vItem.index
+    const hasHeaderTopSpacing = shouldUseHeaderTopSpacing({
+      rows: ctx.renderRows,
+      index: vItem.index,
+      firstHeaderIndex: ctx.firstHeaderIndex
+    })
+    const attentionFrame = getTaskAttentionFramePiece(ctx.renderRows, vItem.index)
     return renderWorktreeSectionHeaderRow({
       ctx: ctx.header,
       row,
       vItem,
-      isActiveStickyHeader: ctx.activeStickyHeaderIndexRef.current === vItem.index,
+      isActiveStickyHeader,
       hasStickyHost: ctx.activeStickyHostIndexRef.current !== null,
-      hasHeaderTopSpacing: shouldUseHeaderTopSpacing({
-        rows: ctx.renderRows,
-        index: vItem.index,
-        firstHeaderIndex: ctx.firstHeaderIndex
-      }),
+      hasHeaderTopSpacing,
+      attentionFrame: attentionFrame ? (
+        <TaskAttentionFrame
+          piece={attentionFrame}
+          // Why: the spacer above a header stays outside the box, which then opens at the title.
+          topInset={
+            hasHeaderTopSpacing && !isActiveStickyHeader ? SECONDARY_GROUP_HEADER_TOP_MARGIN : 0
+          }
+        />
+      ) : null,
       measureVirtualRowElement: ctx.measureVirtualRowElement
     })
   }
@@ -220,6 +236,7 @@ export function renderWorktreeVirtualRow(
       : null
   const itemPreviewOffset =
     ctx.worktreeDragState.previewOffsetsByWorktreeId.get(row.worktree.id) ?? 0
+  const attentionFrame = getTaskAttentionFramePiece(ctx.renderRows, vItem.index)
 
   return (
     <div
@@ -251,6 +268,7 @@ export function renderWorktreeVirtualRow(
           : undefined
       }
     >
+      {attentionFrame ? <TaskAttentionFrame piece={attentionFrame} /> : null}
       {renderWorktreeItemRow(ctx.item, row, false)}
     </div>
   )

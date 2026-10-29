@@ -6,8 +6,9 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import { joinSessionRows } from '../../../../shared/build-web-session-rows'
 import { BuildWebSessionBadge } from './BuildWebSessionBadge'
 import { BuildWebSessionList, type SessionListRow } from './BuildWebSessionList'
-import { BuildWebSessionLogDialog } from './BuildWebSessionLogDialog'
+import { BuildWebSessionLogDialog, type SessionLog } from './BuildWebSessionLogDialog'
 import { useBuildWebStore } from './build-web-store'
+import { useSessionLogTargets } from './build-web-session-log-target'
 import { revealBuildWebSession } from './build-web-session-worktree'
 
 function openRow({ record, worktree }: SessionListRow): void {
@@ -34,7 +35,7 @@ export function BuildWebTaskSessions({
 }): React.JSX.Element | null {
   const worktreesByRepo = useAppStore(selectWorktreesByRepo)
   const consoleHost = useBuildWebStore((s) => s.status?.baseUrl ?? '')
-  const [logOf, setLogOf] = useState<SessionListRow | null>(null)
+  const [log, setLog] = useState<SessionLog | null>(null)
   const records = detail.agent_sessions
   const rows = useMemo(
     () =>
@@ -48,6 +49,7 @@ export function BuildWebTaskSessions({
         : [],
     [consoleHost, detail.id, records, worktreesByRepo]
   )
+  const logTargets = useSessionLogTargets(rows, target)
   if (!records) {
     return detail.agent_session ? <BuildWebSessionBadge session={detail.agent_session} /> : null
   }
@@ -56,12 +58,15 @@ export function BuildWebTaskSessions({
   }
   return (
     <>
-      <BuildWebSessionList rows={rows} onOpen={openRow} onLog={setLogOf} />
-      <BuildWebSessionLogDialog
-        row={logOf}
-        buildWebTarget={target}
-        onClose={() => setLogOf(null)}
+      <BuildWebSessionList
+        rows={rows}
+        onOpen={openRow}
+        logFor={(row) => {
+          const logTarget = logTargets.get(row.record.id)
+          return logTarget ? () => setLog({ row, target: logTarget }) : null
+        }}
       />
+      <BuildWebSessionLogDialog log={log} onClose={() => setLog(null)} />
     </>
   )
 }

@@ -11,6 +11,7 @@ import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
 import { worktreeFolderName } from '../../../../shared/build-web-task-session-worktree'
+import { recordedSessionHostId } from '../../../../shared/build-web-session-host'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { BuildWebSessionArgs } from '../../../../preload/api/build-web-api'
@@ -72,6 +73,12 @@ const sameTarget = (a: RuntimeClientTarget, b: RuntimeClientTarget): boolean =>
   a.kind === 'local'
     ? b.kind === 'local'
     : b.kind === 'environment' && a.environmentId === b.environmentId
+
+/** Whether the worktree runs on the host holding build-web's token, which names itself `local`. */
+function onBuildWebHost(target: RuntimeClientTarget, worktree: Worktree): boolean {
+  const owner = worktreeOwnerTarget(worktree)
+  return owner !== null && sameTarget(owner, target)
+}
 
 /**
  * The build-web host links the session only to a worktree of its own; a worktree on another host
@@ -235,7 +242,7 @@ export async function launchBuildWebTask(args: {
     {
       ...surface,
       worktree_name: sessionWorktreeName(worktree),
-      execution_host_id: worktree.hostId ?? '',
+      execution_host_id: recordedSessionHostId(worktree.hostId, onBuildWebHost(target, worktree)),
       agent: 'claude',
       started_at: startedAt
     },

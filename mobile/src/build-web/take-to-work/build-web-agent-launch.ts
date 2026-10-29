@@ -5,6 +5,7 @@ import { parsePaneKey } from '../../../../src/shared/stable-pane-id'
 import type { RpcClient } from '../../transport/rpc-client'
 import { claudeNameArgs, taskSessionName } from '../../../../src/shared/build-web-task-session-name'
 import { withClaudeLaunchAccount } from '../../../../src/shared/claude-launch-account'
+import { recordedSessionHostId } from '../../../../src/shared/build-web-session-host'
 import { AGENT_LAUNCH_SURFACE_RUNTIME_CAPABILITY } from '../../../../src/shared/agent-launch-runtime-capability'
 import {
   AGENT_LAUNCH_UPDATE_REQUIRED_MESSAGE,
@@ -116,7 +117,9 @@ export async function launchBuildWebTask(args: {
         ...surface,
         // The console keeps the folder; the label is the task's title.
         worktree_name: worktree.folder || worktree.displayName,
-        execution_host_id: worktree.hostId ?? '',
+        // Why always on the build-web host: the phone reads build-web through the host it is
+        // connected to and starts sessions only in that host's own workspaces.
+        execution_host_id: recordedSessionHostId(worktree.hostId, true),
         agent: 'claude',
         started_at: startedAt
       },

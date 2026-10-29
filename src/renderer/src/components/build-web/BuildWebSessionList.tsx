@@ -27,7 +27,7 @@ function SessionRow({
 }: {
   row: SessionListRow
   onOpen: (row: SessionListRow) => void
-  onLog?: (row: SessionListRow) => void
+  onLog: (() => void) | null
 }): React.JSX.Element {
   const { record, worktree, attention } = row
   const state = attention
@@ -61,8 +61,8 @@ function SessionRow({
           </span>
         )}
         <div className="flex-1" />
-        {onLog && record.provider_session_id ? (
-          <Button variant="ghost" size="xs" onClick={() => onLog(row)}>
+        {onLog ? (
+          <Button variant="ghost" size="xs" onClick={onLog}>
             <ScrollText />
             {translate('buildWeb.session.log', 'Log')}
           </Button>
@@ -82,13 +82,13 @@ function SessionRow({
 export function BuildWebSessionList({
   rows,
   onOpen,
-  onLog
+  logFor
 }: {
   rows: readonly SessionListRow[]
   /** Brings a row's worktree forward; only rows whose worktree is here offer it. */
   onOpen: (row: SessionListRow) => void
-  /** Absent where no host hands out logs. */
-  onLog?: (row: SessionListRow) => void
+  /** The row's «Log»; null where the agent's session id is unknown or no host hands its log out. */
+  logFor: (row: SessionListRow) => (() => void) | null
 }): React.JSX.Element {
   return (
     <section className="flex flex-col gap-1.5 rounded-md border border-border px-3 py-2 text-xs">
@@ -98,7 +98,7 @@ export function BuildWebSessionList({
       </h3>
       <ul className="flex flex-col gap-2">
         {rows.map((row) => (
-          <SessionRow key={row.record.id} row={row} onOpen={onOpen} onLog={onLog} />
+          <SessionRow key={row.record.id} row={row} onOpen={onOpen} onLog={logFor(row)} />
         ))}
       </ul>
     </section>

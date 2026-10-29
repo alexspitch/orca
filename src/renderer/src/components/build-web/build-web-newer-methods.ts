@@ -206,3 +206,8 @@ export const NEWER_METHODS: {
       )
   }
 ]
+
+/** The capability a server announces for `method`; null for a call every build-web server has. */
+export function newerMethodCapability(method: Method): string | null {
+  return NEWER_METHODS.find((newer) => newer.methods.has(method))?.capability ?? null
+}

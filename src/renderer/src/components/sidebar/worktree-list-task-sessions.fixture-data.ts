@@ -65,7 +65,8 @@ export const TASK_SESSION_WORKTREES: Worktree[] = [
   wt(orca, 'scratch', { lastActivityAt: minutesAgo(7000) })
 ]
 
-const SELECTED = TASK_SESSION_WORKTREES.find((worktree) => worktree.buildWebTask?.key === 'IS-166')
+export const worktreeIdOfTask = (key: string): string | null =>
+  TASK_SESSION_WORKTREES.find((worktree) => worktree.buildWebTask?.key === key)?.id ?? null
 
 /** Card density over the explorer's seeded settings, as a fixture's `setup`. */
 export function withCompactCards(compactWorktreeCards: boolean): () => void {
@@ -89,7 +90,7 @@ export function taskSessionStore(overrides: Partial<AppState> = {}): Partial<App
     projectOrderBy: 'manual',
     showSleepingWorkspaces: true,
     collapsedGroups: new Set(),
-    activeWorktreeId: SELECTED?.id ?? null,
+    activeWorktreeId: worktreeIdOfTask('IS-166'),
     ...overrides
   }
 }

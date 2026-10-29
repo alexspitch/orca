@@ -71,5 +71,11 @@ const rows: SessionListRow[] = [
 
 export const history = defineFixture({
   width: 640,
-  render: () => <BuildWebSessionList rows={rows} onOpen={() => {}} onLog={() => {}} />
+  render: () => (
+    <BuildWebSessionList
+      rows={rows}
+      onOpen={() => {}}
+      logFor={(row) => (row.record.provider_session_id ? () => {} : null)}
+    />
+  )
 })

@@ -32,9 +32,14 @@ export function findBuildWebSessionWorktree(
   if (!session.surface_id) {
     return null
   }
-  const hostId = parseExecutionHostId(session.execution_host_id)?.id
-  const found = (worktreeId: string): BuildWebSessionWorktree =>
-    hostId ? { worktreeId, hostId } : { worktreeId }
+  const recorded = parseExecutionHostId(session.execution_host_id)?.id
+  // Why this client's row: the record names the host as the build-web host does (`local` for itself).
+  const found = (worktreeId: string): BuildWebSessionWorktree => {
+    const hostId = (
+      state.getKnownWorktreeById(worktreeId, recorded) ?? state.getKnownWorktreeById(worktreeId)
+    )?.hostId
+    return hostId ? { worktreeId, hostId } : { worktreeId }
+  }
   if (session.surface_kind === 'terminal') {
     for (const [worktreeId, tabs] of Object.entries(state.tabsByWorktree)) {
       if ((tabs ?? []).some((tab) => tab.id === session.surface_id)) {

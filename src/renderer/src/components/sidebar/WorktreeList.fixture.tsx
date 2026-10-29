@@ -4,7 +4,11 @@ import { ConfirmationDialogProvider } from '../confirmation-dialog'
 import WorktreeList from './WorktreeList'
 import SidebarFilter from './SidebarFilter'
 import { SidebarTaskAttentionCounter } from './SidebarTaskAttentionCounter'
-import { taskSessionStore, withCompactCards } from './worktree-list-task-sessions.fixture-data'
+import {
+  taskSessionStore,
+  withCompactCards,
+  worktreeIdOfTask
+} from './worktree-list-task-sessions.fixture-data'
 
 // IS-147: the workspaces list grouped by task, compared with the sidebar mockup.
 
@@ -35,6 +39,14 @@ export const detailedByTask = defineFixture({
   store: taskSessionStore(),
   setup: withCompactCards(false),
   render: () => <Sidebar height={900} />
+})
+
+/** The current workspace inside «Needs attention»: its card stays within the amber box. */
+export const compactAttentionSelected = defineFixture({
+  width: SIDEBAR_WIDTH,
+  store: taskSessionStore({ activeWorktreeId: worktreeIdOfTask('IS-133') }),
+  setup: withCompactCards(true),
+  render: () => <Sidebar height={560} />
 })
 
 /** «Awaiting release» opened: its rows show the short timer and «soon» forms. */
