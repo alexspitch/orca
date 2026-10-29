@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "1.4.245-custom.1793270405000",
+      "date": "2026-10-29",
+      "commit": "e987552e13b1",
+      "features": [
+        "An open task's card now refreshes itself every 10 seconds while in sight, and immediately when its tab is opened or Orca regains focus, keeping your drafts intact.",
+        "The task's run, subtasks and commits on an open task's card also update on their own, on desktop and phone."
+      ],
+      "settings": [],
+      "fixes": [
+        "Clicking a task number in the sidebar, «Open task» or Cmd-J now opens the task's tab in its own workspace instead of the current one.",
+        "Sidebar → classic workspace cards now show working and needs-input status instead of hiding it behind the unread bell.",
+        "Sidebar → «By task» group names are now bold and larger, with compact rows indented within their group.",
+        "Sidebar → an opened compact row now names its agents by their tab titles instead of just the agent type."
+      ]
+    },
+    {
       "version": "1.4.245-custom.1793267363000",
       "date": "2026-10-29",
       "commit": "b23acca17f2e",
