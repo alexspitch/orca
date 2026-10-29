@@ -15,6 +15,10 @@ import { formatSummaryStateLabel, getAgentDotState } from './worktree-card-agent
 import { activateWorktreeAgentRow } from './worktree-agent-row-activation'
 import { getReviewLabel } from './worktree-review-helpers'
 import { useWorktreeAgentRows } from './useWorktreeAgentRows'
+import { useNow } from '@/hooks/use-now'
+import type { AgentBackgroundCommand } from '../../../../shared/agent-background-commands'
+import { formatCompactDuration } from '../../../../shared/agent-row-decay-state'
+import { BackgroundCommandIcon, runningBackgroundCommands } from './worktree-card-agent-indicators'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 
@@ -25,6 +29,7 @@ function CompactAgentLines({ worktreeId }: { worktreeId: string }): React.JSX.El
   const agents = useWorktreeAgentRows(worktreeId)
   const generatedTitlesEnabled = useAppStore((s) => s.settings?.tabAutoGenerateTitle === true)
   const rootAgents = useMemo(() => buildAgentRowLineageTree(agents).rootRows, [agents])
+  const now = useNow(30_000, runningBackgroundCommands(agents).length > 0)
   if (rootAgents.length === 0) {
     return null
   }
@@ -47,26 +52,53 @@ function CompactAgentLines({ worktreeId }: { worktreeId: string }): React.JSX.El
         )
         // Why inert: a retained row is completion evidence; opening it would wake a sleeping session.
         const retained = agent.rowSource === 'retained'
+        const commands = retained ? [] : (agent.entry.backgroundCommands ?? [])
         return (
-          <button
-            key={agent.paneKey}
-            type="button"
-            disabled={retained}
-            className="flex h-5 min-w-0 items-center gap-1.5 rounded-[4px] text-left text-xs leading-4 text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-worktree-sidebar-ring disabled:cursor-default"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation()
-              activateWorktreeAgentRow(worktreeId, agent.tab.id, agent.paneKey)
-            }}
-          >
-            <span className="flex size-4 shrink-0 items-center justify-center">
-              <AgentStateDot state={state} size="md" tooltipSide="right" />
-            </span>
-            <span className="min-w-0 truncate text-foreground">{name}</span>
-            <span className="shrink-0">{formatSummaryStateLabel(state)}</span>
-          </button>
+          <React.Fragment key={agent.paneKey}>
+            <button
+              type="button"
+              disabled={retained}
+              className="flex h-5 min-w-0 items-center gap-1.5 rounded-[4px] text-left text-xs leading-4 text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-worktree-sidebar-ring disabled:cursor-default"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation()
+                activateWorktreeAgentRow(worktreeId, agent.tab.id, agent.paneKey)
+              }}
+            >
+              <span className="flex size-4 shrink-0 items-center justify-center">
+                <AgentStateDot state={state} size="md" tooltipSide="right" />
+              </span>
+              <span className="min-w-0 truncate text-foreground">{name}</span>
+              <span className="shrink-0">{formatSummaryStateLabel(state)}</span>
+            </button>
+            {commands.map((command) => (
+              <CompactBackgroundCommandLine key={command.id} command={command} now={now} />
+            ))}
+          </React.Fragment>
         )
       })}
+    </div>
+  )
+}
+
+/** A command the agent above left running in the background, with how long it has run. */
+function CompactBackgroundCommandLine({
+  command,
+  now
+}: {
+  command: AgentBackgroundCommand
+  now: number
+}): React.JSX.Element {
+  return (
+    <div
+      className="flex h-5 min-w-0 items-center gap-1.5 pl-[22px] text-xs leading-4 text-muted-foreground"
+      data-worktree-card-background-command=""
+    >
+      <BackgroundCommandIcon commands={[command]} className="size-3 shrink-0" />
+      <span className="min-w-0 truncate">{command.description}</span>
+      <span className="shrink-0 tabular-nums">
+        {formatCompactDuration(now - command.startedAt)}
+      </span>
     </div>
   )
 }

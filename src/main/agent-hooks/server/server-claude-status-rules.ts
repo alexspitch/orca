@@ -1,4 +1,5 @@
 import { mainAgentStatusEqual } from '../../../shared/main-agent-status'
+import { agentBackgroundCommandsEqual } from '../../../shared/agent-background-commands'
 import {
   claudeTeammateIdMatchesName,
   isClaudeChildTurnEndEvent
@@ -34,9 +35,15 @@ export function withHeldChildWaitMainAgent(
   const mainAgentChanged = !mainAgentStatusEqual(previous.payload.mainAgent, mainAgent)
   const pendingWakeup = next.payload.claudeTaskWakeupPending
   const wakeupChanged = pendingWakeup !== previous.payload.claudeTaskWakeupPending
+  const backgroundCommands = next.payload.backgroundCommands
+  const commandsChanged = !agentBackgroundCommandsEqual(
+    previous.payload.backgroundCommands,
+    backgroundCommands
+  )
   if (
     !mainAgentChanged &&
     !wakeupChanged &&
+    !commandsChanged &&
     runningNonAgentTask === previous.claudeRunningNonAgentTask
   ) {
     return previous
@@ -48,8 +55,13 @@ export function withHeldChildWaitMainAgent(
       ? { claudeRunningNonAgentTask: runningNonAgentTask }
       : {}),
     payload:
-      mainAgentChanged || wakeupChanged
-        ? { ...previous.payload, mainAgent, claudeTaskWakeupPending: pendingWakeup }
+      mainAgentChanged || wakeupChanged || commandsChanged
+        ? {
+            ...previous.payload,
+            mainAgent,
+            claudeTaskWakeupPending: pendingWakeup,
+            backgroundCommands
+          }
         : previous.payload
   }
 }

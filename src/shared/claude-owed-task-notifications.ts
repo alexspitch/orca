@@ -1,3 +1,5 @@
+import type { AgentBackgroundCommand } from './agent-background-commands'
+
 /** Main-agent background tasks keyed by launch/notification task ID. Notifications can arrive a turn after task end and an empty Stop; owed work keeps the pane active (#23942). Captures: __fixtures__/claude-task-notification-hooks.jsonl. */
 export type ClaudeLaunchedBackgroundTasks = Map<string, ClaudeLaunchedBackgroundTask>
 
@@ -11,6 +13,8 @@ type ClaudeLaunchedBackgroundTask = {
   settled?: true
   /** A delivered notification, distinct from a lease that merely gave up waiting. */
   notificationDelivered?: true
+  /** A shell's name for the sidebar, from the tool input that launched it. */
+  label?: Omit<AgentBackgroundCommand, 'id'>
 }
 
 /** An idle notification lease is expectation, not proof: Stop never promises an empty queue and posts can be lost/reordered. Captured deliveries took 40–130ms; Claude idle_prompt consistently fired after 60s. */
@@ -42,7 +46,8 @@ export function readClaudeBackgroundTaskLaunch(
 
 export function recordClaudeBackgroundTaskLaunch(
   tasks: ClaudeLaunchedBackgroundTasks,
-  launch: { id: string; kind: ClaudeLaunchedBackgroundTask['kind'] }
+  launch: { id: string; kind: ClaudeLaunchedBackgroundTask['kind'] },
+  label?: ClaudeLaunchedBackgroundTask['label']
 ): void {
   const previous = tasks.get(launch.id)
   if (previous) {
@@ -52,8 +57,21 @@ export function recordClaudeBackgroundTaskLaunch(
     return
   }
   if (makeClaudeTaskRecordRoom(tasks)) {
-    tasks.set(launch.id, { kind: launch.kind })
+    tasks.set(launch.id, { kind: launch.kind, ...(label ? { label } : {}) })
   }
+}
+
+/** Launched shells not yet seen to end, oldest first; a shell launched before Orca saw it is not named. */
+export function claudeRunningBackgroundCommands(
+  tasks: ClaudeLaunchedBackgroundTasks | undefined
+): AgentBackgroundCommand[] | undefined {
+  const commands: AgentBackgroundCommand[] = []
+  for (const [id, task] of tasks ?? []) {
+    if (task.kind === 'shell' && task.notificationOwedAt === undefined && task.label) {
+      commands.push({ id, ...task.label })
+    }
+  }
+  return commands.length > 0 ? commands.sort((a, b) => a.startedAt - b.startedAt) : undefined
 }
 
 function makeClaudeTaskRecordRoom(tasks: ClaudeLaunchedBackgroundTasks): boolean {

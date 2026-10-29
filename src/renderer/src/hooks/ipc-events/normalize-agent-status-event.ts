@@ -23,6 +23,7 @@ export function normalizeAgentStatusEvent(
     sessionBoundary: data.sessionBoundary,
     turnCompletedAt: data.turnCompletedAt,
     subagents: data.subagents,
+    backgroundCommands: data.backgroundCommands,
     mainAgent: data.mainAgent
   })
 }

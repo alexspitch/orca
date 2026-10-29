@@ -5,6 +5,7 @@ import type { ProgramStatusFacet } from './program-status/facet'
 import type { CheckStatus } from './github/pull-request-types'
 import type { AgentChildWorkView } from './agent-status-child-work-view'
 import type { AgentSubagentSnapshot } from './agent-status-subagent-snapshot'
+import type { AgentBackgroundCommand } from './agent-background-commands'
 import type { BaseRefSearchResult, Repo } from './repo-types'
 import type { CreateWorktreeResult, RemoveWorktreeResult } from './worktree/create-types'
 import type {
@@ -42,6 +43,8 @@ export type RuntimeWorktreeAgentRow = {
   /** Native canonical views win over the CLI roster, including an explicit empty list. */
   children?: AgentChildWorkView[]
   subagents?: AgentSubagentSnapshot[]
+  /** Commands the main agent left running in the background; old hosts omit it. */
+  backgroundCommands?: AgentBackgroundCommand[]
   /** The host's freshness verdict; child clocks cannot be compared with the phone's clock. */
   subagentObservation?: 'live' | 'unverifiable'
   restoredUnconfirmed?: boolean

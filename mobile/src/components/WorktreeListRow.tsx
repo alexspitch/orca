@@ -14,7 +14,7 @@ import { getWorktreeMetaGlyphPresence } from '../worktree/worktree-meta-glyph-pr
 import { AgentSpinner } from './AgentSpinner'
 import { HostKindIcon } from './HostKindIcon'
 import { MobileRepoIcon } from './MobileRepoIcon'
-import { WorktreeAgentCount } from './WorktreeAgentCount'
+import { WorktreeAgentIndicators } from './WorktreeAgentIndicators'
 import { WorktreeAgentList } from './WorktreeAgentList'
 import { WorktreeMetaGlyphs, prStateColor } from './WorktreeMetaGlyphs'
 import {
@@ -162,7 +162,7 @@ function WorktreeListRowComponent({
           {/* Why one end group: two auto margins would split the free space between them. */}
           <View style={styles.nameRowEnd}>
             {!inTaskAttention && <WorktreeTaskSessionChip row={item} />}
-            <WorktreeAgentCount count={item.agents?.length ?? 0} />
+            <WorktreeAgentIndicators agents={item.agents ?? []} />
           </View>
         </View>
         {inTaskAttention && <WorktreeTaskAttentionReason row={item} />}

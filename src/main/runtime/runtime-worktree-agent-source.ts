@@ -7,7 +7,10 @@ import type { AgentChildWorkView } from '../../shared/agent-status-child-work-vi
 import type { AgentMainAgentStatus } from '../../shared/main-agent-status'
 import type { ProgramStatusFacet } from '../../shared/program-status/facet'
 
-export type RuntimeWorktreeAgentSource = Pick<AgentStatusIpcPayload, 'subagents'> & {
+export type RuntimeWorktreeAgentSource = Pick<
+  AgentStatusIpcPayload,
+  'subagents' | 'backgroundCommands'
+> & {
   children?: AgentChildWorkView[]
   paneKey: string
   ptyId?: string

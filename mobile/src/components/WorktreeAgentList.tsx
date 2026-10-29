@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native'
 import type { RuntimeWorktreeAgentRow } from '../../../src/shared/runtime-types'
 import { buildAgentRowLineageTree, flattenAgentRowLineage } from '../worktree/agent-row-lineage'
 import { WorktreeAgentRow } from './WorktreeAgentRow'
+import { agentBackgroundCommands, WorktreeBackgroundCommandRow } from './WorktreeAgentIndicators'
 import { WorktreeAgentSummary } from './WorktreeAgentSummary'
 import { worktreeAgentChildRows } from '../worktree/worktree-agent-child-rows'
 
@@ -56,6 +57,14 @@ export function WorktreeAgentList({
                   now={now}
                   unvisited={unvisited}
                 />
+                {agentBackgroundCommands(node.row).map((command) => (
+                  <WorktreeBackgroundCommandRow
+                    key={command.id}
+                    command={command}
+                    depth={node.depth}
+                    now={now}
+                  />
+                ))}
                 {children.map((childRow) => (
                   <WorktreeAgentRow
                     key={childRow.id}

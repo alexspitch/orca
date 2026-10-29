@@ -59,8 +59,13 @@ export abstract class AgentHookServerPersistence extends AgentHookServerHydratio
       const launchTokenHash = launchToken?.trim()
         ? createHash('sha256').update(launchToken.trim()).digest('hex')
         : this.hydratedLaunchTokenHashByPaneKey.get(paneKey)
-      const { claudeTaskWakeupPending: _pendingWakeup, ...persistedStatus } =
-        persistedPayload.payload
+      // Why not the background commands: their launch records are not saved, so a restored list
+      // would name shells nothing can retire.
+      const {
+        claudeTaskWakeupPending: _pendingWakeup,
+        backgroundCommands: _backgroundCommands,
+        ...persistedStatus
+      } = persistedPayload.payload
       entries[paneKey] = {
         ...persistedPayload,
         payload: persistedStatus,
