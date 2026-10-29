@@ -1,21 +1,53 @@
 import React from 'react'
 import { CircleAlert } from 'lucide-react'
 import { useAppStore } from '@/store'
+import { getRepoMapFromState } from '@/store/selectors'
 import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import type { AppState } from '@/store/types'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import type { Worktree } from '../../../../shared/worktree/types'
 import { isTaskSessionAttention } from '../../../../shared/sidebar-list/task-session-groups'
+import { computeVisibleWorktreeIds } from './compute-visible-worktrees'
+import { buildVisibleWorktreeOptionsFromState } from './visible-worktree-options-from-state'
 import { selectTaskSessionUiAvailable } from './task-session-capability'
 
+/** The rows «By task» would list in Needs attention under the sidebar's current filters. */
 function selectTaskAttentionCount(state: AppState): number {
-  let count = 0
+  const attentionByRepo: Record<string, Worktree[]> = {}
+  const ids: string[] = []
   // Why the fallback: header fixtures mount it over a partial store.
-  for (const worktrees of Object.values(selectWorktreesByRepo(state) ?? {})) {
-    count += worktrees.filter(isTaskSessionAttention).length
+  for (const [repoId, worktrees] of Object.entries(selectWorktreesByRepo(state) ?? {})) {
+    const attention = worktrees.filter(isTaskSessionAttention)
+    if (attention.length > 0) {
+      attentionByRepo[repoId] = attention
+      ids.push(...attention.map((worktree) => worktree.id))
+    }
   }
-  return count
+  if (ids.length === 0) {
+    return 0
+  }
+  // Why only the few attention rows: the filter runs on every store update.
+  return computeVisibleWorktreeIds(attentionByRepo, ids, {
+    ...buildVisibleWorktreeOptionsFromState(state, getRepoMapFromState(state)),
+    keepArchivedTaskAttention: true,
+    injectLineageAncestors: false
+  }).length
+}
+
+function counterLabel(count: number): string {
+  return count === 1
+    ? translate(
+        'buildWeb.session.attentionCounter_one',
+        '{{count}} workspace needs attention. Group by task',
+        { count }
+      )
+    : translate(
+        'buildWeb.session.attentionCounter_other',
+        '{{count}} workspaces need attention. Group by task',
+        { count }
+      )
 }
 
 /** IS-147: outside «By task» an attention row keeps its lane; this counts them and opens By task. */
@@ -27,11 +59,7 @@ export function SidebarTaskAttentionCounter(): React.JSX.Element | null {
   if (count === 0 || groupBy === 'task' || !available) {
     return null
   }
-  const label = translate(
-    'buildWeb.session.attentionCounter',
-    '{{count}} workspaces need attention. Group by task',
-    { count }
-  )
+  const label = counterLabel(count)
   return (
     <Tooltip>
       <TooltipTrigger asChild>

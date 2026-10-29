@@ -5,14 +5,14 @@ import { getWorkspaceAttachments } from '../../../../shared/workspace-attachment
 import { WorktreeCardHeader } from './worktree-card-header'
 import { WorktreeCardMetaRow } from './worktree-card-meta-row'
 import { WorktreeCardDetailsHover } from './WorktreeCardMeta'
-
-// Why 500 ms: the row body is where the pointer rests while scanning a long list (IS-147).
-const WORKTREE_CARD_DETAILS_OPEN_DELAY_MS = 500
 import { WorktreeCardPortsDetails } from './WorktreeCardPorts'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSecondaryRows } from './worktree-card-secondary-rows'
 import { WorktreeCardStatusSlot } from './WorktreeCardStatusSlot'
 import type { WorktreeCardController } from './use-worktree-card-controller'
+
+// Why 500 ms: the row body is where the pointer rests while scanning a long list (IS-147).
+const WORKTREE_CARD_DETAILS_OPEN_DELAY_MS = 500
 
 export function WorktreeCardParentContent({
   card,

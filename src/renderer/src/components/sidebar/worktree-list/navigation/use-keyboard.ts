@@ -1,5 +1,5 @@
 import { textFieldClaimsActionKey } from '@/lib/file-search-shortcut-policy'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type React from 'react'
 import type { Virtualizer } from '@tanstack/react-virtual'
 import { useAppStore } from '@/store'
@@ -11,7 +11,9 @@ import { getShortcutPlatform } from '@/lib/shortcut-platform'
 import { keybindingMatchesAction } from '../../../../../../shared/keybindings'
 import type { HostSectionRow } from '../../../../../../shared/sidebar-list/host-section-rows'
 import type { PinnedWorktreeDisplayPolicy } from '../../../../../../shared/sidebar-list/row-types'
-import type { RenderRow } from '../listing/render-row'
+import { getRenderRowKey, type RenderRow } from '../listing/render-row'
+import { WORKTREE_SIDEBAR_REVEAL_TOP_INSET } from '../../worktree-sidebar-reveal'
+import { createSelectedRowPin } from './selected-row-pin'
 import {
   getCyclableRowIdentity,
   getCyclableWorktreeRows,
@@ -48,6 +50,8 @@ export function useWorktreeListKeyboardNavigation(args: {
   } = args
   const keybindings = useAppStore((s) => s.keybindings)
   const lastActiveWorkspaceRef = useRef<LastActiveCycleWorkspace | null>(null)
+  const [selectedRowPin] = useState(createSelectedRowPin)
+  useEffect(() => selectedRowPin.cancel, [selectedRowPin])
   useEffect(() => {
     // Closing the last tab clears both selection and host; history retains only the id.
     if (activeWorktreeId !== null) {
@@ -102,6 +106,12 @@ export function useWorktreeListKeyboardNavigation(args: {
       )
       if (rowIndex !== -1) {
         virtualizer.scrollToIndex(rowIndex, { align: 'auto' })
+        const scroller = scrollRef.current
+        const row = renderRows[rowIndex]
+        // Why: the compact row it opens and the one it closes must not move it (IS-147).
+        if (scroller && row) {
+          selectedRowPin.pin(scroller, getRenderRowKey(row), WORKTREE_SIDEBAR_REVEAL_TOP_INSET)
+        }
       }
     },
     [
@@ -110,7 +120,9 @@ export function useWorktreeListKeyboardNavigation(args: {
       activeWorktreeId,
       activeWorkspaceExecutionHostId,
       virtualizer,
-      pinnedDisplayPolicy
+      pinnedDisplayPolicy,
+      scrollRef,
+      selectedRowPin
     ]
   )
 

@@ -17,6 +17,11 @@ import { useSidebarListSession } from '@/lib/sidebar-list-session'
 import { ORCA_SIDEBAR_INPUTS_IS_MAIN } from '../../../../../../shared/sidebar-inputs-switch'
 import { getWorktreeHostIdentity } from '../../../../../../shared/worktree/host-qualified-identity'
 import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
+import { isHiddenArchivedRow } from '../../../../../../shared/sidebar-list/task-session-groups'
+import type { Worktree } from '../../../../../../shared/worktree/types'
+
+// Why archived attention rows rank too: «By task» lists them, ordered by the user's sort (IS-147).
+const rankedForSort = (worktree: Worktree): boolean => !isHiddenArchivedRow(worktree, 'task')
 
 // Compute settled order synchronously; selection side effects must not reorder rows under the user.
 function useSettledSidebarWorktreeSortOrder(args: {
@@ -40,7 +45,7 @@ function useSettledSidebarWorktreeSortOrder(args: {
   const recomputedSort = useMemo(() => {
     const state = useAppStore.getState()
     const ranking = rankWorktreesForSort({
-      worktrees: getAllWorktreesFromState(state).filter((worktree) => !worktree.isArchived),
+      worktrees: getAllWorktreesFromState(state).filter(rankedForSort),
       sortBy,
       latched: sessionHasHadLiveSmartSignal.current,
       repoMap,
@@ -92,9 +97,7 @@ function useStampSidebarWorktreeSortOrder(args: {
   const ranked = useMemo(
     () =>
       rankWorktreesForSort({
-        worktrees: getAllWorktreesFromState({ worktreesByRepo }).filter(
-          (worktree) => !worktree.isArchived
-        ),
+        worktrees: getAllWorktreesFromState({ worktreesByRepo }).filter(rankedForSort),
         sortBy,
         latched: false,
         repoMap,

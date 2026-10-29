@@ -4,7 +4,7 @@ import { ConfirmationDialogProvider } from '../confirmation-dialog'
 import WorktreeList from './WorktreeList'
 import SidebarFilter from './SidebarFilter'
 import { SidebarTaskAttentionCounter } from './SidebarTaskAttentionCounter'
-import { taskSessionStore } from './worktree-list-task-sessions.fixture-data'
+import { taskSessionStore, withCompactCards } from './worktree-list-task-sessions.fixture-data'
 
 // IS-147: the workspaces list grouped by task, compared with the sidebar mockup.
 
@@ -25,13 +25,15 @@ function Sidebar({ height, children }: { height: number; children?: ReactNode })
 export const compactByTask = defineFixture({
   width: SIDEBAR_WIDTH,
   store: taskSessionStore(),
+  setup: withCompactCards(true),
   render: () => <Sidebar height={720} />
 })
 
 /** Detailed cards with the session state on the right of the title row. */
 export const detailedByTask = defineFixture({
   width: SIDEBAR_WIDTH,
-  store: taskSessionStore({}, false),
+  store: taskSessionStore(),
+  setup: withCompactCards(false),
   render: () => <Sidebar height={900} />
 })
 
@@ -39,6 +41,7 @@ export const detailedByTask = defineFixture({
 export const compactReleaseOpened = defineFixture({
   width: SIDEBAR_WIDTH,
   store: taskSessionStore({ collapsedGroups: new Set(['task:release:expanded']) }),
+  setup: withCompactCards(true),
   render: () => <Sidebar height={820} />
 })
 
@@ -46,6 +49,7 @@ export const compactReleaseOpened = defineFixture({
 export const compactByProjectWithCounter = defineFixture({
   width: SIDEBAR_WIDTH,
   store: taskSessionStore({ groupBy: 'repo' }),
+  setup: withCompactCards(true),
   render: () => (
     <Sidebar height={760}>
       <div className="flex h-10 shrink-0 items-center justify-end gap-1 px-2">
@@ -53,6 +57,14 @@ export const compactByProjectWithCounter = defineFixture({
       </div>
     </Sidebar>
   )
+})
+
+/** Detailed cards by project: an attention row says its short reason in the warning tone. */
+export const detailedByProject = defineFixture({
+  width: SIDEBAR_WIDTH,
+  store: taskSessionStore({ groupBy: 'repo' }),
+  setup: withCompactCards(false),
+  render: () => <Sidebar height={900} />
 })
 
 /** The filter menu with the task-state switches. */

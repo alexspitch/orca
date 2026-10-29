@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { getStructuredChatWorktreeIds } from '@/components/sidebar/visible-worktree-activity-inputs'
 import { filterWorkspaceRows } from '../../../shared/workspace-view/workspace-row-filters'
 import { buildDesktopWorkspaceRowFactReader } from '@/components/sidebar/desktop-workspace-row-facts'
+import { createTaskSessionHostReader } from '@/components/sidebar/task-session-capability'
 import { sortWorktreesSmart } from '../../../shared/sidebar-list/smart-sort'
 import { buildWorktreeChecksReviewIndex } from '@/components/cmd-j/worktree-checks-review-index'
 import { getLiveAgentStatusByWorktreeId } from '@/lib/worktree-activity-state'
@@ -110,7 +111,12 @@ export function useWorktreeJumpPaletteWorktrees({
         ptyIdsByTabId,
         browserTabsByWorktree,
         worktreeIdsWithLiveAgent,
-        worktreeIdsWithStructuredChat
+        worktreeIdsWithStructuredChat,
+        // Why: a server that predates task sessions must not have its rows hidden as «no task».
+        taskSessionHostKnown: createTaskSessionHostReader(
+          { runtimeStatusByEnvironmentId },
+          defaultHostId
+        )
       })
     )
     return filterPredicate ? visible.filter(filterPredicate.matchesWorktree) : visible
@@ -129,6 +135,7 @@ export function useWorktreeJumpPaletteWorktrees({
     ptyIdsByTabId,
     repoMap,
     defaultHostId,
+    runtimeStatusByEnvironmentId,
     showSleepingWorkspaces,
     tabsByWorktree,
     worktreeIdsWithLiveAgent,

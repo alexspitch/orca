@@ -9,6 +9,7 @@ import { WorktreeHostContextBadge } from './WorktreeHostContextBadge'
 import { CONFLICT_OPERATION_LABELS } from './WorktreeCardHelpers'
 import { TruncatedSidebarLabel } from './truncated-sidebar-label'
 import { getDirectoryName } from './worktree-card-model'
+import { WorktreeTaskKey } from './WorktreeCardTaskSession'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
@@ -41,6 +42,7 @@ export function WorktreeCardMetaRow({
     showDetachedHeadInMetaRow,
     showConflictOperationBadge,
     showMetaRowDetails,
+    showTaskKeyInMetaRow,
     detailsAndPorts
   } = presentation
 
@@ -100,9 +102,12 @@ export function WorktreeCardMetaRow({
         {cacheStartedAt != null && <CacheTimer startedAt={cacheStartedAt} ttlMs={cacheTtlMs} />}
       </div>
 
-      {showMetaRowDetails && (
-        <div className="ml-auto flex shrink-0 items-center gap-1 pr-1.5">{detailsAndPorts}</div>
-      )}
+      {showMetaRowDetails || showTaskKeyInMetaRow ? (
+        <div className="ml-auto flex shrink-0 items-center gap-1 pr-1.5">
+          {showTaskKeyInMetaRow ? <WorktreeTaskKey worktree={worktree} placement="meta" /> : null}
+          {showMetaRowDetails ? detailsAndPorts : null}
+        </div>
+      ) : null}
     </div>
   )
 }

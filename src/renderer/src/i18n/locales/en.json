@@ -21566,7 +21566,6 @@
         "openTaskDescription": "Open the current workspace's build-web task.",
         "openTaskVerb": "open task"
       },
-      "attentionCounter": "{{count}} workspaces need attention. Group by task",
       "openTaskAria": "Open task {{key}}",
       "action": {
         "openTask": "Open task {{key}}"
@@ -21579,14 +21578,19 @@
         "files": "Lost:",
         "unread": "Orca could not read every change in it.",
         "title": "Remove workspace {{name}}?",
-        "confirm": "Remove workspace"
+        "confirm": "Remove workspace",
+        "noCommits": "Branch {{branch}} has no commits of its own.",
+        "reading": "Reading what {{name}} holds…"
       },
       "openTask": {
         "otherConsole": "{{key}} lives on another console: {{console}}."
       },
       "hostUnknown": "The host of this workspace is unknown.",
       "kept": "{{name}} kept, unlinked from {{key}}",
-      "reopened": "{{key}} is back in progress"
+      "reopened": "{{key}} is back in progress",
+      "attentionCounter_one": "{{count}} workspace needs attention. Group by task",
+      "attentionCounter_other": "{{count}} workspaces need attention. Group by task",
+      "reopenKept": "The console kept {{key}} in {{status}}."
     },
     "launch": {
       "sessionNotSaved": "Session ID not saved to {{keys}}",

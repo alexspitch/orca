@@ -30,7 +30,7 @@ const SHOT_DIR = process.env.ORCA_E2E_SHOT_DIR
 
 // oxlint-disable-next-line no-empty-pattern -- Playwright fixture callbacks require object destructuring here.
 test('«By task» groups a hundred rows by their task state on a paired client', async ({}, testInfo) => {
-  // A hundred worktree creates on the serve host before the client even opens.
+  // Why: a hundred task worktrees are created on a headless host and its console polls the sessions.
   test.setTimeout(420_000)
   const scratch = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-build-web-sidebar-'))
   const host = await launchHeadlessPairedRuntimeHost({
@@ -109,7 +109,7 @@ test('«By task» groups a hundred rows by their task state on a paired client',
 
     // Elsewhere the row keeps its place, and a counter beside the filter leads back to «By task».
     await page.evaluate(() => window.__store?.getState().setGroupBy('repo'))
-    const counter = page.getByRole('button', { name: /1 workspaces need attention/ })
+    const counter = page.getByRole('button', { name: /^1 workspaces? needs? attention/ })
     await expect(counter).toBeVisible()
     await shoot('by-project-attention-counter')
     await counter.click()

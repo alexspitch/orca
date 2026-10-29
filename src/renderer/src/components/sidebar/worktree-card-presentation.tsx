@@ -91,6 +91,9 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
   // Why: pinned trees mix repos, so ordinary rows lead with the project chip; cross-repo children keep the regular project badge.
   // Why a task's compact row drops the chip: its number names the work, and the title needs the room.
   const taskNumberLeads = cardDetails.compactCards && Boolean(worktree.buildWebTask)
+  // Why the meta row on a full card: the number sits where a linked Jira issue does (IS-147).
+  const showTaskKeyInMetaRow =
+    !compactCards && !newCardStyle && cardDetails.metaRow && Boolean(worktree.buildWebTask)
   const showPinnedRepoIcon = inPinnedSection && !!repo && !showProjectName && !taskNumberLeads
   const showInlineRepoBadge =
     cardDetails.repoInTitle &&
@@ -133,7 +136,8 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     showDetachedHeadInMetaRow ||
     showConflictOperationBadge ||
     cacheStartedAt != null ||
-    showMetaRowDetails
+    showMetaRowDetails ||
+    showTaskKeyInMetaRow
   )
   // Why: without the identity meta row, a compact card keeps a row only for badges and the timer.
   const hasMetaRow = cardDetails.metaRow
@@ -261,7 +265,7 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
       detailsAndPortsContent
     )
   const titleRowIndicators = showTitleRowIndicators ? (
-    <div className="ml-auto flex shrink-0 items-center gap-1 pr-1.5">{detailsAndPorts}</div>
+    <div className="flex shrink-0 items-center gap-1">{detailsAndPorts}</div>
   ) : null
   // Why: the reason line under a Needs attention row is a second line; the status dot stays on the title.
   const showsAttentionReason =
@@ -288,6 +292,7 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     showCombinedStatusSlot,
     showTitleRowPrimary,
     showMetaRowDetails,
+    showTaskKeyInMetaRow,
     showTitleRowIndicators,
     hasMetaRow,
     showHeaderActions,

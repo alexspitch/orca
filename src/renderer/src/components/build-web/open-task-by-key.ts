@@ -10,6 +10,7 @@ import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { labelIssuePage, withoutPageRecording } from './page-history/page-history-store'
 import { armLinkReturn } from '@/components/link-return/link-return-arm'
+import { sameBuildWebConsole } from '../../../../shared/build-web-console-origin'
 
 /** The task a number names: build-web's own number, or the Jira number of a task linked to Jira. */
 export async function findBuildWebTaskByKey(
@@ -121,4 +122,34 @@ export async function openTaskByKey(key: string): Promise<void> {
       key
     })
   )
+}
+
+/** A task worktree's card (IS-147), only when this client's console is the one the task lives on. */
+export async function openBuildWebTaskCard(task: {
+  issueId: string
+  key: string
+  title: string
+  consoleHost: string
+}): Promise<void> {
+  const host = taskHost()
+  const store = useBuildWebStore.getState()
+  const status =
+    store.contextKey === host.contextKey && store.status
+      ? store.status
+      : await callBuildWeb(host.target, 'status').catch(() => null)
+  if (!status?.connected || !sameBuildWebConsole(status.baseUrl, task.consoleHost)) {
+    toast.error(
+      translate(
+        'buildWeb.session.openTask.otherConsole',
+        '{{key}} lives on another console: {{console}}.',
+        { key: task.key, console: task.consoleHost }
+      )
+    )
+    return
+  }
+  // Why: the first status of a host clears the open card, so it must land before the card opens.
+  if (store.contextKey !== host.contextKey) {
+    store.setStatus(host.contextKey, status)
+  }
+  showBuildWebTaskCard({ id: task.issueId, key: task.key, title: task.title })
 }

@@ -40,7 +40,7 @@ import {
   isTaskSessionAttention
 } from '../../../src/shared/sidebar-list/task-session-groups'
 import { isSidebarGroupCollapsed } from '../../../src/shared/sidebar-list/default-collapsed-groups'
-import { filterWorktrees } from './phone-workspace-row-filter'
+import { filterWorktrees, NO_SERVERS_KNOWING_TASKS } from './phone-workspace-row-filter'
 import { buildTaskLaneSections } from './task-lane-sections'
 
 export type { FilterState, Section, SectionRepo, Worktree } from './workspace-list-types'
@@ -123,11 +123,14 @@ export function buildMobileWorkspacePlan(
   showPinnedInGroups = false,
   repoHostIdByRepoId: ReadonlyMap<string, ExecutionHostId> = new Map(),
   /** The connected host announces `build-web-worktree-task.v1`; the session filter waits for it. */
-  hostKnowsTasks = false
+  hostKnowsTasks = false,
+  /** The paired servers announcing it, for their own rows. */
+  serversKnowingTasks: ReadonlySet<string> = NO_SERVERS_KNOWING_TASKS
 ) {
   const byTask = groupMode === 'task'
   const filtered = filterWorktrees(worktrees, filters, search, repoHostIdByRepoId, {
     hostKnowsTasks,
+    serversKnowingTasks,
     keepArchivedAttention: byTask
   })
   const sorted = sortWorktrees(filtered, sortMode, Date.now(), hostSortsByStamps(worktrees))

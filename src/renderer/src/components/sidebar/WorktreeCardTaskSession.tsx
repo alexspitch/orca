@@ -37,7 +37,7 @@ export function describeWorktreeTaskSession(worktree: Worktree): string | null {
   return detail ? `${base} (${detail})` : base
 }
 
-/** Compact rows: waiting is the icon alone, closing «soon», attention its short reason. */
+/** Compact rows: waiting is the icon alone, closing «soon»; attention says its short reason on both. */
 function badgeText(
   state: Exclude<WorktreeBuildWebSessionState, 'active'>,
   reason: ReturnType<typeof reasonLabels>,
@@ -45,8 +45,7 @@ function badgeText(
 ): string | null {
   const labels = BUILD_WEB_SESSION_STATE_LABELS[state]
   if (state === 'attention') {
-    // Why no text on a full row: the attention section's line or the tooltip says why.
-    return short ? say(reason?.short ?? labels.short ?? labels.full) : null
+    return say(reason?.short ?? labels.short ?? labels.full)
   }
   if (!short) {
     return say(labels.full)
@@ -54,8 +53,17 @@ function badgeText(
   return labels.short ? say(labels.short) : null
 }
 
-/** The task number; it opens the task's card and keeps the click from activating the row. */
-export function WorktreeTaskKey({ worktree }: { worktree: Worktree }): React.JSX.Element | null {
+/**
+ * The task number; it opens the task's card and keeps the click from activating the row. A compact
+ * row leads its title with it; a full card shows it in the meta row, where a linked Jira issue sits.
+ */
+export function WorktreeTaskKey({
+  worktree,
+  placement = 'title'
+}: {
+  worktree: Worktree
+  placement?: 'title' | 'meta'
+}): React.JSX.Element | null {
   const key = worktree.buildWebTask?.key
   if (!key) {
     return null
@@ -63,7 +71,12 @@ export function WorktreeTaskKey({ worktree }: { worktree: Worktree }): React.JSX
   return (
     <button
       type="button"
-      className="-ml-0.5 shrink-0 rounded-[4px] px-0.5 font-mono text-xs font-medium leading-5 text-foreground hover:underline hover:underline-offset-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      className={cn(
+        'shrink-0 rounded-[4px] px-0.5 font-mono font-medium hover:underline hover:underline-offset-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+        placement === 'title'
+          ? '-ml-0.5 text-xs leading-5 text-foreground'
+          : 'text-[11px] leading-none text-muted-foreground hover:text-foreground'
+      )}
       aria-label={translate('buildWeb.session.openTaskAria', 'Open task {{key}}', { key })}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => {
@@ -79,12 +92,10 @@ export function WorktreeTaskKey({ worktree }: { worktree: Worktree }): React.JSX
 /** The session state at the row's right; `short` is the one-line compact row's form. */
 export function WorktreeTaskSessionBadge({
   worktree,
-  short,
-  className
+  short
 }: {
   worktree: Worktree
   short: boolean
-  className?: string
 }): React.JSX.Element | null {
   const state = getWorktreeTaskSessionState(worktree)
   // Why: a failed delete already shows the existing «Delete failed» row.
@@ -101,8 +112,8 @@ export function WorktreeTaskSessionBadge({
         <span
           className={cn(
             'inline-flex shrink-0 items-center gap-[3px] whitespace-nowrap text-[11px] leading-4 text-muted-foreground',
-            state === 'attention' && 'text-status-warning',
-            className
+            state === 'attention' &&
+              'rounded-[4px] bg-status-warning-background px-1 text-status-warning'
           )}
           data-worktree-task-session={state}
         >

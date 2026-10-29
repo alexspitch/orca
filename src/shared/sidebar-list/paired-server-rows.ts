@@ -51,7 +51,9 @@ const PairedServerWorkspaceRowSchema = z
       detachedHead: true,
       recentAt: true,
       smartTier: true,
-      smartAt: true
+      smartAt: true,
+      buildWebTask: true,
+      buildWebSession: true
     }).partial().shape
   )
   .extend({
@@ -124,7 +126,9 @@ export function pairedServerRowOfWorktree(
     ...kindFacts,
     recentAt: worktree.lastActivityAt,
     smartTier: worktree.smartTier,
-    smartAt: worktree.smartAt
+    smartAt: worktree.smartAt,
+    ...(worktree.buildWebTask ? { buildWebTask: worktree.buildWebTask } : {}),
+    ...(worktree.buildWebSession ? { buildWebSession: worktree.buildWebSession } : {})
   }
 }
 
@@ -181,7 +185,10 @@ const ServerWorktreePsRowSchema = z.object({
   liveTerminalCount: z.number().optional().catch(undefined),
   unverifiableTerminalCount: z.number().optional().catch(undefined),
   status: z.string().optional().catch(undefined),
-  workingMode: z.string().optional().catch(undefined)
+  workingMode: z.string().optional().catch(undefined),
+  // IS-147: an older server omits them; a malformed value drops.
+  buildWebTask: WorkspaceRowSchema.shape.buildWebTask,
+  buildWebSession: WorkspaceRowSchema.shape.buildWebSession
 })
 
 function reportedActivity(row: z.infer<typeof ServerWorktreePsRowSchema>): HostReportedActivity {

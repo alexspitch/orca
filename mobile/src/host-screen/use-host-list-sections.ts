@@ -27,6 +27,8 @@ export type HostListSectionsInputs = {
   hostPlatform: NodeJS.Platform | null
   /** The connected host announces `build-web-worktree-task.v1`. */
   hostKnowsTasks: boolean
+  /** The paired servers announcing it, for their own rows. */
+  serversKnowingTasks: ReadonlySet<string>
   state: HostScreenState
 }
 
@@ -56,6 +58,7 @@ function useFilterRepos(
 function useLegacyHostListSections({
   displayWorktrees,
   hostKnowsTasks,
+  serversKnowingTasks,
   state
 }: HostListSectionsInputs): HostListSections {
   const projectCatalog = useMemo(
@@ -88,7 +91,8 @@ function useLegacyHostListSections({
     collapsedGroups,
     workspaceStatuses: state.view.workspaceStatuses,
     repoHostIdByRepoId: state.repoHostIdByRepoId,
-    hostKnowsTasks
+    hostKnowsTasks,
+    serversKnowingTasks
   })
   return { ...sectionsResult, collapsedGroups, projectOrderBy: projectCatalog.projectOrderBy }
 }
@@ -102,6 +106,7 @@ function useFeedHostListSections({
   displayWorktrees,
   hostPlatform,
   hostKnowsTasks,
+  serversKnowingTasks,
   state
 }: HostListSectionsInputs): HostListSections {
   const collapsedGroups = useCollapsedGroups(state)
@@ -148,13 +153,15 @@ function useFeedHostListSections({
               search: state.search,
               repoHostIdByRepoId: state.repoHostIdByRepoId,
               lastVisited,
-              hostKnowsTasks
+              hostKnowsTasks,
+              serversKnowingTasks
             })
           : NO_SECTIONS,
     [
       built,
       preFeed,
       hostKnowsTasks,
+      serversKnowingTasks,
       displayWorktrees,
       state.view,
       state.repoHostIdByRepoId,

@@ -1,9 +1,9 @@
-import { getDefaultSettings } from '../../../../shared/constants'
 import type {
   BuildWebSessionAttentionReason,
   WorktreeBuildWebSessionState
 } from '../../../../shared/build-web-session-types'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
 import { mainWt, repo, wt } from './sidebar-list-golden-factories.test-fixture'
 
@@ -67,11 +67,16 @@ export const TASK_SESSION_WORKTREES: Worktree[] = [
 
 const SELECTED = TASK_SESSION_WORKTREES.find((worktree) => worktree.buildWebTask?.key === 'IS-166')
 
-/** The sidebar's store for these rows; compact by default, the current row is IS-166. */
-export function taskSessionStore(
-  overrides: Partial<AppState> = {},
-  compactWorktreeCards = true
-): Partial<AppState> {
+/** Card density over the explorer's seeded settings, as a fixture's `setup`. */
+export function withCompactCards(compactWorktreeCards: boolean): () => void {
+  return () =>
+    useAppStore.setState((state) => ({
+      settings: state.settings ? { ...state.settings, compactWorktreeCards } : state.settings
+    }))
+}
+
+/** The sidebar's store for these rows; the current row is IS-166. */
+export function taskSessionStore(overrides: Partial<AppState> = {}): Partial<AppState> {
   const worktreesByRepo: AppState['worktreesByRepo'] = { sa: [], orca: [], cards: [] }
   for (const worktree of TASK_SESSION_WORKTREES) {
     worktreesByRepo[worktree.repoId]?.push(worktree)
@@ -79,7 +84,6 @@ export function taskSessionStore(
   return {
     repos: [sa, orca, cards],
     worktreesByRepo,
-    settings: { ...getDefaultSettings('/home/fixture'), compactWorktreeCards },
     groupBy: 'task',
     sortBy: 'recent',
     projectOrderBy: 'manual',

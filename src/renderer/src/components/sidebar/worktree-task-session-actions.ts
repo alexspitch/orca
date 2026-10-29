@@ -1,16 +1,12 @@
 import { toast } from 'sonner'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
-import { defaultScopeHost } from '@/lib/default-creation-host'
-import { getProviderRuntimeContextKey } from '@/lib/provider-runtime-context'
 import { runtimeTargetForWorkspaceOwner } from '@/lib/resolve-owner'
 import { ipcOrRuntimeTargetForHostId } from '@/runtime/runtime-client-target'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
-import { sameBuildWebConsole } from '../../../../shared/build-web-console-origin'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { callBuildWeb } from '../build-web/build-web-client'
-import { useBuildWebStore } from '../build-web/build-web-store'
-import { showBuildWebTaskCard } from '../build-web/open-task-by-key'
+import { openBuildWebTaskCard } from '../build-web/open-task-by-key'
 
 // IS-147: what a task worktree's row does with its task — open its card, keep the worktree
 // (unlinking it), or reopen the task. Keep and reopen run on the host that owns the worktree.
@@ -21,83 +17,96 @@ function ownerTarget(worktree: Pick<Worktree, 'id' | 'hostId'>): RuntimeClientTa
     : runtimeTargetForWorkspaceOwner(useAppStore.getState(), { workspaceId: worktree.id })
 }
 
-/** The task's card, only when this client's console is the one the task lives on. */
-export async function openWorktreeBuildWebTask(worktree: Worktree): Promise<void> {
-  const task = worktree.buildWebTask
-  if (!task) {
-    return
-  }
-  const host = {
-    activeRuntimeEnvironmentId: useAppStore.getState().settings?.activeRuntimeEnvironmentId ?? null
-  }
-  const contextKey = getProviderRuntimeContextKey(host)
-  const store = useBuildWebStore.getState()
-  const status =
-    store.contextKey === contextKey && store.status
-      ? store.status
-      : await callBuildWeb(defaultScopeHost(host), 'status').catch(() => null)
-  if (!status?.connected || !sameBuildWebConsole(status.baseUrl, task.consoleHost)) {
-    toast.error(
-      translate(
-        'buildWeb.session.openTask.otherConsole',
-        '{{key}} lives on another console: {{console}}.',
-        { key: task.key, console: task.consoleHost }
-      )
-    )
-    return
-  }
-  // Why: the first status of a host clears the open card, so it must land before the card opens.
-  if (store.contextKey !== contextKey) {
-    store.setStatus(contextKey, status)
-  }
-  showBuildWebTaskCard({ id: task.issueId, key: task.key, title: worktree.displayName || task.key })
+function hostUnknown(): string {
+  return translate('buildWeb.session.hostUnknown', 'The host of this workspace is unknown.')
 }
 
-async function runOnOwner(
-  worktree: Worktree,
-  run: (target: RuntimeClientTarget) => Promise<{ ok: true } | { ok: false; error: string }>,
-  done: string
-): Promise<void> {
-  const target = ownerTarget(worktree)
-  const result = target
-    ? await run(target).catch((error: unknown) => ({
-        ok: false as const,
-        error: error instanceof Error ? error.message : String(error)
-      }))
-    : {
-        ok: false as const,
-        error: translate('buildWeb.session.hostUnknown', 'The host of this workspace is unknown.')
-      }
-  if (result.ok) {
-    toast.success(done)
-  } else {
-    toast.error(result.error)
-  }
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+/** The task's card, only when this client's console is the one the task lives on. */
+export function openWorktreeBuildWebTask(worktree: Worktree): Promise<void> {
+  const task = worktree.buildWebTask
+  return task
+    ? openBuildWebTaskCard({ ...task, title: worktree.displayName || task.key })
+    : Promise.resolve()
 }
 
 /** «Keep»: the host unlinks the worktree from its task; the worktree stays as it is. */
-export function keepWorktreeTaskSession(worktree: Worktree): Promise<void> {
-  const key = worktree.buildWebTask?.key ?? ''
-  return runOnOwner(
-    worktree,
-    (target) => callBuildWeb(target, 'keepWorktreeSession', { worktreeId: worktree.id }),
+export async function keepWorktreeTaskSession(worktree: Worktree): Promise<void> {
+  const target = ownerTarget(worktree)
+  if (!target) {
+    toast.error(hostUnknown())
+    return
+  }
+  const result = await callBuildWeb(target, 'keepWorktreeSession', {
+    worktreeId: worktree.id
+  }).catch((error: unknown) => ({ ok: false as const, error: errorText(error) }))
+  if (!result.ok) {
+    toast.error(result.error)
+    return
+  }
+  toast.success(
     translate('buildWeb.session.kept', '{{name}} kept, unlinked from {{key}}', {
       name: worktree.displayName,
-      key
+      key: worktree.buildWebTask?.key ?? ''
     })
   )
 }
 
+/** The task's status once it is out of the archive or trash and patched back to in progress. */
+async function moveTaskBackToWork(
+  target: RuntimeClientTarget,
+  issueId: string
+): Promise<{ ok: true; status: string } | { ok: false; error: string }> {
+  const detail = await callBuildWeb(target, 'getIssue', { id: issueId })
+  if (detail.archived_at || detail.deleted_at) {
+    const restored = await callBuildWeb(target, 'restoreIssue', { id: issueId })
+    if (!restored.ok) {
+      return restored
+    }
+  }
+  const patched = await callBuildWeb(target, 'updateIssue', {
+    id: issueId,
+    patch: { status: 'inprogress' }
+  })
+  if (!patched.ok) {
+    return patched
+  }
+  // Why the second read: the console may answer a patch without the task.
+  const status =
+    patched.value.issue?.status ?? (await callBuildWeb(target, 'getIssue', { id: issueId })).status
+  return { ok: true, status }
+}
+
 /** «Back to work»: reopens the task in the console, which takes the session out of closing. */
-export function reopenWorktreeTask(worktree: Worktree): Promise<void> {
+export async function reopenWorktreeTask(worktree: Worktree): Promise<void> {
   const task = worktree.buildWebTask
   if (!task) {
-    return Promise.resolve()
+    return
   }
-  return runOnOwner(
-    worktree,
-    (target) =>
-      callBuildWeb(target, 'updateIssue', { id: task.issueId, patch: { status: 'inprogress' } }),
-    translate('buildWeb.session.reopened', '{{key}} is back in progress', { key: task.key })
-  )
+  const target = ownerTarget(worktree)
+  if (!target) {
+    toast.error(hostUnknown())
+    return
+  }
+  const result = await moveTaskBackToWork(target, task.issueId).catch((error: unknown) => ({
+    ok: false as const,
+    error: errorText(error)
+  }))
+  if (!result.ok) {
+    toast.error(result.error)
+  } else if (result.status !== 'inprogress') {
+    toast.error(
+      translate('buildWeb.session.reopenKept', 'The console kept {{key}} in {{status}}.', {
+        key: task.key,
+        status: result.status
+      })
+    )
+  } else {
+    toast.success(
+      translate('buildWeb.session.reopened', '{{key}} is back in progress', { key: task.key })
+    )
+  }
 }
