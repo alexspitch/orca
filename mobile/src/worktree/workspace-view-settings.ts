@@ -47,6 +47,8 @@ export type WorkspaceViewSettings = {
 
 export type MobileViewState = {
   groupBy: PersistedUIState['groupBy']
+  /** «By task»'s Input required switch; a host that predates it never sends one, so it stays on. */
+  showInputRequiredGroup: boolean
   sortBy: PersistedUIState['sortBy']
   filters: FilterState
   collapsedGroups: readonly string[]
@@ -66,6 +68,7 @@ export type MobileViewState = {
 
 export const INITIAL_MOBILE_VIEW: MobileViewState = {
   groupBy: 'repo',
+  showInputRequiredGroup: true,
   sortBy: 'recent',
   filters: NO_WORKSPACE_ROW_FILTERS,
   collapsedGroups: [],
@@ -111,6 +114,9 @@ export function buildWorkspaceViewSettingsUpdate(
   const update: WorkspaceViewSettings = {}
   if ('groupBy' in patch) {
     update.groupBy = next.groupBy
+  }
+  if ('showInputRequiredGroup' in patch) {
+    update.showInputRequiredGroup = next.showInputRequiredGroup
   }
   if ('sortBy' in patch) {
     update.sortBy = next.sortBy
@@ -173,6 +179,7 @@ export function applyDesktopViewSettings(
   }
   return {
     groupBy: isGroupBy(settings.groupBy) ? settings.groupBy : current.groupBy,
+    showInputRequiredGroup: settings.showInputRequiredGroup ?? current.showInputRequiredGroup,
     sortBy: isSortBy(settings.sortBy) ? settings.sortBy : current.sortBy,
     filters,
     collapsedGroups: settings.collapsedGroups ?? current.collapsedGroups,

@@ -193,16 +193,16 @@ function makePortScan(worktree: Worktree): { key: string; result: WorkspacePortS
   }
 }
 
-function rootContaining(selector: string): HTMLElement {
-  const el = document.querySelector(selector)
+/** The hover root around the row's own element — not a copy shown inside a card. */
+function hoverRootOf(selector: string): HTMLElement | null {
+  const el = Array.from(document.querySelectorAll(selector)).find(
+    (candidate) => !candidate.closest('[data-hover-card-content]')
+  )
   if (!el) {
     throw new Error(`No element matched ${selector}`)
   }
   const root = el.closest('[data-hovercard-root]')
-  if (!(root instanceof HTMLElement)) {
-    throw new Error(`No hover-card root ancestor for ${selector}`)
-  }
-  return root
+  return root instanceof HTMLElement ? root : null
 }
 
 describe('WorktreeCard compact hover ownership', () => {
@@ -227,8 +227,16 @@ describe('WorktreeCard compact hover ownership', () => {
     container.remove()
   })
 
-  it('uses one full identity anchor for compact title, metadata, and live ports', async () => {
+  // IS-147: the row body, its metadata and its ports icon open nothing; the task number opens the
+  // details and the «Project on …» element the host with its live ports — one card each.
+  it('opens the details from the task number and live ports from the «Project on …» element only', async () => {
     const worktree = makeWorktree({
+      buildWebTask: {
+        issueId: 'issue-1',
+        key: 'IS-1',
+        consoleHost: 'https://console.example',
+        branch: 'feature/local-branch'
+      },
       linkedItems: [
         {
           provider: 'github',
@@ -236,14 +244,6 @@ describe('WorktreeCard compact hover ownership', () => {
           number: 57,
           title: 'Review',
           url: 'https://github.com/acme/orca/pull/57'
-        },
-        {
-          provider: 'linear',
-          type: 'issue',
-          number: 0,
-          identifier: 'ENG-2',
-          title: 'Task',
-          url: 'https://linear.app/acme/issue/ENG-2/task'
         }
       ]
     })
@@ -251,33 +251,28 @@ describe('WorktreeCard compact hover ownership', () => {
     const { default: WorktreeCard } = await import('./WorktreeCard')
 
     act(() => {
-      root.render(<WorktreeCard worktree={worktree} repo={makeRepo()} isActive={false} />)
+      root.render(<WorktreeCard worktree={worktree} repo={makeRepo()} isActive />)
     })
 
-    const titleRoot = rootContaining('[data-worktree-title-inline-rename]')
-    const portsRoot = rootContaining('[aria-label="1 live port"]')
-    const metadataRoot = rootContaining('[aria-label="Workspace metadata"]')
-    expect(titleRoot).toBe(portsRoot)
-    expect(titleRoot).toBe(metadataRoot)
-    expect(container.querySelectorAll('[data-hovercard-root]')).toHaveLength(1)
-    expect(container.querySelectorAll('[data-hover-card-content]')).toHaveLength(1)
-    expect(
-      container
-        .querySelector('[data-worktree-card-hover-trigger]')
-        ?.hasAttribute('data-hover-card-trigger')
-    ).toBe(true)
-    const open = openChangeByRoot.get(titleRoot)
+    expect(hoverRootOf('[data-worktree-title-inline-rename]')).toBeNull()
+    expect(hoverRootOf('[aria-label="1 live port"]')).toBeNull()
+    const keyRoot = hoverRootOf('[aria-label="Open task IS-1"]')
+    const hostRoot = hoverRootOf('[data-worktree-card-host]')
+    expect(keyRoot).not.toBeNull()
+    expect(hostRoot).not.toBeNull()
+    expect(keyRoot).not.toBe(hostRoot)
+    expect(container.querySelectorAll('[data-hovercard-root]')).toHaveLength(2)
+    expect(keyRoot?.textContent).toContain('Reviews · 1')
+    expect(keyRoot?.textContent).not.toContain('58941')
+    expect(hostRoot?.textContent).toContain('Live Ports')
+    expect(hostRoot?.textContent).toContain('58941')
+
     act(() => {
-      open?.(true)
+      if (keyRoot) {
+        openChangeByRoot.get(keyRoot)?.(true)
+      }
     })
-    expect(container.querySelectorAll('[data-open="true"]')).toHaveLength(1)
-    act(() => {
-      open?.(false)
-      open?.(true)
-    })
-    expect(container.querySelectorAll('[data-open="true"]')).toHaveLength(1)
-    expect(titleRoot.textContent).toContain('Reviews · 1')
-    expect(titleRoot.textContent).toContain('Issues & tasks · 1')
-    expect(titleRoot.textContent).toContain('58941')
+    expect(keyRoot?.getAttribute('data-open')).toBe('true')
+    expect(hostRoot?.getAttribute('data-open')).toBe('false')
   })
 })

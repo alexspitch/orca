@@ -12,6 +12,20 @@ export const GROUP_HEADER_ROW_HEIGHT = 28
 export const HOST_HEADER_ROW_HEIGHT = 36
 export const WORKTREE_SIDEBAR_VIRTUAL_ROW_GAP = 6
 export const SECONDARY_GROUP_HEADER_TOP_MARGIN = 4
+// Why: compact rows sit flush as 28px lines with 6px before each group, as in the IS-147 mockup.
+const COMPACT_WORKTREE_SIDEBAR_VIRTUAL_ROW_GAP = 0
+const COMPACT_GROUP_HEADER_TOP_MARGIN = 6
+const COMPACT_ITEM_ROW_ESTIMATE = 28
+
+/** Space between two rows of the list; compact rows have none. */
+export function getWorktreeSidebarRowGap(compactRows: boolean): number {
+  return compactRows ? COMPACT_WORKTREE_SIDEBAR_VIRTUAL_ROW_GAP : WORKTREE_SIDEBAR_VIRTUAL_ROW_GAP
+}
+
+/** Space above a group header that follows another group. */
+export function getGroupHeaderTopMargin(compactRows: boolean): number {
+  return compactRows ? COMPACT_GROUP_HEADER_TOP_MARGIN : SECONDARY_GROUP_HEADER_TOP_MARGIN
+}
 const IMPORTED_WORKTREES_LINE_ROW_HEIGHT = 36
 const PENDING_CREATION_ROW_HEIGHT = 56
 const FOLDER_WORKSPACE_ROW_HEIGHT = 64
@@ -54,7 +68,8 @@ export function estimateRenderRowSize(
   rows: readonly RenderRow[],
   index: number,
   firstHeaderIndex: number,
-  _activeStickyHeaderIndex: number | null
+  _activeStickyHeaderIndex: number | null,
+  compactRows = false
 ): number {
   const row = rows[index]
   if (row?.type === 'host-header') {
@@ -77,7 +92,7 @@ export function estimateRenderRowSize(
         index,
         firstHeaderIndex
       })
-        ? SECONDARY_GROUP_HEADER_TOP_MARGIN
+        ? getGroupHeaderTopMargin(compactRows)
         : 0)
     )
   }
@@ -93,7 +108,7 @@ export function estimateRenderRowSize(
   if (row?.type === 'folder-workspace') {
     return FOLDER_WORKSPACE_ROW_HEIGHT
   }
-  return 116
+  return compactRows ? COMPACT_ITEM_ROW_ESTIMATE : 116
 }
 
 export function getVirtualRowTransform(start: number): string {

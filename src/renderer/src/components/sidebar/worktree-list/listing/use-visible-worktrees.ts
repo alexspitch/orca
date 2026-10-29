@@ -23,6 +23,7 @@ import { useSleepingSweepRetention } from './use-sleeping-sweep-retention'
 import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
 import type { WorktreeGroupBy } from '../../../../../../shared/sidebar-list/row-types'
 import { createTaskSessionHostReader } from '../../task-session-capability'
+import { selectInputRequiredWorkspaceIds } from '../../input-required-workspaces'
 
 const EMPTY_WORKTREE_ID_SET: ReadonlySet<string> = new Set()
 
@@ -53,6 +54,12 @@ export function useVisibleSidebarWorktrees(args: {
     hiddenSessionStates
   } = filterState
   const keepArchivedTaskAttention = args.groupBy === 'task'
+  // Why only under a session filter: nothing else reads it before grouping.
+  const inputRequiredWorkspaceIds = useAppStore((s) =>
+    (hiddenSessionStates?.length ?? 0) > 0
+      ? selectInputRequiredWorkspaceIds(s)
+      : EMPTY_WORKTREE_ID_SET
+  )
   const worktreesByRepo = useAppStore((s) => selectWorktreesByRepo(s))
   const agentStatusEpoch = useAppStore((s) => (!showSleepingWorkspaces ? s.agentStatusEpoch : 0))
   // Opt-out lists must skip the clock so they cannot evict the sample shared by live lists.
@@ -135,6 +142,7 @@ export function useVisibleSidebarWorktrees(args: {
       // Switch point: the stamp sort ranks by host identity (use-sort-order.ts).
       sortedByHostIdentity: ORCA_SIDEBAR_INPUTS_IS_MAIN,
       hiddenSessionStates,
+      inputRequiredWorkspaceIds,
       keepArchivedTaskAttention,
       taskSessionHostKnown,
       forcedVisibleWorktreeIds: args.agentSendTargetWorktreeId
@@ -167,6 +175,7 @@ export function useVisibleSidebarWorktrees(args: {
     pairedDeviceIdsByEnvironment,
     worktreeIdsWithStructuredChat,
     hiddenSessionStates,
+    inputRequiredWorkspaceIds,
     keepArchivedTaskAttention,
     taskSessionHostKnown
   ])

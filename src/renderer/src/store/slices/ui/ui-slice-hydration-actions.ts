@@ -143,6 +143,7 @@ export function createUiHydrationActions(set: UISliceSet, _get: UISliceGet): Par
           hideCliCreatedWorkspaces: ui.hideCliCreatedWorkspaces === true,
           hideDetachedHeadWorkspaces: ui.hideDetachedHeadWorkspaces === true,
           hiddenSessionStates: normalizeHiddenTaskSessionGroups(ui.hiddenSessionStates),
+          showInputRequiredGroup: ui.showInputRequiredGroup !== false,
           hideWorkspacesFromOtherDevices: ui.hideWorkspacesFromOtherDevices === true,
           // Why !== false: profiles written before #8873 have no key, and they are
           // precisely the ones showing the bug, so absence must mean "exempt".

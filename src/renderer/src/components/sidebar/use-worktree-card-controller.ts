@@ -46,8 +46,11 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     ports: showPorts
   } = foundation.cardDetails
   const shouldRefreshHostedReview = foundation.newCardStyle ? showStatus : showPR
-  const detailsHoverControl = useWorktreeCardDetailsHoverControl()
-  const hoverDetailsOpen = detailsHoverControl.hoverOpen
+  // Why two: the task number and the «Project on …» element each open their own card (IS-147);
+  // one shared `open` would open both at once.
+  const taskKeyHoverControl = useWorktreeCardDetailsHoverControl()
+  const hostHoverControl = useWorktreeCardDetailsHoverControl()
+  const hoverDetailsOpen = taskKeyHoverControl.hoverOpen || hostHoverControl.hoverOpen
   const referenceDetails = useWorkspaceReferenceDetails(
     worktree,
     repo,
@@ -161,7 +164,8 @@ export function useWorktreeCardController(props: ResolvedWorktreeCardProps) {
     ...foundation,
     ...review,
     ...linked,
-    detailsHoverControl,
+    taskKeyHoverControl,
+    hostHoverControl,
     referenceDetails,
     reviewChecks,
     showStatus,

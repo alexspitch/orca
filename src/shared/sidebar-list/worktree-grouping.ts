@@ -14,8 +14,9 @@ import {
   TASK_GROUP_ORDER,
   getTaskLaneKey,
   getWorktreeTaskGroup,
-  type SidebarTaskGroupReader
+  type InputRequiredReader
 } from './task-session-groups'
+import { folderWorkspaceToWorktree } from '../folder-workspace-worktree'
 import { buildProjectSections, type ProjectGroupingIndex } from '../project-section-grouping'
 import { orderProjectSections } from '../project-section-order'
 import type {
@@ -31,7 +32,7 @@ export function buildOrderedGroups(args: {
   naturalWorktrees: readonly Worktree[]
   repoMap: Map<string, Repo>
   prGroupOf: SidebarPRGroupReader
-  taskGroupOf?: SidebarTaskGroupReader
+  inputRequiredOf?: InputRequiredReader
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectIndex: ProjectGroupingIndex | null
   displayRootByIdentity?: ReadonlyMap<string, Worktree>
@@ -48,7 +49,7 @@ export function buildOrderedGroups(args: {
     naturalWorktrees,
     repoMap,
     prGroupOf,
-    taskGroupOf = getWorktreeTaskGroup,
+    inputRequiredOf,
     workspaceStatuses,
     projectIndex,
     displayRootByIdentity,
@@ -92,7 +93,7 @@ export function buildOrderedGroups(args: {
       groupBy === 'workspace-status'
         ? getWorkspaceStatusGroupKey(getWorkspaceStatus(w, workspaceStatuses))
         : groupBy === 'task'
-          ? getTaskLaneKey(taskGroupOf(w))
+          ? getTaskLaneKey(getWorktreeTaskGroup(w, inputRequiredOf?.(w) === true))
           : getPRLaneKey(prGroupOf(w))
     if (!grouped.has(key)) {
       grouped.set(key, { label: '', items: [], repo: undefined, repoIds: new Set() })
@@ -103,7 +104,13 @@ export function buildOrderedGroups(args: {
   }
   // Folder workspaces bypass the worktree loop; create their lanes even when they are the only occupants (#15362).
   for (const pair of folderWorkspaces) {
-    const key = getFolderWorkspaceLaneKey(pair, groupBy, workspaceStatuses)
+    const key = getFolderWorkspaceLaneKey(
+      pair,
+      groupBy,
+      workspaceStatuses,
+      groupBy === 'task' &&
+        inputRequiredOf?.(folderWorkspaceToWorktree(pair.folderWorkspace)) === true
+    )
     if (!grouped.has(key)) {
       grouped.set(key, {
         label: '',

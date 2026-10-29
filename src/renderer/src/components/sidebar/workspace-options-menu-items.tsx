@@ -38,6 +38,7 @@ import {
 } from '../../../../shared/workspace-view/workspace-view-options'
 import { translate } from '@/i18n/i18n'
 import { SidebarGroupByToggle } from './SidebarGroupByToggle'
+import { SidebarInputRequiredGroupSwitch } from './SidebarInputRequiredGroupSwitch'
 
 export function useWorkspaceOptionsFilterBadge(): {
   hasAnyFilter: boolean
@@ -89,9 +90,12 @@ function GroupByOptionItem(): JSX.Element {
   const groupBy = useAppStore((s) => s.groupBy)
   const setGroupBy = useAppStore((s) => s.setGroupBy)
   return (
-    <div className="px-2 pt-0.5 pb-1">
-      <SidebarGroupByToggle groupBy={groupBy} setGroupBy={setGroupBy} />
-    </div>
+    <>
+      <div className="px-2 pt-0.5 pb-1">
+        <SidebarGroupByToggle groupBy={groupBy} setGroupBy={setGroupBy} />
+      </div>
+      <SidebarInputRequiredGroupSwitch />
+    </>
   )
 }
 

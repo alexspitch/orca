@@ -99,6 +99,7 @@ export const hostViewSettingsSchema = z
   .looseObject({
     ui: z.looseObject({
       groupBy: salvagedOptional('groupBy', z.enum(WORKSPACE_GROUP_BY_ARMS)),
+      showInputRequiredGroup: salvagedOptional('showInputRequiredGroup', z.boolean()),
       sortBy: salvagedOptional('sortBy', z.enum(WORKSPACE_SORT_BY_ARMS)),
       hideSleepingWorkspaces: salvagedOptional('hideSleepingWorkspaces', z.boolean()),
       hideDefaultBranchWorkspace: salvagedOptional('hideDefaultBranchWorkspace', z.boolean()),

@@ -96,6 +96,7 @@ export const UI_STATE_GLOBAL_FIELDS = [
   'hideCliCreatedWorkspaces',
   'hideDetachedHeadWorkspaces',
   'hiddenSessionStates',
+  'showInputRequiredGroup',
   'hideWorkspacesFromOtherDevices',
   'alwaysShowDefaultBranchWorkspace',
   'agentsHideWorkspacesFromOtherDevices',

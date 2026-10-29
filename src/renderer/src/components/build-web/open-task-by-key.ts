@@ -10,6 +10,7 @@ import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { labelIssuePage, withoutPageRecording } from './page-history/page-history-store'
 import { armLinkReturn } from '@/components/link-return/link-return-arm'
+import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { sameBuildWebConsole } from '../../../../shared/build-web-console-origin'
 
 /** The task a number names: build-web's own number, or the Jira number of a task linked to Jira. */
@@ -124,13 +125,20 @@ export async function openTaskByKey(key: string): Promise<void> {
   )
 }
 
-/** A task worktree's card (IS-147), only when this client's console is the one the task lives on. */
-export async function openBuildWebTaskCard(task: {
-  issueId: string
-  key: string
-  title: string
-  consoleHost: string
-}): Promise<void> {
+/**
+ * A task worktree's card (IS-147) as a tab of the workspace the user is in, or the tab it already
+ * has there; only when this client's console is the one the task lives on.
+ */
+export async function openBuildWebTaskCard(
+  task: {
+    issueId: string
+    key: string
+    title: string
+    consoleHost: string
+  },
+  /** Where the tab opens when no workspace is open: the row's own. */
+  fallbackWorktreeId: string
+): Promise<void> {
   const host = taskHost()
   const store = useBuildWebStore.getState()
   const status =
@@ -151,5 +159,17 @@ export async function openBuildWebTaskCard(task: {
   if (store.contextKey !== host.contextKey) {
     store.setStatus(host.contextKey, status)
   }
-  showBuildWebTaskCard({ id: task.issueId, key: task.key, title: task.title })
+  const app = useAppStore.getState()
+  const worktreeId = app.activeWorktreeId
+  if (!worktreeId) {
+    activateAndRevealWorktree(fallbackWorktreeId)
+  } else if (app.activeView !== 'terminal') {
+    app.setActiveView('terminal')
+  }
+  useAppStore.getState().openBuildWebTaskTab(worktreeId ?? fallbackWorktreeId, {
+    contextKey: host.contextKey,
+    issueId: task.issueId,
+    key: task.key,
+    title: task.title
+  })
 }

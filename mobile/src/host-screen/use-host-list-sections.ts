@@ -92,7 +92,8 @@ function useLegacyHostListSections({
     workspaceStatuses: state.view.workspaceStatuses,
     repoHostIdByRepoId: state.repoHostIdByRepoId,
     hostKnowsTasks,
-    serversKnowingTasks
+    serversKnowingTasks,
+    showInputRequiredGroup: state.view.showInputRequiredGroup
   })
   return { ...sectionsResult, collapsedGroups, projectOrderBy: projectCatalog.projectOrderBy }
 }

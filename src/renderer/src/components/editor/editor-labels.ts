@@ -33,6 +33,10 @@ export function getEditorDisplayLabel(
     return file.checkRunDetails?.check.name ?? getBaseLabel(file, variant)
   }
 
+  if (file.mode === 'build-web-task') {
+    return file.buildWebTask?.key ?? getBaseLabel(file, variant)
+  }
+
   if (file.mode === 'markdown-preview') {
     return `${getBaseLabel(file, variant)} (preview)`
   }

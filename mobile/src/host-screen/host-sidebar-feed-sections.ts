@@ -32,6 +32,7 @@ export type HostFeedListSources = {
 
 const TASK_GROUP_LABEL_KEY = {
   attention: 'attention',
+  input: 'input',
   release: 'release',
   progress: 'progress',
   none: 'none'

@@ -8,9 +8,9 @@ import type {
 import { getWorkspaceStatus } from '../../workspace-status'
 import type { WorktreeGroupBy } from '../../../../../../shared/sidebar-list/row-types'
 import {
+  getGroupHeaderTopMargin,
   getVirtualRowTransform,
   getWorktreeVirtualRowTransform,
-  SECONDARY_GROUP_HEADER_TOP_MARGIN,
   shouldUseHeaderTopSpacing
 } from '../viewport/virtual-rows'
 import type { RenderRow } from '../listing/render-row'
@@ -30,7 +30,11 @@ import {
   type WorktreeItemRowContext
 } from './item-row'
 import { renderWorktreeSectionHeaderRow, type SectionHeaderRowContext } from './SectionHeader'
-import { getTaskAttentionFramePiece, TaskAttentionFrame } from './task-attention-frame'
+import {
+  getTaskAttentionFramePiece,
+  TASK_ATTENTION_COMPACT_LAST_ROW_CLASS_NAME,
+  TaskAttentionFrame
+} from './task-attention-frame'
 import type { WorktreeRowDragState } from '../drag/row-state'
 
 export type WorktreeVirtualRowContext = {
@@ -39,6 +43,8 @@ export type WorktreeVirtualRowContext = {
   activeStickyHeaderIndexRef: React.MutableRefObject<number | null>
   activeStickyHostIndexRef: React.MutableRefObject<number | null>
   measureVirtualRowElement: (element: HTMLDivElement | null) => void
+  /** Classic compact cards: flush rows and the mockup's attention box. */
+  compactRows: boolean
   groupBy: WorktreeGroupBy
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   activeWorktreeId: string | null
@@ -127,13 +133,18 @@ function renderLineageGroupVirtualRow(
       ref={ctx.measureVirtualRowElement}
       className={cn(
         'absolute left-0 right-0 top-0',
+        ctx.compactRows &&
+          attentionFrame === 'bottom' &&
+          TASK_ATTENTION_COMPACT_LAST_ROW_CLASS_NAME,
         parent?.worktree.id === ctx.worktreeDragState.draggingWorktreeId && 'pointer-events-none',
         ctx.worktreeDragState.draggingWorktreeId !== null &&
           'transition-transform duration-150 ease-out will-change-transform'
       )}
       style={{ transform: getWorktreeVirtualRowTransform(vItem.start, parentPreviewOffset) }}
     >
-      {attentionFrame ? <TaskAttentionFrame piece={attentionFrame} /> : null}
+      {attentionFrame ? (
+        <TaskAttentionFrame piece={attentionFrame} compact={ctx.compactRows} />
+      ) : null}
       <div className="overflow-visible">
         {parent
           ? renderWorktreeItemRow(
@@ -173,13 +184,16 @@ export function renderWorktreeVirtualRow(
       vItem,
       isActiveStickyHeader,
       hasStickyHost: ctx.activeStickyHostIndexRef.current !== null,
-      hasHeaderTopSpacing,
+      topSpacingClassName: hasHeaderTopSpacing ? (ctx.compactRows ? 'pt-1.5' : 'pt-1') : null,
       attentionFrame: attentionFrame ? (
         <TaskAttentionFrame
           piece={attentionFrame}
+          compact={ctx.compactRows}
           // Why: the spacer above a header stays outside the box, which then opens at the title.
           topInset={
-            hasHeaderTopSpacing && !isActiveStickyHeader ? SECONDARY_GROUP_HEADER_TOP_MARGIN : 0
+            hasHeaderTopSpacing && !isActiveStickyHeader
+              ? getGroupHeaderTopMargin(ctx.compactRows)
+              : 0
           }
         />
       ) : null,
@@ -251,6 +265,9 @@ export function renderWorktreeVirtualRow(
       data-workspace-status={itemWorkspaceStatus ?? undefined}
       className={cn(
         'absolute left-0 right-0 top-0',
+        ctx.compactRows &&
+          attentionFrame === 'bottom' &&
+          TASK_ATTENTION_COMPACT_LAST_ROW_CLASS_NAME,
         row.worktree.id === ctx.worktreeDragState.draggingWorktreeId && 'pointer-events-none',
         ctx.worktreeDragState.draggingWorktreeId !== null &&
           'transition-transform duration-150 ease-out will-change-transform'
@@ -268,7 +285,9 @@ export function renderWorktreeVirtualRow(
           : undefined
       }
     >
-      {attentionFrame ? <TaskAttentionFrame piece={attentionFrame} /> : null}
+      {attentionFrame ? (
+        <TaskAttentionFrame piece={attentionFrame} compact={ctx.compactRows} />
+      ) : null}
       {renderWorktreeItemRow(ctx.item, row, false)}
     </div>
   )

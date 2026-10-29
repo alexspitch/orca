@@ -147,7 +147,8 @@ describe('host screen reply schemas', () => {
       hideWorkspacesFromOtherDevices: true,
       projectOrderBy: 'recent',
       worktreeCardProperties: ['status', 'a-property-from-a-newer-desktop'],
-      agentActivityDisplayMode: 'full'
+      agentActivityDisplayMode: 'full',
+      showInputRequiredGroup: false
     }
     expect(hostViewSettingsSchema.parse({ ui })).toEqual(ui)
   })
@@ -164,7 +165,12 @@ describe('host screen reply schemas', () => {
 
   it('reads a desktop that predates them as absent, which keeps the local value', () => {
     const parsed = hostViewSettingsSchema.parse({
-      ui: { groupBy: 'repo', projectOrderBy: 'alphabetical', agentActivityDisplayMode: 7 }
+      ui: {
+        groupBy: 'repo',
+        projectOrderBy: 'alphabetical',
+        agentActivityDisplayMode: 7,
+        showInputRequiredGroup: 'off'
+      }
     })
     expect(parsed).toEqual({ groupBy: 'repo' })
   })

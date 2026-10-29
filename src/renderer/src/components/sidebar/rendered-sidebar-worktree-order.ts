@@ -31,6 +31,7 @@ import {
   getVisibleSidebarHostIdSet
 } from '../../../../shared/sidebar-list/host-filtering'
 import { selectFolderWorkspaces } from '@/store/workspace-record-selectors'
+import { inputRequiredReaderOf, selectInputRequiredWorkspaceIds } from './input-required-workspaces'
 
 const EMPTY_REPO_ID_SET: ReadonlySet<string> = Object.freeze(new Set<string>())
 const EMPTY_IMPORTED_BY_REPO: ReadonlyMap<string, ImportedWorktreesCardCandidate> = new Map()
@@ -72,6 +73,7 @@ export function computeRenderedSidebarRows(
     worktrees: [...visibleWorktrees],
     repoMap,
     prGroupOf: createSidebarPRGroupReader(repoMap, prCache),
+    inputRequiredOf: inputRequiredReaderOf(selectInputRequiredWorkspaceIds(state)),
     repoOrder: getLogicalRepoOrderRankById(state.repos.map((repo) => repo.id)),
     workspaceStatuses: state.workspaceStatuses,
     projectOrderBy: state.projectOrderBy,

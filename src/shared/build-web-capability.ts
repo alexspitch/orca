@@ -62,5 +62,8 @@ export const BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY = 'build-web-image-g
  */
 export const BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY = 'build-web-worktree-task.v1'
 
+/** A runtime whose `ui.set` takes `showInputRequiredGroup`, the «By task» Input required switch. */
+export const BUILD_WEB_INPUT_REQUIRED_GROUP_RUNTIME_CAPABILITY = 'build-web-input-required-group.v1'
+
 /** A runtime that reads a task session's agent log on its own disk (IS-147): `buildWeb.sessionTranscript`. */
 export const BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY = 'build-web-session-transcript.v1'

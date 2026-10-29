@@ -56,6 +56,18 @@ describe('applyDesktopViewSettings', () => {
     expect(applyDesktopViewSettings(base, {})).toEqual({ ...base, sharesOtherClientFilter: false })
   })
 
+  it('keeps Input required on for a desktop that never sends it and follows one that does', () => {
+    expect(applyDesktopViewSettings(base, {}).showInputRequiredGroup).toBe(true)
+    const off = applyDesktopViewSettings(base, { showInputRequiredGroup: false })
+    expect(off.showInputRequiredGroup).toBe(false)
+    expect(
+      buildWorkspaceViewSettingsUpdate(
+        { showInputRequiredGroup: true },
+        { ...off, showInputRequiredGroup: true }
+      )
+    ).toEqual({ showInputRequiredGroup: true })
+  })
+
   it('keeps renderable workspace statuses when desktop sends an empty catalog', () => {
     const next = applyDesktopViewSettings(base, { workspaceStatuses: [] })
 

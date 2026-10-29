@@ -36,6 +36,8 @@ export function useWorkspaceSections(args: {
   hostKnowsTasks: boolean
   /** The paired servers announcing it, for their own rows. */
   serversKnowingTasks: ReadonlySet<string>
+  /** The host's «By task» Input required switch. */
+  showInputRequiredGroup: boolean
 }): {
   sections: Section[]
   rawSections: Section[]
@@ -56,7 +58,8 @@ export function useWorkspaceSections(args: {
     workspaceStatuses,
     repoHostIdByRepoId,
     hostKnowsTasks,
-    serversKnowingTasks
+    serversKnowingTasks,
+    showInputRequiredGroup
   } = args
 
   const uniqueRepos = useMemo(
@@ -84,7 +87,8 @@ export function useWorkspaceSections(args: {
         showPinnedInGroups,
         repoHostIdByRepoId,
         hostKnowsTasks,
-        serversKnowingTasks
+        serversKnowingTasks,
+        showInputRequiredGroup
       ),
     [
       repoHostIdByRepoId,
@@ -98,7 +102,8 @@ export function useWorkspaceSections(args: {
       pinnedIds,
       projectCatalog,
       workspaceStatuses,
-      showPinnedInGroups
+      showPinnedInGroups,
+      showInputRequiredGroup
     ]
   )
 

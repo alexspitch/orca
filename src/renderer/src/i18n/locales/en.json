@@ -6288,7 +6288,9 @@
           "automationCreated": "Created by automation",
           "branchIdentity": "Branch",
           "branchFolderPathIdentity": "Branch or folder path",
-          "ef18787206": "Queued for deletion"
+          "ef18787206": "Queued for deletion",
+          "archivedBadge": "archived",
+          "runtimeHostFallbackLabel": "Orca server"
         },
         "WorktreeCardAgents": {
           "1b0a156717": "Agents"
@@ -22788,6 +22790,11 @@
       "statePartial": "partial",
       "stateFailed": "failed",
       "stateCancelled": "cancelled"
+    },
+    "taskTab": {
+      "otherHost": "{{key}} is read through another host. Switch back to it to see the card.",
+      "disconnected": "build-web is not connected on this host.",
+      "unavailable": "The task is unavailable."
     }
   },
   "gitLog": {

@@ -2,17 +2,13 @@ import React from 'react'
 
 import { cn } from '@/lib/utils'
 import { getWorkspaceAttachments } from '../../../../shared/workspace-attachments'
+import { WorktreeCardCompactDetails } from './worktree-card-compact-details'
 import { WorktreeCardHeader } from './worktree-card-header'
 import { WorktreeCardMetaRow } from './worktree-card-meta-row'
-import { WorktreeCardDetailsHover } from './WorktreeCardMeta'
-import { WorktreeCardPortsDetails } from './WorktreeCardPorts'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSecondaryRows } from './worktree-card-secondary-rows'
 import { WorktreeCardStatusSlot } from './WorktreeCardStatusSlot'
 import type { WorktreeCardController } from './use-worktree-card-controller'
-
-// Why 500 ms: the row body is where the pointer rests while scanning a long list (IS-147).
-const WORKTREE_CARD_DETAILS_OPEN_DELAY_MS = 500
 
 export function WorktreeCardParentContent({
   card,
@@ -23,7 +19,6 @@ export function WorktreeCardParentContent({
 }): React.JSX.Element {
   const {
     worktree,
-    repo,
     affiliateListMode,
     newCardStyle,
     showStatus,
@@ -33,110 +28,38 @@ export function WorktreeCardParentContent({
     statusLaneReview,
     reviewChecks,
     branchIdentityDisplay,
-    showInlineAgentList,
-    titleRenaming,
-    isDeleting,
-    referenceDetails,
-    hoverIssue,
-    hoverLinearIssue,
-    hoverJiraIssue,
-    hoverReview,
-    hoverComment,
-    metaAutomationProvenance,
-    metaCliProvenance,
-    workspacePorts,
-    detailsHoverControl,
-    handleRenameTitle,
-    handleEditIssue,
-    handleManageLinks,
-    handleEditComment,
-    handleOpenGitHubIssueInOrca,
-    handleOpenIssueInBrowser,
-    linearIssue,
-    handleOpenLinearIssueInOrca,
-    handleOpenReviewInOrca,
-    handleOpenReviewInBrowser,
-    handleOpenAutomation,
-    handleOpenAutomationRun,
-    canUnlinkReview,
-    handleUnlinkReview
+    showInlineAgentList
   } = card
   const {
     titleOnlyCard,
     parentContentMarginLeft,
     showCombinedStatusSlot,
     showUnreadQuickAction,
-    hasHoverDetails,
-    hoverBranchName,
-    hoverWorkspaceTitle
+    compactRowShape
   } = presentation
 
+  // Why no hover card on the body: the number and the «Project on …» element open theirs (IS-147).
   const identityContent = (
     <div
-      className="group/worktree-card flex w-full min-w-0 flex-col gap-1.5"
+      className={cn(
+        'group/worktree-card flex w-full min-w-0 flex-col',
+        compactRowShape ? 'gap-0.5' : 'gap-1.5'
+      )}
       data-worktree-card-hover-trigger=""
     >
       <WorktreeCardHeader card={card} presentation={presentation} />
       {presentation.hasMetaRow && <WorktreeCardMetaRow card={card} presentation={presentation} />}
     </div>
   )
-  // Why: status glyphs and agent rows own their tooltips; only identity content should open the larger details card.
-  const identityContentWithHover =
-    hasHoverDetails && !titleRenaming ? (
-      <WorktreeCardDetailsHover
-        workspace={worktree}
-        referenceDetails={referenceDetails}
-        onManageLinks={affiliateListMode ? undefined : handleManageLinks}
-        issue={hoverIssue}
-        linearIssue={hoverLinearIssue}
-        jiraIssue={hoverJiraIssue}
-        review={hoverReview}
-        comment={hoverComment}
-        automationProvenance={metaAutomationProvenance}
-        cliProvenance={metaCliProvenance}
-        branchName={hoverBranchName}
-        workspaceTitle={hoverWorkspaceTitle}
-        workspaceTitleRenameDisabled={isDeleting || affiliateListMode}
-        detailsAfter={
-          workspacePorts.length > 0 ? <WorktreeCardPortsDetails ports={workspacePorts} /> : null
-        }
-        openDelay={WORKTREE_CARD_DETAILS_OPEN_DELAY_MS}
-        hoverControl={detailsHoverControl}
-        onRenameWorkspaceTitle={affiliateListMode ? undefined : handleRenameTitle}
-        onEditIssue={affiliateListMode ? undefined : handleEditIssue}
-        onEditComment={affiliateListMode ? undefined : handleEditComment}
-        onOpenGitHubIssueInOrca={
-          hoverIssue && 'url' in hoverIssue && hoverIssue.url
-            ? handleOpenGitHubIssueInOrca
-            : undefined
-        }
-        onOpenIssueInBrowser={
-          hoverIssue && 'url' in hoverIssue && hoverIssue.url ? handleOpenIssueInBrowser : undefined
-        }
-        onOpenLinearIssueInOrca={linearIssue?.url ? handleOpenLinearIssueInOrca : undefined}
-        onOpenReviewInOrca={repo ? handleOpenReviewInOrca : undefined}
-        onOpenReviewInBrowser={hoverReview?.url ? handleOpenReviewInBrowser : undefined}
-        onOpenAutomation={affiliateListMode ? undefined : handleOpenAutomation}
-        onOpenAutomationRun={affiliateListMode ? undefined : handleOpenAutomationRun}
-        onUnlinkReview={
-          !affiliateListMode &&
-          (canUnlinkReview ||
-            getWorkspaceAttachments(worktree).some((item) => item.type !== 'issue'))
-            ? handleUnlinkReview
-            : undefined
-        }
-      >
-        {identityContent}
-      </WorktreeCardDetailsHover>
-    ) : (
-      identityContent
-    )
 
   return (
     <div
       className={cn(
-        'flex w-full min-w-0 gap-0.5 pl-0',
-        titleOnlyCard ? 'items-center' : 'items-start'
+        'flex w-full min-w-0 pl-0',
+        compactRowShape ? 'gap-1.5' : 'gap-0.5',
+        compactRowShape === 'line' || (!compactRowShape && titleOnlyCard)
+          ? 'items-center'
+          : 'items-start'
       )}
       style={
         parentContentMarginLeft < 0 ? { marginLeft: `${parentContentMarginLeft}px` } : undefined
@@ -147,7 +70,11 @@ export function WorktreeCardParentContent({
         <div
           className={cn(
             'flex shrink-0 justify-center',
-            newCardStyle ? 'mr-1 w-5 items-center' : 'items-start pt-[2px]',
+            compactRowShape
+              ? 'h-[18px] w-4 items-center'
+              : newCardStyle
+                ? 'mr-1 w-5 items-center'
+                : 'items-start pt-[2px]',
             affiliateListMode && 'px-1'
           )}
           data-worktree-card-status-slot=""
@@ -170,15 +97,19 @@ export function WorktreeCardParentContent({
 
       <div
         className={cn(
-          'flex min-w-0 flex-1 flex-col gap-1.5',
+          'flex min-w-0 flex-1 flex-col',
+          compactRowShape ? 'gap-0.5' : 'gap-1.5',
           // Why: inline agent rows intentionally outdent into the card gutter; inner elements handle truncation.
           showInlineAgentList || getWorkspaceAttachments(worktree).length > 1
             ? 'overflow-visible'
             : 'overflow-hidden'
         )}
       >
-        {identityContentWithHover}
+        {identityContent}
         <WorktreeCardSecondaryRows card={card} presentation={presentation} />
+        {compactRowShape === 'open' ? (
+          <WorktreeCardCompactDetails card={card} presentation={presentation} />
+        ) : null}
       </div>
     </div>
   )

@@ -184,6 +184,11 @@ export function useHostViewSettings(args: {
     [persistViewSettings]
   )
 
+  const setShowInputRequiredGroup = useCallback(
+    (value: boolean) => persistViewSettings({ showInputRequiredGroup: value }),
+    [persistViewSettings]
+  )
+
   const setProjectOrderBy = useCallback(
     (value: ProjectOrderBy) => persistViewSettings({ projectOrderBy: value }),
     [persistViewSettings]
@@ -273,6 +278,7 @@ export function useHostViewSettings(args: {
     toggleCardProperty,
     handleGroupChange,
     handleSortChange,
+    setShowInputRequiredGroup,
     syncViewSettingsFromDesktop,
     toggleCollapsed,
     setFilter,

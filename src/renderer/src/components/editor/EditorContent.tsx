@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { useAppStore } from '@/store'
 import type { MarkdownViewMode, OpenFile, PendingEditorReveal } from '@/store/slices/editor'
 import type { GitDiffResult } from '../../../../shared/git-diff-compare-types'
@@ -15,6 +16,9 @@ import { translate } from '@/i18n/i18n'
 import { useEditorConflictNavigation } from './useEditorConflictNavigation'
 import { useMarkdownDocuments } from './useMarkdownDocuments'
 import type { MarkdownRenderState } from './markdown-render-mode'
+
+// Why lazy: the build-web card is a page's worth of code, loaded only when a task tab opens.
+const BuildWebTaskTabPanel = lazy(() => import('../build-web/BuildWebTaskTabPanel'))
 
 const noopCloseMarkdownTableOfContents = (): void => {}
 
@@ -122,6 +126,18 @@ export function EditorContent({
       activeFile.diffSource === 'combined-uncommitted' ||
       activeFile.diffSource === 'combined-branch' ||
       activeFile.diffSource === 'combined-commit')
+
+  if (activeFile.mode === 'build-web-task') {
+    return activeFile.buildWebTask ? (
+      <Suspense fallback={<div className="h-full" />}>
+        <BuildWebTaskTabPanel task={activeFile.buildWebTask} />
+      </Suspense>
+    ) : (
+      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+        {translate('buildWeb.taskTab.unavailable', 'The task is unavailable.')}
+      </div>
+    )
+  }
 
   if (activeFile.mode === 'check-details') {
     const checkRunDetails = activeFile.checkRunDetails

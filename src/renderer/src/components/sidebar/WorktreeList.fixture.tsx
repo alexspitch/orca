@@ -3,7 +3,9 @@ import { defineFixture } from '../../component-fixtures/component-fixture'
 import { ConfirmationDialogProvider } from '../confirmation-dialog'
 import WorktreeList from './WorktreeList'
 import SidebarFilter from './SidebarFilter'
+import SidebarWorkspaceOptionsMenu from './SidebarWorkspaceOptionsMenu'
 import { SidebarTaskAttentionCounter } from './SidebarTaskAttentionCounter'
+import { compactCurrentRowStore } from './worktree-list-compact-current-row.fixture-data'
 import {
   taskSessionStore,
   withCompactCards,
@@ -12,7 +14,8 @@ import {
 
 // IS-147: the workspaces list grouped by task, compared with the sidebar mockup.
 
-const SIDEBAR_WIDTH = 320
+// Why 350: the frame's 16px padding leaves the mockup's 318px panel.
+const SIDEBAR_WIDTH = 350
 
 function Sidebar({ height, children }: { height: number; children?: ReactNode }) {
   return (
@@ -33,6 +36,14 @@ export const compactByTask = defineFixture({
   render: () => <Sidebar height={720} />
 })
 
+/** The current compact row opened as in the mockup: project, branch, PR, host «dev», one line per agent. */
+export const compactCurrentRowWithAgents = defineFixture({
+  width: SIDEBAR_WIDTH,
+  store: compactCurrentRowStore(),
+  setup: withCompactCards(true),
+  render: () => <Sidebar height={720} />
+})
+
 /** Detailed cards with the session state on the right of the title row. */
 export const detailedByTask = defineFixture({
   width: SIDEBAR_WIDTH,
@@ -47,6 +58,14 @@ export const compactAttentionSelected = defineFixture({
   store: taskSessionStore({ activeWorktreeId: worktreeIdOfTask('IS-133') }),
   setup: withCompactCards(true),
   render: () => <Sidebar height={560} />
+})
+
+/** Input required switched off: waiting agents stay in their task lanes. */
+export const compactByTaskInputRequiredOff = defineFixture({
+  width: SIDEBAR_WIDTH,
+  store: taskSessionStore({ showInputRequiredGroup: false }),
+  setup: withCompactCards(true),
+  render: () => <Sidebar height={720} />
 })
 
 /** «Awaiting release» opened: its rows show the short timer and «soon» forms. */
@@ -86,6 +105,22 @@ export const filterMenu = defineFixture({
   render: () => (
     <div className="flex h-[520px] items-start justify-end bg-worktree-sidebar p-2">
       <SidebarFilter contentSide="bottom" />
+    </div>
+  ),
+  interact: (frame) => {
+    frame
+      .querySelector<HTMLButtonElement>('button')
+      ?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, button: 0 }))
+  }
+})
+
+/** Workspace options grouped by task, with the Input required switch under Group by. */
+export const workspaceOptionsByTask = defineFixture({
+  width: 380,
+  store: taskSessionStore(),
+  render: () => (
+    <div className="flex h-[640px] items-start bg-worktree-sidebar p-2">
+      <SidebarWorkspaceOptionsMenu />
     </div>
   ),
   interact: (frame) => {

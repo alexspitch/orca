@@ -58,6 +58,8 @@ export type WorktreeCardDetailsHoverProps = WorktreeCardMetaBadgesProps & {
   workspaceTitle?: string
   identityOrder?: 'workspace-first' | 'branch-first'
   workspaceTitleRenameDisabled?: boolean
+  /** Above the details, e.g. the host a «Project on …» element names. */
+  detailsBefore?: React.ReactNode
   detailsAfter?: React.ReactNode
   openDelay?: number
   closeDelay?: number

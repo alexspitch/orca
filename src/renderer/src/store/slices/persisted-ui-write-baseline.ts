@@ -24,6 +24,7 @@ export type PersistedUIWriteBaseline = {
   hideCliCreatedWorkspaces: boolean
   hideDetachedHeadWorkspaces: boolean
   hiddenSessionStates: HideableTaskSessionGroup[]
+  showInputRequiredGroup: boolean
   hideWorkspacesFromOtherDevices: boolean
   alwaysShowDefaultBranchWorkspace: boolean
   explorerDisplayRootByWorktree: Record<string, string>
@@ -57,6 +58,7 @@ const PERSISTED_UI_WRITE_BASELINE_FIELD_SET = {
   hideCliCreatedWorkspaces: true,
   hideDetachedHeadWorkspaces: true,
   hiddenSessionStates: true,
+  showInputRequiredGroup: true,
   hideWorkspacesFromOtherDevices: true,
   alwaysShowDefaultBranchWorkspace: true,
   explorerDisplayRootByWorktree: true,

@@ -36,12 +36,12 @@ import {
 import { withRepoSectionDisplayLabels } from '../../../src/shared/project-section-order'
 import type { ProjectOrderBy } from '../../../src/shared/ui-chrome-types'
 import {
-  TASK_ATTENTION_GROUP_KEY,
-  isTaskSessionAttention
+  isTaskLaneAbovePinned,
+  isTaskLaneAbovePinnedKey
 } from '../../../src/shared/sidebar-list/task-session-groups'
 import { isSidebarGroupCollapsed } from '../../../src/shared/sidebar-list/default-collapsed-groups'
 import { filterWorktrees, NO_SERVERS_KNOWING_TASKS } from './phone-workspace-row-filter'
-import { buildTaskLaneSections } from './task-lane-sections'
+import { buildTaskLaneSections, getWorktreeTaskLane } from './task-lane-sections'
 
 export type { FilterState, Section, SectionRepo, Worktree } from './workspace-list-types'
 
@@ -125,13 +125,17 @@ export function buildMobileWorkspacePlan(
   /** The connected host announces `build-web-worktree-task.v1`; the session filter waits for it. */
   hostKnowsTasks = false,
   /** The paired servers announcing it, for their own rows. */
-  serversKnowingTasks: ReadonlySet<string> = NO_SERVERS_KNOWING_TASKS
+  serversKnowingTasks: ReadonlySet<string> = NO_SERVERS_KNOWING_TASKS,
+  /** The host's «By task» Input required switch; false keeps rows in their task lanes. */
+  showInputRequiredGroup = false
 ) {
   const byTask = groupMode === 'task'
+  const inputLane = byTask && showInputRequiredGroup
   const filtered = filterWorktrees(worktrees, filters, search, repoHostIdByRepoId, {
     hostKnowsTasks,
     serversKnowingTasks,
-    keepArchivedAttention: byTask
+    keepArchivedAttention: byTask,
+    inputRequiredLane: inputLane
   })
   const sorted = sortWorktrees(filtered, sortMode, Date.now(), hostSortsByStamps(worktrees))
   const childrenByParentIdentity = getMobileWorkspaceLineageChildren(
@@ -146,17 +150,19 @@ export function buildMobileWorkspacePlan(
     childrenByParentIdentity,
     identityOf: getWorktreeRowIdentity,
     isPinned: (worktree) => isWorktreePinned(worktree, pinnedIds),
-    // Why: Needs attention outranks Pinned, even for a row under a pinned lineage parent.
-    keepOutOfPinned: byTask ? isTaskSessionAttention : undefined,
+    // Why: Needs attention and Input required outrank Pinned, even under a pinned lineage parent.
+    keepOutOfPinned: byTask
+      ? (worktree) => isTaskLaneAbovePinned(getWorktreeTaskLane(worktree, inputLane))
+      : undefined,
     duplicatePinned: showPinnedInGroups,
     owningSectionOf: (worktree) =>
       getProjectGroupingForRepo(worktree.repoId, repoMap, projectIndex),
     projectIdOf: (worktree) => worktree.repoId,
     sectionsOf: ({ pinned, natural: canonicalGroupWorktrees, displayRootByIdentity }) => {
       const sections: Section[] = []
-      const taskLanes = byTask ? buildTaskLaneSections(canonicalGroupWorktrees) : []
-      // Needs attention sits above Pinned; it is the only lane emitted before it.
-      sections.push(...taskLanes.filter((lane) => lane.key === TASK_ATTENTION_GROUP_KEY))
+      const taskLanes = byTask ? buildTaskLaneSections(canonicalGroupWorktrees, inputLane) : []
+      // Needs attention and Input required sit above Pinned; they are the only lanes before it.
+      sections.push(...taskLanes.filter((lane) => isTaskLaneAbovePinnedKey(lane.key)))
       if (pinned.length > 0) {
         sections.push(makeSection('pinned', 'Pinned', pinned, { icon: 'pin' }))
       }
@@ -231,7 +237,7 @@ export function buildMobileWorkspacePlan(
           }
         }
       } else if (byTask) {
-        sections.push(...taskLanes.filter((lane) => lane.key !== TASK_ATTENTION_GROUP_KEY))
+        sections.push(...taskLanes.filter((lane) => !isTaskLaneAbovePinnedKey(lane.key)))
       }
       return sections.map((section): Section & WorktreeOccurrenceSection<Worktree> => ({
         ...section,

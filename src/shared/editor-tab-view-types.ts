@@ -84,6 +84,15 @@ export type OpenCheckRunDetailsState = {
   gitlabProjectRef?: GitLabProjectRef | null
 }
 
+/** A build-web task's card shown as a tab of the workspace it was opened from (IS-147). */
+export type OpenBuildWebTaskState = {
+  /** The build-web host the card reads through, as the build-web store keys it. */
+  contextKey: string
+  issueId: string
+  key: string
+  title: string
+}
+
 /** An editor tab's view, keyed by its mode, with exactly the open-file fields that mode uses today. The view is not saved. */
 export type EditorTabView =
   | { mode: 'edit'; conflict: OpenConflictMetadata }
@@ -107,3 +116,4 @@ export type EditorTabView =
     }
   | { mode: 'conflict-review'; conflictReview?: ConflictReviewState }
   | { mode: 'check-details'; checkRunDetails?: OpenCheckRunDetailsState }
+  | { mode: 'build-web-task'; buildWebTask?: OpenBuildWebTaskState }

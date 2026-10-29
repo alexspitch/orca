@@ -40,7 +40,7 @@ export function WorktreeCardSurface({ card }: { card: WorktreeCardController }):
     showRenameErrorDialog,
     setShowRenameErrorDialog
   } = card
-  const { titleOnlyCard, cardStyle } = presentation
+  const { titleOnlyCard, cardStyle, compactRowShape } = presentation
   const isSleeping = useIsSleepingWorktree(worktree.id)
 
   const parentCardContent = <WorktreeCardParentContent card={card} presentation={presentation} />
@@ -48,16 +48,30 @@ export function WorktreeCardSurface({ card }: { card: WorktreeCardController }):
   const cardBody = (
     <div
       className={cn(
-        'relative flex cursor-pointer flex-col pr-1.5 transition-[background-color,border-color,opacity,box-shadow] duration-200 outline-none select-none',
-        titleOnlyCard ? 'py-2' : 'pt-1.25 pb-1.5',
-        flushSurface ? 'ml-1 w-[calc(100%-0.25rem)]' : 'ml-1',
-        'overflow-hidden rounded-lg',
+        'relative flex cursor-pointer flex-col transition-[background-color,border-color,opacity,box-shadow] duration-200 outline-none select-none',
+        compactRowShape
+          ? [
+              // Why: the workspaces mockup's compact row: 28px lines, 6px off the sidebar's edges
+              // (the list's 4px inset and scrollbar gutter plus 2px), a flat 6px-rounded wash (IS-147).
+              'mx-0.5 rounded-md pr-2 !shadow-none',
+              compactRowShape === 'line' && 'min-h-7 justify-center py-[3px]',
+              compactRowShape === 'tight' && 'py-1',
+              compactRowShape === 'open' && 'py-1.5'
+            ]
+          : [
+              'pr-1.5 rounded-lg',
+              titleOnlyCard ? 'py-2' : 'pt-1.25 pb-1.5',
+              flushSurface ? 'ml-1 w-[calc(100%-0.25rem)]' : 'ml-1'
+            ],
+        'overflow-hidden',
         // Navigation updates the live attribute before React; it must own the complete active style.
         isLineageDropTarget
           ? 'border border-worktree-sidebar-foreground/40 bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground ring-1 ring-inset ring-worktree-sidebar-ring/60'
-          : isActiveSurface
-            ? 'border border-transparent'
-            : 'border border-transparent worktree-sidebar-card-hover',
+          : compactRowShape
+            ? cn('border-0', !isActiveSurface && 'worktree-sidebar-card-hover')
+            : isActiveSurface
+              ? 'border border-transparent'
+              : 'border border-transparent worktree-sidebar-card-hover',
         isActiveSurface && isMultiSelected && 'ring-1 ring-worktree-sidebar-ring/35',
         revealHighlight && [
           'scroll-to-current-workspace-reveal-highlight',

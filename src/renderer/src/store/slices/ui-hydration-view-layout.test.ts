@@ -113,6 +113,19 @@ describe('createUISlice hydratePersistedUI', () => {
     expect(store.getState().alwaysShowDefaultBranchWorkspace).toBe(false)
   })
 
+  it('shows Input required unless a profile or host turned it off', () => {
+    const store = createUIStore()
+    const legacy = makePersistedUI()
+    delete legacy.showInputRequiredGroup
+    store.getState().hydratePersistedUI(legacy, 'startup')
+    expect(store.getState().showInputRequiredGroup).toBe(true)
+
+    store
+      .getState()
+      .hydratePersistedUI(makePersistedUI({ showInputRequiredGroup: false }), 'startup')
+    expect(store.getState().showInputRequiredGroup).toBe(false)
+  })
+
   it('defaults workspace host scope to all hosts', () => {
     expect(getDefaultUIState().workspaceHostScope).toBe('all')
     expect(createUIStore().getState().workspaceHostScope).toBe('all')

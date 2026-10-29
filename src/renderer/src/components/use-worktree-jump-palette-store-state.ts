@@ -11,6 +11,7 @@ import {
   selectPaletteStatusInputs
 } from './worktree-jump-palette-status-inputs'
 import { selectWorktreePaletteCacheInputs } from '@/components/cmd-j/worktree-palette-cache-inputs'
+import { selectInputRequiredWorkspaceIds } from '@/components/sidebar/input-required-workspaces'
 import {
   selectDetectedWorktreesByRepo,
   selectFolderWorkspaces,
@@ -111,6 +112,7 @@ export function useWorktreeJumpPaletteStoreState({
   const hideCliCreatedWorkspaces = useAppStore((state) => state.hideCliCreatedWorkspaces)
   const hideDetachedHeadWorkspaces = useAppStore((state) => state.hideDetachedHeadWorkspaces)
   const hiddenSessionStates = useAppStore((state) => state.hiddenSessionStates)
+  const inputRequiredWorkspaceIds = useAppStore(selectInputRequiredWorkspaceIds)
   const hideWorkspacesFromOtherDevices = useAppStore(
     (state) => state.hideWorkspacesFromOtherDevices
   )
@@ -192,6 +194,7 @@ export function useWorktreeJumpPaletteStoreState({
     hideCliCreatedWorkspaces,
     hideDetachedHeadWorkspaces,
     hiddenSessionStates,
+    inputRequiredWorkspaceIds,
     hideWorkspacesFromOtherDevices,
     showSleepingWorkspaces,
     alwaysShowDefaultBranchWorkspace,

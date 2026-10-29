@@ -11,6 +11,7 @@ function makeBaseline(overrides: Partial<PersistedUIWriteBaseline> = {}): Persis
   return {
     sidebarWidth: 280,
     hiddenSessionStates: [],
+    showInputRequiredGroup: true,
     sidebarOpen: true,
     rightSidebarOpen: true,
     rightSidebarTab: 'explorer',

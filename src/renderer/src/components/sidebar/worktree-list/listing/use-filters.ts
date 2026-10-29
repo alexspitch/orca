@@ -45,6 +45,7 @@ import {
   getWorktreeIdsWithStructuredChat
 } from '../../visible-worktree-activity-inputs'
 import { selectFolderWorkspaces } from '@/store/workspace-record-selectors'
+import { selectInputRequiredWorkspaceIds } from '../../input-required-workspaces'
 
 export type SidebarWorktreeFilters = ReturnType<typeof useSidebarWorktreeFilters>
 
@@ -88,9 +89,10 @@ const REVEAL_WORKSPACE: Record<keyof WorkspaceRowFilters, (context: RevealContex
   },
   hiddenSessionStates: ({ state, worktree }) => {
     const hidden = state.hiddenSessionStates
-    if (isHiddenByTaskSessionFilter(worktree, hidden, true)) {
+    const inputRequired = selectInputRequiredWorkspaceIds(state).has(worktree.id)
+    if (isHiddenByTaskSessionFilter(worktree, hidden, true, inputRequired)) {
       state.setHiddenSessionStates(
-        hidden.filter((group) => group !== getWorktreeTaskGroup(worktree))
+        hidden.filter((group) => group !== getWorktreeTaskGroup(worktree, inputRequired))
       )
     }
   },

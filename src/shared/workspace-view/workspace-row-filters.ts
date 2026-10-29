@@ -21,7 +21,7 @@ export type WorkspaceRowFilters = WorkspaceKindSwitches & {
   filterRepoIds: readonly string[]
   /** The hosts shown; null shows every host. */
   visibleHostIds: readonly ExecutionHostId[] | null
-  /** IS-147: task lanes the session filter hides; Needs attention and unknown states never hide. */
+  /** IS-147: task lanes the session filter hides; Needs attention, Input required and unknown never hide. */
   hiddenSessionStates: readonly HideableTaskSessionGroup[]
 }
 
@@ -75,6 +75,8 @@ export type WorkspaceRowFactReader<Row> = {
   isSleeping: (row: Row) => boolean
   /** The row's task and session; null (or absent) when its host predates `build-web-worktree-task.v1`. */
   taskSession?: (row: Row) => TaskSessionFacts | null
+  /** «By task» with Input required on: the row's agent waits on the user, so the session filter keeps it. */
+  isInputRequired?: (row: Row) => boolean
 }
 
 /** Exempt the main checkout from sleeping sweeps, including detached/offline mains that may be a project’s only entry point (#8873). */
@@ -126,7 +128,12 @@ function buildWorkspaceRowPredicate<Row>(
     }
     const taskSession = read.taskSession?.(row) ?? null
     if (
-      isHiddenByTaskSessionFilter(taskSession ?? {}, filters.hiddenSessionStates, !!taskSession)
+      isHiddenByTaskSessionFilter(
+        taskSession ?? {},
+        filters.hiddenSessionStates,
+        !!taskSession,
+        read.isInputRequired?.(row) === true
+      )
     ) {
       return false
     }

@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertTriangle, ChevronDown, Workflow } from 'lucide-react'
+import { AlertTriangle, ChevronDown, CircleAlert, Workflow } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -39,7 +39,6 @@ export function WorktreeCardSecondaryRows({
 
   return (
     <>
-      {card.inTaskAttentionSection ? <WorktreeTaskAttentionReason worktree={worktree} /> : null}
       {remoteBranchConflict && (
         <div className="mt-0.5 flex items-start gap-1.5 rounded border border-amber-500/25 bg-amber-500/5 px-1.5 py-1 text-[10.5px] leading-snug text-amber-700 dark:text-amber-300">
           <AlertTriangle className="mt-[1px] size-3 shrink-0" />
@@ -58,23 +57,28 @@ export function WorktreeCardSecondaryRows({
 
       {/* The host retains failed deletes until resolved; show its path-leading error in a tooltip. */}
       {worktree.removalError && !isDeleting ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div
-              className="mt-0.5 flex items-center gap-1.5 text-[11px] leading-snug text-destructive"
-              data-worktree-card-delete-failed=""
-            >
-              <AlertTriangle className="size-3 shrink-0" />
-              <span className="min-w-0 truncate">
-                {translate('auto.components.sidebar.WorktreeCard.deleteFailed', 'Delete failed')}
+        <div className="flex min-w-0">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="inline-flex h-4 min-w-0 items-center gap-[3px] rounded-[4px] border border-destructive/40 bg-destructive/10 px-1 text-[10px] font-medium leading-none text-destructive"
+                data-worktree-card-delete-failed=""
+              >
+                <CircleAlert className="size-2.5 shrink-0" aria-hidden />
+                <span className="min-w-0 truncate">
+                  {translate('auto.components.sidebar.WorktreeCard.deleteFailed', 'Delete failed')}
+                </span>
               </span>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="right" sideOffset={8} className="max-w-72 break-words">
-            {worktree.removalError}
-          </TooltipContent>
-        </Tooltip>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={8} className="max-w-72 break-words">
+              {worktree.removalError}
+            </TooltipContent>
+          </Tooltip>
+        </div>
       ) : null}
+
+      {/* Why after the badge: the reason says what the badge's failure was (IS-147 mockup). */}
+      {card.inTaskAttentionSection ? <WorktreeTaskAttentionReason worktree={worktree} /> : null}
 
       {isActive && worktree.linkedLinearIssue ? (
         <LinearAgentSkillSetupPrompt
@@ -86,7 +90,8 @@ export function WorktreeCardSecondaryRows({
       ) : null}
 
       {/* Why: counterbalance the card stack gap (-mt-1) so agents right after the title read as one header group. */}
-      {showInlineAgentList && (
+      {/* Why not on compact rows: the opened one lists its agents on one line each. */}
+      {showInlineAgentList && !card.compactCards && (
         <WorktreeCardAgents
           worktreeId={worktree.id}
           agents={agentActivityDisplayMode === 'compact' ? compactInlineAgentRows : undefined}

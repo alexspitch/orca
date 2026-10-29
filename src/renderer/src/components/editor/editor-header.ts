@@ -30,6 +30,17 @@ export function getEditorHeaderCopyState(file: OpenFile): EditorHeaderCopyState 
     }
   }
 
+  if (file.mode === 'build-web-task') {
+    const task = file.buildWebTask
+    const label = task ? `${task.key} · ${task.title}` : file.relativePath
+    return {
+      copyText: null,
+      copyToastLabel: 'Task copied',
+      pathLabel: label,
+      pathTitle: label
+    }
+  }
+
   if (file.mode === 'check-details') {
     const label = file.checkRunDetails?.check.name ?? 'Check details'
     return {

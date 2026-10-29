@@ -35,7 +35,8 @@ export function getRenderableFolderWorkspaces(
 export function getFolderWorkspaceLaneKey(
   pair: RenderableFolderWorkspace,
   groupBy: Exclude<WorktreeGroupBy, 'repo'>,
-  workspaceStatuses: readonly WorkspaceStatusDefinition[]
+  workspaceStatuses: readonly WorkspaceStatusDefinition[],
+  inputRequired = false
 ): string {
   switch (groupBy) {
     case 'workspace-status':
@@ -46,8 +47,8 @@ export function getFolderWorkspaceLaneKey(
     case 'none':
       return ALL_GROUP_KEY
     case 'task':
-      // A folder carries no task.
-      return getTaskLaneKey('none')
+      // A folder carries no task, but its agent may wait on the user.
+      return getTaskLaneKey(inputRequired ? 'input' : 'none')
   }
 }
 
