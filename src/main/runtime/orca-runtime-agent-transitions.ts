@@ -8,6 +8,10 @@ import { getRepoIdFromWorktreeId } from '../../shared/worktree/id'
 import { OrcaRuntimeWithMigrationCatalog } from './orca-runtime-migration-catalog'
 import { getRuntimeDesktopSurface } from './runtime-desktop-surface'
 import type { AgentStatusStoreView } from './sidebar-inputs/workspace-activity-facts-producer'
+import {
+  CLAUDE_DIALOG_LEASE_SWEEP_MS,
+  renewClaudeDialogStatuses
+} from './claude-dialog-status-lease'
 import { subscribeHookStatusTitles } from './terminal/layout/hook-status-title-subscription'
 import {
   TerminalAgentPhonePush,
@@ -64,10 +68,34 @@ export abstract class OrcaRuntimeWithAgentTransitions extends OrcaRuntimeWithMig
     const detachTitles = subscribe
       ? subscribeHookStatusTitles({ subscribeEnrichedStatus: subscribe }, this)
       : () => {}
+    const detachDialogLease = this.startClaudeDialogLease(store)
     return () => {
+      detachDialogLease()
       detachTitles()
       detachTransitions()
     }
+  }
+
+  private startClaudeDialogLease(store: AgentStatusStoreView): () => void {
+    const renew = store.renewClaudeDialogStatus?.bind(store)
+    if (!renew) {
+      return () => {}
+    }
+    const timer = setInterval(
+      () =>
+        renewClaudeDialogStatuses({
+          listPtyIds: () => this.ptysById.keys(),
+          readPtyRows: (ptyId) =>
+            [...this.collectAgentStatusPaneKeysForPty(ptyId)].flatMap((paneKey) =>
+              store.getStatusSnapshotForPane(paneKey)
+            ),
+          readScreenLines: (ptyId) => this.readLiveTerminalScreenLines(ptyId),
+          renew
+        }),
+      CLAUDE_DIALOG_LEASE_SWEEP_MS
+    )
+    timer.unref?.()
+    return () => clearInterval(timer)
   }
 
   private readTerminalAgentWorkspaceLabels(

@@ -185,4 +185,30 @@ export abstract class AgentHookServerHydration extends AgentHookServerTabCleanup
     }
     return rows
   }
+
+  /** Claude posts no hook while its dialog waits, so the dialog seen on screen re-proves the row, restored ones too. */
+  renewClaudeDialogStatus(paneKey: string, receivedAt: number): boolean {
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Main admits enriched legacy rows; the shared view declares their base event type.
+    const row = this.state.lastStatusByPaneKey.get(paneKey) as
+      | EnrichedAgentHookEventPayload
+      | undefined
+    // A row that moved since the caller read it is newer evidence than the screen.
+    if (
+      row?.receivedAt !== receivedAt ||
+      row.providerSessionOnly === true ||
+      row.payload.agentType !== 'claude' ||
+      (row.payload.state !== 'waiting' && row.payload.state !== 'blocked')
+    ) {
+      return false
+    }
+    // Keep the hook's origin: hook precedence and the program-status lane read it.
+    this.refreshTerminalStatusEvidence(
+      row,
+      undefined,
+      true,
+      false,
+      row.observation?.origin ?? 'hook'
+    )
+    return true
+  }
 }
