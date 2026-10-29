@@ -21,7 +21,8 @@ import {
 
 // IS-147: a «Take to work» worktree follows its task's session on a real serve host against a real
 // console — waiting, removal of the empty one, attention and Keep for one that is not empty, the report
-// of a manual delete, and a task returned during the console's pause.
+// of a manual delete, a task returned during the console's pause, a folder deleted by hand, and
+// auto-remove turned off.
 
 test.skip(
   !CONSOLE_URL || !CONSOLE_TOKEN,
@@ -30,8 +31,8 @@ test.skip(
 test.skip(process.platform === 'win32', 'the scratch repository is made with a POSIX shell')
 
 test('a task worktree follows its session from work to removal', async () => {
-  // One serve launch, a restart, and five sessions that each wait out the console's 8 s pause.
-  test.setTimeout(300_000)
+  // One serve launch, a restart, and seven sessions that each wait out the console's 8 s pause.
+  test.setTimeout(420_000)
   const scratch = mkdtempSync(path.join(os.tmpdir(), 'orca-e2e-build-web-sessions-'))
   const host = await launchHeadlessPairedRuntimeHost({
     extraEnv: { ORCA_BUILD_WEB_SESSION_POLL_MS: String(SESSION_POLL_MS) },
@@ -109,6 +110,37 @@ test('a task worktree follows its session from work to removal', async () => {
       await new Promise((resolve) => setTimeout(resolve, 12_000))
       expect(await taskSessionState(host, wt.worktreeId)).toBe('active')
       expect(existsSync(wt.path)).toBe(true)
+    })
+
+    await test.step('a folder deleted by hand: the host finishes the cleanup', async () => {
+      const task = await createTask('E2E session lifecycle: folder deleted')
+      const wt = await takeTaskToWork(host, repoId, task, 'e2e-tab-gone')
+      rmSync(wt.path, { recursive: true, force: true })
+      await expect.poll(() => taskSessionState(host, wt.worktreeId), poll).toBe('gone')
+      await expect.poll(() => consoleSessionState(wt.sessionId), poll).toBe('removed')
+      const git = (...args: string[]) => execFileSync('git', args, { cwd: work }).toString()
+      expect(git('branch', '--list', wt.branch)).toBe('')
+      expect(git('worktree', 'list', '--porcelain')).not.toContain(wt.path)
+    })
+
+    await test.step('auto-remove off: a closed task waits for a person', async () => {
+      const setAutoCleanup = (on: boolean) =>
+        host.client.call('buildWeb.setAgentSessionSettings', { auto_cleanup: on })
+      await setAutoCleanup(false)
+      try {
+        const task = await createTask('E2E session lifecycle: auto-remove off')
+        const wt = await takeTaskToWork(host, repoId, task, 'e2e-tab-off')
+        await moveTask(task.id, 'done')
+        await skillFinished(task.id, 'e2e-tab-off')
+        await expect
+          .poll(() => taskSessionState(host, wt.worktreeId), poll)
+          .toBe('attention:cleanup-off')
+        await setAutoCleanup(true)
+        await expect.poll(() => taskSessionState(host, wt.worktreeId), poll).toBe('gone')
+        await expect.poll(() => consoleSessionState(wt.sessionId), poll).toBe('removed')
+      } finally {
+        await setAutoCleanup(true)
+      }
     })
   } finally {
     await host.dispose()
