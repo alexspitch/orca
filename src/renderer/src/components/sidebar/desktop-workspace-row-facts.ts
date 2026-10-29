@@ -29,6 +29,8 @@ export type DesktopWorkspaceRowFactInputs = {
   keepArchivedTaskAttention?: boolean
   /** False for a row whose host predates task sessions; absent reads every host as knowing. */
   taskSessionHostKnown?: (worktree: Worktree, repo: Repo | undefined) => boolean
+  /** «By task»'s Input required rows (input-required-workspaces.ts); absent reads none. */
+  inputRequiredWorkspaceIds?: ReadonlySet<string>
 }
 
 export function buildDesktopWorkspaceRowFactReader(
@@ -64,6 +66,7 @@ export function buildDesktopWorkspaceRowFactReader(
     taskSession: (worktree) =>
       inputs.taskSessionHostKnown?.(worktree, inputs.repoMap.get(worktree.repoId)) === false
         ? null
-        : worktree
+        : worktree,
+    isInputRequired: (worktree) => inputs.inputRequiredWorkspaceIds?.has(worktree.id) === true
   }
 }

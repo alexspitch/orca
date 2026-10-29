@@ -26,6 +26,7 @@ export function buildHostFeedView(args: {
   )
   return {
     groupBy: view.groupBy,
+    showInputRequiredGroup: view.showInputRequiredGroup,
     sortBy: view.sortBy,
     projectOrderBy: args.projectOrderBy,
     collapsedGroups: new Set(view.collapsedGroups),

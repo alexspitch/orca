@@ -3,6 +3,7 @@ import type { WorkspaceStatusDefinition, Worktree } from '../worktree/types'
 import type { ProjectSectionModel } from '../project-section-grouping'
 import { ALL_GROUP_KEY } from './group-keys'
 import type { SidebarPRGroupReader, WorktreeGroupBy } from './row-types'
+import type { InputRequiredReader } from './task-session-groups'
 import { getGroupKeyForWorktree } from './worktree-group-keys'
 import { isSidebarGroupCollapsed } from './default-collapsed-groups'
 
@@ -11,6 +12,7 @@ export function getRenderedNaturalAnchorRepoIds({
   worktrees,
   repoMap,
   prGroupOf,
+  inputRequiredOf,
   collapsedGroups,
   workspaceStatuses,
   projectGrouping
@@ -19,6 +21,7 @@ export function getRenderedNaturalAnchorRepoIds({
   worktrees: readonly Worktree[]
   repoMap: Map<string, Repo>
   prGroupOf: SidebarPRGroupReader
+  inputRequiredOf?: InputRequiredReader
   collapsedGroups: ReadonlySet<string>
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectGrouping?: ProjectSectionModel
@@ -45,7 +48,8 @@ export function getRenderedNaturalAnchorRepoIds({
       repoMap,
       prGroupOf,
       workspaceStatuses,
-      projectGrouping
+      projectGrouping,
+      inputRequiredOf
     )
     if (groupKey && !isSidebarGroupCollapsed(collapsedGroups, groupKey)) {
       renderedRepoIds.add(worktree.repoId)

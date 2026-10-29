@@ -209,6 +209,7 @@ export function getDefaultUIState(): PersistedUIState {
     hideDetachedHeadWorkspaces: false,
     hideWorkspacesFromOtherDevices: false,
     hiddenSessionStates: [],
+    showInputRequiredGroup: true,
     alwaysShowDefaultBranchWorkspace: true,
     _explorerDisplayRootMigrated: true,
     explorerDisplayRootByWorktree: {},

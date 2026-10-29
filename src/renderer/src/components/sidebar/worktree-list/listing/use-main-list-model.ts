@@ -100,6 +100,7 @@ export function useMainSidebarListModel(args: SidebarListModelArgs): SidebarList
   )
   const workspaceHostOrder = useAppStore((s) => s.workspaceHostOrder)
   const setWorkspaceHostOrder = useAppStore((s) => s.setWorkspaceHostOrder)
+  const showInputRequiredGroup = useAppStore((s) => s.showInputRequiredGroup)
   const domains = useMemo(
     () =>
       withWindowCreations(
@@ -119,6 +120,7 @@ export function useMainSidebarListModel(args: SidebarListModelArgs): SidebarList
   const view: SidebarFeedView = useMemo(
     () => ({
       groupBy,
+      showInputRequiredGroup,
       sortBy,
       projectOrderBy: args.projectOrderBy,
       collapsedGroups: PLANNED_UNCOLLAPSED,
@@ -134,6 +136,7 @@ export function useMainSidebarListModel(args: SidebarListModelArgs): SidebarList
     }),
     [
       groupBy,
+      showInputRequiredGroup,
       sortBy,
       args.projectOrderBy,
       filterState,

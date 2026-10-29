@@ -144,6 +144,8 @@ export const UiUpdateFields = z
     codeOutlinePanelWidth: z.number().finite().optional(),
     combinedDiffFileTreeWidth: z.number().finite().optional(),
     groupBy: z.enum(['none', 'workspace-status', 'repo', 'pr-status', 'task']).optional(),
+    // Written only to hosts announcing `build-web-input-required-group.v1`.
+    showInputRequiredGroup: z.boolean().optional(),
     showWorkspaceLineage: z.boolean().optional(),
     sortBy: z.enum(['name', 'smart', 'recent', 'repo', 'manual']).optional(),
     projectOrderBy: z.enum(['manual', 'recent']).optional(),

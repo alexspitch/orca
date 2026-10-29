@@ -7,12 +7,29 @@ import {
   type SidebarTaskGroupKey
 } from '../../../src/shared/sidebar-list/task-session-groups'
 import type { Section, Worktree } from './workspace-list-types'
+import { getWorktreeStatus } from './workspace-list-ordering'
+
+/** The host's «needs input» status for the row, as its agent indicator shows it. */
+export function isWorktreeAwaitingInput(row: Worktree): boolean {
+  return getWorktreeStatus(row) === 'permission'
+}
+
+/** A row's «By task» lane; Input required only while that group is on. */
+export function getWorktreeTaskLane(
+  row: Worktree,
+  showInputRequiredGroup: boolean
+): SidebarTaskGroupKey {
+  return getWorktreeTaskGroup(row, showInputRequiredGroup && isWorktreeAwaitingInput(row))
+}
 
 /** «By task» lanes in the desktop's order, each row in its first matching lane; empty lanes drop. */
-export function buildTaskLaneSections(rows: readonly Worktree[]): Section[] {
+export function buildTaskLaneSections(
+  rows: readonly Worktree[],
+  showInputRequiredGroup = false
+): Section[] {
   const byLane = new Map<SidebarTaskGroupKey, Worktree[]>()
   for (const row of rows) {
-    const lane = getWorktreeTaskGroup(row)
+    const lane = getWorktreeTaskLane(row, showInputRequiredGroup)
     const list = byLane.get(lane)
     if (list) {
       list.push(row)

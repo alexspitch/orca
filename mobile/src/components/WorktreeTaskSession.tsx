@@ -1,10 +1,17 @@
-import { CircleAlert, CircleDashed, Hourglass, List, Timer } from 'lucide-react-native'
+import {
+  CircleAlert,
+  CircleDashed,
+  Hourglass,
+  List,
+  MessageCircleQuestion,
+  Timer
+} from 'lucide-react-native'
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native'
 import {
-  BUILD_WEB_SESSION_REASON_LABELS,
-  BUILD_WEB_SESSION_STATE_LABELS
+  BUILD_WEB_SESSION_STATE_LABELS,
+  fillSessionLabel,
+  sessionAttentionPhrases
 } from '../../../src/shared/build-web-session-labels'
-import { BUILD_WEB_SESSION_ATTENTION_REASONS } from '../../../src/shared/build-web-session-types'
 import {
   getTaskGroupFromLaneKey,
   getWorktreeTaskSessionState
@@ -18,11 +25,18 @@ import type { Worktree } from '../worktree/workspace-list-types'
 type TaskRow = Pick<Worktree, 'buildWebTask' | 'buildWebSession'>
 
 // Why read loosely: worktree.ps rows are unchecked wire data, and a newer host may add reasons.
-function reasonLabels(row: TaskRow) {
-  const reason = BUILD_WEB_SESSION_ATTENTION_REASONS.find(
-    (candidate) => candidate === row.buildWebSession?.reason
-  )
-  return reason ? BUILD_WEB_SESSION_REASON_LABELS[reason] : null
+// The phone's rows carry no base branch, so commits read «2 unmerged commits».
+function attentionPhrases(row: TaskRow) {
+  const detail = row.buildWebSession?.detail
+  return sessionAttentionPhrases({
+    reason: row.buildWebSession?.reason,
+    detail: typeof detail === 'string' ? detail : null
+  })
+}
+
+function attentionShortText(row: TaskRow): string | null {
+  const phrases = attentionPhrases(row)
+  return phrases ? fillSessionLabel(phrases.short) : null
 }
 
 function taskKey(row: TaskRow): string | null {
@@ -30,14 +44,15 @@ function taskKey(row: TaskRow): string | null {
   return typeof key === 'string' && key !== '' ? key : null
 }
 
-/** The sentence for an attention row: its reason, and the host's detail when it names one. */
+/** The sentence for an attention row: its reason with the host's detail, worded as the desktop's. */
 export function describeTaskAttention(row: TaskRow): string | null {
   if (getWorktreeTaskSessionState(row) !== 'attention') {
     return null
   }
-  const base = reasonLabels(row)?.full.text ?? BUILD_WEB_SESSION_STATE_LABELS.attention.full.text
-  const detail = row.buildWebSession?.detail
-  return typeof detail === 'string' && detail !== '' ? `${base} (${detail})` : base
+  const phrases = attentionPhrases(row)
+  return phrases
+    ? fillSessionLabel(phrases.full)
+    : BUILD_WEB_SESSION_STATE_LABELS.attention.full.text
 }
 
 export function WorktreeTaskKey({ row }: { row: TaskRow }) {
@@ -58,7 +73,7 @@ export function WorktreeTaskSessionChip({ row }: { row: TaskRow }) {
   const attention = state === 'attention'
   const labels = BUILD_WEB_SESSION_STATE_LABELS[state]
   const text = attention
-    ? (reasonLabels(row)?.short.text ?? labels.short?.text ?? labels.full.text)
+    ? (attentionShortText(row) ?? labels.short?.text ?? labels.full.text)
     : labels.full.text
   const Icon = attention ? CircleAlert : state === 'waiting' ? Timer : Hourglass
   const color = attention ? colors.statusAmber : colors.textMuted
@@ -90,6 +105,9 @@ export function TaskLaneIcon(props: { sectionKey: string; style?: StyleProp<View
   switch (getTaskGroupFromLaneKey(props.sectionKey)) {
     case 'attention':
       return <CircleAlert {...icon} color={colors.statusAmber} />
+    case 'input':
+      // The agent indicator's «needs input» colour.
+      return <MessageCircleQuestion {...icon} color={colors.statusRed} />
     case 'release':
       return <Timer {...icon} />
     case 'progress':

@@ -42,6 +42,8 @@ export type VisibleWorktreeOptions = {
   sleepingSweepExemptWorktreeIds?: ReadonlySet<string>
   /** IS-147: the lanes the session filter hides; absent hides none. */
   hiddenSessionStates?: readonly HideableTaskSessionGroup[]
+  /** The rows in Input required, which the session filter keeps (input-required-workspaces.ts). */
+  inputRequiredWorkspaceIds?: ReadonlySet<string>
   keepArchivedTaskAttention?: boolean
   taskSessionHostKnown?: (worktree: Worktree, repo: Repo | undefined) => boolean
 }

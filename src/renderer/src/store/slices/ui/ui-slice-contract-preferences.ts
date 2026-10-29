@@ -61,6 +61,9 @@ export type UISlicePreferences = {
   /** IS-147: the «By task» lanes the session filter hides. */
   hiddenSessionStates: HideableTaskSessionGroup[]
   setHiddenSessionStates: (v: readonly HideableTaskSessionGroup[]) => void
+  /** «By task»: agents waiting on the user get the Input required group. */
+  showInputRequiredGroup: boolean
+  setShowInputRequiredGroup: (v: boolean) => void
   hideWorkspacesFromOtherDevices: boolean
   setHideWorkspacesFromOtherDevices: (v: boolean) => void
   alwaysShowDefaultBranchWorkspace: boolean

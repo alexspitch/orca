@@ -9,7 +9,7 @@ import { WorktreeHostContextBadge } from './WorktreeHostContextBadge'
 import { CONFLICT_OPERATION_LABELS } from './WorktreeCardHelpers'
 import { TruncatedSidebarLabel } from './truncated-sidebar-label'
 import { getDirectoryName } from './worktree-card-model'
-import { WorktreeTaskKey } from './WorktreeCardTaskSession'
+import { WorktreeCardTaskKeyHover } from './worktree-card-hover-cards'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
@@ -37,7 +37,6 @@ export function WorktreeCardMetaRow({
     showHostContextBadge,
     contextLabel,
     showIdentityInNewCard,
-    hasHoverDetails,
     showBranch,
     showDetachedHeadInMetaRow,
     showConflictOperationBadge,
@@ -64,7 +63,6 @@ export function WorktreeCardMetaRow({
           <TruncatedSidebarLabel
             text={identityDisplay!}
             className="text-[11px] text-muted-foreground leading-none"
-            tooltipEnabled={!hasHoverDetails}
           />
         ) : isFolder && !newCardStyle ? (
           <span
@@ -77,8 +75,6 @@ export function WorktreeCardMetaRow({
           <TruncatedSidebarLabel
             text={branch}
             className="text-[11px] text-muted-foreground leading-none"
-            // Why: whole-card details hover already shows full identity; a nested tooltip would compete for it.
-            tooltipEnabled={!hasHoverDetails}
           />
         ) : showDetachedHeadInMetaRow && detachedHeadDisplay ? (
           <DetachedHeadBadge
@@ -104,7 +100,9 @@ export function WorktreeCardMetaRow({
 
       {showMetaRowDetails || showTaskKeyInMetaRow ? (
         <div className="ml-auto flex shrink-0 items-center gap-1 pr-1.5">
-          {showTaskKeyInMetaRow ? <WorktreeTaskKey worktree={worktree} placement="meta" /> : null}
+          {showTaskKeyInMetaRow ? (
+            <WorktreeCardTaskKeyHover card={card} presentation={presentation} placement="meta" />
+          ) : null}
           {showMetaRowDetails ? detailsAndPorts : null}
         </div>
       ) : null}

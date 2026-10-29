@@ -3,11 +3,13 @@ import type {
   WorktreeBuildWebSessionState,
   WorktreeBuildWebTask
 } from '../build-web-session-types'
+import type { Worktree } from '../worktree/types'
 
-// «By task» (IS-147): a workspace's lane follows only its task's state; the live agent never moves it.
+// «By task» (IS-147): a workspace's lane follows its task's state; the live agent moves it only into
+// Input required, while it waits on the user and that group is switched on.
 
-/** Lane order after Needs attention and Pinned; folders and plain workspaces land in `none`. */
-export const TASK_GROUP_ORDER = ['attention', 'release', 'progress', 'none'] as const
+/** Lane order; Pinned sits after Input required. Folders and plain workspaces land in `none`. */
+export const TASK_GROUP_ORDER = ['attention', 'input', 'release', 'progress', 'none'] as const
 export type SidebarTaskGroupKey = (typeof TASK_GROUP_ORDER)[number]
 
 export const TASK_GROUP_KEY_PREFIX = 'task:'
@@ -24,22 +26,63 @@ export function getTaskGroupFromLaneKey(key: string): SidebarTaskGroupKey | null
 export const TASK_ATTENTION_GROUP_KEY = getTaskLaneKey('attention')
 export const TASK_RELEASE_GROUP_KEY = getTaskLaneKey('release')
 
+/** The lanes above Pinned, which claim a pinned row before Pinned does. */
+export function isTaskLaneAbovePinned(group: SidebarTaskGroupKey): boolean {
+  return group === 'attention' || group === 'input'
+}
+
+export function isTaskLaneAbovePinnedKey(key: string): boolean {
+  const group = getTaskGroupFromLaneKey(key)
+  return group !== null && isTaskLaneAbovePinned(group)
+}
+
+/**
+ * Whether an agent in a workspace waits on the user (the status lane's «needs input») while the
+ * Input required group is on. Each client reads it from its own agent state.
+ */
+export type InputRequiredReader = (workspace: Pick<Worktree, 'id' | 'hostId'>) => boolean
+
+/** Absent means on: hosts and profiles before the switch show the group. */
+export function isInputRequiredGroupShown(
+  groupBy: string,
+  showInputRequiredGroup: boolean | undefined
+): boolean {
+  return groupBy === 'task' && showInputRequiredGroup !== false
+}
+
 /** Wire rows from a phone's host are unchecked, so every field may be missing or malformed. */
 export type TaskSessionFacts = {
   buildWebTask?: Pick<WorktreeBuildWebTask, 'key'> | null
   buildWebSession?: Pick<WorktreeBuildWebSession, 'state'> | null
 }
 
-/** A worktree's lane; a task whose session the host has not reported yet reads as in progress. */
-export function getWorktreeTaskGroup(worktree: TaskSessionFacts): SidebarTaskGroupKey {
-  if (!worktree.buildWebTask) {
-    return 'none'
-  }
-  const state = worktree.buildWebSession?.state
+/**
+ * A worktree's first matching lane; `inputRequired` is the reader's answer for it. A task whose
+ * session the host has not reported yet reads as in progress.
+ */
+export function getWorktreeTaskGroup(
+  worktree: TaskSessionFacts,
+  inputRequired = false
+): SidebarTaskGroupKey {
+  const state = worktree.buildWebTask ? worktree.buildWebSession?.state : undefined
   if (state === 'attention') {
     return 'attention'
   }
+  if (inputRequired) {
+    return 'input'
+  }
+  if (!worktree.buildWebTask) {
+    return 'none'
+  }
   return state === 'waiting' || state === 'closing' ? 'release' : 'progress'
+}
+
+/** «By task»'s `keepOutOfPinned`: the rows a lane above Pinned claims, even under a pinned parent. */
+export function claimedAbovePinned(
+  inputRequiredOf: InputRequiredReader | undefined
+): (worktree: TaskSessionFacts & Pick<Worktree, 'id' | 'hostId'>) => boolean {
+  return (worktree) =>
+    isTaskLaneAbovePinned(getWorktreeTaskGroup(worktree, inputRequiredOf?.(worktree) === true))
 }
 
 /** The state a row's badge shows; null without a task or while the state is unknown. */
@@ -67,10 +110,7 @@ export function isHiddenArchivedRow(
   return worktree.isArchived && !(groupBy === 'task' && isTaskSessionAttention(worktree))
 }
 
-/** A worktree's task lane, read by each client from its own worktree meta. */
-export type SidebarTaskGroupReader = (worktree: TaskSessionFacts) => SidebarTaskGroupKey
-
-/** The lanes the session filter may hide. Attention and an unknown state are never hidden. */
+/** The lanes the session filter may hide. Attention, Input required and an unknown state never hide. */
 export const HIDEABLE_TASK_SESSION_GROUPS = ['none', 'progress', 'release'] as const
 export type HideableTaskSessionGroup = (typeof HIDEABLE_TASK_SESSION_GROUPS)[number]
 
@@ -88,7 +128,8 @@ export function normalizeHiddenTaskSessionGroups(value: unknown): HideableTaskSe
 export function isHiddenByTaskSessionFilter(
   worktree: TaskSessionFacts,
   hidden: readonly HideableTaskSessionGroup[],
-  knowsTasks: boolean
+  knowsTasks: boolean,
+  inputRequired = false
 ): boolean {
   if (hidden.length === 0 || !knowsTasks) {
     return false
@@ -96,6 +137,6 @@ export function isHiddenByTaskSessionFilter(
   if (worktree.buildWebTask && getWorktreeTaskSessionState(worktree) === null) {
     return false
   }
-  const group = getWorktreeTaskGroup(worktree)
-  return group !== 'attention' && hidden.includes(group)
+  const group = getWorktreeTaskGroup(worktree, inputRequired)
+  return group !== 'attention' && group !== 'input' && hidden.includes(group)
 }

@@ -9,6 +9,7 @@ import {
 } from '../../../../shared/workspace-creator-visibility'
 import type { VisibleWorktreeOptions } from './compute-visible-worktrees'
 import { createTaskSessionHostReader } from './task-session-capability'
+import { selectInputRequiredWorkspaceIds } from './input-required-workspaces'
 
 /** Isolate store reads so sidebar, palette and keyboard shortcuts can share the pure visibility filter. */
 export function buildVisibleWorktreeOptionsFromState(
@@ -50,6 +51,7 @@ export function buildVisibleWorktreeOptionsFromState(
     worktreeLineageById: state.worktreeLineageById,
     preserveLineageParentOrder: state.sortBy === 'manual',
     hiddenSessionStates: state.hiddenSessionStates,
+    inputRequiredWorkspaceIds: selectInputRequiredWorkspaceIds(state),
     keepArchivedTaskAttention: state.groupBy === 'task',
     taskSessionHostKnown: createTaskSessionHostReader(state, defaultHostId)
   }

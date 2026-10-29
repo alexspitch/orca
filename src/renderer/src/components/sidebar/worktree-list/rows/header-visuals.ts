@@ -1,4 +1,13 @@
-import { CircleAlert, CircleDashed, CircleX, FolderTree, List, Pin, Timer } from 'lucide-react'
+import {
+  CircleAlert,
+  CircleDashed,
+  CircleX,
+  FolderTree,
+  List,
+  MessageCircleQuestion,
+  Pin,
+  Timer
+} from 'lucide-react'
 import type React from 'react'
 import { translate } from '@/i18n/i18n'
 import type { PRGroupKey } from '../../../../../../shared/workspace-view/workspace-pr-groups'
@@ -73,13 +82,21 @@ const ALL_GROUP_META = {
 } as const
 
 const TASK_GROUP_LABEL_KEYS: Record<SidebarTaskGroupKey, keyof typeof BUILD_WEB_TASK_GROUP_LABELS> =
-  { attention: 'attention', release: 'release', progress: 'progress', none: 'none' }
+  {
+    attention: 'attention',
+    input: 'input',
+    release: 'release',
+    progress: 'progress',
+    none: 'none'
+  }
 
 const TASK_GROUP_META: Record<
   SidebarTaskGroupKey,
   { icon: React.ComponentType<{ className?: string }>; tone: string }
 > = {
   attention: { icon: CircleAlert, tone: 'text-status-warning' },
+  // The status lane's «needs input» glyph and tone (AgentQuestionIcon), kept by its muted lane header.
+  input: { icon: MessageCircleQuestion, tone: 'text-agent-question' },
   release: { icon: Timer, tone: 'text-muted-foreground' },
   progress: { icon: List, tone: 'text-muted-foreground' },
   none: { icon: CircleDashed, tone: 'text-muted-foreground' }

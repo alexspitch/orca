@@ -76,7 +76,8 @@ export function IssueHeader({
   saving: boolean
   onSave: (patch: BuildWebIssuePatch) => void
   onTakeToWork: () => void
-  onCollapse: () => void
+  /** Absent where there is no page to collapse back to (a workspace's tab). */
+  onCollapse?: () => void
   /** The «Issues» crumb: the list, with no card open. */
   onBackToList: () => void
   /** The parent crumb of a subtask. */
@@ -187,19 +188,21 @@ export function IssueHeader({
               {translate('buildWeb.archive.archive', 'Archive')}
             </Button>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={onCollapse}
-                aria-label={translate('buildWeb.card.collapse', 'Collapse')}
-              >
-                <Minimize2 />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>{translate('buildWeb.card.collapse', 'Collapse')}</TooltipContent>
-          </Tooltip>
+          {onCollapse ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onCollapse}
+                  aria-label={translate('buildWeb.card.collapse', 'Collapse')}
+                >
+                  <Minimize2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{translate('buildWeb.card.collapse', 'Collapse')}</TooltipContent>
+            </Tooltip>
+          ) : null}
         </div>
       </div>
       <ArchivedNote detail={detail} archive={archive} />

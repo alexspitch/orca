@@ -23,7 +23,10 @@ import {
 import type { ExecutionHostId } from '../../../src/shared/execution-host'
 import type { WorktreeCardProperty } from '../../../src/shared/ui-chrome-types'
 import { HIDEABLE_TASK_SESSION_GROUPS } from '../../../src/shared/sidebar-list/task-session-groups'
-import { BUILD_WEB_TASK_FILTER_LABELS } from '../../../src/shared/build-web-session-labels'
+import {
+  BUILD_WEB_TASK_FILTER_LABELS,
+  BUILD_WEB_TASK_INPUT_GROUP_SWITCH_LABEL
+} from '../../../src/shared/build-web-session-labels'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import {
   phoneCardPropertyChoices,
@@ -293,6 +296,25 @@ export function taskSessionFilterRows(controller: HostScreenController): ReactNo
       }
     />
   ))
+}
+
+/**
+ * IS-147: «By task»'s Input required switch, offered only by a host that takes it.
+ * Why keep a switch that is off: it must stay reachable to turn the group back on.
+ */
+export function inputRequiredGroupRows(controller: HostScreenController): ReactNode[] {
+  const { groupBy, showInputRequiredGroup } = controller.state.view
+  if (groupBy !== 'task' || (!controller.hostTakesInputRequiredGroup && showInputRequiredGroup)) {
+    return []
+  }
+  return [
+    <SwitchRow
+      key="showInputRequiredGroup"
+      label={BUILD_WEB_TASK_INPUT_GROUP_SWITCH_LABEL.text}
+      value={showInputRequiredGroup}
+      onChange={controller.settings.setShowInputRequiredGroup}
+    />
+  ]
 }
 
 export const WORKSPACE_OPTION_CONTROLS: Record<WorkspaceViewOptionKey, WorkspaceOptionControl> = {

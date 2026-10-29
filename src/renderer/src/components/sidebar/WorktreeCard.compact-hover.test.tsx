@@ -171,16 +171,26 @@ function makeHostedReview(overrides: Partial<HostedReviewInfo> = {}): HostedRevi
   }
 }
 
-function expectIdentityBodyIsHoverTrigger(markup: string): void {
-  const surfaceTag = markup.match(/<div[^>]*data-worktree-card-surface="true"[^>]*>/)?.[0]
-  const triggerTag = markup.match(/<div[^>]*data-worktree-card-hover-trigger=""[^>]*>/)?.[0]
+const TASK: NonNullable<Worktree['buildWebTask']> = {
+  issueId: 'issue-1',
+  key: 'IS-1',
+  consoleHost: 'https://console.example',
+  branch: 'feature/local-branch'
+}
 
-  expect(surfaceTag).toBeDefined()
-  expect(surfaceTag).not.toContain('data-hover-card-trigger=""')
-  expect(surfaceTag).not.toContain('group/worktree-card')
+function makeTaskWorktree(overrides: Partial<Worktree> = {}): Worktree {
+  return makeWorktree({ buildWebTask: TASK, ...overrides })
+}
+
+/** IS-147: the row body opens nothing; the task number carries the details card. */
+function expectTaskKeyIsTheHoverTrigger(markup: string): void {
+  const triggerTag = markup.match(/<div[^>]*data-worktree-card-hover-trigger=""[^>]*>/)?.[0]
+  const keyTag = markup.match(/<button[^>]*aria-label="Open task IS-1"[^>]*>/)?.[0]
+
   expect(triggerTag).toBeDefined()
-  expect(triggerTag).toContain('data-hover-card-trigger=""')
-  expect(triggerTag).toContain('group/worktree-card')
+  expect(triggerTag).not.toContain('data-hover-card-trigger=""')
+  expect(keyTag).toBeDefined()
+  expect(keyTag).toContain('data-hover-card-trigger=""')
 }
 
 describe('WorktreeCard compact hover details', () => {
@@ -197,9 +207,9 @@ describe('WorktreeCard compact hover details', () => {
     cacheTimerMocks.usePromptCacheCountdownStartedAt.mockReturnValue(null)
   })
 
-  it('shows PR and live port details from the compact worktree card hover', async () => {
-    settings = { compactWorktreeCards: true, experimentalNewWorktreeCardStyle: true }
-    const worktree = makeWorktree({ linkedPR: 456 })
+  it('opens PR details from the task number and live ports from the «Project on …» element', async () => {
+    settings = { compactWorktreeCards: true }
+    const worktree = makeTaskWorktree({ linkedPR: 456 })
     hostedReviewCache = {
       'local::repo-1::feature/local-branch': {
         data: makeHostedReview(),
@@ -235,24 +245,27 @@ describe('WorktreeCard compact hover details', () => {
     const { default: WorktreeCard } = await import('./WorktreeCard')
 
     const markup = renderToStaticMarkup(
-      <WorktreeCard worktree={worktree} repo={makeRepo()} isActive={false} />
+      <WorktreeCard worktree={worktree} repo={makeRepo()} isActive />
     )
 
     expect(markup).toContain('data-worktree-title-inline-rename=""')
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup).toContain('data-hover-open-delay="500"')
     expect(markup).toContain('PR #456')
     expect(markup).toContain('Fix stale GH PR')
-    expect(markup).toContain('Live Ports')
+    expect(markup.match(/Live Ports/g)).toHaveLength(1)
     expect(markup).toContain('58941')
+    expect(markup.match(/<span[^>]*data-worktree-card-host=""[^>]*>/)?.[0]).toContain(
+      'data-hover-card-trigger=""'
+    )
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
     expect(markup).toContain('aria-label="1 live port"')
   }, 30_000)
 
-  it('shows hidden task, notes, and port details from the compact worktree card hover', async () => {
+  it('shows hidden task and notes from the task number, never the live ports', async () => {
     settings = { compactWorktreeCards: true, experimentalNewWorktreeCardStyle: true }
     worktreeCardProperties = ['status']
-    const worktree = makeWorktree({
+    const worktree = makeTaskWorktree({
       linkedIssue: 123,
       linkedLinearIssue: 'ENG-123',
       linkedPR: 456,
@@ -291,13 +304,12 @@ describe('WorktreeCard compact hover details', () => {
     )
 
     expect(markup).toContain('data-hover-open-delay="500"')
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup).toContain('Issue #123')
     expect(markup).toContain('ENG-123</span>')
     expect(markup).toContain('· Linear')
     expect(markup).toContain('Reviewer handoff note')
-    expect(markup).toContain('Live Ports')
-    expect(markup).toContain('58941')
+    expect(markup).not.toContain('Live Ports')
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
   }, 30_000)
 
@@ -322,7 +334,7 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({ linkedIssue: 123 })}
+        worktree={makeTaskWorktree({ linkedIssue: 123 })}
         repo={makeRepo()}
         isActive={false}
       />
@@ -408,7 +420,7 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({
+        worktree={makeTaskWorktree({
           linkedIssue: 123,
           linkedLinearIssue: 'ENG-123',
           linkedPR: 456,
@@ -421,7 +433,7 @@ describe('WorktreeCard compact hover details', () => {
 
     expect(markup).toContain('Workspace metadata')
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup.match(/data-hover-open-delay="500"/g)).toHaveLength(1)
     expect(markup).toContain('Reviewer handoff note')
   })
@@ -433,7 +445,7 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({
+        worktree={makeTaskWorktree({
           branch: 'bug-hold-to-talk-speech-to-text-option-no-longer-works',
           displayName: '[Bug]: Hold-to-talk speech-to-text option no longer works',
           comment: 'Reviewer handoff note'
@@ -444,7 +456,7 @@ describe('WorktreeCard compact hover details', () => {
     )
 
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup).toContain('[Bug]: Hold-to-talk speech-to-text option no longer works')
     expect(markup).toContain('bug-hold-to-talk-speech-to-text-option-no-longer-works')
     expect(markup).toContain('Reviewer handoff note')
@@ -459,13 +471,13 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({ displayName: longTitle, comment: 'Reviewer handoff note' })}
+        worktree={makeTaskWorktree({ displayName: longTitle, comment: 'Reviewer handoff note' })}
         repo={makeRepo()}
         isActive={false}
       />
     )
 
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup.match(new RegExp(longTitle, 'g'))).toHaveLength(2)
     expect(markup).toContain('feature/local-branch')
     expect(markup).toContain('Reviewer handoff note')
@@ -478,14 +490,14 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({ displayName: 'Readable identity only' })}
+        worktree={makeTaskWorktree({ displayName: 'Readable identity only' })}
         repo={makeRepo()}
         isActive={false}
       />
     )
 
     expect(markup).toContain('data-worktree-card-meta-row=""')
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup.match(/data-hover-open-delay="500"/g)).toHaveLength(1)
     expect(markup.match(/Readable identity only/g)).toHaveLength(2)
     expect(markup).toContain('feature/local-branch')
@@ -500,17 +512,17 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({ displayName: '  feature/local-branch  ' })}
+        worktree={makeTaskWorktree({ displayName: '  feature/local-branch  ' })}
         repo={makeRepo()}
         isActive={false}
       />
     )
 
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup.match(/feature\/local-branch/g)).toHaveLength(3)
   })
 
-  it('keeps detailed metadata hover scoped to metadata icons by default', async () => {
+  it('opens no details card from the metadata icons', async () => {
     settings = { compactWorktreeCards: false }
     worktreeCardProperties = ['status', 'issue', 'linear-issue', 'comment', 'ports']
     const { default: WorktreeCard } = await import('./WorktreeCard')
@@ -532,8 +544,7 @@ describe('WorktreeCard compact hover details', () => {
     const surfaceTag = markup.match(/<div[^>]*data-worktree-card-surface="true"[^>]*>/)?.[0]
     expect(surfaceTag).toBeDefined()
     expect(surfaceTag).not.toContain('data-hover-card-trigger=""')
-    expect(markup.match(/data-hover-open-delay="250"/g)).toHaveLength(1)
-    expect(markup).toContain('Reviewer handoff note')
+    expect(markup).not.toContain('data-hover-card-content=""')
   })
 
   it('keeps child card markup inside the parent card by default', async () => {
@@ -592,7 +603,7 @@ describe('WorktreeCard compact hover details', () => {
 
   it('keeps unlink available for an auto-detected PR in the identity hover', async () => {
     settings = { compactWorktreeCards: true, experimentalNewWorktreeCardStyle: true }
-    const worktree = makeWorktree()
+    const worktree = makeTaskWorktree()
     hostedReviewCache = {
       'local::repo-1::feature/local-branch': {
         data: makeHostedReview({ url: '' }),
@@ -637,14 +648,14 @@ describe('WorktreeCard compact hover details', () => {
     const { default: WorktreeCard } = await import('./WorktreeCard')
 
     const markup = renderToStaticMarkup(
-      <WorktreeCard worktree={makeWorktree()} repo={makeRepo()} isActive={false} />
+      <WorktreeCard worktree={makeTaskWorktree()} repo={makeRepo()} isActive={false} />
     )
     const statusIndex = markup.indexOf('data-worktree-card-status-slot=""')
     const triggerIndex = markup.indexOf('data-worktree-card-hover-trigger=""')
     const hoverContentIndex = markup.indexOf('data-hover-card-content=""')
     const agentsIndex = markup.indexOf('data-worktree-agents=""')
 
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(statusIndex).toBeGreaterThanOrEqual(0)
     expect(statusIndex).toBeLessThan(triggerIndex)
     expect(hoverContentIndex).toBeGreaterThan(triggerIndex)
@@ -678,7 +689,7 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({ comment: 'Parent note' })}
+        worktree={makeTaskWorktree({ comment: 'Parent note' })}
         repo={makeRepo()}
         isActive={false}
         lineageChildren={<div data-lineage-child-card="">Child card</div>}
@@ -689,7 +700,7 @@ describe('WorktreeCard compact hover details', () => {
     const hoverContentIndex = markup.indexOf('data-hover-card-content=""')
     const childIndex = markup.indexOf('data-lineage-child-card=""')
 
-    expectIdentityBodyIsHoverTrigger(markup)
+    expectTaskKeyIsTheHoverTrigger(markup)
     expect(markup).toContain('data-worktree-lineage-children=""')
     expect(markup).toContain('group/worktree-card')
     expect(markup).not.toContain('group relative flex cursor-pointer')
@@ -763,7 +774,7 @@ describe('WorktreeCard compact hover details', () => {
     expect(markup).not.toContain('>Folder</span>')
   })
 
-  it('keeps hidden folder path identity available from the new-card hover', async () => {
+  it('opens no details card on a row without a task', async () => {
     settings = { compactWorktreeCards: false, experimentalNewWorktreeCardStyle: true }
     worktreeCardProperties = ['status']
     projectGroups = [{ id: 'group-1' }]
@@ -783,8 +794,7 @@ describe('WorktreeCard compact hover details', () => {
     )
 
     expect(markup).not.toContain('data-worktree-card-meta-row=""')
-    expect(markup).toContain('data-hover-open-delay="500"')
-    expect(markup).toContain('/Users/x/projects/my-app')
+    expect(markup).not.toContain('data-hover-card-content=""')
     expect(markup).toContain('Docs folder')
   })
 
@@ -812,7 +822,7 @@ describe('WorktreeCard compact hover details', () => {
 
     const markup = renderToStaticMarkup(
       <WorktreeCard
-        worktree={makeWorktree({ displayName: 'Human title' })}
+        worktree={makeTaskWorktree({ displayName: 'Human title' })}
         repo={makeRepo()}
         isActive={false}
       />

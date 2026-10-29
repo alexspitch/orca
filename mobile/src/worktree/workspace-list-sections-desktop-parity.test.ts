@@ -167,6 +167,7 @@ describe('readServedProjectSections', () => {
 })
 
 // IS-147: the cast of the desktop golden group-by-task.txt; feat-a's lineage spreads over three lanes.
+// The `input` rows have an agent waiting on the user: one with no task, one pinned, one in attention.
 type TaskSpec = {
   name: string
   task?: string
@@ -175,21 +176,27 @@ type TaskSpec = {
   archived?: true
   parent?: string
   main?: true
+  input?: true
 }
 
 const TASK_SPECS: TaskSpec[] = [
   { name: 'orca', main: true },
   { name: 'feat-a', task: 'IS-1', state: 'active', pinned: true },
   { name: 'feat-b', task: 'IS-2', state: 'waiting', parent: 'feat-a' },
-  { name: 'feat-c', task: 'IS-3', state: 'attention', pinned: true },
+  { name: 'feat-c', task: 'IS-3', state: 'attention', pinned: true, input: true },
   { name: 'gitlab-mr', task: 'IS-6', state: 'active', parent: 'feat-a' },
   { name: 'api-y', task: 'IS-5', state: 'closing' },
   // A task whose state the host has not reported yet reads as in progress.
   { name: 'same', task: 'IS-7' },
   { name: 'zeta' },
   { name: 'archived', task: 'IS-4', state: 'attention', archived: true },
-  { name: 'old', archived: true }
+  { name: 'old', archived: true },
+  { name: 'ask', input: true },
+  { name: 'ask-pin', task: 'IS-8', state: 'waiting', pinned: true, input: true }
 ]
+const AWAITING_INPUT = new Set(
+  TASK_SPECS.filter((spec) => spec.input).map((spec) => `orca::/w/${spec.name}`)
+)
 
 const ORCA_REPO: Repo = {
   id: 'orca',
@@ -257,6 +264,7 @@ function phoneTaskRow(spec: TaskSpec): Worktree {
       : {}),
     buildWebTask: row.buildWebTask,
     buildWebSession: row.buildWebSession,
+    ...(spec.input ? { status: 'permission' as const } : {}),
     liveTerminalCount: 0,
     hasAttachedPty: false,
     unread: false,
@@ -291,6 +299,8 @@ type TaskView = {
   pinnedInGroups: boolean
   collapsed: string[]
   hidden: HideableTaskSessionGroup[]
+  /** The Input required switch; off unless set. */
+  inputGroup?: true
 }
 
 type DrawnSection = { key: string; count: number; rows: [string, number][] }
@@ -298,6 +308,11 @@ type DrawnSection = { key: string; count: number; rows: [string, number][] }
 /** The desktop sidebar: its row filter (desktop-workspace-row-facts.ts), name sort, then its planner. */
 function desktopTaskSections(view: TaskView): DrawnSection[] {
   const keepArchivedTaskAttention = view.groupBy === 'task'
+  // The window's reader: its status lane's «needs input», while «By task» shows the group.
+  const inputRequiredOf =
+    view.groupBy === 'task' && view.inputGroup
+      ? (w: Pick<DesktopWorktree, 'id'>) => AWAITING_INPUT.has(w.id)
+      : undefined
   const facts: WorkspaceRowFactReader<DesktopWorktree> = {
     isArchived: (w) => w.isArchived && !(keepArchivedTaskAttention && isTaskSessionAttention(w)),
     isFolderWorkspace: () => false,
@@ -310,7 +325,8 @@ function desktopTaskSections(view: TaskView): DrawnSection[] {
     isDetachedHead: () => false,
     isMainWorktree: (w) => w.isMainWorktree,
     isSleeping: () => false,
-    taskSession: (w) => w
+    taskSession: (w) => w,
+    isInputRequired: (w) => inputRequiredOf?.(w) === true
   }
   const all = TASK_SPECS.map(desktopTaskRow)
   const visible = filterWorkspaceRows(
@@ -323,6 +339,7 @@ function desktopTaskSections(view: TaskView): DrawnSection[] {
     worktrees: visible,
     repoMap: new Map([[ORCA_REPO.id, ORCA_REPO]]),
     prGroupOf: () => 'in-progress',
+    inputRequiredOf,
     workspaceStatuses: DEFAULT_WORKSPACE_STATUSES,
     projectOrderBy: 'manual',
     lineageById: TASK_LINEAGE,
@@ -362,7 +379,9 @@ function phoneTaskSections(view: TaskView): DrawnSection[] {
     undefined,
     view.pinnedInGroups,
     new Map(),
-    true
+    true,
+    undefined,
+    view.inputGroup === true
   )
   const raw = plan.render(new Set())
   return collapseSections(raw, new Set(view.collapsed)).map((section, index) => ({
@@ -393,8 +412,45 @@ describe('«By task» on the phone', () => {
         hidden: ['none', 'progress', 'release']
       }
     ],
-    ['another grouping', { groupBy: 'none', pinnedInGroups: false, collapsed: [], hidden: [] }]
+    ['another grouping', { groupBy: 'none', pinnedInGroups: false, collapsed: [], hidden: [] }],
+    [
+      'input required',
+      { groupBy: 'task', pinnedInGroups: false, collapsed: [], hidden: [], inputGroup: true }
+    ],
+    [
+      'input required, pinned in groups, session filter hides every lane it may',
+      {
+        groupBy: 'task',
+        pinnedInGroups: true,
+        collapsed: [],
+        hidden: ['none', 'progress', 'release'],
+        inputGroup: true
+      }
+    ],
+    [
+      'input required collapsed by hand',
+      {
+        groupBy: 'task',
+        pinnedInGroups: false,
+        collapsed: ['task:input'],
+        hidden: [],
+        inputGroup: true
+      }
+    ],
+    [
+      'input required in another grouping',
+      { groupBy: 'none', pinnedInGroups: false, collapsed: [], hidden: [], inputGroup: true }
+    ]
   ]
+  const viewNamed = (label: string): TaskView => {
+    const found = views.find(([name]) => name === label)
+    if (!found) {
+      throw new Error(label)
+    }
+    return found[1]
+  }
+  const rowIdsOf = (sections: DrawnSection[], key: string) =>
+    sections.find((section) => section.key === key)?.rows.map(([id]) => id) ?? []
 
   it.each(views)("renders the desktop sidebar's lanes and rows (%s)", (_label, view) => {
     expect(phoneTaskSections(view)).toEqual(desktopTaskSections(view))
@@ -413,5 +469,34 @@ describe('«By task» on the phone', () => {
     expect(plain[2]).toMatchObject({ count: 1, rows: [] })
     const outside = phoneTaskSections(views[5][1]).flatMap((section) => section.rows)
     expect(outside.map(([id]) => id)).not.toContain(taskRowId('archived'))
+  })
+
+  it('lists a waiting agent after attention and before Pinned, past the session filter', () => {
+    const on = phoneTaskSections(viewNamed('input required'))
+    expect(on.map((section) => section.key)).toEqual([
+      'task:attention',
+      'task:input',
+      'pinned',
+      'task:release',
+      'task:progress',
+      'task:none'
+    ])
+    // A closed task's leftover stays in Needs attention though its agent waits too.
+    expect(rowIdsOf(on, 'task:attention')).toEqual([taskRowId('archived'), taskRowId('feat-c')])
+    expect(rowIdsOf(on, 'task:input')).toEqual([taskRowId('ask'), taskRowId('ask-pin')])
+    expect(rowIdsOf(on, 'pinned')).not.toContain(taskRowId('ask-pin'))
+    const filtered = phoneTaskSections({ ...viewNamed('input required'), hidden: ['none'] })
+    expect(rowIdsOf(filtered, 'task:input')).toEqual([taskRowId('ask'), taskRowId('ask-pin')])
+  })
+
+  it('returns waiting rows to their task lanes while the switch is off', () => {
+    const off = phoneTaskSections(viewNamed('plain'))
+    expect(off.map((section) => section.key)).not.toContain('task:input')
+    expect(rowIdsOf(off, 'pinned')).toContain(taskRowId('ask-pin'))
+    expect(rowIdsOf(off, 'task:none')).toContain(taskRowId('ask'))
+    const filtered = phoneTaskSections({ ...viewNamed('plain'), hidden: ['none'] })
+    expect(filtered.flatMap((section) => section.rows.map(([id]) => id))).not.toContain(
+      taskRowId('ask')
+    )
   })
 })

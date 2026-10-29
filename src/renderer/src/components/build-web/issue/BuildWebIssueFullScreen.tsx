@@ -31,19 +31,43 @@ type CardTab = BuildWebCardTab
 const TABS: readonly CardTab[] = BUILD_WEB_CARD_TABS
 const NO_PERMS: string[] = []
 
+/** A card shown as a workspace's tab (IS-147): its own task, and where its links lead. */
+export type BuildWebIssueTabPlace = {
+  issueId: string
+  onOpenIssue: (id: string) => void
+  onBackToList: () => void
+}
+
 /** The task on the whole page, with build-web's tabs: Overview, Build, Guide & Jira, Commits, Subtasks. */
 export function BuildWebIssueFullScreen({
-  onTakeToWork
+  onTakeToWork,
+  inWorkspaceTab
 }: {
   onTakeToWork: (issues: BuildWebIssueRow[]) => void
+  /** Set when a workspace's tab shows the card: the page's open card and tabs stay untouched. */
+  inWorkspaceTab?: BuildWebIssueTabPlace
 }) {
   const { target } = useBuildWebTarget()
-  const issueId = useBuildWebStore((s) => s.openIssueId)
+  const pageIssueId = useBuildWebStore((s) => s.openIssueId)
+  const issueId = inWorkspaceTab ? inWorkspaceTab.issueId : pageIssueId
   const perms = useBuildWebStore((s) => s.status?.perms ?? NO_PERMS)
   const collapseFullScreen = useBuildWebStore((s) => s.collapseFullScreen)
-  const openIssue = useBuildWebStore((s) => s.openIssue)
+  const storeOpenIssue = useBuildWebStore((s) => s.openIssue)
+  const openIssue = (id: string | null, fullScreen?: boolean): void => {
+    if (inWorkspaceTab) {
+      if (id) {
+        inWorkspaceTab.onOpenIssue(id)
+      } else {
+        inWorkspaceTab.onBackToList()
+      }
+      return
+    }
+    storeOpenIssue(id, fullScreen)
+  }
   const state = useBuildWebIssueDetail(issueId)
-  const [tab, setTab] = useState<CardTab>(() => useBuildWebStore.getState().openTab)
+  const [tab, setTab] = useState<CardTab>(() =>
+    inWorkspaceTab ? 'overview' : useBuildWebStore.getState().openTab
+  )
   // Where the first build is headed: kept here until the task has a run to store it on.
   const [firstTesting, setFirstTesting] = useState<BuildWebTestingStatus>('Testing')
   // Why: a tab stays mounted once opened, so a guide draft or a comment survives a tab switch.
@@ -56,11 +80,12 @@ export function BuildWebIssueFullScreen({
     reload: reloadRun
   } = useIssueRun(target, issueId ?? '', Boolean(issueId) && runsVisible)
   const detail = state.detail
+  const keepsPageTabs = !inWorkspaceTab
   useEffect(() => {
-    if (detail) {
+    if (detail && keepsPageTabs) {
       labelTaskTab(detail.id, detail.key, detail.title)
     }
-  }, [detail])
+  }, [detail, keepsPageTabs])
   const plan = useIssuePlan(target, detail)
   const archive = useIssueArchive(target, detail, state.reload)
   if (!issueId || state.error) {
@@ -74,7 +99,9 @@ export function BuildWebIssueFullScreen({
   const showRuns = runsVisible && !detail.parent_id
   const open = (next: CardTab) => {
     setTab(next)
-    useBuildWebStore.setState({ openTab: next })
+    if (keepsPageTabs) {
+      useBuildWebStore.setState({ openTab: next })
+    }
     setVisited((seen) => (seen.has(next) ? seen : new Set([...seen, next])))
   }
   const testing = {
@@ -141,7 +168,7 @@ export function BuildWebIssueFullScreen({
         saving={state.saving}
         onSave={(patch) => void state.save(patch)}
         onTakeToWork={() => onTakeToWork([detail])}
-        onCollapse={collapseFullScreen}
+        onCollapse={inWorkspaceTab ? undefined : collapseFullScreen}
         onBackToList={() => openIssue(null)}
         onOpenIssue={(id) => openIssue(id, true)}
         archive={archive}

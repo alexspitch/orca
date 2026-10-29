@@ -7,6 +7,7 @@ import {
 } from '../../../src/shared/workspace-view/workspace-row-filters'
 import type { FilterState, Worktree } from './workspace-list-types'
 import { resolveWorktreeHostId } from './worktree-host-context-labels'
+import { isWorktreeAwaitingInput } from './task-lane-sections'
 
 /** IS-147: what the phone knows of its rows' tasks while it filters them. */
 export type PhoneTaskSessionScope = {
@@ -16,6 +17,8 @@ export type PhoneTaskSessionScope = {
   serversKnowingTasks: ReadonlySet<string>
   /** «By task» lists a closed task's leftover even when it is archived. */
   keepArchivedAttention: boolean
+  /** «By task» with Input required on: a row awaiting input is never hidden by the session filter. */
+  inputRequiredLane?: boolean
 }
 
 export const NO_SERVERS_KNOWING_TASKS: ReadonlySet<string> = new Set()
@@ -80,7 +83,8 @@ function phoneRowFacts(
     // Why the guess: #8873's exemption must fail open on hosts that predate isMainWorktree.
     isMainWorktree: (w) => w.isMainWorktree ?? guessDefaultBranchWorkspace(w),
     isSleeping: (w) => !isWorktreeActive(w),
-    taskSession: (w) => (rowKnowsTasks(w, hostIdOf(w), taskScope) ? w : null)
+    taskSession: (w) => (rowKnowsTasks(w, hostIdOf(w), taskScope) ? w : null),
+    isInputRequired: (w) => taskScope.inputRequiredLane === true && isWorktreeAwaitingInput(w)
   }
 }
 

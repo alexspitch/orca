@@ -27,7 +27,10 @@ import { useHostScreenIdentity } from './use-host-screen-identity'
 import { useHostScreenState } from './use-host-screen-state'
 import { useHostViewSettings } from './use-host-view-settings'
 import { countActiveWorkspaceFilters } from '../../../src/shared/workspace-view/workspace-row-filters'
-import { BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY } from '../../../src/shared/build-web-capability'
+import {
+  BUILD_WEB_INPUT_REQUIRED_GROUP_RUNTIME_CAPABILITY,
+  BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY
+} from '../../../src/shared/build-web-capability'
 import { useHostWorktreeActions } from './use-host-worktree-actions'
 import { useHostWorktreeCatalog } from './use-host-worktree-catalog'
 import { useHostDisplay } from '../transport/use-host-display'
@@ -125,6 +128,10 @@ export function useHostScreenController({
   const feed = sidebarFeed?.feed ?? null
   // IS-147: only such a host reports task sessions and takes «By task» and the session filter.
   const hostKnowsTasks = hostCapabilities.includes(BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY)
+  // Only such a host's ui.set takes the Input required switch.
+  const hostTakesInputRequiredGroup = hostCapabilities.includes(
+    BUILD_WEB_INPUT_REQUIRED_GROUP_RUNTIME_CAPABILITY
+  )
   const serversKnowingTasks = useServersKnowingTasks({
     client,
     hostCapabilities,
@@ -175,6 +182,7 @@ export function useHostScreenController({
     hostDisplay,
     hostId,
     hostKnowsTasks,
+    hostTakesInputRequiredGroup,
     insets,
     isReadOnly: connState === 'auth-failed',
     isWideLayout,

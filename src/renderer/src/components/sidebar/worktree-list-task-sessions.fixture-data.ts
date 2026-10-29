@@ -2,6 +2,7 @@ import type {
   BuildWebSessionAttentionReason,
   WorktreeBuildWebSessionState
 } from '../../../../shared/build-web-session-types'
+import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import { useAppStore } from '@/store'
 import type { AppState } from '@/store/types'
@@ -68,6 +69,37 @@ export const TASK_SESSION_WORKTREES: Worktree[] = [
 export const worktreeIdOfTask = (key: string): string | null =>
   TASK_SESSION_WORKTREES.find((worktree) => worktree.buildWebTask?.key === key)?.id ?? null
 
+// Agents waiting on the user: a task in progress, a workspace with no task and an attention row,
+// which stays in Needs attention. A live tab's approval title is the status lane's «needs input».
+const AWAITING_INPUT_WORKTREES = TASK_SESSION_WORKTREES.filter(
+  (worktree) =>
+    ['IS-172', 'IS-149'].includes(worktree.buildWebTask?.key ?? '') ||
+    worktree.displayName === 'invest'
+)
+
+function awaitingInputTabs(): Pick<AppState, 'tabsByWorktree' | 'ptyIdsByTabId'> {
+  const tabsByWorktree: Record<string, TerminalTab[]> = {}
+  const ptyIdsByTabId: Record<string, string[]> = {}
+  for (const worktree of AWAITING_INPUT_WORKTREES) {
+    const id = `tab-${worktree.id}`
+    tabsByWorktree[worktree.id] = [
+      {
+        id,
+        ptyId: `pty-${worktree.id}`,
+        worktreeId: worktree.id,
+        title: 'Codex - waiting for approval',
+        customTitle: null,
+        color: null,
+        sortOrder: 0,
+        createdAt: NOW,
+        launchAgent: 'codex'
+      }
+    ]
+    ptyIdsByTabId[id] = [`pty-${worktree.id}`]
+  }
+  return { tabsByWorktree, ptyIdsByTabId }
+}
+
 /** Card density over the explorer's seeded settings, as a fixture's `setup`. */
 export function withCompactCards(compactWorktreeCards: boolean): () => void {
   return () =>
@@ -91,6 +123,7 @@ export function taskSessionStore(overrides: Partial<AppState> = {}): Partial<App
     showSleepingWorkspaces: true,
     collapsedGroups: new Set(),
     activeWorktreeId: worktreeIdOfTask('IS-166'),
+    ...awaitingInputTabs(),
     ...overrides
   }
 }

@@ -27,6 +27,7 @@ import type { WorktreeRowDragState } from '../drag/row-state'
 
 export type WorktreeItemRowContext = {
   settings: AppState['settings']
+  compactRows: boolean
   groupBy: WorktreeGroupBy
   folderBackedProjectGroupIds: ReadonlySet<string>
   groupKeyByRowKey: ReadonlyMap<string, string>
@@ -144,8 +145,9 @@ export function renderWorktreeItemRow(
       className={cn(
         // Why: don't transition 'transform' — it lags/flashes when TanStack Virtual repositions adjacent rows.
         'relative transition-[opacity,filter] duration-150 ease-out',
-        // Why: keeps the card inside the «Needs attention» box (see TaskAttentionFrame).
-        inTaskAttentionSection && !nested && 'pr-1',
+        // Why: keeps the card inside the «Needs attention» box (see TaskAttentionFrame); a compact
+        // row sits 2px off the box's border, as in the mockup.
+        inTaskAttentionSection && !nested && (ctx.compactRows ? 'px-[3px]' : 'pr-1'),
         ctx.worktreeDragState.draggingWorktreeId === itemRow.worktree.id &&
           // Why: the fixed drag preview is the affordance; a translucent source row would bleed through sticky headers/footers.
           'pointer-events-none opacity-0'
@@ -206,6 +208,7 @@ export function renderWorktreeItemRow(
         showProjectName={itemRow.showProjectName}
         inPinnedSection={itemRow.sectionKey === PINNED_GROUP_KEY}
         inTaskAttentionSection={inTaskAttentionSection}
+        inTaskGrouping={ctx.groupBy === 'task'}
         renameRowKey={itemRow.rowKey}
         lineageChildCount={itemRow.lineageChildCount}
         lineageCollapsed={itemRow.lineageCollapsed}

@@ -4,6 +4,7 @@ import { WORKSPACE_ROW_FILTER_UI_FIELDS } from './workspace-row-filters'
 /** The non-filter UI state a host's own phone mirrors through ui.get/ui.set. */
 export const WORKSPACE_VIEW_UI_FIELDS = [
   'groupBy',
+  'showInputRequiredGroup',
   'sortBy',
   'projectOrderBy',
   'worktreeCardProperties',

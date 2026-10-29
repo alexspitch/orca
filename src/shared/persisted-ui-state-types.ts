@@ -84,6 +84,8 @@ export type PersistedUIState = {
   hideWorkspacesFromOtherDevices?: boolean
   /** IS-147: task lanes hidden by the session filter; written only to hosts announcing the task capability. */
   hiddenSessionStates?: HideableTaskSessionGroup[]
+  /** «By task» lists agents waiting on the user in Input required. Absent means on. */
+  showInputRequiredGroup?: boolean
   /** Keep each project's main workspace out of the "Hide sleeping" sweep. Absent means on (#8873). */
   alwaysShowDefaultBranchWorkspace?: boolean
   /** Per-worktree Explorer dotfile visibility. Missing entries inherit the default: show. */

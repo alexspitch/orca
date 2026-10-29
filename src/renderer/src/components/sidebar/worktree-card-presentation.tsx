@@ -1,16 +1,12 @@
-import React from 'react'
 import { getWorkspaceAttachments } from '../../../../shared/workspace-attachments'
 
 import {
+  getCompactWorktreeCardPaddingLeft,
   getFlushWorktreeCardPaddingLeft,
   getNewCardStyleParentContentMarginLeft
 } from './worktree-list/rows/indentation'
-import {
-  hasWorktreeCardDetails,
-  WorktreeCardDetailsHover,
-  WorktreeCardMetaBadges
-} from './WorktreeCardMeta'
-import { WorktreeCardPortsDetails, WorktreeCardPortsTrigger } from './WorktreeCardPorts'
+import { WorktreeCardMetaBadges } from './WorktreeCardMeta'
+import { WorktreeCardPortsTrigger } from './WorktreeCardPorts'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 import { getWorktreeTaskSessionState } from '../../../../shared/sidebar-list/task-session-groups'
 
@@ -66,42 +62,26 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     metaComment,
     metaAutomationProvenance,
     metaCliProvenance,
-    hoverIssue,
-    hoverLinearIssue,
-    hoverJiraIssue,
-    hoverReview,
-    hoverComment,
-    linearIssue,
-    handleEditIssue,
-    handleManageLinks,
-    handleEditComment,
-    handleOpenGitHubIssueInOrca,
-    handleOpenIssueInBrowser,
-    handleOpenLinearIssueInOrca,
-    handleOpenReviewInOrca,
-    handleOpenReviewInBrowser,
-    handleOpenAutomation,
-    handleOpenAutomationRun,
-    canUnlinkReview,
-    handleUnlinkReview,
-    detailsHoverControl,
     showDeleteQuickAction
   } = card
 
   // Why: pinned trees mix repos, so ordinary rows lead with the project chip; cross-repo children keep the regular project badge.
-  // Why a task's compact row drops the chip: its number names the work, and the title needs the room.
-  const taskNumberLeads = cardDetails.compactCards && Boolean(worktree.buildWebTask)
+  // Why a task's compact row drops the chip: its number names the work, and the title needs the room;
+  // grouped «By task», every compact title line is the mockup's — the opened row names the project.
+  const taskGroupedCompactRow = compactCards && card.inTaskGrouping === true
+  const plainCompactTitle =
+    taskGroupedCompactRow || (compactCards && Boolean(worktree.buildWebTask))
   // Why the meta row on a full card: the number sits where a linked Jira issue does (IS-147).
   const showTaskKeyInMetaRow =
     !compactCards && !newCardStyle && cardDetails.metaRow && Boolean(worktree.buildWebTask)
-  const showPinnedRepoIcon = inPinnedSection && !!repo && !showProjectName && !taskNumberLeads
+  const showPinnedRepoIcon = inPinnedSection && !!repo && !showProjectName && !plainCompactTitle
   const showInlineRepoBadge =
     cardDetails.repoInTitle &&
     !!repo &&
     !hideRepoBadge &&
     !isFolder &&
     !showPinnedRepoIcon &&
-    !taskNumberLeads
+    !plainCompactTitle
   const showRepoBadgeInMetaRow =
     !cardDetails.repoInTitle && !!repo && !hideRepoBadge && !showPinnedRepoIcon
   const contextLabel = getVisibleContextLabel(
@@ -123,9 +103,12 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
   const showUnreadQuickAction = !affiliateListMode && showStatus && !newCardStyle
   // Why: the slot owns the unread/status lane; legacy keeps the bell toggle, the new card keeps the glyph passive.
   const showCombinedStatusSlot = showStatus
-  const showTitleRowPrimary = compactCards && worktree.isMainWorktree && !isFolder
+  const showTitleRowPrimary =
+    compactCards && worktree.isMainWorktree && !isFolder && !plainCompactTitle
   const showMetaRowDetails = !newCardStyle && !compactCards && (hasDetails || hasPorts)
-  const showTitleRowIndicators = (newCardStyle || compactCards) && (hasDetails || hasPorts)
+  // Why not grouped «By task»: the mockup's title line ends with the session state alone.
+  const showTitleRowIndicators =
+    (newCardStyle || (compactCards && !taskGroupedCompactRow)) && (hasDetails || hasPorts)
   // Why: grouped views can hide the repo badge; don't reserve a blank metadata lane unless there's real content.
   const hasDetailedMetaRowContent = Boolean(
     (showRepoBadgeInMetaRow && repo) ||
@@ -139,10 +122,13 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     showMetaRowDetails ||
     showTaskKeyInMetaRow
   )
-  // Why: without the identity meta row, a compact card keeps a row only for badges and the timer.
-  const hasMetaRow = cardDetails.metaRow
-    ? hasDetailedMetaRowContent
-    : hasMetadataBadge || cacheStartedAt != null
+  // Why: without the identity meta row, a compact card keeps a row only for badges and the timer;
+  // an opened compact row draws its own line (WorktreeCardCompactDetails).
+  const hasMetaRow = compactCards
+    ? !cardDetails.expanded && (hasMetadataBadge || cacheStartedAt != null)
+    : cardDetails.metaRow
+      ? hasDetailedMetaRowContent
+      : hasMetadataBadge || cacheStartedAt != null
   const showHeaderActions = showTitleRowPrimary || showDeleteQuickAction
   const trimmedVisibleCardTitle = visibleCardTitle.trim()
   const showBranchIdentityHover = newCardStyle
@@ -159,32 +145,15 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     trimmedVisibleCardTitle.length > 0 && trimmedVisibleCardTitle !== hoverBranchName
       ? trimmedVisibleCardTitle
       : undefined
-  const hasHoverIdentity = Boolean(hoverWorkspaceTitle || hoverBranchName)
-  const hasHoverDetails =
-    (newCardStyle || compactCards) &&
-    (getWorkspaceAttachments(worktree).length > 0 ||
-      hasWorktreeCardDetails({
-        issue: hoverIssue,
-        linearIssue: hoverLinearIssue,
-        jiraIssue: hoverJiraIssue,
-        review: hoverReview,
-        comment: hoverComment,
-        automationProvenance: metaAutomationProvenance,
-        cliProvenance: metaCliProvenance
-      }) ||
-      workspacePorts.length > 0 ||
-      hasHoverIdentity)
-  // Why: the parent row owns metadata hover; don't stack the title's truncation tooltip on the details popover.
-  const titleWrapper = hasHoverDetails
-    ? (title: React.ReactElement): React.ReactElement => title
-    : undefined
   // Why: sidebar rows need a small surface inset while content stays aligned with the pre-inset layout.
   const applyNewCardStyleStatusLaneOffset = newCardStyle && showCombinedStatusSlot
-  const cardPaddingLeft = flushSurface
-    ? getFlushWorktreeCardPaddingLeft(contentIndent, applyNewCardStyleStatusLaneOffset)
-    : contentIndent > 0
-      ? `calc(0.125rem + ${contentIndent}px)`
-      : null
+  const cardPaddingLeft = compactCards
+    ? getCompactWorktreeCardPaddingLeft(contentIndent)
+    : flushSurface
+      ? getFlushWorktreeCardPaddingLeft(contentIndent, applyNewCardStyleStatusLaneOffset)
+      : contentIndent > 0
+        ? `calc(0.125rem + ${contentIndent}px)`
+        : null
   const parentContentMarginLeft =
     flushSurface && applyNewCardStyleStatusLaneOffset
       ? getNewCardStyleParentContentMarginLeft(contentIndent)
@@ -223,47 +192,8 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
         )}
       </div>
     ) : null
-  const detailsAndPorts =
-    detailsAndPortsContent && !newCardStyle && !compactCards ? (
-      <WorktreeCardDetailsHover
-        workspace={worktree}
-        referenceDetails={referenceDetails}
-        onManageLinks={affiliateListMode ? undefined : handleManageLinks}
-        issue={metaIssue}
-        linearIssue={metaLinearIssue}
-        jiraIssue={metaJiraIssue}
-        review={metaReview}
-        comment={metaComment}
-        automationProvenance={metaAutomationProvenance}
-        cliProvenance={metaCliProvenance}
-        detailsAfter={hasPorts ? <WorktreeCardPortsDetails ports={workspacePorts} /> : null}
-        hoverControl={detailsHoverControl}
-        onEditIssue={affiliateListMode ? undefined : handleEditIssue}
-        onEditComment={affiliateListMode ? undefined : handleEditComment}
-        onOpenGitHubIssueInOrca={
-          metaIssue && 'url' in metaIssue && metaIssue.url ? handleOpenGitHubIssueInOrca : undefined
-        }
-        onOpenIssueInBrowser={
-          metaIssue && 'url' in metaIssue && metaIssue.url ? handleOpenIssueInBrowser : undefined
-        }
-        onOpenLinearIssueInOrca={linearIssue?.url ? handleOpenLinearIssueInOrca : undefined}
-        onOpenReviewInOrca={repo ? handleOpenReviewInOrca : undefined}
-        onOpenReviewInBrowser={metaReview?.url ? handleOpenReviewInBrowser : undefined}
-        onOpenAutomation={affiliateListMode ? undefined : handleOpenAutomation}
-        onOpenAutomationRun={affiliateListMode ? undefined : handleOpenAutomationRun}
-        onUnlinkReview={
-          !affiliateListMode &&
-          (canUnlinkReview ||
-            getWorkspaceAttachments(worktree).some((item) => item.type !== 'issue'))
-            ? handleUnlinkReview
-            : undefined
-        }
-      >
-        {detailsAndPortsContent}
-      </WorktreeCardDetailsHover>
-    ) : (
-      detailsAndPortsContent
-    )
+  // Why no hover card: details open from the task number and the «Project on …» element only (IS-147).
+  const detailsAndPorts = detailsAndPortsContent
   const titleRowIndicators = showTitleRowIndicators ? (
     <div className="flex shrink-0 items-center gap-1">{detailsAndPorts}</div>
   ) : null
@@ -277,10 +207,20 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     showLineageChildChip ||
     showsAttentionReason
   const titleOnlyCard = !hasSecondaryCardContent
+  // Why three shapes: the mockup's one-line row, the attention box's two-line row, the opened row.
+  const compactRowShape: 'line' | 'tight' | 'open' | null = !compactCards
+    ? null
+    : cardDetails.expanded
+      ? 'open'
+      : card.inTaskAttentionSection
+        ? 'tight'
+        : 'line'
 
   return {
     showPinnedRepoIcon,
     showInlineRepoBadge,
+    plainCompactTitle,
+    taskGroupedCompactRow,
     showRepoBadgeInMetaRow,
     showHostContextBadge,
     contextLabel,
@@ -299,13 +239,12 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     showDeleteQuickAction,
     hoverBranchName,
     hoverWorkspaceTitle,
-    hasHoverDetails,
-    titleWrapper,
     parentContentMarginLeft,
     cardStyle,
     detailsAndPorts,
     titleRowIndicators,
     titleOnlyCard,
+    compactRowShape,
     expandedCompactRow: cardDetails.expanded
   }
 }

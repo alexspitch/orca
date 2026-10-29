@@ -404,8 +404,6 @@ describe('WorktreeList real child WorktreeCard integration', () => {
     const childOption = container.querySelector('[id="worktree-list-option-all%3A%7Cchild"]')
 
     expect(childOption?.textContent).toContain('MR #42')
-    expect(childOption?.textContent).toContain('Child GitLab MR')
-    expect(childOption?.textContent).toContain('Child handoff note')
   })
 
   it('keeps expanded child cards in the parent title column', async () => {

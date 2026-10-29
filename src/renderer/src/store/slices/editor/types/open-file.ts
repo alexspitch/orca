@@ -13,6 +13,7 @@ import type {
   CommitCompareSnapshot,
   ConflictReviewState,
   DiffSource,
+  OpenBuildWebTaskState,
   OpenCheckRunDetailsState,
   OpenConflictMetadata
 } from '../../../../../../shared/editor-tab-view-types'
@@ -82,6 +83,8 @@ export type OpenFile = {
   fileContentReloadNonce?: number
   /** Why: CI check-details tabs are virtual editor tabs backed by fetched PR check-run metadata, not a file on disk. */
   checkRunDetails?: OpenCheckRunDetailsState
+  /** A build-web task's card opened from a sidebar row's number: a virtual tab, never a file. */
+  buildWebTask?: OpenBuildWebTaskState
   // Only host-mirrored tabs may be culled on omission; locally opened tabs survive.
   mirroredFromRuntimeSession?: boolean
   // Read-only is orthogonal to mode: logs cannot edit/autosave/rename; persist only true.
@@ -90,7 +93,13 @@ export type OpenFile = {
   csvPreviewOnly?: boolean
   /** Why: explicit live tail, only meaningful for a read-only local log. */
   liveTail?: boolean
-  mode: 'edit' | 'diff' | 'conflict-review' | 'markdown-preview' | 'check-details'
+  mode:
+    | 'edit'
+    | 'diff'
+    | 'conflict-review'
+    | 'markdown-preview'
+    | 'check-details'
+    | 'build-web-task'
 }
 
 export type ActivityBarPosition = 'top' | 'side'

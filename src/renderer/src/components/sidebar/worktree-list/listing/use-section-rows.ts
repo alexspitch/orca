@@ -40,6 +40,10 @@ import type { ExecutionHostRegistryEntry } from '../../../../../../shared/execut
 import { buildSidebarHostOptions } from '../../sidebar-host-options'
 import { selectPendingWorktreeCreationKeys } from './pending-worktree-creation-keys'
 import { selectWorktreesByRepo } from '@/store/workspace-record-selectors'
+import {
+  inputRequiredReaderOf,
+  selectInputRequiredWorkspaceIds
+} from '../../input-required-workspaces'
 
 type SectionRowsArgs = {
   agentSendTargetWorktreeId?: string | null
@@ -78,6 +82,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
   const wslHostServerFilesMissing = useAppStore((s) => s.wslHostServerFiles === 'missing')
   const workspaceHostOrder = useAppStore((s) => s.workspaceHostOrder)
   const setWorkspaceHostOrder = useAppStore((s) => s.setWorkspaceHostOrder)
+  const inputRequiredWorkspaceIds = useAppStore(selectInputRequiredWorkspaceIds)
 
   // Why: manual header order is bound to state.repos; Recent/Smart derive order from the sorted worktree stream.
   const repoOrder = useMemo(
@@ -156,6 +161,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
         worktrees,
         repoMap,
         prGroupOf: createSidebarPRGroupReader(repoMap, args.prCache),
+        inputRequiredOf: inputRequiredReaderOf(inputRequiredWorkspaceIds),
         repoOrder,
         workspaceStatuses: args.workspaceStatuses,
         projectOrderBy: args.projectOrderBy,
@@ -179,6 +185,7 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
       worktrees,
       repoMap,
       args.prCache,
+      inputRequiredWorkspaceIds,
       defaultHostId,
       repoOrder,
       args.workspaceStatuses,

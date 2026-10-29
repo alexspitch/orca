@@ -51,9 +51,9 @@ import { orderMainWorktreeFirst, getRenderedNaturalAnchorRepoIds } from './secti
 import { withRepoSectionDisplayLabels } from '../project-section-order'
 import { buildOrderedGroups } from './worktree-grouping'
 import {
-  TASK_ATTENTION_GROUP_KEY,
-  getWorktreeTaskGroup,
-  type SidebarTaskGroupReader
+  claimedAbovePinned,
+  isTaskLaneAbovePinnedKey,
+  type InputRequiredReader
 } from './task-session-groups'
 
 type SidebarOccurrenceSection = WorktreeOccurrenceSection<Worktree> & { group: WorktreeGroupEntry }
@@ -67,8 +67,8 @@ export type SidebarRowPlanInputs = {
   /** Defaults to repoMap's registration for the row's repo id. */
   repoOfWorktree?: RepoOfWorktree
   prGroupOf: SidebarPRGroupReader
-  /** The «By task» lane of a worktree, from its meta; defaults to the meta reader. */
-  taskGroupOf?: SidebarTaskGroupReader
+  /** «By task»: rows whose agent waits on the user, while Input required is on; absent reads none. */
+  inputRequiredOf?: InputRequiredReader
   repoOrder?: Map<string, number>
   workspaceStatuses: readonly WorkspaceStatusDefinition[]
   projectOrderBy: ProjectOrderBy
@@ -96,7 +96,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
     repoMap,
     repoOfWorktree,
     prGroupOf,
-    taskGroupOf = getWorktreeTaskGroup,
+    inputRequiredOf,
     repoOrder,
     workspaceStatuses,
     projectOrderBy,
@@ -134,9 +134,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
       ? getSidebarLineageChildren(worktrees, lineageById, worktreeMap, filterRepoIds)
       : new Map<string, Worktree[]>(),
     isPinned: (worktree) => worktree.isPinned === true,
-    // Why: Needs attention outranks Pinned, even for a row under a pinned lineage parent.
-    keepOutOfPinned:
-      groupBy === 'task' ? (worktree) => taskGroupOf(worktree) === 'attention' : undefined,
+    keepOutOfPinned: groupBy === 'task' ? claimedAbovePinned(inputRequiredOf) : undefined,
     duplicatePinned: pinnedDisplayPolicy === 'duplicate-in-groups',
     owningSectionOf: (worktree) =>
       getProjectGroupingForRepo(worktree.repoId, repoMap, projectIndex),
@@ -150,7 +148,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
               naturalWorktrees: natural,
               repoMap,
               prGroupOf,
-              taskGroupOf,
+              inputRequiredOf,
               workspaceStatuses,
               projectIndex,
               displayRootByIdentity,
@@ -211,6 +209,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
       worktrees: naturalWorktrees,
       repoMap,
       prGroupOf,
+      inputRequiredOf,
       collapsedGroups,
       workspaceStatuses,
       projectGrouping
@@ -232,10 +231,10 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
       noticeHostContextLabelByRepoId,
       occurrencePlan
     }
-    // Needs attention sits above Pinned; it is the only lane emitted before it.
-    const leadingGroups = orderedGroups.filter(([key]) => key === TASK_ATTENTION_GROUP_KEY)
+    // Needs attention and Input required sit above Pinned; they are the only lanes emitted before it.
+    const leadingGroups = orderedGroups.filter(([key]) => isTaskLaneAbovePinnedKey(key))
     appendOrderedGroups(sectionContext, leadingGroups)
-    // Why after Needs attention: a closed task's leftover outranks a workspace still being made.
+    // Why after them: a closed task's leftover or a waiting agent outranks a workspace still being made.
     if (groupBy !== 'repo') {
       for (const creation of pendingCreations) {
         result.push(buildPendingCreationRow(creation, repoMap))
@@ -243,7 +242,7 @@ export function planSidebarRows(inputs: SidebarRowPlanInputs) {
     }
     const laterGroups =
       leadingGroups.length > 0
-        ? orderedGroups.filter(([key]) => key !== TASK_ATTENTION_GROUP_KEY)
+        ? orderedGroups.filter(([key]) => !isTaskLaneAbovePinnedKey(key))
         : orderedGroups
     emitPinnedGroup(
       pinnedSectionWorktrees,

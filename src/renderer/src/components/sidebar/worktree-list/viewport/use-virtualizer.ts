@@ -10,7 +10,7 @@ import {
   extractWorktreeVirtualRowIndexes,
   getStickyHeaderIndexes,
   getVirtualRowIndex,
-  WORKTREE_SIDEBAR_VIRTUAL_ROW_GAP
+  getWorktreeSidebarRowGap
 } from './virtual-rows'
 import { getRenderRowKey } from '../listing/render-row'
 import type { RenderRow } from '../listing/render-row'
@@ -29,8 +29,10 @@ export function useWorktreeListVirtualizer(args: {
   scrollRef: React.RefObject<HTMLDivElement | null>
   scrollOffsetRef: React.MutableRefObject<number>
   suppressMeasurementAdjustmentUntilRef: React.MutableRefObject<number>
+  /** Classic compact cards: flush 28px rows (see getWorktreeSidebarRowGap). */
+  compactRows: boolean
 }) {
-  const { renderRows, firstHeaderIndex, scrollRef, scrollOffsetRef } = args
+  const { renderRows, firstHeaderIndex, scrollRef, scrollOffsetRef, compactRows } = args
   const stickyHeaderIndexes = useMemo(() => getStickyHeaderIndexes(renderRows), [renderRows])
   const activeStickyHeaderIndexRef = useRef<number | null>(null)
   const activeStickyHostIndexRef = useRef<number | null>(null)
@@ -81,7 +83,8 @@ export function useWorktreeListVirtualizer(args: {
             renderRows,
             index ?? -1,
             firstHeaderIndex,
-            activeStickyHeaderIndexRef.current
+            activeStickyHeaderIndexRef.current,
+            compactRows
           )
         )
       }
@@ -94,12 +97,13 @@ export function useWorktreeListVirtualizer(args: {
           renderRows,
           index,
           firstHeaderIndex,
-          activeStickyHeaderIndexRef.current
+          activeStickyHeaderIndexRef.current,
+          compactRows
         )
       }
       return measureVirtualElementSize(element, entry, instance)
     },
-    [firstHeaderIndex, isCurrentVirtualRowElement, renderRows]
+    [compactRows, firstHeaderIndex, isCurrentVirtualRowElement, renderRows]
   )
 
   const virtualizer = useVirtualizer({
@@ -110,7 +114,8 @@ export function useWorktreeListVirtualizer(args: {
         renderRows,
         index,
         firstHeaderIndex,
-        activeStickyHeaderIndexRef.current
+        activeStickyHeaderIndexRef.current,
+        compactRows
       ),
     measureElement: measureCurrentVirtualRowElement,
     // Why: TanStack memoizes rangeExtractor by identity; header indexes must be deps or sticky slots go stale.
@@ -126,7 +131,7 @@ export function useWorktreeListVirtualizer(args: {
       [renderRows, stickyHeaderIndexes]
     ),
     overscan: 10,
-    gap: WORKTREE_SIDEBAR_VIRTUAL_ROW_GAP,
+    gap: getWorktreeSidebarRowGap(compactRows),
     // Why: the sticky group header lives inside the virtual list, so scroll math needs the same top inset as the DOM reveal.
     scrollPaddingStart: WORKTREE_SIDEBAR_REVEAL_TOP_INSET,
     isScrollingResetDelay: USER_SCROLL_MEASUREMENT_ADJUSTMENT_SUPPRESS_MS,

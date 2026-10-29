@@ -40,39 +40,39 @@ export const BUILD_WEB_SESSION_REASON_LABELS: Record<
   { full: BuildWebSessionLabel; short: BuildWebSessionLabel }
 > = {
   commits: {
-    full: label('reason.commits', 'Task closed, branch has unmerged commits'),
+    full: label('reason.commits', 'Unmerged commits'),
     short: label('reason.commitsShort', 'Unmerged commits')
   },
   dirty: {
-    full: label('reason.dirty', 'Task closed, worktree has uncommitted changes'),
+    full: label('reason.dirty', 'Uncommitted changes'),
     short: label('reason.dirtyShort', 'Uncommitted')
   },
   'head-moved': {
-    full: label('reason.headMoved', 'Task closed, worktree is on another branch'),
+    full: label('reason.headMoved', 'Switched to another branch'),
     short: label('reason.headMovedShort', 'Other branch')
   },
   blocked: {
-    full: label('reason.blocked', 'Task closed, cleanup is blocked'),
+    full: label('reason.blocked', 'Cleanup is blocked'),
     short: label('reason.blockedShort', 'Blocked')
   },
   'remove-failed': {
-    full: label('reason.removeFailed', 'Task closed, removing the worktree failed'),
+    full: label('reason.removeFailed', 'Removing the workspace failed'),
     short: label('reason.removeFailedShort', 'Delete failed')
   },
   'agent-running': {
-    full: label('reason.agentRunning', 'Task closed a day ago, the agent is still running'),
+    full: label('reason.agentRunning', 'Agent still running 24 h after Done'),
     short: label('reason.agentRunningShort', 'Agent running')
   },
   'terminal-busy': {
-    full: label('reason.terminalBusy', 'Task closed a day ago, a terminal is still busy'),
+    full: label('reason.terminalBusy', 'Terminal still busy 24 h after Done'),
     short: label('reason.terminalBusyShort', 'Terminal busy')
   },
   'state-unknown': {
-    full: label('reason.stateUnknown', 'Task closed a day ago, the worktree state is unknown'),
+    full: label('reason.stateUnknown', 'State unknown 24 h after Done'),
     short: label('reason.stateUnknownShort', 'State unknown')
   },
   'skill-unfinished': {
-    full: label('reason.skillUnfinished', 'Task done a day ago, the skill never finished'),
+    full: label('reason.skillUnfinished', 'Skill not finished 24 h after Done'),
     short: label('reason.skillUnfinishedShort', 'Skill unfinished')
   },
   replaced: {
@@ -80,9 +80,98 @@ export const BUILD_WEB_SESSION_REASON_LABELS: Record<
     short: label('reason.replacedShort', 'Replaced')
   },
   'cleanup-off': {
-    full: label('reason.cleanupOff', 'Task closed, auto-remove is off'),
+    full: label('reason.cleanupOff', 'Done, auto-remove is off'),
     short: label('reason.cleanupOffShort', 'Task closed')
   }
+}
+
+/** Words with the values they name: the desktop passes both to translate(), the phone to fillSessionLabel(). */
+export type BuildWebSessionPhrase = { label: BuildWebSessionLabel; values: Record<string, string> }
+
+const phrase = (
+  labelOf: BuildWebSessionLabel,
+  values: Record<string, string> = {}
+): BuildWebSessionPhrase => ({ label: labelOf, values })
+
+// Why separate words for one commit: the phone has no plural rules.
+const COMMIT_COUNT_LABELS = {
+  one: label('reason.commitsOne', '1 commit not in {{base}}'),
+  many: label('reason.commitsMany', '{{count}} commits not in {{base}}'),
+  oneNoBase: label('reason.commitsOneNoBase', '1 unmerged commit'),
+  manyNoBase: label('reason.commitsManyNoBase', '{{count}} unmerged commits'),
+  oneShort: label('reason.commitsOneShort', '1 commit'),
+  manyShort: label('reason.commitsManyShort', '{{count}} commits')
+} as const
+
+const DETAIL_LABELS = {
+  headMoved: label('reason.headMovedTo', 'Switched to {{branch}}'),
+  blocked: label('reason.blockedBy', 'Cleanup is blocked ({{detail}})')
+} as const
+
+/** `origin/master` and `refs/remotes/origin/master` both name `master`. */
+function baseBranchName(baseRef: string | null | undefined): string | null {
+  const name = baseRef
+    ?.trim()
+    .replace(/^refs\/(heads|remotes)\//, '')
+    .replace(/^[^/]+\/(?=.)/, '')
+  return name ? name : null
+}
+
+function commitPhrases(
+  detail: string,
+  baseRef: string | null | undefined
+): { full: BuildWebSessionPhrase; short: BuildWebSessionPhrase } | null {
+  const count = /^\d+$/.test(detail) ? Number(detail) : 0
+  if (count < 1) {
+    return null
+  }
+  const base = baseBranchName(baseRef)
+  const one = count === 1
+  const values = { count: String(count) }
+  const full = base
+    ? phrase(one ? COMMIT_COUNT_LABELS.one : COMMIT_COUNT_LABELS.many, { ...values, base })
+    : phrase(one ? COMMIT_COUNT_LABELS.oneNoBase : COMMIT_COUNT_LABELS.manyNoBase, values)
+  const short = phrase(one ? COMMIT_COUNT_LABELS.oneShort : COMMIT_COUNT_LABELS.manyShort, values)
+  return { full, short }
+}
+
+/**
+ * An attention reason as a row says it, with the host's detail (the commit count, the branch the
+ * worktree moved to, the blockers) and the worktree's base branch; null for a reason this client
+ * does not know.
+ */
+export function sessionAttentionPhrases(args: {
+  reason: string | null | undefined
+  detail?: string | null
+  baseRef?: string | null
+}): { full: BuildWebSessionPhrase; short: BuildWebSessionPhrase } | null {
+  const labels = sessionReasonLabels(args.reason)
+  if (!labels) {
+    return null
+  }
+  const detail = typeof args.detail === 'string' && args.detail !== '' ? args.detail : undefined
+  const plain = { full: phrase(labels.full), short: phrase(labels.short) }
+  if (!detail) {
+    return plain
+  }
+  if (args.reason === 'commits') {
+    return commitPhrases(detail, args.baseRef) ?? plain
+  }
+  if (args.reason === 'head-moved') {
+    return { ...plain, full: phrase(DETAIL_LABELS.headMoved, { branch: detail }) }
+  }
+  if (args.reason === 'blocked') {
+    return { ...plain, full: phrase(DETAIL_LABELS.blocked, { detail }) }
+  }
+  return plain
+}
+
+/** A phrase's text with its values filled in, for the phone, which shows `text` as is. */
+export function fillSessionLabel(words: BuildWebSessionPhrase): string {
+  return words.label.text.replace(/{{(\w+)}}/g, (match, name: string) => {
+    const value = Object.hasOwn(words.values, name) ? words.values[name] : undefined
+    return value ?? match
+  })
 }
 
 /** A reason's words; null for one this client does not know (a newer host's) or none. */
@@ -117,11 +206,18 @@ export function sessionHistoryLabel(state: string): BuildWebSessionLabel {
 /** «By task» group headers. */
 export const BUILD_WEB_TASK_GROUP_LABELS = {
   attention: label('group.attention', 'Needs attention'),
+  input: label('group.input', 'Input required'),
   pinned: label('group.pinned', 'Pinned'),
   release: label('group.release', 'Awaiting release'),
   progress: label('group.progress', 'In progress'),
   none: label('group.none', 'No task')
 } as const
+
+/** The Workspace options switch for the Input required group. */
+export const BUILD_WEB_TASK_INPUT_GROUP_SWITCH_LABEL = label(
+  'groupSwitch.input',
+  'Input required group'
+)
 
 /** The session filter's switches in Workspace options. */
 export const BUILD_WEB_TASK_FILTER_LABELS: Record<HideableTaskSessionGroup, BuildWebSessionLabel> =

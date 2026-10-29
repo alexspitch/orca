@@ -25,11 +25,11 @@ function errorText(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 
-/** The task's card, only when this client's console is the one the task lives on. */
+/** The task's card as a tab of the current workspace, only when this client's console holds the task. */
 export function openWorktreeBuildWebTask(worktree: Worktree): Promise<void> {
   const task = worktree.buildWebTask
   return task
-    ? openBuildWebTaskCard({ ...task, title: worktree.displayName || task.key })
+    ? openBuildWebTaskCard({ ...task, title: worktree.displayName || task.key }, worktree.id)
     : Promise.resolve()
 }
 

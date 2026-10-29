@@ -13,21 +13,31 @@ import { formatSparseDirectoryPreview, shouldBeginWorktreeRename } from './workt
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 import { WorktreeCardSshHostControl } from './WorktreeCardSshHostControl'
 import { WorktreeTitleInlineRename } from './WorktreeTitleInlineRename'
-import { WorktreeTaskKey, WorktreeTaskSessionBadge } from './WorktreeCardTaskSession'
+import { WorktreeTaskSessionBadge } from './WorktreeCardTaskSession'
+import {
+  describeWorktreeCardHost,
+  WorktreeCardHostHover,
+  WorktreeCardTaskKeyHover
+} from './worktree-card-hover-cards'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
-function RepoIdentityChip({
+export function RepoIdentityChip({
   repo,
+  className,
   children
 }: {
   repo: Repo
+  className?: string
   children: React.ReactNode
 }): React.JSX.Element {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <span
-          className="inline-flex h-4 max-w-24 shrink-0 items-center justify-center gap-0.5 rounded-[4px] border border-worktree-sidebar-border bg-worktree-sidebar-accent/55 px-0.5"
+          className={cn(
+            'inline-flex h-4 max-w-24 shrink-0 items-center justify-center gap-0.5 rounded-[4px] border border-worktree-sidebar-border bg-worktree-sidebar-accent/55 px-0.5',
+            className
+          )}
           aria-label={translate(
             'auto.components.sidebar.WorktreeCard.35ccfe2475',
             'Project {{value0}}',
@@ -72,7 +82,7 @@ export function WorktreeCardHeader({
     sshOwnerEnvironmentId,
     stopQuickActionPointerPropagation,
     isRuntimeDisconnected,
-    runtimeHostLabel,
+    isSshDisconnected,
     visibleCardTitle,
     isDeleting,
     showUnreadEmphasis,
@@ -93,8 +103,9 @@ export function WorktreeCardHeader({
     showDeleteQuickAction,
     showTitleRowIndicators,
     titleRowIndicators,
-    titleWrapper
+    taskGroupedCompactRow
   } = presentation
+  const runtimeHost = describeWorktreeCardHost(card)
 
   return (
     <div className="flex min-w-0 items-center justify-between gap-2">
@@ -110,7 +121,8 @@ export function WorktreeCardHeader({
           </RepoIdentityChip>
         )}
 
-        {repo?.connectionId && (
+        {/* Why: grouped «By task», the opened compact row names the host; a reconnect stays on the title. */}
+        {repo?.connectionId && (!taskGroupedCompactRow || isSshDisconnected) && (
           <WorktreeCardSshHostControl
             targetId={repo.connectionId}
             targetLabel={sshTargetLabel || repo.displayName}
@@ -122,42 +134,26 @@ export function WorktreeCardHeader({
           />
         )}
 
-        {!repo?.connectionId && parsedRepoHost?.kind === 'runtime' && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="shrink-0 inline-flex items-center">
-                {isRuntimeDisconnected ? (
-                  // This surface shows runtime disconnection passively; reconnect controls belong to host management.
-                  <ServerOff className="size-3 text-destructive" />
-                ) : (
-                  <Server className="size-3 text-muted-foreground" />
-                )}
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="right" sideOffset={8}>
-              {isRuntimeDisconnected
-                ? runtimeHostLabel
-                  ? translate(
-                      'auto.components.sidebar.WorktreeCard.runtimeHostDisconnectedNamed',
-                      '{{hostName}} disconnected',
-                      { hostName: runtimeHostLabel }
-                    )
-                  : translate(
-                      'auto.components.sidebar.WorktreeCard.runtimeHostDisconnected',
-                      'Server disconnected'
-                    )
-                : runtimeHostLabel
-                  ? translate(
-                      'auto.components.sidebar.WorktreeCard.runtimeHostProjectNamed',
-                      'Project on {{hostName}}',
-                      { hostName: runtimeHostLabel }
-                    )
-                  : translate(
-                      'auto.components.sidebar.WorktreeCard.runtimeHostProject',
-                      'Project on Orca server'
-                    )}
-            </TooltipContent>
-          </Tooltip>
+        {!taskGroupedCompactRow && !repo?.connectionId && parsedRepoHost?.kind === 'runtime' && (
+          <WorktreeCardHostHover
+            card={card}
+            presentation={presentation}
+            heading={runtimeHost.heading}
+            icon={
+              <runtimeHost.Icon
+                className={cn('size-3', runtimeHost.disconnected && 'text-destructive')}
+              />
+            }
+          >
+            <span className="shrink-0 inline-flex items-center" data-worktree-card-host="">
+              {isRuntimeDisconnected ? (
+                // This surface shows runtime disconnection passively; reconnect controls belong to host management.
+                <ServerOff className="size-3 text-destructive" />
+              ) : (
+                <Server className="size-3 text-muted-foreground" />
+              )}
+            </span>
+          </WorktreeCardHostHover>
         )}
 
         {showInlineRepoBadge && (
@@ -171,16 +167,17 @@ export function WorktreeCardHeader({
           </RepoIdentityChip>
         )}
 
-        {presentation.showTaskKeyInMetaRow ? null : <WorktreeTaskKey worktree={worktree} />}
+        {presentation.showTaskKeyInMetaRow ? null : (
+          <WorktreeCardTaskKeyHover card={card} presentation={presentation} />
+        )}
 
         <WorktreeTitleInlineRename
           displayName={visibleCardTitle}
           disabled={isDeleting || affiliateListMode}
           showUnreadEmphasis={showUnreadEmphasis}
           dimReadTitle={newCardStyle}
-          className="text-[13px] leading-5"
+          className={compactCards ? 'text-[13px] leading-[18px]' : 'text-[13px] leading-5'}
           editingClassName="flex-1"
-          titleWrapper={titleWrapper}
           onEditingChange={affiliateListMode ? undefined : setTitleRenaming}
           onRename={handleRenameTitle}
           beginEditing={
@@ -279,6 +276,7 @@ export function WorktreeCardHeader({
             <WorktreeTaskSessionBadge
               worktree={worktree}
               short={compactCards && !presentation.expandedCompactRow}
+              compact={compactCards}
             />
           )}
         </div>

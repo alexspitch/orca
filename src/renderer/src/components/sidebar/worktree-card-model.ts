@@ -30,6 +30,8 @@ export type WorktreeCardProps = {
   inPinnedSection?: boolean
   /** IS-147: the row sits in «Needs attention», whose reason line replaces its badge. */
   inTaskAttentionSection?: boolean
+  /** The list is grouped «By task»: a compact row's title line is the mockup's — no project chip or primary star (IS-147). */
+  inTaskGrouping?: boolean
   activationRowKey?: string
   renameRowKey?: string
   contentIndent?: number

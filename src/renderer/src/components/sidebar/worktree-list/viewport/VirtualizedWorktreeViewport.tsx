@@ -84,6 +84,7 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
     ]
   )
   const newCardStyle = settings?.experimentalNewWorktreeCardStyle === true
+  const compactRows = !newCardStyle && settings?.compactWorktreeCards === true
 
   const reveal = useSidebarRevealHighlight()
   const scrollSuppression = useWorktreeSidebarScrollSuppression(scrollRef)
@@ -159,7 +160,8 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
     firstHeaderIndex,
     scrollRef,
     scrollOffsetRef,
-    suppressMeasurementAdjustmentUntilRef: scrollSuppression.suppressMeasurementAdjustmentUntilRef
+    suppressMeasurementAdjustmentUntilRef: scrollSuppression.suppressMeasurementAdjustmentUntilRef,
+    compactRows
   })
 
   usePendingSidebarReveal({
@@ -328,6 +330,7 @@ export const VirtualizedWorktreeViewport = React.memo(function VirtualizedWorktr
     worktreeVisibilityDefaultsByHost,
     getRepoSshGate,
     newCardStyle,
+    compactRows,
     folderBackedProjectGroupIds,
     projectGroups,
     session,

@@ -36,6 +36,7 @@ export function useWorktreeJumpPaletteWorktrees({
   hideCliCreatedWorkspaces,
   hideDetachedHeadWorkspaces,
   hiddenSessionStates,
+  inputRequiredWorkspaceIds,
   hideWorkspacesFromOtherDevices,
   showSleepingWorkspaces,
   alwaysShowDefaultBranchWorkspace,
@@ -116,7 +117,8 @@ export function useWorktreeJumpPaletteWorktrees({
         taskSessionHostKnown: createTaskSessionHostReader(
           { runtimeStatusByEnvironmentId },
           defaultHostId
-        )
+        ),
+        inputRequiredWorkspaceIds
       })
     )
     return filterPredicate ? visible.filter(filterPredicate.matchesWorktree) : visible
@@ -130,6 +132,7 @@ export function useWorktreeJumpPaletteWorktrees({
     hideDefaultBranchWorkspace,
     hideDetachedHeadWorkspaces,
     hiddenSessionStates,
+    inputRequiredWorkspaceIds,
     hideWorkspacesFromOtherDevices,
     pairedDeviceIdsByEnvironment,
     ptyIdsByTabId,

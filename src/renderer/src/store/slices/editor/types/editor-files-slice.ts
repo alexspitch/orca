@@ -4,6 +4,7 @@ import type {
   CombinedDiffAlternate,
   ConflictReviewEntry,
   ConflictReviewState,
+  OpenBuildWebTaskState,
   OpenCheckRunDetailsState
 } from '../../../../../../shared/editor-tab-view-types'
 import type {
@@ -205,6 +206,8 @@ export type EditorFilesSlice = {
     state: CheckRunDetailsTabPatch
   ) => void
   reloadOpenCheckRunDetailsTab: (fileId: string) => Promise<void>
+  /** Opens a build-web task's card as a tab of the worktree, or focuses the tab it already has. */
+  openBuildWebTaskTab: (worktreeId: string, task: OpenBuildWebTaskState) => void
   openBranchAllDiffs: (
     worktreeId: string,
     worktreePath: string,

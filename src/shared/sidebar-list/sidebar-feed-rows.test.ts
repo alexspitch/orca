@@ -208,6 +208,30 @@ describe('buildSidebarFeedRows keeps same-id workspaces on two hosts apart', () 
     expect(laneOf('local|r::/w/same')).toEqual(laneOf('local|r::/w/other'))
   })
 
+  it('puts only the twin whose own agent waits on the user in Input required, while it is on', () => {
+    const activity = new Map([
+      [
+        composeWorktreeHostIdentity('ssh:box', 'r::/w/same'),
+        { ...IDLE_WORKSPACE_ACTIVITY, agent: 'permission' as const }
+      ]
+    ])
+    const hideTaskless = {
+      ...NO_WORKSPACE_ROW_FILTERS,
+      hiddenSessionStates: ['none' as const]
+    }
+    const lanes = (showInputRequiredGroup: boolean) =>
+      outline(
+        buildSidebarFeedRows(
+          domains({ workspaces, activity }),
+          catalog(repos),
+          view({ groupBy: 'task', showInputRequiredGroup, filters: hideTaskless })
+        ).sectionRows
+      )
+    // «Hide workspaces without a task» spares only the row that waits, and only in its own lane.
+    expect(lanes(true)).toEqual(['# task:input@0', 'ssh:box|r::/w/same@0'])
+    expect(lanes(false)).toEqual([])
+  })
+
   it('gives each twin’s row its own host’s registration of the repo', () => {
     const built = buildSidebarFeedRows(domains({ workspaces }), catalog(repos), view())
     const repoOf = (hostId: string) =>

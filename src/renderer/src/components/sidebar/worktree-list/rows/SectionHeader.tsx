@@ -21,7 +21,12 @@ import type {
 } from '../../../../../../shared/sidebar-list/row-types'
 import { PINNED_GROUP_KEY } from '../../../../../../shared/sidebar-list/group-keys'
 import { isSidebarGroupCollapsed } from '../../../../../../shared/sidebar-list/default-collapsed-groups'
-import { getTaskHeaderChrome, TaskHeaderCount } from './task-section-header'
+import {
+  getTaskHeaderChrome,
+  getTaskLaneHeaderLook,
+  SectionHeaderTitle,
+  TaskHeaderChevron
+} from './task-section-header'
 import { getWorkspaceStatusFromGroupKey } from '../../workspace-status'
 import { getVirtualRowTransform } from '../viewport/virtual-rows'
 import { getSidebarHeaderVisual } from './header-visuals'
@@ -84,7 +89,7 @@ export function renderWorktreeSectionHeaderRow(args: {
   vItem: VirtualItem
   isActiveStickyHeader: boolean
   hasStickyHost: boolean
-  hasHeaderTopSpacing: boolean
+  topSpacingClassName: string | null
   /** The top of the «Needs attention» box (TaskAttentionFrame), drawn behind the header. */
   attentionFrame: React.ReactNode
   measureVirtualRowElement: (element: HTMLDivElement | null) => void
@@ -180,6 +185,7 @@ export function renderWorktreeSectionHeaderRow(args: {
   const collapseKey = row.collapseKey ?? row.key
   const isHeaderCollapsed = isSidebarGroupCollapsed(ctx.collapsedGroups, collapseKey)
   const taskHeader = getTaskHeaderChrome(row.icon, collapseKey, ctx.toggleGroupWithScrollAnchor)
+  const taskLane = getTaskLaneHeaderLook(ctx.groupBy === 'task', isPinnedHeader, taskHeader)
   // Why: repo/project/status/pinned/task share compact section chrome; flat "All" stays a simple label.
   const laneHeader = headerWorkspaceStatus !== null || isPinnedHeader || taskHeader.collapsible
   const showHeaderCollapseAffordance =
@@ -198,7 +204,7 @@ export function renderWorktreeSectionHeaderRow(args: {
       className={cn(
         'left-0 right-0',
         // Why: drop the inter-group spacer once the header pins so it sits flush at top (see getActiveStickyHeaderIndexForScroll).
-        args.hasHeaderTopSpacing && !isActiveStickyHeader && 'pt-1',
+        !isActiveStickyHeader && args.topSpacingClassName,
         isActiveStickyHeader
           ? cn(
               'sticky z-20 bg-worktree-sidebar',
@@ -243,7 +249,7 @@ export function renderWorktreeSectionHeaderRow(args: {
             // Keep grab on the title; action buttons use pointer cursors.
             'group relative flex h-7 w-full items-center gap-1.5 pr-2 text-left transition-all',
             !(isDraggableRepoHeader || isDraggableProjectGroupHeader) && 'cursor-pointer',
-            taskHeader.toneClassName,
+            taskLane?.headerClassName,
             ctx.highlightedRevealRowKey === row.key &&
               'rounded-md bg-worktree-sidebar-accent ring-1 ring-worktree-sidebar-ring/50',
             (isDraggingThis || isDraggingThisProjectGroup) &&
@@ -258,8 +264,9 @@ export function renderWorktreeSectionHeaderRow(args: {
           )}
           style={{
             // Why: non-project headers like "All" are flat-list labels; don't reserve project hierarchy indent.
-            paddingLeft:
-              isRepoHeader || isProjectGroupHeader
+            paddingLeft: taskLane
+              ? taskLane.paddingLeft
+              : isRepoHeader || isProjectGroupHeader
                 ? getProjectGroupHeaderPaddingLeft(row.projectGroupDepth ?? 0)
                 : WORKTREE_SECTION_HEADER_PADDING_LEFT
           }}
@@ -319,8 +326,9 @@ export function renderWorktreeSectionHeaderRow(args: {
           >
             <div
               className={cn(
-                'flex size-4 shrink-0 items-center justify-center rounded-[4px]',
-                repoHeaderColor ? 'text-muted-foreground' : headerVisual.tone
+                'flex shrink-0 items-center justify-center rounded-[4px]',
+                taskLane?.iconSizeClassName ?? 'size-4',
+                repoHeaderColor || taskLane?.mutedIcon ? 'text-muted-foreground' : headerVisual.tone
               )}
             >
               {row.repo ? (
@@ -331,24 +339,21 @@ export function renderWorktreeSectionHeaderRow(args: {
                   iconClassName="size-3.5"
                 />
               ) : (
-                <headerVisual.icon className="size-3" />
+                <headerVisual.icon className={taskLane?.iconSizeClassName ?? 'size-3'} />
               )}
             </div>
 
-            <div className="min-w-0 flex-1">
-              <div className="flex min-w-0 items-center gap-1.5">
-                <div className="min-w-0 truncate text-[13px] font-semibold leading-4">{label}</div>
-                <TaskHeaderCount taskGroup={taskHeader.taskGroup} count={row.count} />
-                {hostContext ? <ProjectHeaderHostLabel context={hostContext} /> : null}
-                <RepoForkIndicator upstream={row.repo?.upstream} />
-                <FolderPathStatusIndicator status={projectGroupPathStatus} />
-                {isRepoHeader ? <RepoScanUnavailableIndicator repo={row.repo!} /> : null}
-              </div>
-            </div>
+            <SectionHeaderTitle label={label} count={row.count} taskLane={taskLane}>
+              {hostContext ? <ProjectHeaderHostLabel context={hostContext} /> : null}
+              <RepoForkIndicator upstream={row.repo?.upstream} />
+              <FolderPathStatusIndicator status={projectGroupPathStatus} />
+              {isRepoHeader ? <RepoScanUnavailableIndicator repo={row.repo!} /> : null}
+            </SectionHeaderTitle>
+            <TaskHeaderChevron lane={taskLane} rows={row.count} collapsed={isHeaderCollapsed} />
           </div>
 
           <ProjectHeaderActions>
-            {showHeaderCollapseAffordance ? (
+            {showHeaderCollapseAffordance && !taskLane ? (
               <div
                 className="flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground"
                 data-repo-header-collapse-affordance=""

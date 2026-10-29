@@ -106,6 +106,8 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
     setHideDetachedHeadWorkspaces: (v) => set({ hideDetachedHeadWorkspaces: v }),
     hiddenSessionStates: [],
     setHiddenSessionStates: (v) => set({ hiddenSessionStates: [...v] }),
+    showInputRequiredGroup: true,
+    setShowInputRequiredGroup: (v) => set({ showInputRequiredGroup: v }),
     hideWorkspacesFromOtherDevices: false,
     setHideWorkspacesFromOtherDevices: (v) => set({ hideWorkspacesFromOtherDevices: v }),
     alwaysShowDefaultBranchWorkspace: true,
