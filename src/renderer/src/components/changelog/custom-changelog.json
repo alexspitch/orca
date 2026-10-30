@@ -1,6 +1,16 @@
 {
   "releases": [
     {
+      "version": "1.4.246-custom.1793353393000",
+      "date": "2026-10-30",
+      "commit": "4e9bfda5737c",
+      "features": [
+        "Commits tab shows a commit's changed files as a collapsible folder tree with file counts and +/− lines, on desktop and phone, opening the first file automatically."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.246-custom.1793344032000",
       "date": "2026-10-30",
       "commit": "5f2b35479be4",
