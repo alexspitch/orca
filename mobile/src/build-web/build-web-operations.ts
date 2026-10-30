@@ -51,6 +51,7 @@ const BUILD_WEB_OPERATIONS = {
   commitDiff: buildWebOperation('buildWeb.commitDiff'),
   consoleFeatures: buildWebOperation('buildWeb.consoleFeatures'),
   connect: buildWebOperation('buildWeb.connect'),
+  createIssue: buildWebOperation('buildWeb.createIssue'),
   createIssueRun: buildWebOperation('buildWeb.createIssueRun'),
   createJiraIssue: buildWebOperation('buildWeb.createJiraIssue'),
   deleteComment: buildWebOperation('buildWeb.deleteComment'),

@@ -5,6 +5,7 @@ import type {
   BuildWebIssueDetail,
   BuildWebIssuePatch
 } from '../../../../src/shared/build-web-types'
+import { stepsOfLines } from '../../../../src/shared/build-web-issue-steps'
 import { MobileMarkdown } from '../../components/MobileMarkdown'
 import { colors, spacing } from '../../theme/mobile-theme'
 import { CardButton, SaveCancelRow, SectionTitle, ui } from './issue-card-ui'
@@ -113,11 +114,7 @@ export function IssueDescriptionSection({
         rows={6}
         onSave={(draft) =>
           onSave({
-            steps: draft
-              .split('\n')
-              .map((line) => line.trim())
-              .filter(Boolean)
-              .map((text) => ({ text }))
+            steps: stepsOfLines(draft)
           })
         }
       >

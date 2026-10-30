@@ -20,6 +20,7 @@ import {
   BuildWebBuildLogParams,
   BuildWebVersionBranchesParams,
   BuildWebIssueUpdateParams,
+  BuildWebIssueCreateParams,
   BuildWebCommitDiffParams,
   BuildWebCommitsParams,
   BuildWebGuideParams,
@@ -95,6 +96,7 @@ export function registerBuildWebHandlers(runtime: BuildWebSessionLinkRuntime): v
   handle('listIssueChildren', BuildWebIssueId, (args) => commands.buildWebListIssueChildren(args))
   handle('listVersions', BuildWebVersionsParams, (args) => commands.buildWebListVersions(args))
   handle('updateIssue', BuildWebIssueUpdateParams, (args) => commands.buildWebUpdateIssue(args))
+  handle('createIssue', BuildWebIssueCreateParams, (args) => commands.buildWebCreateIssue(args))
   handle('setFavorite', BuildWebFavoriteParams, (args) => commands.buildWebSetFavorite(args))
   handle('archiveIssue', BuildWebIssueId, (args) => commands.buildWebArchiveIssue(args))
   handle('restoreIssue', BuildWebIssueId, (args) => commands.buildWebRestoreIssue(args))

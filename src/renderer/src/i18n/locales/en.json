@@ -21608,6 +21608,18 @@
       "revealFailed": "Could not open the worktree.",
       "failed": "Could not start the agent."
     },
+    "create": {
+      "open": "New task",
+      "title": "New task",
+      "description": "build-web numbers the task from the product’s counter.",
+      "name": "Title",
+      "chooseProduct": "Choose",
+      "descriptionPlaceholder": "Description, Markdown",
+      "stepsPlaceholder": "Steps, one per line",
+      "cancel": "Cancel",
+      "submit": "Create",
+      "created": "Created {{key}}"
+    },
     "client": {
       "updateServer": "This Orca server does not support build-web yet. Update the server to use Issues.",
       "restart": "This window was opened before Orca was updated. Restart Orca to use this.",
@@ -21622,6 +21634,7 @@
       "updateServerStandHealth": "This Orca server does not monitor the stands yet. Update the server.",
       "updateServerCommentTelegram": "This Orca server cannot send a comment to Telegram yet. Update the server, or send it to the console.",
       "updateServerArchive": "This Orca server cannot archive tasks yet. Update the server.",
+      "updateServerCreate": "This Orca server cannot create tasks yet. Update the server.",
       "updateServerArchiveList": "This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.",
       "updateServerAssigneeFilter": "This Orca server cannot filter tasks by assignee yet. Update the server, or clear the Assignee filter.",
       "updateServerChatPlatform": "This Orca server does not know Chat Platform yet. Update the server.",

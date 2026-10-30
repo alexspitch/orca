@@ -71,3 +71,6 @@ export const BUILD_WEB_INPUT_REQUIRED_GROUP_RUNTIME_CAPABILITY = 'build-web-inpu
 
 /** A runtime that reads a task session's agent log on its own disk (IS-147): `buildWeb.sessionTranscript`. */
 export const BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY = 'build-web-session-transcript.v1'
+
+/** A runtime that creates a task on the console: `buildWeb.createIssue`. */
+export const BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY = 'build-web-issue-create.v1'

@@ -13,6 +13,7 @@ export const buildWebApi = {
   listAssignees: () => ipcRenderer.invoke('buildWeb:listAssignees'),
   listVersions: (args) => ipcRenderer.invoke('buildWeb:listVersions', args),
   updateIssue: (args) => ipcRenderer.invoke('buildWeb:updateIssue', args),
+  createIssue: (args) => ipcRenderer.invoke('buildWeb:createIssue', args),
   setFavorite: (args) => ipcRenderer.invoke('buildWeb:setFavorite', args),
   archiveIssue: (args) => ipcRenderer.invoke('buildWeb:archiveIssue', args),
   restoreIssue: (args) => ipcRenderer.invoke('buildWeb:restoreIssue', args),

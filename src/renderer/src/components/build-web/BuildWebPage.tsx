@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { MoreHorizontal, RefreshCw } from 'lucide-react'
+import { MoreHorizontal, Plus, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -23,6 +23,7 @@ import { BuildWebFilters } from './BuildWebFilters'
 import { BuildWebIssueList } from './BuildWebIssueList'
 import { BuildWebListState } from './BuildWebListState'
 import { BuildWebIssueDrawer } from './BuildWebIssueDrawer'
+import { BuildWebNewIssueDialog } from './BuildWebNewIssueDialog'
 import { BuildWebSelectionBar } from './BuildWebSelectionBar'
 import { BuildWebTakeToWorkDialog } from './BuildWebTakeToWorkDialog'
 import { BuildWebTaskTabs } from './BuildWebTaskTabs'
@@ -62,6 +63,7 @@ export default function BuildWebPage(): React.JSX.Element {
   const fullScreen = useBuildWebStore((s) => s.fullScreen)
   const openIssueId = useBuildWebStore((s) => s.openIssueId)
   const { taking, takeToWork, closeTaking } = useTakeToWork()
+  const [creating, setCreating] = useState(false)
 
   // Why on leaving: the card is dropped, since the Testing page shows the same store's card as a
   // dialog; the place is kept and shown again on coming back. Why the view check: StrictMode's
@@ -137,6 +139,10 @@ export default function BuildWebPage(): React.JSX.Element {
             <span className="truncate text-xs text-muted-foreground">
               {status.login} · {status.baseUrl?.replace(/^https?:\/\//, '')}
             </span>
+            <Button variant="outline" size="sm" onClick={() => setCreating(true)}>
+              <Plus />
+              {translate('buildWeb.create.open', 'New task')}
+            </Button>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -202,6 +208,15 @@ export default function BuildWebPage(): React.JSX.Element {
       )}
       <BuildWebIssueDrawer onTakeToWork={takeToWork} />
       <BuildWebTakeToWorkDialog issues={taking} onClose={closeTaking} />
+      <BuildWebNewIssueDialog
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={(issue) => {
+          setCreating(false)
+          reload()
+          openIssue(issue.id)
+        }}
+      />
       <BuildLogDialog target={target} />
     </main>
   )

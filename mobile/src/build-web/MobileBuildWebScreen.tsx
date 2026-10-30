@@ -2,12 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft, MoreHorizontal, RefreshCw } from 'lucide-react-native'
+import { ChevronLeft, MoreHorizontal, Plus, RefreshCw } from 'lucide-react-native'
 import type {
   BuildWebConnectionStatus,
   BuildWebIssueRow
 } from '../../../src/shared/build-web-types'
-import { BUILD_WEB_RUNTIME_CAPABILITY } from '../../../src/shared/build-web-capability'
+import {
+  BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY,
+  BUILD_WEB_RUNTIME_CAPABILITY
+} from '../../../src/shared/build-web-capability'
 import { ActionSheetModal } from '../components/ActionSheetModal'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
@@ -30,6 +33,7 @@ import { BuildWebConnectForm } from './BuildWebConnectForm'
 import { BuildWebIssueListView } from './list/BuildWebIssueListView'
 import { BuildWebIssueScreen } from './issue/BuildWebIssueScreen'
 import { BuildWebTakeToWorkSheet } from './take-to-work/BuildWebTakeToWorkSheet'
+import { IssueCreateSheet } from './list/IssueCreateSheet'
 import { BuildWebNoticeBanner, type BuildWebNotice } from './BuildWebNoticeBanner'
 import { BuildWebImagesView } from './images/BuildWebImagesView'
 import { BuildWebTasksView } from './tasks/BuildWebTasksView'
@@ -72,6 +76,7 @@ export function MobileBuildWebScreen() {
   const [taking, setTaking] = useState<BuildWebIssueRow[] | null>(null)
   const [reloadToken, setReloadToken] = useState(0)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [notice, setNotice] = useState<BuildWebNotice | null>(null)
   const [section, setSection] = useState<Section>('issues')
   // Why remembered: the Images section stays mounted once opened, so its filters survive a switch.
@@ -273,6 +278,7 @@ export function MobileBuildWebScreen() {
               />
             ) : null}
             <BuildWebTakeToWorkSheet issues={taking} onClose={() => setTaking(null)} />
+            <IssueCreateSheet visible={creating} onClose={() => setCreating(false)} />
           </ImageTrackingContext.Provider>
         </BuildWebScreenContext.Provider>
       )
@@ -323,6 +329,18 @@ export function MobileBuildWebScreen() {
         </View>
         {connected ? (
           <>
+            {section === 'issues' &&
+            hostCapabilities.includes(BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY) ? (
+              <Pressable
+                style={styles.iconButton}
+                onPress={() => setCreating(true)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="New task"
+              >
+                <Plus size={18} color={colors.textSecondary} />
+              </Pressable>
+            ) : null}
             <Pressable
               style={styles.iconButton}
               onPress={() => setReloadToken((n) => n + 1)}

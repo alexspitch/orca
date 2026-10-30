@@ -2,6 +2,7 @@ import type {
   BuildWebAgentSession,
   BuildWebIssuePatch,
   BuildWebCommentOutcome,
+  BuildWebIssueDraft,
   BuildWebIssueRow,
   BuildWebJiraOutcome,
   BuildWebMutationResult,
@@ -76,6 +77,23 @@ export function updateBuildWebIssue(
     )
     const row = issueRowOf(credential.baseUrl, answer?.issue)
     return { issue: row ? withoutFavorite(row) : null, jira: jiraOutcomeOf(answer?.jira) }
+  })
+}
+
+/** A new task; the console numbers it from the product's counter. */
+export function createBuildWebIssue(
+  draft: BuildWebIssueDraft
+): Promise<BuildWebMutationResult<Omit<BuildWebIssueRow, 'favorite'>>> {
+  return buildWebMutation(async () => {
+    const credential = requireBuildWebCredential()
+    const answer = recordOf(
+      await buildWebRequest({ ...credential, method: 'POST', path: '/api/tms/issues', body: draft })
+    )
+    const row = issueRowOf(credential.baseUrl, answer?.issue)
+    if (!row) {
+      throw new Error('build-web created the task but did not return it')
+    }
+    return withoutFavorite(row)
   })
 }
 

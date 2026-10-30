@@ -264,6 +264,12 @@ export type BuildWebIssuePatch = Partial<{
   version: string
 }>
 
+/** A new task as the console's create takes it: the product and the title, the rest optional. */
+export type BuildWebIssueDraft = Omit<BuildWebIssuePatch, 'product' | 'title'> & {
+  product: BuildWebProduct
+  title: string
+}
+
 /** build-web's three kinds of task. */
 export const BUILD_WEB_ISSUE_TYPES = ['bug', 'improvement', 'chore'] as const
 
