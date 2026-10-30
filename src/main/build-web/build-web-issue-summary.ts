@@ -31,6 +31,7 @@ export async function buildWebIssueSummary(
       ? BUILD_WEB_OPEN_STATUSES.filter((s) => filters.status?.includes(s))
       : [...BUILD_WEB_OPEN_STATUSES],
     product: filters.product,
+    assignee: filters.assignee,
     q: filters.q?.trim() || undefined
   }
   if (query.status.length === 0) {

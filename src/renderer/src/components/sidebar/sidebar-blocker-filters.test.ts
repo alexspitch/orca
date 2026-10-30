@@ -8,20 +8,24 @@ describe('blockerFilterNames', () => {
       blockerFilterNames({
         quick: new Set(),
         statuses: new Set([...BUILD_WEB_OPEN_STATUSES, 'done']),
-        product: 'all',
+        products: new Set(),
+        assignees: new Set(),
+        me: 'me@spitch.ch',
         query: ' '
       })
     ).toEqual([])
   })
 
-  it('names the quick filters, the product, the open statuses chosen and the search', () => {
+  it('names the quick filters, products, assignees, the open statuses chosen and the search', () => {
     expect(
       blockerFilterNames({
         quick: new Set(['jira', 'mine']),
         statuses: new Set(['todo', 'inprogress', 'done']),
-        product: 'dc',
+        products: new Set(['dc', 'sa']),
+        assignees: new Set(['me@spitch.ch', 'none', 'oleg@spitch.ch']),
+        me: 'Me@Spitch.ch',
         query: 'IS-1'
       })
-    ).toEqual(['Mine', 'Jira', 'DC', 'To do, In progress', '«IS-1»'])
+    ).toEqual(['Mine', 'Jira', 'SA, DC', 'Mine, Unassigned, oleg', 'To do, In progress', '«IS-1»'])
   })
 })

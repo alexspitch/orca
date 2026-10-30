@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import {
   BUILD_WEB_OPEN_STATUSES,
+  BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES,
   type BuildWebConnectionStatus,
   type BuildWebIssueQuery,
@@ -46,7 +47,10 @@ export const TO_WORK_STATUSES: readonly BuildWebStatus[] = [
 export type BuildWebListFilters = {
   quick: readonly QuickFilter[]
   statuses: readonly BuildWebStatus[]
-  product: BuildWebProduct | 'all'
+  /** None means every product. */
+  products: readonly BuildWebProduct[]
+  /** Logins and `BUILD_WEB_UNASSIGNED`; none means anyone's. */
+  assignees: readonly string[]
   query: string
 }
 
@@ -74,7 +78,10 @@ type BuildWebState = {
   query: string
   /** The statuses shown; empty means any status. */
   statuses: ReadonlySet<BuildWebStatus>
-  product: BuildWebProduct | 'all'
+  /** The products shown; empty means every product. */
+  products: ReadonlySet<BuildWebProduct>
+  /** The assignees shown, any of them; empty means anyone's. */
+  assignees: ReadonlySet<string>
   issues: BuildWebIssueRow[]
   total: number
   loading: boolean
@@ -95,7 +102,10 @@ type BuildWebState = {
   setQuery: (query: string) => void
   toggleStatus: (status: BuildWebStatus) => void
   setStatuses: (statuses: readonly BuildWebStatus[]) => void
-  setProduct: (product: BuildWebProduct | 'all') => void
+  toggleProduct: (product: BuildWebProduct) => void
+  setProducts: (products: readonly BuildWebProduct[]) => void
+  toggleAssignee: (assignee: string) => void
+  setAssignees: (assignees: readonly string[]) => void
   /** The saved query whose tab the list is; null for the plain List, whose filters are kept. */
   queryTabId: string | null
   /** The list as one of its tabs: the plain List or a saved query's, each with its own filters. */
@@ -137,7 +147,8 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
   panelWidths: prefs.panelWidths,
   query: '',
   statuses: new Set(prefs.statuses ?? OPEN_STATUSES),
-  product: 'all',
+  products: new Set(),
+  assignees: new Set(),
   issues: [],
   total: 0,
   loading: false,
@@ -165,10 +176,7 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
     ),
   toggleQuick: (filter) =>
     set((state) => {
-      const quick = new Set(state.quick)
-      if (!quick.delete(filter)) {
-        quick.add(filter)
-      }
+      const quick = toggled(state.quick, filter)
       // Why the archive is not kept: a restart must land on the live tasks, not on put-away ones.
       if (state.queryTabId === null) {
         writeViewPrefs({ quick: [...quick].filter((q) => q !== 'archived') })
@@ -196,10 +204,7 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
   setQuery: (query) => set({ query, page: 0 }),
   toggleStatus: (status) =>
     set((state) => {
-      const statuses = new Set(state.statuses)
-      if (!statuses.delete(status)) {
-        statuses.add(status)
-      }
+      const statuses = toggled(state.statuses, status)
       if (state.queryTabId === null) {
         writeViewPrefs({ statuses: [...statuses] })
       }
@@ -211,14 +216,20 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
     }
     set({ statuses: new Set(list), page: 0 })
   },
-  setProduct: (product) => set({ product, page: 0 }),
+  toggleProduct: (product) =>
+    set((state) => ({ products: toggled(state.products, product), page: 0 })),
+  setProducts: (list) => set({ products: new Set(list), page: 0 }),
+  toggleAssignee: (assignee) =>
+    set((state) => ({ assignees: toggled(state.assignees, assignee), page: 0 })),
+  setAssignees: (list) => set({ assignees: new Set(list), page: 0 }),
   queryTabId: null,
-  showListTab: (queryTabId, { quick, statuses, product, query }, options) =>
+  showListTab: (queryTabId, { quick, statuses, products, assignees, query }, options) =>
     set({
       queryTabId,
       quick: new Set(quick),
       statuses: new Set(statuses),
-      product,
+      products: new Set(products),
+      assignees: new Set(assignees),
       query,
       page: 0,
       ...(options?.keepCard
@@ -243,14 +254,7 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
     set((state) => ({
       issues: state.issues.map((issue) => (issue.id === id ? { ...issue, ...patch } : issue))
     })),
-  toggleSelected: (id) =>
-    set((state) => {
-      const selected = new Set(state.selected)
-      if (!selected.delete(id)) {
-        selected.add(id)
-      }
-      return { selected }
-    }),
+  toggleSelected: (id) => set((state) => ({ selected: toggled(state.selected, id) })),
   clearSelection: () => set({ selected: new Set() }),
   openIssue: (openIssueId, fullScreen = false, openTab = 'overview') =>
     set({ openIssueId, fullScreen, fullScreenFromDrawer: false, openTab }),
@@ -269,9 +273,27 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
   setFocus: (focus) => set({ focus })
 }))
 
+function toggled<T>(set: ReadonlySet<T>, value: T): Set<T> {
+  const next = new Set(set)
+  if (!next.delete(value)) {
+    next.add(value)
+  }
+  return next
+}
+
+const productsOf = (products: ReadonlySet<BuildWebProduct>): BuildWebProduct[] | undefined =>
+  products.size ? BUILD_WEB_PRODUCTS.filter((p) => products.has(p)) : undefined
+
+// Why sorted: the same choice is the same request, whatever order it was ticked in.
+const assigneesOf = (assignees: ReadonlySet<string>): string[] | undefined =>
+  assignees.size ? [...assignees].sort() : undefined
+
 /** The list request for the current filters, sort and page. */
 export function issueQueryOf(
-  state: Pick<BuildWebState, 'quick' | 'sort' | 'page' | 'query' | 'statuses' | 'product'>
+  state: Pick<
+    BuildWebState,
+    'quick' | 'sort' | 'page' | 'query' | 'statuses' | 'products' | 'assignees'
+  >
 ): BuildWebIssueQuery {
   return {
     // Why: a host older than the flags reads only `view`, which holds one quick filter at most.
@@ -290,7 +312,8 @@ export function issueQueryOf(
     status: state.statuses.size
       ? BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s))
       : undefined,
-    product: state.product === 'all' ? undefined : [state.product],
+    product: productsOf(state.products),
+    assignee: assigneesOf(state.assignees),
     // As build-web's list: each task with its subtasks right under it.
     tree: true
   }
@@ -298,7 +321,7 @@ export function issueQueryOf(
 
 /** The filters the sidebar's blocker count follows: the list's, without its search and paging. */
 export function issueSummaryQueryOf(
-  state: Pick<BuildWebState, 'quick' | 'statuses' | 'product' | 'query'>
+  state: Pick<BuildWebState, 'quick' | 'statuses' | 'products' | 'assignees' | 'query'>
 ): BuildWebIssueSummaryQuery {
   return {
     mine: state.quick.has('mine'),
@@ -307,7 +330,8 @@ export function issueSummaryQueryOf(
     jira: state.quick.has('jira'),
     // Why the page's choice as it is: the host counts its open statuses only, all of them for none.
     status: BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s)),
-    product: state.product === 'all' ? undefined : [state.product],
+    product: productsOf(state.products),
+    assignee: assigneesOf(state.assignees),
     q: state.query.trim() || undefined
   }
 }

@@ -1,5 +1,6 @@
 import {
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_ASSIGNEE_FILTER_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY,
   BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY
@@ -30,6 +31,12 @@ export function listIssuesRefusal(
     !capabilities.includes(BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY)
   ) {
     return 'This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.'
+  }
+  if (
+    query.assignee?.length &&
+    !capabilities.includes(BUILD_WEB_ISSUE_ASSIGNEE_FILTER_RUNTIME_CAPABILITY)
+  ) {
+    return 'This Orca server cannot filter tasks by assignee yet. Update the server, or clear the Assignee filter.'
   }
   return null
 }

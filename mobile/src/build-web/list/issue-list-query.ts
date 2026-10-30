@@ -1,5 +1,6 @@
 import {
   BUILD_WEB_OPEN_STATUSES,
+  BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES,
   type BuildWebIssueQuery,
   type BuildWebProduct,
@@ -29,14 +30,18 @@ export const TO_WORK_STATUSES: readonly BuildWebStatus[] = [
 export type BuildWebListFilters = {
   quick: readonly QuickFilter[]
   statuses: readonly BuildWebStatus[]
-  product: BuildWebProduct | 'all'
+  /** None means every product. */
+  products: readonly BuildWebProduct[]
+  /** Logins and `BUILD_WEB_UNASSIGNED`; none means anyone's. */
+  assignees: readonly string[]
   query: string
 }
 
 export type IssueListView = {
   quick: ReadonlySet<QuickFilter>
   statuses: ReadonlySet<BuildWebStatus>
-  product: BuildWebProduct | 'all'
+  products: ReadonlySet<BuildWebProduct>
+  assignees: ReadonlySet<string>
   query: string
   sort: IssueSortState
   page: number
@@ -65,7 +70,11 @@ export function issueQueryOf(view: IssueListView): BuildWebIssueQuery {
     offset: view.page * ISSUE_PAGE_SIZE,
     q: view.query.trim() || undefined,
     status: view.statuses.size ? BUILD_WEB_STATUSES.filter((s) => view.statuses.has(s)) : undefined,
-    product: view.product === 'all' ? undefined : [view.product],
+    product: view.products.size
+      ? BUILD_WEB_PRODUCTS.filter((p) => view.products.has(p))
+      : undefined,
+    // Why sorted: the same choice is the same request, whatever order it was ticked in.
+    assignee: view.assignees.size ? [...view.assignees].sort() : undefined,
     // As build-web's list: each task with its subtasks right under it.
     tree: true
   }

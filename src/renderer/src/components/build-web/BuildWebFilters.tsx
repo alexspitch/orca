@@ -1,20 +1,13 @@
-import { Archive, Bot, FoldVertical, Star, Ticket, UnfoldVertical, User } from 'lucide-react'
+import { useRef } from 'react'
+import { Archive, Bot, FoldVertical, Star, Ticket, UnfoldVertical, User, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import { translate } from '@/i18n/i18n'
-import { BUILD_WEB_PRODUCTS, type BuildWebProduct } from '../../../../shared/build-web-types'
 import { useBuildWebStore } from './build-web-store'
 import { BuildWebStatusFilter, BuildWebToWorkToggle } from './BuildWebStatusFilter'
+import { BuildWebAssigneeFilter, BuildWebProductFilter } from './BuildWebListFilterMenus'
 import { quickFilterLabel } from './build-web-labels'
-import { ProductChip } from './BuildWebToneChip'
 import { QUICK_FILTERS, type QuickFilter } from './build-web-view-prefs'
 import { familiesOf, foldedOf, useIssueFolds } from './build-web-families'
 
@@ -25,7 +18,6 @@ const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
   jira: <Ticket />,
   archived: <Archive />
 }
-const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
 
 /** Fold or unfold every family on the page at once, as build-web's toolbar does. */
 function FoldAllButton(): React.JSX.Element {
@@ -51,13 +43,47 @@ function FoldAllButton(): React.JSX.Element {
   )
 }
 
+/** The key-or-title search, with a button that empties it. */
+function SearchField(): React.JSX.Element {
+  const query = useBuildWebStore((s) => s.query)
+  const setQuery = useBuildWebStore((s) => s.setQuery)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const label = translate('buildWeb.filters.search', 'Search by key or title')
+  return (
+    <div className="relative min-w-48 flex-1">
+      <Input
+        ref={inputRef}
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder={label}
+        aria-label={label}
+        className={query ? 'h-8 pr-8' : 'h-8'}
+        data-escape-clears-value="true"
+      />
+      {query ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon-xs"
+          className="absolute top-1/2 right-1 -translate-y-1/2"
+          aria-label={translate('buildWeb.filters.clearSearch', 'Clear search')}
+          // Why: the click must not blur the field it hands focus back to.
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            setQuery('')
+            inputRef.current?.focus()
+          }}
+        >
+          <X />
+        </Button>
+      ) : null}
+    </div>
+  )
+}
+
 export function BuildWebFilters(): React.JSX.Element {
   const quick = useBuildWebStore((s) => s.quick)
-  const query = useBuildWebStore((s) => s.query)
-  const product = useBuildWebStore((s) => s.product)
   const toggleQuick = useBuildWebStore((s) => s.toggleQuick)
-  const setQuery = useBuildWebStore((s) => s.setQuery)
-  const setProduct = useBuildWebStore((s) => s.setProduct)
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2 md:px-5">
@@ -84,32 +110,9 @@ export function BuildWebFilters(): React.JSX.Element {
       </ToggleGroup>
       <BuildWebToWorkToggle />
       <BuildWebStatusFilter />
-      <Select
-        value={product}
-        onValueChange={(next) => setProduct(PRODUCTS.find((p) => p === next) ?? 'all')}
-      >
-        <SelectTrigger size="sm" aria-label={translate('buildWeb.filters.product', 'Product')}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">
-            {translate('buildWeb.filters.allProducts', 'All products')}
-          </SelectItem>
-          {PRODUCTS.map((p) => (
-            <SelectItem key={p} value={p}>
-              <ProductChip product={p} />
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Input
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        placeholder={translate('buildWeb.filters.search', 'Search by key or title')}
-        aria-label={translate('buildWeb.filters.search', 'Search by key or title')}
-        className="h-8 min-w-48 flex-1"
-        data-escape-clears-value="true"
-      />
+      <BuildWebProductFilter />
+      <BuildWebAssigneeFilter />
+      <SearchField />
       <FoldAllButton />
     </div>
   )

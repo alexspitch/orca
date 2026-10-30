@@ -45,6 +45,10 @@ export function issueListQuery(query: BuildWebIssueQuery): string {
   if (query.product?.length) {
     params.set('product', query.product.join(','))
   }
+  if (query.assignee?.length) {
+    // The console stores a login in lower case and matches it exactly.
+    params.set('assignee', query.assignee.map((a) => a.toLowerCase()).join(','))
+  }
   params.set('limit', String(Math.min(Math.max(query.limit ?? LIST_LIMIT_MAX, 1), LIST_LIMIT_MAX)))
   if (query.offset) {
     params.set('offset', String(query.offset))

@@ -30,6 +30,14 @@ const SEARCH_DEBOUNCE_MS = 300
 
 export type IssueList = ReturnType<typeof useIssueList>
 
+function withToggled<T>(set: ReadonlySet<T>, value: T): Set<T> {
+  const next = new Set(set)
+  if (!next.delete(value)) {
+    next.add(value)
+  }
+  return next
+}
+
 export function useIssueList(reloadToken: number) {
   const { call, hostCapabilities } = useBuildWebScreen()
   const [prefs] = useState(readViewPrefs)
@@ -37,7 +45,8 @@ export function useIssueList(reloadToken: number) {
   const [statuses, setStatusSet] = useState<ReadonlySet<BuildWebStatus>>(
     () => new Set(prefs.statuses ?? OPEN_STATUSES)
   )
-  const [product, setProductState] = useState<BuildWebProduct | 'all'>('all')
+  const [products, setProductSet] = useState<ReadonlySet<BuildWebProduct>>(() => new Set())
+  const [assignees, setAssigneeSet] = useState<ReadonlySet<string>>(() => new Set())
   const [query, setQueryState] = useState('')
   const [sort, setSort] = useState<IssueSortState>(prefs.sort)
   const [page, setPageState] = useState(0)
@@ -92,8 +101,23 @@ export function useIssueList(reloadToken: number) {
     [setStatuses, statuses]
   )
 
-  const setProduct = useCallback((next: BuildWebProduct | 'all') => {
-    setProductState(next)
+  const setProducts = useCallback((list: readonly BuildWebProduct[]) => {
+    setProductSet(new Set(list))
+    setPageState(0)
+  }, [])
+
+  const toggleProduct = useCallback((product: BuildWebProduct) => {
+    setProductSet((current) => withToggled(current, product))
+    setPageState(0)
+  }, [])
+
+  const setAssignees = useCallback((list: readonly string[]) => {
+    setAssigneeSet(new Set(list))
+    setPageState(0)
+  }, [])
+
+  const toggleAssignee = useCallback((assignee: string) => {
+    setAssigneeSet((current) => withToggled(current, assignee))
     setPageState(0)
   }, [])
 
@@ -119,7 +143,8 @@ export function useIssueList(reloadToken: number) {
     setQueryTabId(id)
     setQuick(new Set(filters.quick))
     setStatusSet(new Set(filters.statuses))
-    setProductState(filters.product)
+    setProductSet(new Set(filters.products))
+    setAssigneeSet(new Set(filters.assignees))
     setQueryState(filters.query)
     setPageState(0)
   }, [])
@@ -128,15 +153,16 @@ export function useIssueList(reloadToken: number) {
     () => ({
       quick: QUICK_FILTERS.filter((q) => quick.has(q)),
       statuses: [...statuses],
-      product,
+      products: [...products],
+      assignees: [...assignees],
       query
     }),
-    [product, query, quick, statuses]
+    [assignees, products, query, quick, statuses]
   )
 
   const load = useCallback(async () => {
     const mine = ++generation.current
-    const request = issueQueryOf({ quick, statuses, product, query, sort, page })
+    const request = issueQueryOf({ quick, statuses, products, assignees, query, sort, page })
     const refusal = listIssuesRefusal(hostCapabilities, request)
     if (refusal) {
       setLoading(false)
@@ -166,7 +192,7 @@ export function useIssueList(reloadToken: number) {
         setLoading(false)
       }
     }
-  }, [call, hostCapabilities, page, product, query, quick, sort, statuses])
+  }, [assignees, call, hostCapabilities, page, products, query, quick, sort, statuses])
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), query ? SEARCH_DEBOUNCE_MS : 0)
@@ -217,7 +243,8 @@ export function useIssueList(reloadToken: number) {
   return {
     quick,
     statuses,
-    product,
+    products,
+    assignees,
     query,
     sort,
     page,
@@ -233,7 +260,10 @@ export function useIssueList(reloadToken: number) {
     toggleQuick,
     setStatuses,
     toggleStatus,
-    setProduct,
+    setProducts,
+    toggleProduct,
+    setAssignees,
+    toggleAssignee,
     setQuery,
     sortBy,
     setPage,

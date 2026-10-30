@@ -1,7 +1,8 @@
-import type {
-  BuildWebIssueProduct,
-  BuildWebIssueStatus,
-  BuildWebView
+import {
+  BUILD_WEB_UNASSIGNED,
+  type BuildWebIssueProduct,
+  type BuildWebIssueStatus,
+  type BuildWebView
 } from '../../../../shared/build-web-types'
 import { translate } from '@/i18n/i18n'
 
@@ -96,6 +97,16 @@ export function priorityLabel(priority: number): string {
 export function loginOf(email: string): string {
   const at = email.indexOf('@')
   return at > 0 ? email.slice(0, at) : email
+}
+
+/** An assignee filter's value as the list names it: nobody, the viewer, or a login. */
+export function assigneeFilterLabel(value: string, me: string | null): string {
+  if (value === BUILD_WEB_UNASSIGNED) {
+    return translate('buildWeb.filters.unassigned', 'Unassigned')
+  }
+  return me !== null && value === me.toLowerCase()
+    ? translate('buildWeb.filters.assignedToMe', 'Mine')
+    : loginOf(value)
 }
 
 export function typeLabel(type: string): string {

@@ -189,6 +189,9 @@ export const BUILD_WEB_ISSUE_SORTS = [
 ] as const
 export type BuildWebIssueSort = (typeof BUILD_WEB_ISSUE_SORTS)[number]
 
+/** The assignee filter's value for tasks nobody is assigned; a login is an e-mail, never this word. */
+export const BUILD_WEB_UNASSIGNED = 'none'
+
 export type BuildWebIssueQuery = {
   /** Kept for hosts that predate the flags below; a newer host reads the flags when any is set. */
   view: BuildWebView
@@ -205,6 +208,8 @@ export type BuildWebIssueQuery = {
   q?: string
   status?: BuildWebStatus[]
   product?: BuildWebProduct[]
+  /** Assignee logins, and `BUILD_WEB_UNASSIGNED` for nobody's; a task matches any of them. */
+  assignee?: string[]
   limit?: number
   offset?: number
   /**
@@ -233,7 +238,7 @@ export type BuildWebIssueSummary = { blockers: number; capped: boolean }
 /** The list's filters the badge counts within, its search too; only open tasks are counted. */
 export type BuildWebIssueSummaryQuery = Pick<
   BuildWebIssueQuery,
-  'mine' | 'ai' | 'favorite' | 'jira' | 'status' | 'product' | 'q'
+  'mine' | 'ai' | 'favorite' | 'jira' | 'status' | 'product' | 'assignee' | 'q'
 >
 
 export type BuildWebIssuePage = { issues: BuildWebIssueRow[]; total: number }

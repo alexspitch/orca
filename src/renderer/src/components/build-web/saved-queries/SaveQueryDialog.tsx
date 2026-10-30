@@ -33,8 +33,9 @@ function SaveQueryForm({
   const quick = useBuildWebStore((s) => s.quick)
   const statuses = useBuildWebStore((s) => s.statuses)
   const query = useBuildWebStore((s) => s.query)
-  const listProduct = useBuildWebStore((s) => s.product)
-  const view = { quick, statuses, query, product: listProduct }
+  const products = useBuildWebStore((s) => s.products)
+  const assignees = useBuildWebStore((s) => s.assignees)
+  const view = { quick, statuses, query, products, assignees }
   const [name, setName] = useState('')
   const [shared, setShared] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -87,7 +88,7 @@ function SaveQueryForm({
         <DialogDescription>
           {translate(
             'buildWeb.savedQueries.saveDescription',
-            'The quick filters, statuses, product and search of the list, kept in build-web with its saved filters.'
+            'The quick filters, statuses, products, assignees and search of the list, kept in build-web with its saved filters.'
           )}
         </DialogDescription>
       </DialogHeader>

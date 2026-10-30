@@ -40,6 +40,10 @@ export const BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY = 'build-web-saved-queri
 /** A runtime whose `buildWeb.listIssues` accepts `sort: 'favorite'`; an older one refuses the value. */
 export const BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY = 'build-web-issue-favorite-sort.v1'
 
+/** A runtime whose `buildWeb.listIssues` and `issueSummary` take `assignee`; an older one drops it and lists everyone's. */
+export const BUILD_WEB_ISSUE_ASSIGNEE_FILTER_RUNTIME_CAPABILITY =
+  'build-web-issue-assignee-filter.v1'
+
 /** A runtime that says whether a product version's images hold its branch's changes: `buildWeb.imageFreshness`. */
 export const BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY = 'build-web-image-freshness.v1'
 

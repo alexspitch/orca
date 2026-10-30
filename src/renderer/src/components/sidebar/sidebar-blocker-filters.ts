@@ -1,9 +1,15 @@
 import {
   BUILD_WEB_OPEN_STATUSES,
+  BUILD_WEB_PRODUCTS,
   type BuildWebProduct,
   type BuildWebStatus
 } from '../../../../shared/build-web-types'
-import { productLabel, quickFilterLabel, statusLabel } from '../build-web/build-web-labels'
+import {
+  assigneeFilterLabel,
+  productLabel,
+  quickFilterLabel,
+  statusLabel
+} from '../build-web/build-web-labels'
 import { QUICK_FILTERS, type QuickFilter } from '../build-web/build-web-view-prefs'
 
 /**
@@ -13,12 +19,19 @@ import { QUICK_FILTERS, type QuickFilter } from '../build-web/build-web-view-pre
 export function blockerFilterNames(state: {
   quick: ReadonlySet<QuickFilter>
   statuses: ReadonlySet<BuildWebStatus>
-  product: BuildWebProduct | 'all'
+  products: ReadonlySet<BuildWebProduct>
+  assignees: ReadonlySet<string>
+  /** The viewer's login, to name their own tasks «Mine». */
+  me: string | null
   query: string
 }): string[] {
   const names = QUICK_FILTERS.filter((q) => state.quick.has(q)).map(quickFilterLabel)
-  if (state.product !== 'all') {
-    names.push(productLabel(state.product))
+  const products = BUILD_WEB_PRODUCTS.filter((p) => state.products.has(p))
+  if (products.length > 0) {
+    names.push(products.map(productLabel).join(', '))
+  }
+  if (state.assignees.size > 0) {
+    names.push([...state.assignees].map((a) => assigneeFilterLabel(a, state.me)).join(', '))
   }
   const open = BUILD_WEB_OPEN_STATUSES.filter((s) => state.statuses.has(s))
   if (open.length > 0 && open.length < BUILD_WEB_OPEN_STATUSES.length) {

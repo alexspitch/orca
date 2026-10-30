@@ -3,6 +3,7 @@ import type { BuildWebSavedQuery } from '../../../../../shared/build-web-saved-q
 import {
   BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES,
+  type BuildWebProduct,
   type BuildWebStatus
 } from '../../../../../shared/build-web-types'
 import { useBuildWebStore, type BuildWebListFilters } from '../build-web-store'
@@ -36,7 +37,9 @@ function filtersOfRaw(raw: unknown): BuildWebListFilters {
   return {
     quick: QUICK_FILTERS.filter((q) => strings(v.quick).includes(q)),
     statuses: BUILD_WEB_STATUSES.filter((s) => strings(v.statuses).includes(s)),
-    product: BUILD_WEB_PRODUCTS.find((p) => p === v.product) ?? 'all',
+    // Why `product` too: tabs kept before the list took several products held one.
+    products: BUILD_WEB_PRODUCTS.filter((p) => strings(v.products).includes(p) || v.product === p),
+    assignees: strings(v.assignees),
     query: typeof v.query === 'string' ? v.query : ''
   }
 }
@@ -104,14 +107,16 @@ function currentTabs(): readonly BuildWebQueryTab[] {
 type FilterState = {
   quick: ReadonlySet<string>
   statuses: ReadonlySet<BuildWebStatus>
-  product: BuildWebListFilters['product']
+  products: ReadonlySet<BuildWebProduct>
+  assignees: ReadonlySet<string>
   query: string
 }
 
 const filtersOf = (state: FilterState): BuildWebListFilters => ({
   quick: QUICK_FILTERS.filter((q) => state.quick.has(q)),
   statuses: BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s)),
-  product: state.product,
+  products: BUILD_WEB_PRODUCTS.filter((p) => state.products.has(p)),
+  assignees: [...state.assignees],
   query: state.query
 })
 
@@ -126,7 +131,8 @@ useBuildWebStore.subscribe((state, prev) => {
     state.contextKey !== prev.contextKey ||
     (state.quick === prev.quick &&
       state.statuses === prev.statuses &&
-      state.product === prev.product &&
+      state.products === prev.products &&
+      state.assignees === prev.assignees &&
       state.query === prev.query)
   ) {
     return

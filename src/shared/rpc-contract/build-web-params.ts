@@ -17,6 +17,8 @@ const notDotSegment = (value: string) => value !== '.' && value !== '..'
 const Id = required('Missing task id', 128).refine(notDotSegment, 'Invalid id')
 const Status = z.enum(BUILD_WEB_STATUSES)
 const Product = z.enum(BUILD_WEB_PRODUCTS)
+// Why a cap: each value lands in the console's query string.
+const Assignees = z.array(z.string().trim().min(1).max(320)).max(100)
 // Why: build-web's own limits — a longer value would be refused there with a less useful message.
 const ShortText = z.string().max(200)
 
@@ -36,6 +38,7 @@ export const BuildWebIssueQueryParams = z.object({
   q: z.string().max(500).optional(),
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
   product: z.array(Product).max(BUILD_WEB_PRODUCTS.length).optional(),
+  assignee: Assignees.optional(),
   limit: z.number().int().min(1).max(100).optional(),
   offset: z.number().int().min(0).max(100_000).optional(),
   tree: z.boolean().optional(),
@@ -53,6 +56,7 @@ export const BuildWebIssueSummaryParams = z.object({
   jira: z.boolean().optional(),
   status: z.array(Status).max(BUILD_WEB_STATUSES.length).optional(),
   product: z.array(Product).max(BUILD_WEB_PRODUCTS.length).optional(),
+  assignee: Assignees.optional(),
   q: z.string().max(200).optional()
 })
 
