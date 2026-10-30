@@ -15,6 +15,7 @@ import type {
   BuildWebImageAdoptParams,
   BuildWebImagePushParams,
   BuildWebIssueUpdateParams,
+  BuildWebIssueCreateParams,
   BuildWebRunParams,
   BuildWebBuildLogParams,
   BuildWebVersionBranchesParams,
@@ -59,6 +60,7 @@ import {
   archiveBuildWebIssue,
   restoreBuildWebIssue,
   clearBuildWebAgentSession,
+  createBuildWebIssue,
   noteBuildWebProviderSession,
   setBuildWebFavorite,
   updateBuildWebIssue
@@ -140,6 +142,10 @@ export class RuntimeBuildWebCommands {
 
   buildWebUpdateIssue(args: In<typeof BuildWebIssueUpdateParams>) {
     return updateBuildWebIssue(args.id, args.patch)
+  }
+
+  buildWebCreateIssue(args: In<typeof BuildWebIssueCreateParams>) {
+    return createBuildWebIssue(args.draft)
   }
 
   buildWebSetFavorite(args: In<typeof BuildWebFavoriteParams>) {

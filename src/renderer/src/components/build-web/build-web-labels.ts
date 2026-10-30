@@ -1,4 +1,5 @@
 import {
+  BUILD_WEB_ASSIGNEE_ME,
   BUILD_WEB_UNASSIGNED,
   type BuildWebIssueProduct,
   type BuildWebIssueStatus,
@@ -99,13 +100,13 @@ export function loginOf(email: string): string {
   return at > 0 ? email.slice(0, at) : email
 }
 
-/** An assignee filter's value as the list names it: nobody, the viewer, or a login. */
-export function assigneeFilterLabel(value: string, me: string | null): string {
-  if (value === BUILD_WEB_UNASSIGNED) {
-    return translate('buildWeb.filters.unassigned', 'Unassigned')
+/** An assignee filter's value as the list names it: the viewer, nobody, or a login. */
+export function assigneeFilterLabel(value: string): string {
+  if (value === BUILD_WEB_ASSIGNEE_ME) {
+    return translate('buildWeb.filters.assignedToMe', 'Mine')
   }
-  return me !== null && value === me.toLowerCase()
-    ? translate('buildWeb.filters.assignedToMe', 'Mine')
+  return value === BUILD_WEB_UNASSIGNED
+    ? translate('buildWeb.filters.unassigned', 'Unassigned')
     : loginOf(value)
 }
 

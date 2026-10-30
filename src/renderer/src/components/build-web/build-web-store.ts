@@ -12,6 +12,7 @@ import {
   type BuildWebStatus
 } from '../../../../shared/build-web-types'
 import type { BuildWebTrainRun } from '../../../../shared/build-web-train-types'
+import { assigneeFilterQuery } from './build-web-assignee-options'
 import {
   nextSort,
   readViewPrefs,
@@ -80,7 +81,7 @@ type BuildWebState = {
   statuses: ReadonlySet<BuildWebStatus>
   /** The products shown; empty means every product. */
   products: ReadonlySet<BuildWebProduct>
-  /** The assignees shown, any of them; empty means anyone's. */
+  /** The assignees shown, any of them, Mine (`BUILD_WEB_ASSIGNEE_ME`) among them; empty means anyone's. */
   assignees: ReadonlySet<string>
   issues: BuildWebIssueRow[]
   total: number
@@ -134,8 +135,8 @@ type BuildWebState = {
 const prefs = readViewPrefs()
 
 export const ISSUE_PAGE_SIZE = 50
-/** The quick filters an older host knows as its single `view`. */
-const VIEW_FILTERS = ['mine', 'ai', 'favorite'] as const
+/** The quick filters an older host knows as its single `view`, after Mine. */
+const VIEW_FILTERS = ['ai', 'favorite'] as const
 
 export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
   contextKey: null,
@@ -148,7 +149,7 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
   query: '',
   statuses: new Set(prefs.statuses ?? OPEN_STATUSES),
   products: new Set(),
-  assignees: new Set(),
+  assignees: new Set(prefs.assignees),
   issues: [],
   total: 0,
   loading: false,
@@ -219,9 +220,13 @@ export const useBuildWebStore = create<BuildWebState>()((set, get) => ({
   toggleProduct: (product) =>
     set((state) => ({ products: toggled(state.products, product), page: 0 })),
   setProducts: (list) => set({ products: new Set(list), page: 0 }),
-  toggleAssignee: (assignee) =>
-    set((state) => ({ assignees: toggled(state.assignees, assignee), page: 0 })),
-  setAssignees: (list) => set({ assignees: new Set(list), page: 0 }),
+  toggleAssignee: (assignee) => get().setAssignees([...toggled(get().assignees, assignee)]),
+  setAssignees: (list) => {
+    if (get().queryTabId === null) {
+      writeViewPrefs({ assignees: [...list] })
+    }
+    set({ assignees: new Set(list), page: 0 })
+  },
   queryTabId: null,
   showListTab: (queryTabId, { quick, statuses, products, assignees, query }, options) =>
     set({
@@ -284,21 +289,19 @@ function toggled<T>(set: ReadonlySet<T>, value: T): Set<T> {
 const productsOf = (products: ReadonlySet<BuildWebProduct>): BuildWebProduct[] | undefined =>
   products.size ? BUILD_WEB_PRODUCTS.filter((p) => products.has(p)) : undefined
 
-// Why sorted: the same choice is the same request, whatever order it was ticked in.
-const assigneesOf = (assignees: ReadonlySet<string>): string[] | undefined =>
-  assignees.size ? [...assignees].sort() : undefined
-
-/** The list request for the current filters, sort and page. */
+/** The list request for the current filters, sort and page; `me` is the token owner's login. */
 export function issueQueryOf(
   state: Pick<
     BuildWebState,
     'quick' | 'sort' | 'page' | 'query' | 'statuses' | 'products' | 'assignees'
-  >
+  >,
+  me: string | null
 ): BuildWebIssueQuery {
+  const assignee = assigneeFilterQuery(state.assignees, me)
   return {
     // Why: a host older than the flags reads only `view`, which holds one quick filter at most.
-    view: VIEW_FILTERS.find((q) => state.quick.has(q)) ?? 'all',
-    mine: state.quick.has('mine'),
+    view: assignee.mine ? 'mine' : (VIEW_FILTERS.find((q) => state.quick.has(q)) ?? 'all'),
+    ...assignee,
     ai: state.quick.has('ai'),
     favorite: state.quick.has('favorite'),
     jira: state.quick.has('jira'),
@@ -313,7 +316,6 @@ export function issueQueryOf(
       ? BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s))
       : undefined,
     product: productsOf(state.products),
-    assignee: assigneesOf(state.assignees),
     // As build-web's list: each task with its subtasks right under it.
     tree: true
   }
@@ -321,17 +323,17 @@ export function issueQueryOf(
 
 /** The filters the sidebar's blocker count follows: the list's, without its search and paging. */
 export function issueSummaryQueryOf(
-  state: Pick<BuildWebState, 'quick' | 'statuses' | 'products' | 'assignees' | 'query'>
+  state: Pick<BuildWebState, 'quick' | 'statuses' | 'products' | 'assignees' | 'query'>,
+  me: string | null
 ): BuildWebIssueSummaryQuery {
   return {
-    mine: state.quick.has('mine'),
+    ...assigneeFilterQuery(state.assignees, me),
     ai: state.quick.has('ai'),
     favorite: state.quick.has('favorite'),
     jira: state.quick.has('jira'),
     // Why the page's choice as it is: the host counts its open statuses only, all of them for none.
     status: BUILD_WEB_STATUSES.filter((s) => state.statuses.has(s)),
     product: productsOf(state.products),
-    assignee: assigneesOf(state.assignees),
     q: state.query.trim() || undefined
   }
 }

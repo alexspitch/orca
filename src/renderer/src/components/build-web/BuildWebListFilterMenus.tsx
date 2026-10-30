@@ -58,23 +58,22 @@ export function BuildWebProductFilter(): React.JSX.Element {
   )
 }
 
-function assigneeSummary(selected: ReadonlySet<string>, me: string | null): string {
+function assigneeSummary(selected: ReadonlySet<string>): string {
   if (selected.size === 0) {
     return translate('buildWeb.filters.anyAssignee', 'Any assignee')
   }
   const [only] = selected
   return selected.size === 1
-    ? assigneeFilterLabel(only, me)
+    ? assigneeFilterLabel(only)
     : translate('buildWeb.filters.assigneeCount', '{{count}} assignees', { count: selected.size })
 }
 
-/** Tasks of any of the ticked people, the viewer's own and the unassigned among them. */
+/** Tasks of any of the ticked people, Mine and the unassigned among them. */
 export function BuildWebAssigneeFilter(): React.JSX.Element {
   const assignees = useBuildWebStore((s) => s.assignees)
   const toggleAssignee = useBuildWebStore((s) => s.toggleAssignee)
   const setAssignees = useBuildWebStore((s) => s.setAssignees)
-  // The console keeps a login in lower case and matches it exactly.
-  const me = useBuildWebStore((s) => s.status?.login?.toLowerCase() ?? null)
+  const me = useBuildWebStore((s) => s.status?.login ?? null)
   const [open, setOpen] = useState(false)
   const users = useBuildWebAssignees(open)
   const { own, people } = assigneeFilterOptions(users, me, assignees)
@@ -85,9 +84,7 @@ export function BuildWebAssigneeFilter(): React.JSX.Element {
       onSelect={(event) => event.preventDefault()}
       onCheckedChange={() => toggleAssignee(option.value)}
     >
-      <span>
-        {option.user ? loginOf(option.user.email) : assigneeFilterLabel(option.value, me)}
-      </span>
+      <span>{option.user ? loginOf(option.user.email) : assigneeFilterLabel(option.value)}</span>
       {option.user?.name && option.user.name !== loginOf(option.user.email) ? (
         <span className="text-xs text-muted-foreground">{option.user.name}</span>
       ) : null}
@@ -101,7 +98,7 @@ export function BuildWebAssigneeFilter(): React.JSX.Element {
           size="sm"
           aria-label={translate('buildWeb.filters.assignee', 'Assignee')}
         >
-          {assigneeSummary(assignees, me)}
+          {assigneeSummary(assignees)}
           <ChevronDown />
         </Button>
       </DropdownMenuTrigger>

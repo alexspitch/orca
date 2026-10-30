@@ -19,6 +19,7 @@ import {
   BuildWebBuildLogParams,
   BuildWebVersionBranchesParams,
   BuildWebIssueUpdateParams,
+  BuildWebIssueCreateParams,
   BuildWebCommitDiffParams,
   BuildWebCommitsParams,
   BuildWebGuideParams,
@@ -95,6 +96,12 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: BuildWebIssueUpdateParams,
     handler: async (params, { runtime }) => runtime.buildWebUpdateIssue(params)
+  }),
+  defineMethod({
+    name: 'buildWeb.createIssue',
+    permission: 'workspace',
+    params: BuildWebIssueCreateParams,
+    handler: async (params, { runtime }) => runtime.buildWebCreateIssue(params)
   }),
   defineMethod({
     name: 'buildWeb.setFavorite',

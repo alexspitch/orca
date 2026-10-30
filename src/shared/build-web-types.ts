@@ -192,6 +192,9 @@ export type BuildWebIssueSort = (typeof BUILD_WEB_ISSUE_SORTS)[number]
 /** The assignee filter's value for tasks nobody is assigned; a login is an e-mail, never this word. */
 export const BUILD_WEB_UNASSIGNED = 'none'
 
+/** The assignee filter's value for the token's owner; Orca asks for it by flag or login, never by this word. */
+export const BUILD_WEB_ASSIGNEE_ME = 'me'
+
 export type BuildWebIssueQuery = {
   /** Kept for hosts that predate the flags below; a newer host reads the flags when any is set. */
   view: BuildWebView
@@ -260,6 +263,12 @@ export type BuildWebIssuePatch = Partial<{
   stand_mode: string
   version: string
 }>
+
+/** A new task as the console's create takes it: the product and the title, the rest optional. */
+export type BuildWebIssueDraft = Omit<BuildWebIssuePatch, 'product' | 'title'> & {
+  product: BuildWebProduct
+  title: string
+}
 
 /** build-web's three kinds of task. */
 export const BUILD_WEB_ISSUE_TYPES = ['bug', 'improvement', 'chore'] as const

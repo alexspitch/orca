@@ -62,29 +62,33 @@ export const BuildWebIssueSummaryParams = z.object({
 
 export const BuildWebVersionsParams = z.object({ product: Product })
 
+const IssueFields = z.object({
+  title: z.string().min(1).max(500).optional(),
+  status: Status.optional(),
+  priority: z.number().int().min(1).max(5).optional(),
+  assignee: ShortText.optional(),
+  version_id: z.union([ShortText, z.null()]).optional(),
+  for_ai: z.boolean().optional(),
+  type: z.enum(BUILD_WEB_ISSUE_TYPES).optional(),
+  product: Product.optional(),
+  stand_id: z.union([Id, z.null()]).optional(),
+  stand_mode: ShortText.optional(),
+  version: ShortText.optional(),
+  description: z.string().max(100_000).optional(),
+  steps: z
+    .array(z.object({ text: z.string().max(4000) }))
+    .max(200)
+    .optional()
+})
+
 export const BuildWebIssueUpdateParams = z.object({
   id: Id,
-  patch: z
-    .object({
-      title: z.string().min(1).max(500).optional(),
-      status: Status.optional(),
-      priority: z.number().int().min(1).max(5).optional(),
-      assignee: ShortText.optional(),
-      version_id: z.union([ShortText, z.null()]).optional(),
-      for_ai: z.boolean().optional(),
-      type: z.enum(BUILD_WEB_ISSUE_TYPES).optional(),
-      product: Product.optional(),
-      stand_id: z.union([Id, z.null()]).optional(),
-      stand_mode: ShortText.optional(),
-      version: ShortText.optional(),
-      description: z.string().max(100_000).optional(),
-      steps: z
-        .array(z.object({ text: z.string().max(4000) }))
-        .max(200)
-        .optional()
-    })
-    // Why strip, not strict: a newer client may send a field this host does not know yet.
-    .strip()
+  // Why strip, not strict: a newer client may send a field this host does not know yet.
+  patch: IssueFields.strip()
+})
+
+export const BuildWebIssueCreateParams = z.object({
+  draft: IssueFields.extend({ product: Product, title: required('Name the task', 500) }).strip()
 })
 
 export const BuildWebCommentEditParams = z.object({

@@ -42,7 +42,7 @@ function SaveQueryForm({
   list: Pick<IssueList, 'quick' | 'statuses' | 'products' | 'assignees' | 'query'>
   onClose: () => void
 }) {
-  const { call, hostCapabilities, notify } = useBuildWebScreen()
+  const { call, hostCapabilities, notify, status } = useBuildWebScreen()
   const [name, setName] = useState('')
   const [shared, setShared] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -50,7 +50,7 @@ function SaveQueryForm({
   const sameName = known.filter((q) => q.mine && q.name.toLowerCase() === trimmed.toLowerCase())
 
   const save = async () => {
-    const filter = savedFilterOfView(list)
+    const filter = savedFilterOfView(list, status.login)
     const refusal = savedQueryProductsRefusal(hostCapabilities, filter.product)
     if (refusal) {
       notify(refusal, 'error')

@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebIssueDetail, BuildWebIssuePatch } from '../../../../shared/build-web-types'
+import { stepsOfLines } from '../../../../shared/build-web-issue-steps'
 import { BuildWebIssueDescription, BuildWebIssueSteps, SectionTitle } from './BuildWebIssueBody'
 
 // The task's own text edited in place: the title, the description (Markdown) and the steps to
@@ -190,12 +191,7 @@ export function EditableSteps({
             disabled={saving || draft === current}
             onCancel={() => setDraft(null)}
             onSave={() => {
-              const steps = draft
-                .split('\n')
-                .map((line) => line.trim())
-                .filter(Boolean)
-                .map((text) => ({ text }))
-              onSave({ steps })
+              onSave({ steps: stepsOfLines(draft) })
               setDraft(null)
             }}
           />

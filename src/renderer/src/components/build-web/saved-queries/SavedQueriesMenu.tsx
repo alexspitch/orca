@@ -32,6 +32,8 @@ function unsupportedLabel(field: string): string {
       return translate('buildWeb.savedQueries.field.verdict', 'verdict')
     case 'author':
       return translate('buildWeb.savedQueries.field.author', 'author')
+    case 'assignee':
+      return translate('buildWeb.savedQueries.field.assigneesBesideMine', 'assignees beside Mine')
     case 'stand':
       return translate('buildWeb.savedQueries.field.stand', 'stand')
     case 'mode':

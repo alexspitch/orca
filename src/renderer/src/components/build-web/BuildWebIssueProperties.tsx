@@ -38,7 +38,7 @@ const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
 type Option = { value: string; label: React.ReactNode }
 
 /** A value that reads as text and opens as a list — build-web's InlineSelect. */
-function InlineSelect({
+export function InlineSelect({
   label,
   value,
   options,
@@ -75,7 +75,13 @@ function InlineSelect({
   )
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
+export function PropertyRow({
+  label,
+  children
+}: {
+  label: string
+  children: React.ReactNode
+}): React.JSX.Element {
   return (
     <>
       <span className="text-xs text-muted-foreground">{label}</span>
@@ -208,7 +214,7 @@ export function BuildWebIssueProperties({
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-[110px_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 text-sm">
         {child ? (
-          <Row label={translate('buildWeb.detail.status', 'Status')}>
+          <PropertyRow label={translate('buildWeb.detail.status', 'Status')}>
             <InlineSelect
               label={translate('buildWeb.props.subtaskStatus', 'Subtask status')}
               value={detail.status}
@@ -224,9 +230,9 @@ export function BuildWebIssueProperties({
                 label: <StatusChip status={s} />
               }))}
             />
-          </Row>
+          </PropertyRow>
         ) : null}
-        <Row label={translate('buildWeb.detail.assignee', 'Assignee')}>
+        <PropertyRow label={translate('buildWeb.detail.assignee', 'Assignee')}>
           <InlineSelect
             label={translate('buildWeb.detail.assignee', 'Assignee')}
             value={detail.assignee || NONE}
@@ -234,10 +240,10 @@ export function BuildWebIssueProperties({
             onChange={(v) => void onSave({ assignee: v === NONE ? '' : v })}
             options={people}
           />
-        </Row>
+        </PropertyRow>
         {child ? null : (
           <>
-            <Row label={translate('buildWeb.props.product', 'Product')}>
+            <PropertyRow label={translate('buildWeb.props.product', 'Product')}>
               <InlineSelect
                 label={translate('buildWeb.props.product', 'Product')}
                 value={detail.product === 'unknown' ? NONE : detail.product}
@@ -250,8 +256,8 @@ export function BuildWebIssueProperties({
                 }}
                 options={PRODUCTS.map((p) => ({ value: p, label: productLabel(p) }))}
               />
-            </Row>
-            <Row label={translate('buildWeb.props.stand', 'Stand')}>
+            </PropertyRow>
+            <PropertyRow label={translate('buildWeb.props.stand', 'Stand')}>
               <InlineSelect
                 label={translate('buildWeb.props.stand', 'Stand')}
                 value={detail.stand_id ?? NONE}
@@ -283,8 +289,8 @@ export function BuildWebIssueProperties({
                   </TooltipContent>
                 </Tooltip>
               ) : null}
-            </Row>
-            <Row label={translate('buildWeb.props.version', 'Version')}>
+            </PropertyRow>
+            <PropertyRow label={translate('buildWeb.props.version', 'Version')}>
               <InlineSelect
                 label={translate('buildWeb.props.productVersion', 'Product version')}
                 value={detail.version_id ?? NONE}
@@ -304,10 +310,10 @@ export function BuildWebIssueProperties({
                     : [])
                 ]}
               />
-            </Row>
+            </PropertyRow>
           </>
         )}
-        <Row label={translate('buildWeb.props.type', 'Type')}>
+        <PropertyRow label={translate('buildWeb.props.type', 'Type')}>
           <InlineSelect
             label={translate('buildWeb.props.type', 'Type')}
             value={BUILD_WEB_ISSUE_TYPES.find((t) => t === detail.type) ?? NONE}
@@ -325,9 +331,9 @@ export function BuildWebIssueProperties({
               ...BUILD_WEB_ISSUE_TYPES.map((t) => ({ value: t, label: <TypeChip type={t} /> }))
             ]}
           />
-        </Row>
+        </PropertyRow>
         {child ? null : (
-          <Row label={translate('buildWeb.detail.priority', 'Priority')}>
+          <PropertyRow label={translate('buildWeb.detail.priority', 'Priority')}>
             <InlineSelect
               label={translate('buildWeb.detail.priority', 'Priority')}
               value={String(detail.priority)}
@@ -338,10 +344,10 @@ export function BuildWebIssueProperties({
                 label: <PriorityChip priority={p} />
               }))}
             />
-          </Row>
+          </PropertyRow>
         )}
         {testing && !child ? (
-          <Row label={translate('buildWeb.props.testing', 'Testing')}>
+          <PropertyRow label={translate('buildWeb.props.testing', 'Testing')}>
             <InlineSelect
               label={translate('buildWeb.props.testing', 'Testing')}
               value={testing.value}
@@ -354,15 +360,15 @@ export function BuildWebIssueProperties({
               }}
               options={BUILD_WEB_TESTING_STATUSES.map((s) => ({ value: s, label: s }))}
             />
-          </Row>
+          </PropertyRow>
         ) : null}
-        <Row label={translate('buildWeb.detail.forAi', 'Handed to AI')}>
+        <PropertyRow label={translate('buildWeb.detail.forAi', 'Handed to AI')}>
           <Switch
             checked={detail.for_ai}
             disabled={busy}
             onCheckedChange={(checked) => void onSave({ for_ai: checked })}
           />
-        </Row>
+        </PropertyRow>
       </div>
       {child && detail.parent_id ? (
         <p className="text-2xs text-muted-foreground">

@@ -16,6 +16,7 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.commitDiff',
   'buildWeb.consoleFeatures',
   'buildWeb.connect',
+  'buildWeb.createIssue',
   'buildWeb.createIssueRun',
   'buildWeb.createJiraIssue',
   'buildWeb.deleteComment',

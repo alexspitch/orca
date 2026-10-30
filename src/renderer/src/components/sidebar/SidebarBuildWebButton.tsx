@@ -37,8 +37,8 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
   const me = useBuildWebStore((s) => s.status?.login ?? null)
   const query = useSettledQuery(useBuildWebStore((s) => s.query))
   const filters = useMemo(
-    () => issueSummaryQueryOf({ quick, statuses, products, assignees, query }),
-    [assignees, products, query, quick, statuses]
+    () => issueSummaryQueryOf({ quick, statuses, products, assignees, query }, me),
+    [assignees, me, products, query, quick, statuses]
   )
   const readBlockers = useCallback(
     (target: RuntimeClientTarget): Promise<BuildWebBadge> =>
@@ -92,7 +92,7 @@ export function SidebarBuildWebButton(): React.JSX.Element | null {
                 <BlockersHint
                   count={blockers.count}
                   capped={blockers.capped}
-                  filters={blockerFilterNames({ quick, statuses, products, assignees, me, query })}
+                  filters={blockerFilterNames({ quick, statuses, products, assignees, query })}
                 />
               }
             />

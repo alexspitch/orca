@@ -5,6 +5,7 @@ import {
   BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
   BUILD_WEB_REDOS_TWIN_RUNTIME_CAPABILITY,
@@ -144,6 +145,15 @@ export const NEWER_METHODS: {
       translate(
         'buildWeb.client.updateServerArchive',
         'This Orca server cannot archive tasks yet. Update the server.'
+      )
+  },
+  {
+    methods: new Set<Method>(['createIssue']),
+    capability: BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerCreate',
+        'This Orca server cannot create tasks yet. Update the server.'
       )
   },
   {

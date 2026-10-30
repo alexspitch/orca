@@ -6,6 +6,7 @@ import type {
   BuildWebIssueFileContent,
   BuildWebMockupView,
   BuildWebIssuePage,
+  BuildWebIssueDraft,
   BuildWebIssuePatch,
   BuildWebIssueQuery,
   BuildWebIssueRow,
@@ -75,6 +76,10 @@ export type BuildWebApi = {
     id: string
     patch: BuildWebIssuePatch
   }) => Promise<BuildWebMutationResult<BuildWebUpdateOutcome>>
+  /** A new task; the console numbers it. */
+  createIssue: (args: {
+    draft: BuildWebIssueDraft
+  }) => Promise<BuildWebMutationResult<Omit<BuildWebIssueRow, 'favorite'>>>
   setFavorite: (args: { id: string; on: boolean }) => Promise<BuildWebMutationResult<boolean>>
   /** Into the console's archive, with the subtasks; `restoreIssue` takes it back. */
   archiveIssue: (args: { id: string }) => Promise<BuildWebMutationResult<true>>

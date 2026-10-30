@@ -10,6 +10,7 @@ import type {
   IssueSortState,
   QuickFilter
 } from '../../../../src/renderer/src/components/build-web/build-web-view-prefs'
+import { assigneeFilterQuery } from '../../../../src/renderer/src/components/build-web/build-web-assignee-options'
 
 // The desktop build-web-store's list request, without zustand: filters, sort and page in, query out.
 
@@ -47,18 +48,20 @@ export type IssueListView = {
   page: number
 }
 
-/** The quick filters an older host knows as its single `view`. */
-const VIEW_FILTERS = ['mine', 'ai', 'favorite'] as const
+/** The quick filters an older host knows as its single `view`, after Mine. */
+const VIEW_FILTERS = ['ai', 'favorite'] as const
 
 export function sameStatuses(set: ReadonlySet<BuildWebStatus>, list: readonly BuildWebStatus[]) {
   return set.size === list.length && list.every((s) => set.has(s))
 }
 
-export function issueQueryOf(view: IssueListView): BuildWebIssueQuery {
+/** The list request; `me` is the token owner's login. */
+export function issueQueryOf(view: IssueListView, me: string | null): BuildWebIssueQuery {
+  const assignee = assigneeFilterQuery(view.assignees, me)
   return {
     // Why: a host older than the flags reads only `view`, which holds one quick filter at most.
-    view: VIEW_FILTERS.find((q) => view.quick.has(q)) ?? 'all',
-    mine: view.quick.has('mine'),
+    view: assignee.mine ? 'mine' : (VIEW_FILTERS.find((q) => view.quick.has(q)) ?? 'all'),
+    ...assignee,
     ai: view.quick.has('ai'),
     favorite: view.quick.has('favorite'),
     jira: view.quick.has('jira'),
@@ -73,8 +76,6 @@ export function issueQueryOf(view: IssueListView): BuildWebIssueQuery {
     product: view.products.size
       ? BUILD_WEB_PRODUCTS.filter((p) => view.products.has(p))
       : undefined,
-    // Why sorted: the same choice is the same request, whatever order it was ticked in.
-    assignee: view.assignees.size ? [...view.assignees].sort() : undefined,
     // As build-web's list: each task with its subtasks right under it.
     tree: true
   }
