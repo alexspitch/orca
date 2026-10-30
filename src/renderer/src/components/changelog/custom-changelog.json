@@ -1,6 +1,22 @@
 {
   "releases": [
     {
+      "version": "1.4.246-custom.1793344032000",
+      "date": "2026-10-30",
+      "commit": "5f2b35479be4",
+      "features": [
+        "Issues → New task creates a task with title, product, type, status, priority, assignee, release, stand, description and steps; the phone's Issues header gets a «+» button.",
+        "Issues now filters by assignee, including Mine and Unassigned, and by several products at once, on the desktop and the phone.",
+        "Mine moves from the Issues quick filters into the assignee list, where the list still opens on it by default.",
+        "The Issues search field gets a button that clears it.",
+        "Saved queries in Issues now apply their assignee and product filters instead of reporting them as unsupported, and a shared Mine query shows each reader's own tasks.",
+        "The sidebar blocker count and its hint now follow the Issues assignee and product filters.",
+        "With an older Orca server, Issues asks you to update the server before creating tasks or filtering by assignee, and the phone hides its «+»."
+      ],
+      "settings": [],
+      "fixes": []
+    },
+    {
       "version": "1.4.245-custom.1793306746000",
       "date": "2026-10-29",
       "commit": "9df9cca79cca",
