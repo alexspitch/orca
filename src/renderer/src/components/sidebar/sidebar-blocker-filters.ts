@@ -21,8 +21,6 @@ export function blockerFilterNames(state: {
   statuses: ReadonlySet<BuildWebStatus>
   products: ReadonlySet<BuildWebProduct>
   assignees: ReadonlySet<string>
-  /** The viewer's login, to name their own tasks «Mine». */
-  me: string | null
   query: string
 }): string[] {
   const names = QUICK_FILTERS.filter((q) => state.quick.has(q)).map(quickFilterLabel)
@@ -31,7 +29,7 @@ export function blockerFilterNames(state: {
     names.push(products.map(productLabel).join(', '))
   }
   if (state.assignees.size > 0) {
-    names.push([...state.assignees].map((a) => assigneeFilterLabel(a, state.me)).join(', '))
+    names.push([...state.assignees].map(assigneeFilterLabel).join(', '))
   }
   const open = BUILD_WEB_OPEN_STATUSES.filter((s) => state.statuses.has(s))
   if (open.length > 0 && open.length < BUILD_WEB_OPEN_STATUSES.length) {

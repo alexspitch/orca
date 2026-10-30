@@ -35,6 +35,7 @@ function SaveQueryForm({
   const query = useBuildWebStore((s) => s.query)
   const products = useBuildWebStore((s) => s.products)
   const assignees = useBuildWebStore((s) => s.assignees)
+  const me = useBuildWebStore((s) => s.status?.login ?? null)
   const view = { quick, statuses, query, products, assignees }
   const [name, setName] = useState('')
   const [shared, setShared] = useState(false)
@@ -45,7 +46,7 @@ function SaveQueryForm({
   const save = async () => {
     setSaving(true)
     try {
-      const filter = savedFilterOfView(view)
+      const filter = savedFilterOfView(view, me)
       const result = await callBuildWeb(target, 'saveQuery', {
         product: storageProductOf(filter),
         name: trimmed,

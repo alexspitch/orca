@@ -3,11 +3,13 @@ import {
   type BuildWebSavedFilter
 } from '../../../../../shared/build-web-saved-query-types'
 import {
+  BUILD_WEB_ASSIGNEE_ME,
   BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES,
   type BuildWebProduct,
   type BuildWebStatus
 } from '../../../../../shared/build-web-types'
+import { assigneeFilterQuery } from '../build-web-assignee-options'
 import type { QuickFilter } from '../build-web-view-prefs'
 
 // Orca's Issues filters and build-web's saved filter, each way. The console's table narrows by more
@@ -31,17 +33,21 @@ export type AppliedSavedFilter = {
   unsupported: string[]
 }
 
-/** What the list shows now, as the console saves it; the archive and the sort are not part of it. */
-export function savedFilterOfView(view: IssuesView): BuildWebSavedFilter {
+/**
+ * What the list shows now, as the console saves it; the archive and the sort are not part of it.
+ * Mine alone is saved as the console's Mine, so a shared query means each reader's own tasks.
+ */
+export function savedFilterOfView(view: IssuesView, me: string | null): BuildWebSavedFilter {
+  const { mine, assignee } = assigneeFilterQuery(view.assignees, me)
   return {
     ...EMPTY_BUILD_WEB_SAVED_FILTER,
     q: view.query.trim(),
     product: BUILD_WEB_PRODUCTS.filter((p) => view.products.has(p)),
-    assignee: [...view.assignees].sort(),
+    assignee: assignee ?? [],
     status: BUILD_WEB_STATUSES.filter((s) => view.statuses.has(s)),
     jira: view.quick.has('jira') ? ['yes'] : [],
     favorite: view.quick.has('favorite'),
-    mine: view.quick.has('mine'),
+    mine: mine === true,
     ai: view.quick.has('ai')
   }
 }
@@ -71,10 +77,12 @@ export function viewOfSavedFilter(filter: BuildWebSavedFilter): AppliedSavedFilt
   if (filter.rootOnly) {
     unsupported.push('rootOnly')
   }
-  const quick: QuickFilter[] = []
-  if (filter.mine) {
-    quick.push('mine')
+  // Why Mine wins: the console ANDs its Mine with the assignees, so the tasks shown are the reader's
+  // own at most; the list's assignees are ORed and cannot say that.
+  if (filter.mine && filter.assignee.length > 0) {
+    unsupported.push('assignee')
   }
+  const quick: QuickFilter[] = []
   if (filter.ai) {
     quick.push('ai')
   }
@@ -88,7 +96,7 @@ export function viewOfSavedFilter(filter: BuildWebSavedFilter): AppliedSavedFilt
     quick,
     statuses: BUILD_WEB_STATUSES.filter((s) => filter.status.includes(s)),
     products: BUILD_WEB_PRODUCTS.filter((p) => filter.product.includes(p)),
-    assignees: [...filter.assignee],
+    assignees: filter.mine ? [BUILD_WEB_ASSIGNEE_ME] : [...filter.assignee],
     query: filter.q,
     unsupported
   }

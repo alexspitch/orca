@@ -2,6 +2,8 @@
 
 function unsupportedLabel(field: string): string {
   switch (field) {
+    case 'assignee':
+      return 'assignees beside Mine'
     case 'jira':
       return 'not in Jira'
     case 'rootOnly':

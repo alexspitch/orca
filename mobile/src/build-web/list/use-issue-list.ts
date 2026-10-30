@@ -39,14 +39,15 @@ function withToggled<T>(set: ReadonlySet<T>, value: T): Set<T> {
 }
 
 export function useIssueList(reloadToken: number) {
-  const { call, hostCapabilities } = useBuildWebScreen()
+  const { call, hostCapabilities, status } = useBuildWebScreen()
+  const me = status.login
   const [prefs] = useState(readViewPrefs)
   const [quick, setQuick] = useState<ReadonlySet<QuickFilter>>(() => new Set(prefs.quick))
   const [statuses, setStatusSet] = useState<ReadonlySet<BuildWebStatus>>(
     () => new Set(prefs.statuses ?? OPEN_STATUSES)
   )
   const [products, setProductSet] = useState<ReadonlySet<BuildWebProduct>>(() => new Set())
-  const [assignees, setAssigneeSet] = useState<ReadonlySet<string>>(() => new Set())
+  const [assignees, setAssigneeSet] = useState<ReadonlySet<string>>(() => new Set(prefs.assignees))
   const [query, setQueryState] = useState('')
   const [sort, setSort] = useState<IssueSortState>(prefs.sort)
   const [page, setPageState] = useState(0)
@@ -111,15 +112,21 @@ export function useIssueList(reloadToken: number) {
     setPageState(0)
   }, [])
 
-  const setAssignees = useCallback((list: readonly string[]) => {
-    setAssigneeSet(new Set(list))
-    setPageState(0)
-  }, [])
+  const setAssignees = useCallback(
+    (list: readonly string[]) => {
+      if (queryTabId === null) {
+        writeViewPrefs({ assignees: [...list] })
+      }
+      setAssigneeSet(new Set(list))
+      setPageState(0)
+    },
+    [queryTabId]
+  )
 
-  const toggleAssignee = useCallback((assignee: string) => {
-    setAssigneeSet((current) => withToggled(current, assignee))
-    setPageState(0)
-  }, [])
+  const toggleAssignee = useCallback(
+    (assignee: string) => setAssignees([...withToggled(assignees, assignee)]),
+    [assignees, setAssignees]
+  )
 
   // Why page 0: a narrower filter may have fewer pages than the one being read.
   const setQuery = useCallback((next: string) => {
@@ -162,7 +169,7 @@ export function useIssueList(reloadToken: number) {
 
   const load = useCallback(async () => {
     const mine = ++generation.current
-    const request = issueQueryOf({ quick, statuses, products, assignees, query, sort, page })
+    const request = issueQueryOf({ quick, statuses, products, assignees, query, sort, page }, me)
     const refusal = listIssuesRefusal(hostCapabilities, request)
     if (refusal) {
       setLoading(false)
@@ -192,7 +199,7 @@ export function useIssueList(reloadToken: number) {
         setLoading(false)
       }
     }
-  }, [assignees, call, hostCapabilities, page, products, query, quick, sort, statuses])
+  }, [assignees, call, hostCapabilities, me, page, products, query, quick, sort, statuses])
 
   useEffect(() => {
     const timer = setTimeout(() => void load(), query ? SEARCH_DEBOUNCE_MS : 0)

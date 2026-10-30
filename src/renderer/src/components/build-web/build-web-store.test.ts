@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { BuildWebIssueRow, BuildWebProduct } from '../../../../shared/build-web-types'
+import {
+  BUILD_WEB_ASSIGNEE_ME,
+  type BuildWebIssueRow,
+  type BuildWebProduct
+} from '../../../../shared/build-web-types'
 import {
   ISSUE_PAGE_SIZE,
   issueQueryOf,
@@ -68,8 +72,8 @@ describe('build-web store', () => {
       products: new Set<BuildWebProduct>(),
       assignees: new Set<string>()
     }
-    expect(issueQueryOf(base)).toMatchObject({ archived: true })
-    expect(issueQueryOf({ ...base, quick: new Set() })).not.toHaveProperty('archived')
+    expect(issueQueryOf(base, null)).toMatchObject({ archived: true })
+    expect(issueQueryOf({ ...base, quick: new Set() }, null)).not.toHaveProperty('archived')
 
     const stored = new Map<string, string>()
     const storage = {
@@ -81,10 +85,10 @@ describe('build-web store', () => {
       configurable: true
     })
     try {
-      useBuildWebStore.setState({ quick: new Set<QuickFilter>(['mine']) })
+      useBuildWebStore.setState({ quick: new Set<QuickFilter>(['jira']) })
       useBuildWebStore.getState().toggleQuick('archived')
       expect(useBuildWebStore.getState().quick.has('archived')).toBe(true)
-      expect(JSON.parse(stored.get('orca.buildWeb.viewPrefs') ?? '{}').quick).toEqual(['mine'])
+      expect(JSON.parse(stored.get('orca.buildWeb.viewPrefs') ?? '{}').quick).toEqual(['jira'])
     } finally {
       Reflect.deleteProperty(globalThis, 'window')
     }
@@ -108,7 +112,7 @@ describe('build-web store', () => {
     useBuildWebStore.getState().sortBy('favorite')
     const state = useBuildWebStore.getState()
     expect(state.sort).toEqual({ sort: 'favorite', dir: 'asc' })
-    expect(issueQueryOf(state)).toMatchObject({ sort: 'favorite', dir: 'asc' })
+    expect(issueQueryOf(state, null)).toMatchObject({ sort: 'favorite', dir: 'asc' })
   })
 
   it('collapses a full card to where it came from: the side card, or the list', () => {
@@ -138,15 +142,16 @@ describe('build-web store', () => {
 
   it('asks for the picked statuses, combined quick filters, the sort and the page', () => {
     const base = {
-      quick: new Set<QuickFilter>(['mine']),
+      quick: new Set<QuickFilter>(),
       sort: { sort: 'updated_at' as const, dir: 'desc' as const },
       page: 0,
       query: '  ',
       statuses: new Set(OPEN_STATUSES),
       products: new Set<BuildWebProduct>(),
-      assignees: new Set<string>()
+      assignees: new Set([BUILD_WEB_ASSIGNEE_ME])
     }
-    expect(issueQueryOf(base)).toEqual({
+    // Mine alone is the console's own flag, which an older Orca server passes on too.
+    expect(issueQueryOf(base, 'Me@Spitch.ch')).toEqual({
       view: 'mine',
       mine: true,
       ai: false,
@@ -159,21 +164,24 @@ describe('build-web store', () => {
       q: undefined,
       status: [...OPEN_STATUSES],
       product: undefined,
-      assignee: undefined,
       tree: true
     })
     expect(
-      issueQueryOf({
-        ...base,
-        quick: new Set<QuickFilter>(['ai', 'favorite']),
-        page: 2,
-        query: 'export',
-        statuses: new Set(TO_WORK_STATUSES),
-        products: new Set<BuildWebProduct>(['dc', 'sa']),
-        assignees: new Set(['none', 'me@spitch.ch'])
-      })
+      issueQueryOf(
+        {
+          ...base,
+          quick: new Set<QuickFilter>(['ai', 'favorite']),
+          page: 2,
+          query: 'export',
+          statuses: new Set(TO_WORK_STATUSES),
+          products: new Set<BuildWebProduct>(['dc', 'sa']),
+          assignees: new Set(['none', BUILD_WEB_ASSIGNEE_ME])
+        },
+        'Me@Spitch.ch'
+      )
     ).toMatchObject({
       view: 'ai',
+      mine: false,
       ai: true,
       favorite: true,
       offset: 2 * ISSUE_PAGE_SIZE,
@@ -182,9 +190,8 @@ describe('build-web store', () => {
       product: ['sa', 'dc'],
       assignee: ['me@spitch.ch', 'none']
     })
-    expect(issueQueryOf({ ...base, quick: new Set(), statuses: new Set() })).toMatchObject({
-      view: 'all',
-      status: undefined
-    })
+    expect(
+      issueQueryOf({ ...base, assignees: new Set(), statuses: new Set() }, 'me@spitch.ch')
+    ).toMatchObject({ view: 'all', mine: false, assignee: undefined, status: undefined })
   })
 })

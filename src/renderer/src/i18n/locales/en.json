@@ -22732,6 +22732,7 @@
         "version": "version",
         "verdict": "verdict",
         "author": "author",
+        "assigneesBesideMine": "assignees beside Mine",
         "stand": "stand",
         "mode": "mode",
         "noJira": "not in Jira",

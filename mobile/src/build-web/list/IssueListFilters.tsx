@@ -12,7 +12,6 @@ import {
   Star,
   Ticket,
   UnfoldVertical,
-  User,
   type LucideIcon
 } from 'lucide-react-native'
 import {
@@ -40,7 +39,6 @@ import type { IssueList } from './use-issue-list'
 import { useBuildWebAssignees } from './use-build-web-assignees'
 
 const QUICK_ICON: Record<QuickFilter, LucideIcon> = {
-  mine: User,
   ai: Bot,
   favorite: Star,
   jira: Ticket,
@@ -65,12 +63,12 @@ const PRODUCT_OPTIONS: readonly IssueCheckOption[] = BUILD_WEB_PRODUCTS.map((p) 
   chip: <ProductChip product={p} />
 }))
 
-function assigneeSummary(selected: ReadonlySet<string>, me: string | null): string {
+function assigneeSummary(selected: ReadonlySet<string>): string {
   if (selected.size === 0) {
     return 'Any assignee'
   }
   const [only] = selected
-  return selected.size === 1 ? assigneeFilterLabel(only, me) : `${selected.size} assignees`
+  return selected.size === 1 ? assigneeFilterLabel(only) : `${selected.size} assignees`
 }
 
 /** The desktop's filter bar: quick filters, «To work», status, product, assignee, sort, folds and search. */
@@ -82,13 +80,12 @@ export function IssueListFilters({
   onOpenSavedQueries: () => void
 }) {
   const [sheet, setSheet] = useState<Sheet>(null)
-  // The console keeps a login in lower case and matches it exactly.
-  const me = useBuildWebScreen().status.login?.toLowerCase() ?? null
+  const me = useBuildWebScreen().status.login
   const users = useBuildWebAssignees(sheet === 'assignee')
   const { own, people } = assigneeFilterOptions(users, me, list.assignees)
   const assigneeOptions: IssueCheckOption[] = [...own, ...people].map((option) => ({
     value: option.value,
-    label: option.user ? loginOf(option.user.email) : assigneeFilterLabel(option.value, me),
+    label: option.user ? loginOf(option.user.email) : assigneeFilterLabel(option.value),
     subtitle:
       option.user?.name && option.user.name !== loginOf(option.user.email)
         ? option.user.name
@@ -143,7 +140,7 @@ export function IssueListFilters({
           onPress={() => setSheet('product')}
         />
         <FilterPill
-          label={assigneeSummary(list.assignees, me)}
+          label={assigneeSummary(list.assignees)}
           accessibilityLabel="Assignee"
           trailing={<ChevronDown size={12} color={colors.textMuted} />}
           onPress={() => setSheet('assignee')}

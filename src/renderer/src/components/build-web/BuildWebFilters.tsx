@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Archive, Bot, FoldVertical, Star, Ticket, UnfoldVertical, User, X } from 'lucide-react'
+import { Archive, Bot, FoldVertical, Star, Ticket, UnfoldVertical, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -12,7 +12,6 @@ import { QUICK_FILTERS, type QuickFilter } from './build-web-view-prefs'
 import { familiesOf, foldedOf, useIssueFolds } from './build-web-families'
 
 const QUICK_ICON: Record<QuickFilter, React.ReactNode> = {
-  mine: <User />,
   ai: <Bot />,
   favorite: <Star />,
   jira: <Ticket />,
@@ -87,7 +86,7 @@ export function BuildWebFilters(): React.JSX.Element {
 
   return (
     <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2 md:px-5">
-      {/* Combined like build-web's: Mine and For AI together is my tasks handed to the model. */}
+      {/* Combined with AND like build-web's; Mine is in the assignee list. */}
       <ToggleGroup
         type="multiple"
         variant="outline"

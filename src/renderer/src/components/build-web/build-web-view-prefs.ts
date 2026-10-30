@@ -1,4 +1,5 @@
 import {
+  BUILD_WEB_ASSIGNEE_ME,
   BUILD_WEB_ISSUE_SORTS,
   BUILD_WEB_STATUSES,
   type BuildWebIssueSort,
@@ -8,7 +9,7 @@ import {
 // Per-viewer conveniences kept in localStorage (as the GitHub project column widths are): the
 // Issues page's quick filters and sort, and the side card's width. Lost storage just means defaults.
 
-export const QUICK_FILTERS = ['mine', 'ai', 'favorite', 'jira', 'archived'] as const
+export const QUICK_FILTERS = ['ai', 'favorite', 'jira', 'archived'] as const
 export type QuickFilter = (typeof QUICK_FILTERS)[number]
 
 export type IssueSortState = { sort: BuildWebIssueSort; dir: 'asc' | 'desc' }
@@ -23,6 +24,8 @@ type ViewPrefs = {
   quick: QuickFilter[]
   /** Null until the person picks: the list then shows the open statuses. */
   statuses: BuildWebStatus[] | null
+  /** The assignee filter: logins, nobody and Mine; Mine alone until the person picks. */
+  assignees: string[]
   sort: IssueSortState
   drawerWidth: number
   /** The sized side of each split (a full-screen card tab, the Recaps list), by panel. */
@@ -66,8 +69,9 @@ const FOLDED_KEPT = 200
 
 const STORAGE_KEY = 'orca.buildWeb.viewPrefs'
 const DEFAULTS: ViewPrefs = {
-  quick: ['mine'],
+  quick: [],
   statuses: null,
+  assignees: [BUILD_WEB_ASSIGNEE_ME],
   sort: { sort: 'updated_at', dir: 'desc' },
   drawerWidth: DRAWER_DEFAULT_WIDTH,
   panelWidths: {},
@@ -126,6 +130,12 @@ function prefsOf(raw: unknown): ViewPrefs {
   const statuses = Array.isArray(v.statuses)
     ? BUILD_WEB_STATUSES.filter((s) => v.statuses.includes(s))
     : null
+  // Why the quick filters: Mine was one of them before the assignee list, kept as it was left.
+  const assignees = Array.isArray(v.assignees)
+    ? stringsOf(v.assignees)
+    : Array.isArray(v.quick) && !v.quick.includes('mine')
+      ? []
+      : DEFAULTS.assignees
   const panelWidths: Record<string, number> = {}
   if (v.panelWidths && typeof v.panelWidths === 'object') {
     for (const [key, value] of Object.entries(v.panelWidths)) {
@@ -137,6 +147,7 @@ function prefsOf(raw: unknown): ViewPrefs {
   return {
     quick,
     statuses,
+    assignees,
     panelWidths,
     runFilters: runFiltersOf(v.runFilters),
     hidePending: v.hidePending === true,

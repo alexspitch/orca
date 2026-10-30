@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { BuildWebSavedQuery } from '../../../../../shared/build-web-saved-query-types'
 import {
+  BUILD_WEB_ASSIGNEE_ME,
   BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES,
   type BuildWebProduct,
@@ -39,7 +40,12 @@ function filtersOfRaw(raw: unknown): BuildWebListFilters {
     statuses: BUILD_WEB_STATUSES.filter((s) => strings(v.statuses).includes(s)),
     // Why `product` too: tabs kept before the list took several products held one.
     products: BUILD_WEB_PRODUCTS.filter((p) => strings(v.products).includes(p) || v.product === p),
-    assignees: strings(v.assignees),
+    // Why the quick filters: tabs kept before the assignee list held Mine there.
+    assignees: Array.isArray(v.assignees)
+      ? strings(v.assignees)
+      : strings(v.quick).includes('mine')
+        ? [BUILD_WEB_ASSIGNEE_ME]
+        : [],
     query: typeof v.query === 'string' ? v.query : ''
   }
 }

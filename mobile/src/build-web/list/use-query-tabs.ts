@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react'
 import type { BuildWebSavedQuery } from '../../../../src/shared/build-web-saved-query-types'
-import { BUILD_WEB_PRODUCTS, BUILD_WEB_STATUSES } from '../../../../src/shared/build-web-types'
+import {
+  BUILD_WEB_ASSIGNEE_ME,
+  BUILD_WEB_PRODUCTS,
+  BUILD_WEB_STATUSES
+} from '../../../../src/shared/build-web-types'
 import { QUICK_FILTERS } from '../../../../src/renderer/src/components/build-web/build-web-view-prefs'
 import { viewOfSavedFilter } from '../../../../src/renderer/src/components/build-web/saved-queries/saved-query-filter'
 import type { BuildWebListFilters } from './issue-list-query'
@@ -24,7 +28,12 @@ function filtersOfRaw(raw: unknown): BuildWebListFilters {
     statuses: BUILD_WEB_STATUSES.filter((s) => strings(v.statuses).includes(s)),
     // Why `product` too: tabs kept before the list took several products held one.
     products: BUILD_WEB_PRODUCTS.filter((p) => strings(v.products).includes(p) || v.product === p),
-    assignees: strings(v.assignees),
+    // Why the quick filters: tabs kept before the assignee list held Mine there.
+    assignees: Array.isArray(v.assignees)
+      ? strings(v.assignees)
+      : strings(v.quick).includes('mine')
+        ? [BUILD_WEB_ASSIGNEE_ME]
+        : [],
     query: typeof v.query === 'string' ? v.query : ''
   }
 }
