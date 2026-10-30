@@ -16,14 +16,16 @@ import type { QuickFilter } from '../build-web-view-prefs'
 export type IssuesView = {
   quick: ReadonlySet<QuickFilter>
   statuses: ReadonlySet<BuildWebStatus>
-  product: BuildWebProduct | 'all'
+  products: ReadonlySet<BuildWebProduct>
+  assignees: ReadonlySet<string>
   query: string
 }
 
 export type AppliedSavedFilter = {
   quick: QuickFilter[]
   statuses: BuildWebStatus[]
-  product: BuildWebProduct | 'all'
+  products: BuildWebProduct[]
+  assignees: string[]
   query: string
   /** The filter's fields Orca's list does not narrow by. */
   unsupported: string[]
@@ -34,7 +36,8 @@ export function savedFilterOfView(view: IssuesView): BuildWebSavedFilter {
   return {
     ...EMPTY_BUILD_WEB_SAVED_FILTER,
     q: view.query.trim(),
-    product: view.product === 'all' ? [] : [view.product],
+    product: BUILD_WEB_PRODUCTS.filter((p) => view.products.has(p)),
+    assignee: [...view.assignees].sort(),
     status: BUILD_WEB_STATUSES.filter((s) => view.statuses.has(s)),
     jira: view.quick.has('jira') ? ['yes'] : [],
     favorite: view.quick.has('favorite'),
@@ -52,16 +55,11 @@ export function storageProductOf(filter: BuildWebSavedFilter): BuildWebProduct {
   return products.length === 1 ? products[0] : ALL_PRODUCTS_STORAGE
 }
 
-const OTHER_LISTS = ['type', 'version', 'verdict', 'author', 'assignee', 'stand', 'mode'] as const
+const OTHER_LISTS = ['type', 'version', 'verdict', 'author', 'stand', 'mode'] as const
 
 /** A saved filter as Orca's list reads it, with what it could not apply. */
 export function viewOfSavedFilter(filter: BuildWebSavedFilter): AppliedSavedFilter {
   const unsupported: string[] = OTHER_LISTS.filter((key) => filter[key].length > 0)
-  const products = BUILD_WEB_PRODUCTS.filter((p) => filter.product.includes(p))
-  // Why 'all' for several: Orca's list picks one product or every one.
-  if (products.length > 1) {
-    unsupported.push('product')
-  }
   // Why only `yes`: Orca's quick filter is «linked to Jira»; «not linked» has no switch.
   const jiraYes = filter.jira.includes('yes') && !filter.jira.includes('no')
   if (filter.jira.includes('no')) {
@@ -89,7 +87,8 @@ export function viewOfSavedFilter(filter: BuildWebSavedFilter): AppliedSavedFilt
   return {
     quick,
     statuses: BUILD_WEB_STATUSES.filter((s) => filter.status.includes(s)),
-    product: products.length === 1 ? products[0] : 'all',
+    products: BUILD_WEB_PRODUCTS.filter((p) => filter.product.includes(p)),
+    assignees: [...filter.assignee],
     query: filter.q,
     unsupported
   }

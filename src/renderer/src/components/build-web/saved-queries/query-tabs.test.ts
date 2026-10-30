@@ -24,7 +24,7 @@ const saved = (id: string, over: Partial<BuildWebSavedQuery['filter']>): BuildWe
 
 const shown = () => {
   const s = useBuildWebStore.getState()
-  return { tab: s.queryTabId, query: s.query, product: s.product, quick: [...s.quick] }
+  return { tab: s.queryTabId, query: s.query, products: [...s.products], quick: [...s.quick] }
 }
 
 const storage = new Map<string, string>()
@@ -50,7 +50,7 @@ afterEach(() => {
 describe('saved query tabs', () => {
   it('opens a query as its tab, and each tab comes back with the filters it was left with', () => {
     openQueryTab(saved('a', { q: 'deploy', product: ['dc'], mine: true }))
-    expect(shown()).toEqual({ tab: 'a', query: 'deploy', product: 'dc', quick: ['mine'] })
+    expect(shown()).toEqual({ tab: 'a', query: 'deploy', products: ['dc'], quick: ['mine'] })
 
     useBuildWebStore.getState().setQuery('deploy failed')
     showPlainList()

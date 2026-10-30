@@ -2,6 +2,7 @@ import {
   BUILD_WEB_COMMENT_TELEGRAM_RUNTIME_CAPABILITY,
   BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_ASSIGNEE_FILTER_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY
@@ -93,6 +94,20 @@ const NEWER_ARGUMENTS: {
       translate(
         'buildWeb.client.updateServerArchiveList',
         'This Orca server cannot list the archive yet. Update the server, or turn the Archive filter off.'
+      )
+  },
+  {
+    // Why the list only: an older server drops `assignee` and would list everyone's tasks as if
+    // filtered; the sidebar badge then just counts without it.
+    applies: (method, arg) => {
+      const assignee = field(arg, 'assignee')
+      return method === 'listIssues' && Array.isArray(assignee) && assignee.length > 0
+    },
+    capability: BUILD_WEB_ISSUE_ASSIGNEE_FILTER_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerAssigneeFilter',
+        'This Orca server cannot filter tasks by assignee yet. Update the server, or clear the Assignee filter.'
       )
   },
   {

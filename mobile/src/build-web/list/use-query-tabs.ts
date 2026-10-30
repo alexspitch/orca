@@ -22,7 +22,9 @@ function filtersOfRaw(raw: unknown): BuildWebListFilters {
   return {
     quick: QUICK_FILTERS.filter((q) => strings(v.quick).includes(q)),
     statuses: BUILD_WEB_STATUSES.filter((s) => strings(v.statuses).includes(s)),
-    product: BUILD_WEB_PRODUCTS.find((p) => p === v.product) ?? 'all',
+    // Why `product` too: tabs kept before the list took several products held one.
+    products: BUILD_WEB_PRODUCTS.filter((p) => strings(v.products).includes(p) || v.product === p),
+    assignees: strings(v.assignees),
     query: typeof v.query === 'string' ? v.query : ''
   }
 }

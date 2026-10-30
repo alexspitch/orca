@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { BuildWebIssueRow } from '../../../../shared/build-web-types'
+import type { BuildWebIssueRow, BuildWebProduct } from '../../../../shared/build-web-types'
 import {
   ISSUE_PAGE_SIZE,
   issueQueryOf,
@@ -65,7 +65,8 @@ describe('build-web store', () => {
       page: 0,
       query: '',
       statuses: new Set(OPEN_STATUSES),
-      product: 'all' as const
+      products: new Set<BuildWebProduct>(),
+      assignees: new Set<string>()
     }
     expect(issueQueryOf(base)).toMatchObject({ archived: true })
     expect(issueQueryOf({ ...base, quick: new Set() })).not.toHaveProperty('archived')
@@ -142,7 +143,8 @@ describe('build-web store', () => {
       page: 0,
       query: '  ',
       statuses: new Set(OPEN_STATUSES),
-      product: 'all' as const
+      products: new Set<BuildWebProduct>(),
+      assignees: new Set<string>()
     }
     expect(issueQueryOf(base)).toEqual({
       view: 'mine',
@@ -157,6 +159,7 @@ describe('build-web store', () => {
       q: undefined,
       status: [...OPEN_STATUSES],
       product: undefined,
+      assignee: undefined,
       tree: true
     })
     expect(
@@ -166,7 +169,8 @@ describe('build-web store', () => {
         page: 2,
         query: 'export',
         statuses: new Set(TO_WORK_STATUSES),
-        product: 'dc'
+        products: new Set<BuildWebProduct>(['dc', 'sa']),
+        assignees: new Set(['none', 'me@spitch.ch'])
       })
     ).toMatchObject({
       view: 'ai',
@@ -175,7 +179,8 @@ describe('build-web store', () => {
       offset: 2 * ISSUE_PAGE_SIZE,
       q: 'export',
       status: ['todo', 'planned', 'inprogress', 'build_failed'],
-      product: ['dc']
+      product: ['sa', 'dc'],
+      assignee: ['me@spitch.ch', 'none']
     })
     expect(issueQueryOf({ ...base, quick: new Set(), statuses: new Set() })).toMatchObject({
       view: 'all',

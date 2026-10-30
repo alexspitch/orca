@@ -59,7 +59,8 @@ export function useBuildWebIssueList(): { reload: () => void } {
   const page = useBuildWebStore((s) => s.page)
   const query = useBuildWebStore((s) => s.query)
   const statuses = useBuildWebStore((s) => s.statuses)
-  const product = useBuildWebStore((s) => s.product)
+  const products = useBuildWebStore((s) => s.products)
+  const assignees = useBuildWebStore((s) => s.assignees)
   const generation = useRef(0)
 
   const load = useCallback(async () => {
@@ -69,7 +70,7 @@ export function useBuildWebIssueList(): { reload: () => void } {
       const answer = await callBuildWeb(
         target,
         'listIssues',
-        issueQueryOf({ quick, sort, page, query, statuses, product })
+        issueQueryOf({ quick, sort, page, query, statuses, products, assignees })
       )
       if (mine === generation.current) {
         useBuildWebStore.getState().setIssues(answer.issues, answer.total)
@@ -79,7 +80,7 @@ export function useBuildWebIssueList(): { reload: () => void } {
         useBuildWebStore.getState().setError(error instanceof Error ? error.message : String(error))
       }
     }
-  }, [page, product, query, quick, sort, statuses, target])
+  }, [assignees, page, products, query, quick, sort, statuses, target])
 
   useEffect(() => {
     if (!connected) {

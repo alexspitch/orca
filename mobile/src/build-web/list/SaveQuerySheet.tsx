@@ -14,7 +14,7 @@ import { CardButton, ui } from '../issue/issue-card-ui'
 import { savedQueryProductsRefusal } from './list-capability-gates'
 import type { IssueList } from './use-issue-list'
 
-/** The list's quick filters, statuses, product and search, kept in build-web as a saved filter. */
+/** The list's quick filters, statuses, products, assignees and search, kept in build-web as a saved filter. */
 export function SaveQuerySheet({
   known,
   list,
@@ -22,7 +22,7 @@ export function SaveQuerySheet({
 }: {
   /** The saved queries read last; null while closed. */
   known: readonly BuildWebSavedQuery[] | null
-  list: Pick<IssueList, 'quick' | 'statuses' | 'product' | 'query'>
+  list: Pick<IssueList, 'quick' | 'statuses' | 'products' | 'assignees' | 'query'>
   onClose: () => void
 }) {
   return (
@@ -39,7 +39,7 @@ function SaveQueryForm({
   onClose
 }: {
   known: readonly BuildWebSavedQuery[]
-  list: Pick<IssueList, 'quick' | 'statuses' | 'product' | 'query'>
+  list: Pick<IssueList, 'quick' | 'statuses' | 'products' | 'assignees' | 'query'>
   onClose: () => void
 }) {
   const { call, hostCapabilities, notify } = useBuildWebScreen()

@@ -18,22 +18,26 @@ import {
 import {
   BUILD_WEB_ISSUE_SORTS,
   BUILD_WEB_PRODUCTS,
-  type BuildWebIssueSort,
-  type BuildWebProduct
+  type BuildWebIssueSort
 } from '../../../../src/shared/build-web-types'
 import {
   QUICK_FILTERS,
   type QuickFilter
 } from '../../../../src/renderer/src/components/build-web/build-web-view-prefs'
+import { assigneeFilterOptions } from '../../../../src/renderer/src/components/build-web/build-web-assignee-options'
 import { MobileSearchField } from '../../components/MobileSearchField'
 import { PickerModal } from '../../components/PickerModal'
 import { colors, spacing } from '../../theme/mobile-theme'
-import { productLabel, quickFilterLabel } from '../build-web-labels'
+import { assigneeFilterLabel, loginOf, productLabel, quickFilterLabel } from '../build-web-labels'
+import { ProductChip } from '../BuildWebToneChip'
+import { useBuildWebScreen } from '../build-web-screen-context'
 import { familiesOf, foldedOf } from './issue-families'
+import { IssueCheckSheet, type IssueCheckOption } from './IssueCheckSheet'
 import { OPEN_STATUSES, sameStatuses, TO_WORK_STATUSES } from './issue-list-query'
 import { FilterPill } from './list-controls'
 import { IssueStatusSheet, statusSummaryOf } from './IssueStatusSheet'
 import type { IssueList } from './use-issue-list'
+import { useBuildWebAssignees } from './use-build-web-assignees'
 
 const QUICK_ICON: Record<QuickFilter, LucideIcon> = {
   mine: User,
@@ -53,9 +57,23 @@ const SORT_LABELS: Record<BuildWebIssueSort, string> = {
   favorite: 'Favorites first'
 }
 
-type Sheet = 'status' | 'product' | 'sort' | null
+type Sheet = 'status' | 'product' | 'assignee' | 'sort' | null
 
-/** The desktop's filter bar: quick filters, «To work», status, product, sort, folds and search. */
+const PRODUCT_OPTIONS: readonly IssueCheckOption[] = BUILD_WEB_PRODUCTS.map((p) => ({
+  value: p,
+  label: productLabel(p),
+  chip: <ProductChip product={p} />
+}))
+
+function assigneeSummary(selected: ReadonlySet<string>, me: string | null): string {
+  if (selected.size === 0) {
+    return 'Any assignee'
+  }
+  const [only] = selected
+  return selected.size === 1 ? assigneeFilterLabel(only, me) : `${selected.size} assignees`
+}
+
+/** The desktop's filter bar: quick filters, «To work», status, product, assignee, sort, folds and search. */
 export function IssueListFilters({
   list,
   onOpenSavedQueries
@@ -64,6 +82,19 @@ export function IssueListFilters({
   onOpenSavedQueries: () => void
 }) {
   const [sheet, setSheet] = useState<Sheet>(null)
+  // The console keeps a login in lower case and matches it exactly.
+  const me = useBuildWebScreen().status.login?.toLowerCase() ?? null
+  const users = useBuildWebAssignees(sheet === 'assignee')
+  const { own, people } = assigneeFilterOptions(users, me, list.assignees)
+  const assigneeOptions: IssueCheckOption[] = [...own, ...people].map((option) => ({
+    value: option.value,
+    label: option.user ? loginOf(option.user.email) : assigneeFilterLabel(option.value, me),
+    subtitle:
+      option.user?.name && option.user.name !== loginOf(option.user.email)
+        ? option.user.name
+        : undefined
+  }))
+  const products = BUILD_WEB_PRODUCTS.filter((p) => list.products.has(p))
   const kids = familiesOf(list.issues)
   const folded = foldedOf(list.foldAll, list.toggled, kids)
   const allFolded = kids.size > 0 && [...kids.keys()].every((id) => folded.has(id))
@@ -106,10 +137,16 @@ export function IssueListFilters({
           onPress={() => setSheet('status')}
         />
         <FilterPill
-          label={list.product === 'all' ? 'All products' : productLabel(list.product)}
+          label={products.length === 0 ? 'All products' : products.map(productLabel).join(', ')}
           accessibilityLabel="Product"
           trailing={<ChevronDown size={12} color={colors.textMuted} />}
           onPress={() => setSheet('product')}
+        />
+        <FilterPill
+          label={assigneeSummary(list.assignees, me)}
+          accessibilityLabel="Assignee"
+          trailing={<ChevronDown size={12} color={colors.textMuted} />}
+          onPress={() => setSheet('assignee')}
         />
         <FilterPill
           label={SORT_LABELS[list.sort.sort]}
@@ -140,18 +177,29 @@ export function IssueListFilters({
         onSet={list.setStatuses}
         onClose={() => setSheet(null)}
       />
-      <PickerModal<BuildWebProduct | 'all'>
+      <IssueCheckSheet
         visible={sheet === 'product'}
         title="Product"
-        options={[
-          { value: 'all', label: 'All products' },
-          ...BUILD_WEB_PRODUCTS.map((p) => ({ value: p, label: productLabel(p) }))
-        ]}
-        selected={list.product}
-        onSelect={(next) => {
-          setSheet(null)
-          list.setProduct(next)
+        resetLabel="All products"
+        options={PRODUCT_OPTIONS}
+        selected={list.products}
+        onToggle={(value) => {
+          const product = BUILD_WEB_PRODUCTS.find((p) => p === value)
+          if (product) {
+            list.toggleProduct(product)
+          }
         }}
+        onReset={() => list.setProducts([])}
+        onClose={() => setSheet(null)}
+      />
+      <IssueCheckSheet
+        visible={sheet === 'assignee'}
+        title="Assignee"
+        resetLabel="Any assignee"
+        options={assigneeOptions}
+        selected={list.assignees}
+        onToggle={list.toggleAssignee}
+        onReset={() => list.setAssignees([])}
         onClose={() => setSheet(null)}
       />
       <PickerModal<BuildWebIssueSort>

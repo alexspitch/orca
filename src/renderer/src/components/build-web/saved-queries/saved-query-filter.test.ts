@@ -8,13 +8,15 @@ describe('saved queries of the Issues list', () => {
       savedFilterOfView({
         quick: new Set(['mine', 'jira', 'archived'] as const),
         statuses: new Set(['testing', 'todo'] as const),
-        product: 'dc',
+        products: new Set(['dc'] as const),
+        assignees: new Set(['none', 'me@spitch.ch']),
         query: '  IS-12 '
       })
     ).toEqual({
       ...EMPTY_BUILD_WEB_SAVED_FILTER,
       q: 'IS-12',
       product: ['dc'],
+      assignee: ['me@spitch.ch', 'none'],
       status: ['todo', 'testing'],
       jira: ['yes'],
       mine: true
@@ -25,13 +27,15 @@ describe('saved queries of the Issues list', () => {
     const view = {
       quick: new Set(['ai', 'favorite'] as const),
       statuses: new Set(['inprogress'] as const),
-      product: 'all' as const,
+      products: new Set(['dc', 'sa'] as const),
+      assignees: new Set(['none']),
       query: 'deploy'
     }
     expect(viewOfSavedFilter(savedFilterOfView(view))).toEqual({
       quick: ['ai', 'favorite'],
       statuses: ['inprogress'],
-      product: 'all',
+      products: ['sa', 'dc'],
+      assignees: ['none'],
       query: 'deploy',
       unsupported: []
     })
@@ -41,16 +45,18 @@ describe('saved queries of the Issues list', () => {
     const applied = viewOfSavedFilter({
       ...EMPTY_BUILD_WEB_SAVED_FILTER,
       product: ['dc', 'sa'],
+      assignee: ['me@spitch.ch'],
       type: ['bug'],
       jira: ['no'],
       from: '2026-09-01',
       rootOnly: true,
       status: ['testing', 'nonsense']
     })
-    expect(applied.product).toBe('all')
+    expect(applied.products).toEqual(['sa', 'dc'])
+    expect(applied.assignees).toEqual(['me@spitch.ch'])
     expect(applied.statuses).toEqual(['testing'])
     expect(applied.quick).toEqual([])
-    expect(applied.unsupported).toEqual(['type', 'product', 'jira', 'dates', 'rootOnly'])
+    expect(applied.unsupported).toEqual(['type', 'jira', 'dates', 'rootOnly'])
   })
 })
 
