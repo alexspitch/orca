@@ -18,6 +18,8 @@ import { BuildWebListState } from '../BuildWebListState'
 import { useBuildWebTarget } from '../use-build-web-data'
 import { useLiveRead } from '../use-live-read'
 import { diffFilesOf, type DiffCell } from './commit-diff-rows'
+import { commitFileTreeOf, firstFileIndexOf } from './commit-file-tree'
+import { CommitFileTree } from './CommitFileTree'
 
 // Why slower than the card: each reading runs git over the task's branches on the console.
 const COMMITS_LIVE_MS = 30_000
@@ -66,7 +68,8 @@ export function IssueCommitsTab({
   // Why its own error: a failed diff must not hide the list, and retry must fetch the diff again.
   const [diffError, setDiffError] = useState<string | null>(null)
   const [diffAttempt, setDiffAttempt] = useState(0)
-  const [fileIndex, setFileIndex] = useState(0)
+  // Null until a file is picked: the tree's first file is shown.
+  const [fileIndex, setFileIndex] = useState<number | null>(null)
 
   const load = useCallback(
     async (fetchFirst: boolean) => {
@@ -106,7 +109,7 @@ export function IssueCommitsTab({
     let alive = true
     setDiff(null)
     setDiffError(null)
-    setFileIndex(0)
+    setFileIndex(null)
     void callBuildWeb(target, 'commitDiff', { id: issueId, sha })
       .then((next) => alive && setDiff(next))
       .catch(
@@ -118,7 +121,9 @@ export function IssueCommitsTab({
     }
   }, [diffAttempt, issueId, sha, target])
   const files = useMemo(() => (diff ? diffFilesOf(diff.diff) : []), [diff])
-  const file = files[fileIndex] ?? null
+  const tree = useMemo(() => commitFileTreeOf(files), [files])
+  const shownIndex = fileIndex ?? firstFileIndexOf(tree)
+  const file = shownIndex === null ? null : (files[shownIndex] ?? null)
 
   if (error) {
     return <BuildWebListState kind="error" error={error} onRetry={() => void load(false)} />
@@ -211,25 +216,14 @@ export function IssueCommitsTab({
           />
         ) : (
           <>
-            <div className="flex flex-wrap gap-1 border-b border-border p-2">
-              {files.map((f, n) => (
-                <button
-                  key={f.path}
-                  type="button"
-                  onClick={() => setFileIndex(n)}
-                  aria-pressed={n === fileIndex}
-                  className={cn(
-                    'rounded px-2 py-1 font-mono text-xs hover:bg-accent',
-                    n === fileIndex && 'bg-accent'
-                  )}
-                >
-                  {f.path}{' '}
-                  <span className="text-muted-foreground">
-                    +{f.added} −{f.removed}
-                  </span>
-                </button>
-              ))}
-            </div>
+            {files.length > 0 ? (
+              <CommitFileTree
+                key={sha}
+                roots={tree}
+                selected={shownIndex}
+                onSelect={setFileIndex}
+              />
+            ) : null}
             {diff.truncated ? (
               <p className="px-3 text-xs text-muted-foreground">
                 {translate(
