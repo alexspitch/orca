@@ -1,14 +1,22 @@
 import { useMemo, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ChevronDown, ChevronRight, FileText, Folder } from 'lucide-react-native'
 import {
   mobileDiffLineNumber,
   mobileDiffLinePrefix
 } from '../../../../source-control/mobile-diff-format'
+import { statusColor } from '../../../../source-control/mobile-source-control-screen-state'
 import { colors, radii, spacing, typography } from '../../../../theme/mobile-theme'
-import { commitPatchFiles, type CommitPatchLine } from './commit-patch-files'
+import { commitTreeRows, firstFileIndexOf } from './commit-file-tree'
+import { commitPatchFiles, type CommitPatchFile, type CommitPatchLine } from './commit-patch-files'
 
 // Why a cap: thousands of wrapped rows freeze a phone; the server already cuts a huge patch.
 const MAX_SHOWN_LINES = 2000
+const INDENT = 12
+const NO_FOLDERS: ReadonlySet<string> = new Set()
+
+const statusTone = (status: CommitPatchFile['status']) =>
+  statusColor(status === 'changed' ? 'modified' : status)
 
 function PatchLine({ line }: { line: CommitPatchLine }) {
   if (line.kind === 'hunk') {
@@ -35,31 +43,73 @@ function PatchLine({ line }: { line: CommitPatchLine }) {
   )
 }
 
-/** A commit's files, one shown at a time, its lines removed-over-added. */
+/** A commit's files as folders, one file shown at a time, its lines removed-over-added. Mount per commit. */
 export function CommitPatchView({ patch, truncated }: { patch: string; truncated: boolean }) {
   const files = useMemo(() => commitPatchFiles(patch), [patch])
-  const [fileIndex, setFileIndex] = useState(0)
-  const file = files[fileIndex] ?? null
+  const paths = useMemo(() => files.map((f) => f.path), [files])
+  const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(NO_FOLDERS)
+  const rows = useMemo(() => commitTreeRows(paths, collapsed), [paths, collapsed])
+  // Why apart from rows: folding the first folder must not swap the file shown.
+  const first = useMemo(() => firstFileIndexOf(commitTreeRows(paths, NO_FOLDERS)), [paths])
+  const [fileIndex, setFileIndex] = useState<number | null>(null)
+  const shownIndex = fileIndex ?? first
+  const file = shownIndex === null ? null : (files[shownIndex] ?? null)
+  const toggle = (key: string) =>
+    setCollapsed((shown) => {
+      const next = new Set(shown)
+      if (!next.delete(key)) {
+        next.add(key)
+      }
+      return next
+    })
   return (
     <View style={styles.view}>
-      <View style={styles.files}>
-        {files.map((f, n) => (
-          <Pressable
-            key={`${f.path}-${n}`}
-            style={[styles.file, n === fileIndex && styles.fileActive]}
-            onPress={() => setFileIndex(n)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: n === fileIndex }}
-          >
-            <Text style={styles.filePath}>
-              {f.path}{' '}
-              <Text style={styles.muted}>
-                +{f.added} −{f.removed}
-              </Text>
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      {rows.length > 0 ? (
+        <ScrollView style={styles.files} nestedScrollEnabled>
+          {rows.map((row) =>
+            row.kind === 'folder' ? (
+              <Pressable
+                key={`folder:${row.key}`}
+                style={[styles.treeRow, { paddingLeft: spacing.sm + row.depth * INDENT }]}
+                onPress={() => toggle(row.key)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: !collapsed.has(row.key) }}
+              >
+                {collapsed.has(row.key) ? (
+                  <ChevronRight size={12} color={colors.textMuted} />
+                ) : (
+                  <ChevronDown size={12} color={colors.textMuted} />
+                )}
+                <Folder size={12} color={colors.textMuted} />
+                <Text style={[styles.treeName, styles.muted]} numberOfLines={1}>
+                  {row.name}
+                </Text>
+                <Text style={styles.count}>{row.files}</Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                key={`file:${row.key}`}
+                style={[
+                  styles.treeRow,
+                  { paddingLeft: spacing.sm + INDENT + row.depth * INDENT },
+                  row.index === shownIndex && styles.fileActive
+                ]}
+                onPress={() => setFileIndex(row.index)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: row.index === shownIndex }}
+              >
+                <FileText size={12} color={statusTone(files[row.index]?.status ?? 'changed')} />
+                <Text style={styles.treeName} numberOfLines={1}>
+                  {row.name}
+                </Text>
+                <Text style={styles.count}>
+                  +{files[row.index]?.added ?? 0} −{files[row.index]?.removed ?? 0}
+                </Text>
+              </Pressable>
+            )
+          )}
+        </ScrollView>
+      ) : null}
       {truncated ? (
         <Text style={styles.note}>
           The patch is long and was cut; open the commit in build-web for all of it.
@@ -92,20 +142,21 @@ const styles = StyleSheet.create({
     overflow: 'hidden'
   },
   files: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-    padding: spacing.sm,
+    maxHeight: 320,
+    paddingVertical: spacing.xs,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle
   },
-  file: { paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: radii.button },
-  fileActive: { backgroundColor: colors.bgRaised },
-  filePath: {
-    color: colors.textPrimary,
-    fontFamily: typography.monoFamily,
-    fontSize: typography.metaSize
+  treeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: 32,
+    paddingRight: spacing.sm
   },
+  fileActive: { backgroundColor: colors.bgRaised },
+  treeName: { flex: 1, minWidth: 0, color: colors.textPrimary, fontSize: typography.metaSize },
+  count: { color: colors.textMuted, fontSize: typography.metaSize, fontVariant: ['tabular-nums'] },
   muted: { color: colors.textMuted },
   note: {
     paddingHorizontal: spacing.md,
