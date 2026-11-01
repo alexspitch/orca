@@ -18,7 +18,7 @@ import { getOrCreateRendererRoot } from './lib/react-renderer-root'
 import { I18nProvider } from './i18n/I18nProvider'
 import { useAppStore } from './store'
 import { SourceFileRefChooser } from './components/source-file-ref/SourceFileRefChooser'
-import { LinkReturnSwipe } from './components/link-return/LinkReturnSwipe'
+import { BackGesture } from './components/place-return/BackGesture'
 
 function SpaceWindowRoot(): React.JSX.Element {
   const { t } = useTranslation()
@@ -87,7 +87,7 @@ function SpaceWindowRoot(): React.JSX.Element {
         </ConfirmationDialogProvider>
         <Toaster closeButton toastOptions={{ className: 'font-sans text-sm' }} />
         <SourceFileRefChooser />
-        <LinkReturnSwipe />
+        <BackGesture />
       </TooltipProvider>
     </RecoverableRenderErrorBoundary>
   )

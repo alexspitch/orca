@@ -9,7 +9,7 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import { callBuildWeb } from './build-web-client'
 import { useBuildWebStore } from './build-web-store'
 import { labelIssuePage, withoutPageRecording } from './page-history/page-history-store'
-import { armLinkReturn } from '@/components/link-return/link-return-arm'
+import { armLinkReturn } from '@/components/place-return/place-return-arm'
 import { activateAndRevealWorktree } from '@/lib/worktree-activation'
 import { sameBuildWebConsole } from '../../../../shared/build-web-console-origin'
 

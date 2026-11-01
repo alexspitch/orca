@@ -7,7 +7,7 @@ import {
   sourceFileRefScopeOf
 } from './source-file-ref-open'
 import { offerSourceFileRefPaths } from './SourceFileRefChooser'
-import { armLinkReturn } from '@/components/link-return/link-return-arm'
+import { armLinkReturn } from '@/components/place-return/place-return-arm'
 
 const message = (failure: unknown) => (failure instanceof Error ? failure.message : String(failure))
 

@@ -36,7 +36,7 @@ import { useRuntimeGraphSync } from './app-shell/use-runtime-graph-sync'
 import { useWindowVisibilityEffects } from './app-shell/use-window-visibility-effects'
 import { SpaceWindowStatePublisher } from './components/workspace-space/SpaceWindowStatePublisher'
 import { SourceFileRefChooser } from './components/source-file-ref/SourceFileRefChooser'
-import { LinkReturnSwipe } from './components/link-return/LinkReturnSwipe'
+import { BackGesture } from './components/place-return/BackGesture'
 import { PlainSshTerminalPanels } from './components/plain-ssh-terminal/PlainSshTerminalPanels'
 import { installActiveWorktreeRemovalSuccessor } from './lib/active-worktree-removal-successor'
 
@@ -112,7 +112,7 @@ function App(): React.JSX.Element {
         </ConfirmationDialogProvider>
         <Toaster closeButton toastOptions={{ className: 'font-sans text-sm' }} />
         <SourceFileRefChooser />
-        <LinkReturnSwipe />
+        <BackGesture />
         <PlainSshTerminalPanels />
       </TooltipProvider>
       <SkillFreshnessNudge />

@@ -10,7 +10,7 @@ import {
 import { translate } from '@/i18n/i18n'
 import type { SourceFileRef } from './source-file-ref'
 import { openSourceFileRefPath, type SourceFileRefScope } from './source-file-ref-open'
-import { armLinkReturn } from '@/components/link-return/link-return-arm'
+import { armLinkReturn } from '@/components/place-return/place-return-arm'
 
 // One chooser for every surface: a rich editor's inline code has no React element to hang a menu on.
 

@@ -1,5 +1,5 @@
 import { beginLinkOpenRequest } from '@/lib/link-open-request'
-import { armLinkReturn } from '@/components/link-return/link-return-arm'
+import { armLinkReturn } from '@/components/place-return/place-return-arm'
 
 /** Supersedes earlier opens now, for a click still deciding what to open; true until a later open. */
 export function reserveDetectedFilePathOpenTurn(armReturn = false): () => boolean {

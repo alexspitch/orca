@@ -148,7 +148,7 @@ function getHistoryEntryKey(entry: WorktreeNavHistoryEntry): string {
   return `view:task-detail:linear:${sourceScope}:${entry.issue.workspaceId ?? 'selected'}:${entry.issue.id}`
 }
 
-function isLiveEntry(entry: WorktreeNavHistoryEntry, state: AppState): boolean {
+export function isLiveEntry(entry: WorktreeNavHistoryEntry, state: AppState): boolean {
   if (isViewEntry(entry)) {
     return true
   }
