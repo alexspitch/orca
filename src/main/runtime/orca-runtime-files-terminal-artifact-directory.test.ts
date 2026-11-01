@@ -3,6 +3,7 @@ import { mkdir, realpath, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import type * as FsPromises from 'node:fs/promises'
+import type { RuntimeTerminalPathResolution } from '../../shared/runtime-file-contracts'
 import { lstatMock, readdirMock } from './orca-runtime-files-mock-registry'
 import {
   createRuntimeFileCommands,
@@ -35,15 +36,15 @@ vi.mock(
 
 // A folder a terminal printed under the temp dir (an agent's scratchpad): listed, its files granted one by one.
 
-function directoryTarget(result: { openTarget?: { kind: string } }): {
+function directoryTarget(result: RuntimeTerminalPathResolution): {
   absolutePath: string
   grantId: string
 } {
   const target = result.openTarget
-  if (target?.kind !== 'absolute-directory' || !('grantId' in target)) {
+  if (target?.kind !== 'absolute-directory') {
     throw new Error('Expected a terminal folder target')
   }
-  return target as { absolutePath: string; grantId: string }
+  return { absolutePath: target.absolutePath, grantId: target.grantId }
 }
 
 describe('terminal artifact folders', () => {
@@ -52,8 +53,8 @@ describe('terminal artifact folders', () => {
 
   async function realFs() {
     const actual = await vi.importActual<typeof FsPromises>('fs/promises')
-    lstatMock.mockImplementation(actual.lstat)
-    readdirMock.mockImplementation(actual.readdir)
+    lstatMock.mockImplementation((path) => actual.lstat(path))
+    readdirMock.mockImplementation((path) => actual.readdir(path, { withFileTypes: true }))
   }
 
   async function scratchpad() {
