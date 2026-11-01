@@ -3,9 +3,11 @@ import {
   BUILD_WEB_UNASSIGNED,
   type BuildWebIssueProduct,
   type BuildWebIssueStatus,
+  type BuildWebUser,
   type BuildWebView
 } from '../../../../shared/build-web-types'
 import { translate } from '@/i18n/i18n'
+import { isJiraLogin } from './issue/issue-tester'
 
 // Labels are looked up when drawn, never cached at import: the language can change at runtime.
 
@@ -29,6 +31,8 @@ export function statusLabel(status: BuildWebIssueStatus): string {
       return translate('buildWeb.status.buildFailed', 'Build failed')
     case 'testing':
       return translate('buildWeb.status.testing', 'Testing')
+    case 'self_testing':
+      return translate('buildWeb.status.selfTesting', 'Self-testing')
     case 'testing_external':
       return translate('buildWeb.status.testingExternal', 'External testing')
     case 'done':
@@ -98,6 +102,16 @@ export function priorityLabel(priority: number): string {
 export function loginOf(email: string): string {
   const at = email.indexOf('@')
   return at > 0 ? email.slice(0, at) : email
+}
+
+/** A person as the card names them: the login, or the name of somebody known only from Jira. */
+export function personLabel(who: string, people: readonly BuildWebUser[]): string {
+  if (!isJiraLogin(who)) {
+    return loginOf(who)
+  }
+  return (
+    people.find((p) => p.email === who)?.name || translate('buildWeb.props.jiraPerson', 'Jira user')
+  )
 }
 
 /** An assignee filter's value as the list names it: the viewer, nobody, or a login. */

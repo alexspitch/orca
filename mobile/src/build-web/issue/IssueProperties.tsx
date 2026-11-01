@@ -30,6 +30,7 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { PriorityChip, StatusChip, TypeChip } from '../BuildWebToneChip'
 import { MutedText, ui } from './issue-card-ui'
 import { PropertyRow, PropertySelect } from './IssuePropertySelect'
+import { IssueTesterRow } from './IssueTester'
 
 const NONE = '__none__'
 
@@ -272,11 +273,22 @@ export function IssueProperties({
             label="Testing"
             value={testing.value}
             disabled={busy}
-            options={BUILD_WEB_TESTING_STATUSES.map((s) => ({ value: s, label: s }))}
+            options={BUILD_WEB_TESTING_STATUSES.filter(
+              // Self-testing only from a console that knows it (IS-347, which sends the tester too).
+              (s) => s !== 'SELF_TESTING' || detail.tester !== undefined || testing.value === s
+            ).map((s) => ({ value: s, label: s }))}
             onChange={testing.onChange}
           />
         </PropertyRow>
       ) : null}
+      {child || detail.tester === undefined ? null : (
+        <IssueTesterRow
+          detail={detail}
+          afterTrain={testing?.value ?? detail.after_train ?? 'Testing'}
+          disabled={busy}
+          onSave={onSave}
+        />
+      )}
       <PropertyRow label="Handed to AI">
         <MobileSwitch
           value={detail.for_ai}

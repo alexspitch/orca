@@ -16,6 +16,7 @@ import type {
   BuildWebIssueSummaryQuery,
   BuildWebMutationResult,
   BuildWebProduct,
+  BuildWebTester,
   BuildWebUpdateOutcome,
   BuildWebUser,
   BuildWebVersion
@@ -72,6 +73,8 @@ export type BuildWebApi = {
   /** A task's subtasks; a host predating it answers with an unknown method. */
   listIssueChildren: (args: { id: string }) => Promise<BuildWebIssueRow[]>
   listAssignees: () => Promise<BuildWebUser[]>
+  /** IS-347: who may accept a task, `jira:` people too; a host predating it answers with an unknown method. */
+  listTesters: () => Promise<BuildWebTester[]>
   listVersions: (args: { product: BuildWebProduct }) => Promise<BuildWebVersion[]>
   updateIssue: (args: {
     id: string

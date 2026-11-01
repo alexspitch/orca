@@ -26,6 +26,8 @@ export function testingNote(testing: BuildWebTestingStatus): string {
   switch (testing) {
     case 'Testing':
       return 'Testing: images are not published; the watcher publishes them when the task reaches Done.'
+    case 'SELF_TESTING':
+      return 'SELF_TESTING: nothing is published; the assignee checks it themselves. In Jira the task is in Testing.'
     case 'TESTING_EXTERNAL':
       return 'TESTING_EXTERNAL: the build tag is published right after the build.'
     case 'Done':

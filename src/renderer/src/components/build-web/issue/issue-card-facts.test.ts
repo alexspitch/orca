@@ -9,6 +9,7 @@ describe('card facts', () => {
     expect(nextStatus('inprogress', true)).toBe('done')
     expect(nextStatus('build_failed', false)).toBe('deploying')
     expect(nextStatus('testing_external', false)).toBe('done')
+    expect(nextStatus('self_testing', false)).toBe('done')
     expect(nextStatus('wontfix', false)).toBeNull()
     expect(nextStatus('unknown', false)).toBeNull()
   })

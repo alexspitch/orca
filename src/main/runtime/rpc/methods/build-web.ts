@@ -1,5 +1,6 @@
 import { defineMethod } from '../core'
 import { setBuildWebAgentSessionOnHost } from '../../../build-web/build-web-session-link'
+import { listBuildWebTesters } from '../../../build-web/build-web-issue-read'
 import {
   BuildWebAgentSessionParams,
   BuildWebClearSessionParams,
@@ -84,6 +85,12 @@ export const BUILD_WEB_METHODS = [
     permission: 'workspace',
     params: null,
     handler: async (_params, { runtime }) => runtime.buildWebListAssignees()
+  }),
+  defineMethod({
+    name: 'buildWeb.listTesters',
+    permission: 'workspace',
+    params: null,
+    handler: async () => listBuildWebTesters()
   }),
   defineMethod({
     name: 'buildWeb.listVersions',

@@ -75,7 +75,7 @@ export function BuildWebIssueFullScreen({
   const [tab, setTab] = useState<CardTab>(() =>
     inWorkspaceTab ? 'overview' : useBuildWebStore.getState().openTab
   )
-  // Where the first build is headed: kept here until the task has a run to store it on.
+  // Where the first build is headed, for a console that does not keep it on the task (before IS-347).
   const [firstTesting, setFirstTesting] = useState<BuildWebTestingStatus>('Testing')
   // Why: a tab stays mounted once opened, so a guide draft or a comment survives a tab switch.
   const [visited, setVisited] = useState<ReadonlySet<CardTab>>(() => new Set(['overview', tab]))
@@ -120,17 +120,32 @@ export function BuildWebIssueFullScreen({
     }
     setVisited((seen) => (seen.has(next) ? seen : new Set([...seen, next])))
   }
+  // IS-347: the task keeps it until the first build (the console's auto-build reads it there); the run after.
   const testing = {
     value: run
       ? (BUILD_WEB_TESTING_STATUSES.find((s) => s === run.testing_status) ?? 'Testing')
-      : firstTesting,
+      : detail.after_train === undefined
+        ? firstTesting
+        : (detail.after_train ?? 'Testing'),
     onChange: (next: BuildWebTestingStatus) => {
       if (!run) {
-        setFirstTesting(next)
+        if (detail.after_train === undefined) {
+          setFirstTesting(next)
+        } else {
+          void state.save({ after_train: next })
+        }
         return
       }
       void callBuildWeb(target, 'setTestingStatus', { runId: run.id, testingStatus: next }).then(
-        (result) => (result.ok ? setRun(result.value ?? run) : toast.error(result.error)),
+        (result) => {
+          if (!result.ok) {
+            toast.error(result.error)
+            return
+          }
+          setRun(result.value ?? run)
+          // Why: the console settles the tester for the new kind of check.
+          state.reload()
+        },
         (failure) => toast.error(failure instanceof Error ? failure.message : String(failure))
       )
     }

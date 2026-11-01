@@ -12,6 +12,7 @@ import {
   type BuildWebIssueStatus,
   type BuildWebProduct
 } from '../../shared/build-web-types'
+import { BUILD_WEB_TESTING_STATUSES } from '../../shared/build-web-run-types'
 import { numberOf, recordOf, textOf, textOrNull, textsOf } from './build-web-response-fields'
 import {
   agentSessionRecordsOf,
@@ -90,7 +91,22 @@ export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | 
       ? { agent_session_state: liveSessionStateOf(v.agent_session_state) }
       : {}),
     ...(textOf(v.work_branch) ? { work_branch: textOf(v.work_branch) } : {}),
+    ...testerFieldsOf(v),
     url: buildWebIssueUrl(baseUrl, v.id, textOf(v.product))
+  }
+}
+
+/** IS-347's fields, only from a console that sends them: without them the card has no tester row. */
+function testerFieldsOf(
+  v: Record<string, unknown>
+): Pick<BuildWebIssueRow, 'tester' | 'after_train' | 'jira_author'> {
+  if (!('tester' in v)) {
+    return {}
+  }
+  return {
+    tester: textOf(v.tester),
+    after_train: BUILD_WEB_TESTING_STATUSES.find((s) => s === v.after_train) ?? null,
+    jira_author: textOf(v.jira_author)
   }
 }
 

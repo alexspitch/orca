@@ -40,6 +40,7 @@ import {
 } from '../../shared/rpc-contract/build-web-params'
 import { RuntimeBuildWebCommands } from '../runtime/runtime-build-web-commands'
 import { stageBuildWebIssueFile } from '../build-web/build-web-issue-files'
+import { listBuildWebTesters } from '../build-web/build-web-issue-read'
 import {
   getBuildWebDeployNotes,
   startBuildWebDeployNotes
@@ -71,6 +72,7 @@ export function registerBuildWebHandlers(runtime: BuildWebSessionLinkRuntime): v
   ipcMain.handle('buildWeb:testConnection', () => commands.buildWebTestConnection())
   ipcMain.handle('buildWeb:consoleFeatures', () => commands.buildWebConsoleFeatures())
   ipcMain.handle('buildWeb:listAssignees', () => commands.buildWebListAssignees())
+  ipcMain.handle('buildWeb:listTesters', () => listBuildWebTesters())
   ipcMain.handle('buildWeb:imageSummary', () => commands.buildWebImageSummary())
   ipcMain.handle('buildWeb:issueSummary', (_event, args: unknown) =>
     commands.buildWebIssueSummary(BuildWebIssueSummaryParams.parse(args ?? {}))

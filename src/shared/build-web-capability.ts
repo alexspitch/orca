@@ -80,3 +80,9 @@ export const BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY = 'build-web-issue-create
 
 /** A runtime that reads and restarts a task's deploy note (IS-341): `buildWeb.deployNotes`, `buildWeb.startDeployNotes`. */
 export const BUILD_WEB_DEPLOY_NOTES_RUNTIME_CAPABILITY = 'build-web-deploy-notes.v1'
+
+/**
+ * A runtime that knows a task's tester (IS-347): `buildWeb.listTesters`, `tester` and `after_train`
+ * in a task's patch, the `self_testing` status and `SELF_TESTING` after the train.
+ */
+export const BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY = 'build-web-issue-tester.v1'

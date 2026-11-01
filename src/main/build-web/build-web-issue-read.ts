@@ -1,15 +1,18 @@
-import type {
-  BuildWebIssueDetail,
-  BuildWebIssuePage,
-  BuildWebIssueQuery,
-  BuildWebIssueRow,
-  BuildWebUser,
-  BuildWebVersion
+import {
+  BUILD_WEB_PRODUCTS,
+  BUILD_WEB_USER_ROLES,
+  type BuildWebIssueDetail,
+  type BuildWebIssuePage,
+  type BuildWebIssueQuery,
+  type BuildWebIssueRow,
+  type BuildWebTester,
+  type BuildWebUser,
+  type BuildWebVersion
 } from '../../shared/build-web-types'
 import { requireBuildWebCredential } from './build-web-connection'
 import { buildWebRequest } from './build-web-request'
 import { issueDetailOf, issueRowOf } from './build-web-issue-mapping'
-import { numberOf, recordOf, textOf } from './build-web-response-fields'
+import { numberOf, recordOf, recordsOf, textOf, textsOf } from './build-web-response-fields'
 
 const LIST_LIMIT_MAX = 100
 
@@ -127,6 +130,29 @@ export async function listBuildWebAssignees(): Promise<BuildWebUser[]> {
     .map((u) => recordOf(u))
     .filter((u): u is Record<string, unknown> => u !== null && typeof u.email === 'string')
     .map((u) => ({ email: textOf(u.email), name: textOf(u.name) }))
+}
+
+/**
+ * IS-347: who may accept a task — console users and people known only from Jira (`jira:` logins),
+ * with their roles. A console before IS-347 answers the assignees, with no roles.
+ */
+export async function listBuildWebTesters(): Promise<BuildWebTester[]> {
+  const credential = requireBuildWebCredential()
+  const answer = recordOf(
+    await buildWebRequest({ ...credential, path: '/api/tms/issues/assignees?tester=1' })
+  )
+  return recordsOf(answer?.users)
+    .filter((u) => textOf(u.email) !== '')
+    .map((u) => {
+      const roles = textsOf(u.roles)
+      const products = textsOf(u.default_tester_for)
+      return {
+        email: textOf(u.email),
+        name: textOf(u.name),
+        roles: BUILD_WEB_USER_ROLES.filter((r) => roles.includes(r)),
+        default_tester_for: BUILD_WEB_PRODUCTS.filter((p) => products.includes(p))
+      }
+    })
 }
 
 export async function listBuildWebVersions(product: string): Promise<BuildWebVersion[]> {

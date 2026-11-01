@@ -1,4 +1,5 @@
 import type { SecretAtRestProtection } from './secret-at-rest-protection'
+import type { BuildWebTestingStatus } from './build-web-run-types'
 import type {
   BuildWebAgentSessionRecord,
   BuildWebAgentSessionState,
@@ -20,6 +21,8 @@ export const BUILD_WEB_STATUSES = [
   'deploying',
   'build_failed',
   'testing',
+  // IS-347: the assignee checks it themselves; Jira shows Testing.
+  'self_testing',
   'testing_external',
   'done',
   'wontfix'
@@ -103,6 +106,15 @@ export type BuildWebIssueRow = {
   agent_session_state?: BuildWebLiveSessionState | null
   /** The branch the skill works in, `<KEY>-<title slug>`; absent from older consoles and hosts. */
   work_branch?: string
+  /**
+   * IS-347: who accepts it after the train — a login, `jira:<accountId>` for a person known only
+   * from Jira, or '' for nobody. Absent from older consoles and hosts, with the two below.
+   */
+  tester?: string
+  /** «After the train» before the first build, null for Testing; the run holds it after. */
+  after_train?: BuildWebTestingStatus | null
+  /** The Jira issue's creator as a console login: an external check's default tester. */
+  jira_author?: string
   /** Built in main from the stored base URL — never taken from the console's answer. */
   url: string
 }
@@ -252,6 +264,7 @@ export const BUILD_WEB_OPEN_STATUSES: readonly BuildWebStatus[] = [
   'deploying',
   'build_failed',
   'testing',
+  'self_testing',
   'testing_external'
 ]
 
@@ -282,6 +295,10 @@ export type BuildWebIssuePatch = Partial<{
   stand_id: string | null
   stand_mode: string
   version: string
+  /** IS-347: a login or `jira:<accountId>`; '' asks the console for the default tester. */
+  tester: string
+  /** «After the train» before the first build; with a run, the console changes the run's too. */
+  after_train: BuildWebTestingStatus
 }>
 
 /** A new task as the console's create takes it: the product and the title, the rest optional. */
@@ -316,4 +333,13 @@ export type BuildWebMutationResult<T> =
   | { ok: false; error: string; status?: number; routeMissing?: boolean }
 
 export type BuildWebUser = { email: string; name: string }
+
+export const BUILD_WEB_USER_ROLES = ['developer', 'tester', 'ps_engineer', 'analyst'] as const
+export type BuildWebUserRole = (typeof BUILD_WEB_USER_ROLES)[number]
+
+/** Who may accept a task (IS-347): a console user or a `jira:` person, with roles and the products they test by default. */
+export type BuildWebTester = BuildWebUser & {
+  roles: BuildWebUserRole[]
+  default_tester_for: BuildWebProduct[]
+}
 export type BuildWebVersion = { id: string; name: string; branch: string }

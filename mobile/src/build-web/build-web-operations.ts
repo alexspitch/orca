@@ -89,6 +89,7 @@ const BUILD_WEB_OPERATIONS = {
   listIssueChildren: buildWebOperation('buildWeb.listIssueChildren'),
   listIssues: buildWebOperation('buildWeb.listIssues'),
   listStands: buildWebOperation('buildWeb.listStands'),
+  listTesters: buildWebOperation('buildWeb.listTesters'),
   listUiAccounts: buildWebOperation('buildWeb.listUiAccounts'),
   listVersions: buildWebOperation('buildWeb.listVersions'),
   noteProviderSession: buildWebOperation('buildWeb.noteProviderSession'),

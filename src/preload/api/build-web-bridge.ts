@@ -11,6 +11,7 @@ export const buildWebApi = {
   getIssue: (args) => ipcRenderer.invoke('buildWeb:getIssue', args),
   listIssueChildren: (args) => ipcRenderer.invoke('buildWeb:listIssueChildren', args),
   listAssignees: () => ipcRenderer.invoke('buildWeb:listAssignees'),
+  listTesters: () => ipcRenderer.invoke('buildWeb:listTesters'),
   listVersions: (args) => ipcRenderer.invoke('buildWeb:listVersions', args),
   updateIssue: (args) => ipcRenderer.invoke('buildWeb:updateIssue', args),
   createIssue: (args) => ipcRenderer.invoke('buildWeb:createIssue', args),

@@ -1035,6 +1035,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'buildWeb.listIssueChildren': BuildWebIssueId,
   'buildWeb.listIssues': BuildWebIssueQueryParams,
   'buildWeb.listStands': null,
+  'buildWeb.listTesters': null,
   'buildWeb.listTrains': null,
   'buildWeb.listUiAccounts': null,
   'buildWeb.listVersions': BuildWebVersionsParams,

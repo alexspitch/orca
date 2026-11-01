@@ -3,13 +3,6 @@ import { RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import {
@@ -31,62 +24,19 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import { callBuildWeb } from './build-web-client'
 import { BUILD_WEB_PRIORITIES, loginOf, productLabel, typeLabel } from './build-web-labels'
 import { PriorityChip, StatusChip, TypeChip } from './BuildWebToneChip'
+import { InlineSelect, PropertyRow, type PropertyOption } from './BuildWebPropertyControls'
+import { IssueTesterRow } from './BuildWebIssueTester'
 
 const NONE = '__none__'
 const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
 
-type Option = { value: string; label: React.ReactNode }
-
-/** A value that reads as text and opens as a list — build-web's InlineSelect. */
-export function InlineSelect({
-  label,
-  value,
-  options,
-  disabled,
-  onChange,
-  onOpen
-}: {
-  label: string
-  value: string
-  options: Option[]
-  disabled: boolean
-  onChange: (value: string) => void
-  /** Read the list again: what build-web adds while the card is open shows on the next open. */
-  onOpen?: () => void
-}): React.JSX.Element {
-  return (
-    <Select
-      value={value}
-      disabled={disabled}
-      onValueChange={onChange}
-      onOpenChange={(open) => open && onOpen?.()}
-    >
-      <SelectTrigger size="sm" aria-label={label} className="w-full min-w-0">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((o) => (
-          <SelectItem key={o.value} value={o.value}>
-            {o.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )
-}
-
-export function PropertyRow({
-  label,
-  children
-}: {
-  label: string
-  children: React.ReactNode
-}): React.JSX.Element {
-  return (
-    <>
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <div className="flex min-w-0 items-center gap-1">{children}</div>
-    </>
+/** Self-testing only from a console that knows it (IS-347, which sends the tester too). */
+function testingOptions(
+  detail: BuildWebIssueDetail,
+  current: BuildWebTestingStatus
+): BuildWebTestingStatus[] {
+  return BUILD_WEB_TESTING_STATUSES.filter(
+    (s) => s !== 'SELF_TESTING' || detail.tester !== undefined || current === s
   )
 }
 
@@ -189,14 +139,14 @@ export function BuildWebIssueProperties({
     }
   }
 
-  const people: Option[] = [
+  const people: PropertyOption[] = [
     { value: NONE, label: translate('buildWeb.props.unassigned', 'Unassigned') },
     ...assignees.map((u) => ({ value: u.email, label: loginOf(u.email) })),
     ...(detail.assignee && !assignees.some((u) => u.email === detail.assignee)
       ? [{ value: detail.assignee, label: loginOf(detail.assignee) }]
       : [])
   ]
-  const standOptions: Option[] = [
+  const standOptions: PropertyOption[] = [
     { value: NONE, label: translate('buildWeb.props.noStand', 'Not set') },
     ...standList.map((s) => ({ value: s.id, label: s.name })),
     ...(detail.stand_id && !standList.some((s) => s.id === detail.stand_id)
@@ -358,10 +308,20 @@ export function BuildWebIssueProperties({
                   testing.onChange(next)
                 }
               }}
-              options={BUILD_WEB_TESTING_STATUSES.map((s) => ({ value: s, label: s }))}
+              options={testingOptions(detail, testing.value).map((s) => ({ value: s, label: s }))}
             />
           </PropertyRow>
         ) : null}
+        {/* IS-347: a console that sends the tester; a subtask has none, its parent is checked. */}
+        {child || detail.tester === undefined ? null : (
+          <IssueTesterRow
+            target={target}
+            detail={detail}
+            afterTrain={testing?.value ?? detail.after_train ?? 'Testing'}
+            disabled={busy}
+            onSave={onSave}
+          />
+        )}
         <PropertyRow label={translate('buildWeb.detail.forAi', 'Handed to AI')}>
           <Switch
             checked={detail.for_ai}

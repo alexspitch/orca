@@ -21648,7 +21648,8 @@
       "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server.",
       "updateServerSessions": "This Orca server does not follow task sessions yet. Update the server.",
       "updateServerTranscript": "This Orca server does not hand out session logs yet. Update the server.",
-      "updateServerDeployNotes": "This Orca server does not show deploy notes yet. Update the server."
+      "updateServerDeployNotes": "This Orca server does not show deploy notes yet. Update the server.",
+      "updateServerTester": "This Orca server does not know testers and self-testing yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -21660,6 +21661,7 @@
       "deploying": "Deploying",
       "buildFailed": "Build failed",
       "testing": "Testing",
+      "selfTesting": "Self-testing",
       "testingExternal": "External testing",
       "done": "Done",
       "wontfix": "Won't fix"
@@ -22037,7 +22039,14 @@
       "noVersionSet": "Not set",
       "type": "Type",
       "testing": "Testing",
-      "fromParent": "Product, priority, version, stand and build — from the parent"
+      "fromParent": "Product, priority, version, stand and build — from the parent",
+      "tester": "Tester",
+      "testerNotNeeded": "Not needed",
+      "testerSelf": "{{who}} — self-testing",
+      "testerNoAssignee": "No assignee",
+      "testerDefault": "Default",
+      "testerMissing": "Not assigned",
+      "jiraPerson": "Jira user"
     },
     "run": {
       "dismiss": "Dismiss",
@@ -22173,6 +22182,7 @@
       "manual": "manual",
       "noteTesting": "Testing: images are not published; the watcher publishes them when the task reaches Done.",
       "noteExternal": "TESTING_EXTERNAL: the build tag is published right after the build.",
+      "noteSelfTesting": "SELF_TESTING: nothing is published; the assignee checks it themselves. In Jira the task is in Testing.",
       "noteDone": "Done: the train moves the task straight to Done and publishes every image, main tag included.",
       "whyChanges": "the task’s changes",
       "whyShared": "depends on changed shared code",

@@ -48,6 +48,11 @@ export function testingNote(testing: BuildWebTestingStatus): string {
         'buildWeb.newBuild.noteTesting',
         'Testing: images are not published; the watcher publishes them when the task reaches Done.'
       )
+    case 'SELF_TESTING':
+      return translate(
+        'buildWeb.newBuild.noteSelfTesting',
+        'SELF_TESTING: nothing is published; the assignee checks it themselves. In Jira the task is in Testing.'
+      )
     case 'TESTING_EXTERNAL':
       return translate(
         'buildWeb.newBuild.noteExternal',

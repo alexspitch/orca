@@ -4,6 +4,7 @@ import {
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_ASSIGNEE_FILTER_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY,
   BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY
 } from '../../../../shared/build-web-capability'
@@ -15,7 +16,7 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import type { BuildWebApi } from '../../../../preload/api/build-web-api'
 import { assertRuntimeEnvironmentCapability, callRuntimeRpc } from '@/runtime/runtime-rpc-client'
 import { translate } from '@/i18n/i18n'
-import { NEWER_METHODS } from './build-web-newer-methods'
+import { NEWER_METHODS, testerRefusal } from './build-web-newer-methods'
 
 type Method = keyof BuildWebApi
 type ArgsOf<M extends Method> = Parameters<BuildWebApi[M]>
@@ -34,6 +35,17 @@ export function namesChatPlatform(arg: unknown): boolean {
     (Array.isArray(product) && product.includes('cp')) ||
     field(field(arg, 'patch'), 'product') === 'cp' ||
     field(arg, 'repo') === 'chat-platform'
+  )
+}
+
+/** The call names IS-347's tester, «After the train» or self-testing: an older server refuses or drops them. */
+export function namesIssueTester(arg: unknown): boolean {
+  const patch = field(arg, 'patch') ?? field(arg, 'draft')
+  return (
+    field(arg, 'testingStatus') === 'SELF_TESTING' ||
+    field(patch, 'status') === 'self_testing' ||
+    field(patch, 'tester') !== undefined ||
+    field(patch, 'after_train') !== undefined
   )
 }
 
@@ -109,6 +121,11 @@ const NEWER_ARGUMENTS: {
         'buildWeb.client.updateServerAssigneeFilter',
         'This Orca server cannot filter tasks by assignee yet. Update the server, or clear the Assignee filter.'
       )
+  },
+  {
+    applies: (_method, arg) => namesIssueTester(arg),
+    capability: BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY,
+    refusal: testerRefusal
   },
   {
     applies: (method, arg) =>

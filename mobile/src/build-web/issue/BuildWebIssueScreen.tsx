@@ -62,7 +62,7 @@ export function BuildWebIssueScreen({
   const [visited, setVisited] = useState<ReadonlySet<BuildWebCardTab>>(
     () => new Set(['overview', initialTab])
   )
-  // Where the first build is headed: kept here until the task has a run to store it on.
+  // Where the first build is headed, for a console that does not keep it on the task (before IS-347).
   const [firstTesting, setFirstTesting] = useState<BuildWebTestingStatus>('Testing')
 
   const reloadDetail = state.reload
@@ -106,17 +106,31 @@ export function BuildWebIssueScreen({
   }
 
   const currentRun = run.run
+  // IS-347: the task keeps it until the first build (the console's auto-build reads it there); the run after.
   const testing: BuildWebTestingStatus = currentRun
     ? (BUILD_WEB_TESTING_STATUSES.find((s) => s === currentRun.testing_status) ?? 'Testing')
-    : firstTesting
+    : detail.after_train === undefined
+      ? firstTesting
+      : (detail.after_train ?? 'Testing')
   const setTesting = (next: BuildWebTestingStatus) => {
     if (!currentRun) {
-      setFirstTesting(next)
+      if (detail.after_train === undefined) {
+        setFirstTesting(next)
+      } else {
+        void state.save({ after_train: next })
+      }
       return
     }
     void call('setTestingStatus', { runId: currentRun.id, testingStatus: next }).then(
-      (result) =>
-        result.ok ? run.setRun(result.value ?? currentRun) : notify(result.error, 'error'),
+      (result) => {
+        if (!result.ok) {
+          notify(result.error, 'error')
+          return
+        }
+        run.setRun(result.value ?? currentRun)
+        // Why: the console settles the tester for the new kind of check.
+        state.reload()
+      },
       (failure: unknown) => notify(buildWebErrorMessage(failure), 'error')
     )
   }

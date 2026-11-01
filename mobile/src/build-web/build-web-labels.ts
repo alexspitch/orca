@@ -3,8 +3,10 @@ import {
   BUILD_WEB_UNASSIGNED,
   type BuildWebIssueProduct,
   type BuildWebIssueStatus,
+  type BuildWebUser,
   type BuildWebView
 } from '../../../src/shared/build-web-types'
+import { isJiraLogin } from '../../../src/renderer/src/components/build-web/issue/issue-tester'
 
 // The desktop's build-web-labels with its English defaults: mobile has no i18n.
 
@@ -28,6 +30,8 @@ export function statusLabel(status: BuildWebIssueStatus): string {
       return 'Build failed'
     case 'testing':
       return 'Testing'
+    case 'self_testing':
+      return 'Self-testing'
     case 'testing_external':
       return 'External testing'
     case 'done':
@@ -98,6 +102,11 @@ export function priorityLabel(priority: number): string {
 export function loginOf(email: string): string {
   const at = email.indexOf('@')
   return at > 0 ? email.slice(0, at) : email
+}
+
+/** A person as the card names them: the login, or the name of somebody known only from Jira. */
+export function personLabel(who: string, people: readonly BuildWebUser[]): string {
+  return isJiraLogin(who) ? people.find((p) => p.email === who)?.name || 'Jira user' : loginOf(who)
 }
 
 /** An assignee filter's value as the list names it: the viewer, nobody, or a login. */

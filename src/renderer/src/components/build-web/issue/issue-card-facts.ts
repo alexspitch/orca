@@ -18,7 +18,7 @@ export function nextStatus(status: BuildWebIssueStatus, subtask: boolean): Build
   if (status === 'build_failed') {
     return 'deploying'
   }
-  if (status === 'testing' || status === 'testing_external') {
+  if (status === 'testing' || status === 'self_testing' || status === 'testing_external') {
     return 'done'
   }
   return 'inprogress'

@@ -6,6 +6,7 @@ import {
   BUILD_WEB_STATUSES
 } from '../build-web-types'
 import { BUILD_WEB_IMAGE_SORTS } from '../build-web-image-types'
+import { BUILD_WEB_TESTING_STATUSES } from '../build-web-run-types'
 
 // One object per call: the web client's generic proxy sends `buildWeb.<name>(args)`,
 // and IPC validates with the same schemas, so both transports agree on every field.
@@ -78,7 +79,10 @@ const IssueFields = z.object({
   steps: z
     .array(z.object({ text: z.string().max(4000) }))
     .max(200)
-    .optional()
+    .optional(),
+  // IS-347: a login or `jira:<accountId>`; '' asks the console for the default.
+  tester: ShortText.optional(),
+  after_train: z.enum(BUILD_WEB_TESTING_STATUSES).optional()
 })
 
 export const BuildWebIssueUpdateParams = z.object({

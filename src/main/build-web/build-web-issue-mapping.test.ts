@@ -118,6 +118,23 @@ describe('issue rows', () => {
     ).toBeNull()
   })
 
+  it('reads the tester only from a console that sends it (IS-347)', () => {
+    expect(issueRowOf('https://bw.test', raw)).not.toHaveProperty('tester')
+    const row = issueRowOf('https://bw.test', {
+      ...raw,
+      status: 'self_testing',
+      tester: 'jira:5b10ac',
+      after_train: 'SOMEDAY',
+      jira_author: 'ann@x.test'
+    })
+    expect(row).toMatchObject({
+      status: 'self_testing',
+      tester: 'jira:5b10ac',
+      after_train: null,
+      jira_author: 'ann@x.test'
+    })
+  })
+
   it('reads the card with its branches and comments', () => {
     const detail = issueDetailOf('https://bw.test', {
       issue: { ...raw, description: 'text', steps: [{ text: 'one' }, 5] },

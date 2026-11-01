@@ -9,6 +9,7 @@ import {
   BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY,
   BUILD_WEB_REDOS_TWIN_RUNTIME_CAPABILITY,
   BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY,
   BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY,
@@ -217,6 +218,11 @@ export const NEWER_METHODS: {
       )
   },
   {
+    methods: new Set<Method>(['listTesters']),
+    capability: BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY,
+    refusal: () => testerRefusal()
+  },
+  {
     methods: new Set<Method>(['savedQueries', 'saveQuery', 'deleteQuery']),
     capability: BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY,
     refusal: () =>
@@ -226,6 +232,12 @@ export const NEWER_METHODS: {
       )
   }
 ]
+
+export const testerRefusal = (): string =>
+  translate(
+    'buildWeb.client.updateServerTester',
+    'This Orca server does not know testers and self-testing yet. Update the server.'
+  )
 
 /** The capability a server announces for `method`; null for a call every build-web server has. */
 export function newerMethodCapability(method: Method): string | null {

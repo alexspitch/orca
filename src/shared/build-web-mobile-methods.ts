@@ -54,6 +54,7 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.listIssueChildren',
   'buildWeb.listIssues',
   'buildWeb.listStands',
+  'buildWeb.listTesters',
   'buildWeb.listUiAccounts',
   'buildWeb.listVersions',
   'buildWeb.noteProviderSession',

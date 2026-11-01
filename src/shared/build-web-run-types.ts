@@ -82,8 +82,13 @@ export type BuildWebCombo = { image: string; dist: string; branch: string }
 export const BUILD_WEB_PUSH_AFTER = ['none', 'build-tag', 'all'] as const
 export type BuildWebPushAfter = (typeof BUILD_WEB_PUSH_AFTER)[number]
 
-/** Where a task is headed after its build; decides what a train publishes. */
-export const BUILD_WEB_TESTING_STATUSES = ['Testing', 'TESTING_EXTERNAL', 'Done'] as const
+/** Where a task is headed after its build («After the train»); decides what a train publishes. In the console's order. */
+export const BUILD_WEB_TESTING_STATUSES = [
+  'Testing',
+  'SELF_TESTING',
+  'TESTING_EXTERNAL',
+  'Done'
+] as const
 export type BuildWebTestingStatus = (typeof BUILD_WEB_TESTING_STATUSES)[number]
 
 export type BuildWebBranch = { name: string; fromTree: boolean }

@@ -29,7 +29,7 @@ import { callBuildWeb } from './build-web-client'
 import { BUILD_WEB_PRIORITIES, loginOf, productLabel } from './build-web-labels'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebAssignees, useBuildWebTarget } from './use-build-web-data'
-import { InlineSelect, PropertyRow } from './BuildWebIssueProperties'
+import { InlineSelect, PropertyRow } from './BuildWebPropertyControls'
 import { PriorityChip, StatusChip, TypeChip } from './BuildWebToneChip'
 
 const NONE = '__none__'

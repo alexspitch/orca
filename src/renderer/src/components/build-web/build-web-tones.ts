@@ -36,6 +36,7 @@ export function statusTone(status: BuildWebIssueStatus): ChipTone | null {
     case 'build_failed':
       return 'crimson'
     case 'testing':
+    case 'self_testing':
       return 'amber'
     case 'testing_external':
       return 'ochre'
