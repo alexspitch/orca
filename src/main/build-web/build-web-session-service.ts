@@ -2,6 +2,7 @@ import type { Store } from '../persistence'
 import type { OrcaRuntimeService } from '../runtime/orca-runtime'
 import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
 import {
+  buildWebPendingBranchDrops,
   installBuildWebSessionReports,
   setRemovedBuildWebWorktreeListener
 } from './build-web-session-reports'
@@ -41,13 +42,12 @@ export function startBuildWebSessionService(
       runtime,
       store,
       reports,
+      pendingDrops: buildWebPendingBranchDrops(),
       pollMs: envMs('ORCA_BUILD_WEB_SESSION_POLL_MS', POLL_MS),
       stuckMs: envMs('ORCA_BUILD_WEB_SESSION_STUCK_MS', STUCK_MS),
       announceRemoved: (closed) => runtime.announceBuildWebSessionClosed(closed)
     })
-    setRemovedBuildWebWorktreeListener((worktreeId, meta) =>
-      watcher.noteRemovedTaskWorktree(worktreeId, meta)
-    )
+    setRemovedBuildWebWorktreeListener((worktreeId) => watcher.noteRemovedTaskWorktree(worktreeId))
     watcher.start()
     return watcher
   } catch (error) {

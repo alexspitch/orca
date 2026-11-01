@@ -11,16 +11,25 @@ import {
   type BuildWebSessionReport,
   type BuildWebSessionReportQueue
 } from './build-web-session-report-queue'
+import { createPendingBranchDrops, type PendingBranchDrops } from './build-web-pending-branch-drops'
 
 // The host's one report queue (IS-147), in userData so desktop and `orca serve` both keep it.
 
 const FILE_NAME = 'build-web-session-reports.json'
+const DROPS_FILE_NAME = 'build-web-pending-branch-drops.json'
 
 let queue: BuildWebSessionReportQueue | null = null
+let pendingDrops: PendingBranchDrops | null = null
 
-type RemovedTaskWorktreeListener = (worktreeId: string, meta: WorktreeMeta) => void
+type RemovedTaskWorktreeListener = (worktreeId: string) => void
 
 let removedTaskWorktreeListener: RemovedTaskWorktreeListener | null = null
+
+/** The deleted task worktrees whose branch the watcher still owes a look. */
+export function buildWebPendingBranchDrops(): PendingBranchDrops {
+  pendingDrops ??= createPendingBranchDrops(join(getProfileUserDataPath(), DROPS_FILE_NAME))
+  return pendingDrops
+}
 
 /** The watcher hears of every deleted task worktree, to drop Orca's branch once the delete settled. */
 export function setRemovedBuildWebWorktreeListener(
@@ -86,11 +95,14 @@ export function reportRemovedBuildWebWorktree(
 
 export function installBuildWebSessionReports(): BuildWebSessionReportQueue {
   const reports = buildWebSessionReports()
+  const drops = buildWebPendingBranchDrops()
   setWorktreeMetaRowRemovedListener((worktreeId, meta) => {
     reportRemovedBuildWebWorktree(reports, worktreeId, meta)
     // Why the folder: Forget keeps the checkout, and the branch stays with it.
     if (meta.buildWebTask && !worktreeFolderExists(worktreeId)) {
-      removedTaskWorktreeListener?.(worktreeId, meta)
+      // Why on disk first: the watcher may start later (orcad) or the app quit before its next look.
+      drops.add(worktreeId, meta)
+      removedTaskWorktreeListener?.(worktreeId)
     }
   })
   return reports

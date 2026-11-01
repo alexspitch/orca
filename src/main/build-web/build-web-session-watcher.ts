@@ -3,7 +3,6 @@ import {
   type BuildWebAgentSessionStatus
 } from '../../shared/build-web-session-types'
 import type { BuildWebIssueDetail } from '../../shared/build-web-types'
-import type { WorktreeMeta } from '../../shared/worktree/meta-types'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import type { Store } from '../persistence'
 import { readWorktreeMetaForHost } from '../persistence/host-qualified-worktree-meta'
@@ -21,6 +20,7 @@ import {
 } from './build-web-session-finisher'
 import { healBuildWebSessionLink, type BuildWebSessionHealRuntime } from './build-web-session-heal'
 import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
+import type { PendingBranchDrops } from './build-web-pending-branch-drops'
 import { dropBuildWebTaskBranch } from './build-web-task-branch-drop'
 import { createBuildWebWorktreeGitProbe } from './build-web-worktree-git-probe'
 import { watchedBuildWebSessionChange } from './build-web-session-state'
@@ -49,6 +49,7 @@ export type BuildWebSessionWatcherDeps = Pick<
   runtime: BuildWebSessionWatcherRuntime
   store: Store
   reports: BuildWebSessionReportQueue
+  pendingDrops: PendingBranchDrops
   pollMs: number
 }
 
@@ -72,8 +73,8 @@ export class BuildWebSessionWatcher {
   private readonly goneLooks = new Map<string, number>()
   private readonly healTriedAt = new Map<string, number>()
   private readonly unlinkedNoted = new Set<string>()
-  /** Task worktrees a person deleted: Orca's branch is looked at once their delete settled. */
-  private readonly removedBranches = new Map<string, { meta: WorktreeMeta; looks: number }>()
+  /** Looks at each deleted task worktree's branch while its delete was still underway. */
+  private readonly removedBranchLooks = new Map<string, number>()
 
   constructor(private readonly deps: BuildWebSessionWatcherDeps) {
     this.finisher = new BuildWebSessionFinisher({
@@ -94,9 +95,9 @@ export class BuildWebSessionWatcher {
   }
 
   /** A deleted task worktree; the finisher's own deletes settle their branch themselves. */
-  noteRemovedTaskWorktree(worktreeId: string, meta: WorktreeMeta): void {
-    if (!this.stopped && !this.finisher.isWorking(worktreeId)) {
-      this.removedBranches.set(worktreeId, { meta, looks: 0 })
+  noteRemovedTaskWorktree(worktreeId: string): void {
+    if (!this.stopped && this.finisher.isWorking(worktreeId)) {
+      this.deps.pendingDrops.remove(worktreeId)
     }
   }
 
@@ -178,18 +179,18 @@ export class BuildWebSessionWatcher {
   /** Orca's branch of a task worktree a person deleted goes when it adds nothing (plan 5). */
   private async dropRemovedTaskBranches(): Promise<void> {
     const { runtime, store } = this.deps
-    for (const [worktreeId, pending] of this.removedBranches) {
+    for (const { worktreeId, meta } of this.deps.pendingDrops.list()) {
       if (this.stopped) {
         return
       }
-      if (
-        isBuildWebTaskWorktreeBeingRemoved(runtime, worktreeId) &&
-        ++pending.looks < REMOVED_BRANCH_LOOKS
-      ) {
+      const looks = (this.removedBranchLooks.get(worktreeId) ?? 0) + 1
+      if (isBuildWebTaskWorktreeBeingRemoved(runtime, worktreeId) && looks < REMOVED_BRANCH_LOOKS) {
+        this.removedBranchLooks.set(worktreeId, looks)
         continue
       }
-      this.removedBranches.delete(worktreeId)
-      const row = removedBuildWebTaskWorktree(store, worktreeId, pending.meta)
+      this.removedBranchLooks.delete(worktreeId)
+      this.deps.pendingDrops.remove(worktreeId)
+      const row = removedBuildWebTaskWorktree(store, worktreeId, meta)
       if (!row) {
         continue
       }
