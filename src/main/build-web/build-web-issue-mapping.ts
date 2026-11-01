@@ -198,9 +198,10 @@ export function issueDetailOf(baseUrl: string, value: unknown): BuildWebIssueDet
     files: Array.isArray(card.files)
       ? card.files.map(fileOf).filter((f): f is BuildWebIssueFile => f !== null)
       : [],
-    events: Array.isArray(card.events)
-      ? card.events.map(eventOf).filter((e): e is BuildWebIssueEvent => e !== null)
-      : [],
+    // Why only when sent: a console before IS-354 has no Activity, and the card then hides the tab.
+    ...(Array.isArray(card.events)
+      ? { events: card.events.map(eventOf).filter((e): e is BuildWebIssueEvent => e !== null) }
+      : {}),
     telegram_available: card.telegram_available === true,
     archived_at: textOrNull(issue.archived_at),
     archived_by: textOrNull(issue.archived_by),

@@ -240,7 +240,7 @@ describe('issue rows', () => {
       ['e4', 'build', 'cancelled', ''],
       ['e5', 'teleport', 'maybe', '']
     ])
-    expect(issueDetailOf('https://bw.test', { issue: raw })?.events).toEqual([])
+    expect(issueDetailOf('https://bw.test', { issue: raw })?.events).toBeUndefined()
   })
 
   it('reads the files of the task and of its comments', () => {
