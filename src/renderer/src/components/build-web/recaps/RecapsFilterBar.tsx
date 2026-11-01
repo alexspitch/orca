@@ -10,6 +10,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { translate } from '@/i18n/i18n'
 import type { BuildWebRecapPage } from '../../../../../shared/build-web-recap-types'
+import { productLabel } from '../build-web-labels'
 import { ProductChip } from '../BuildWebToneChip'
 import { RECAP_VIEWS, type RecapView } from '../build-web-view-prefs'
 import { RecapAutomationPicker } from './RecapAutomationPicker'
@@ -86,7 +87,7 @@ export function RecapsFilterBar({
   onChange: (next: RecapFilters) => void
   onRefresh: () => void
 }): React.JSX.Element {
-  const versions = recapVersionOptions(facets.versions, filters.product)
+  const versions = recapVersionOptions(facets.versions, filters.product, productLabel)
   return (
     <div className="flex flex-wrap items-center gap-2">
       <ToggleGroup

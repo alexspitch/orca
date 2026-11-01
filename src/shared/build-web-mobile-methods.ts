@@ -62,6 +62,8 @@ export const BUILD_WEB_MOBILE_METHODS = [
   'buildWeb.pushImages',
   'buildWeb.pushProgress',
   'buildWeb.pushRun',
+  'buildWeb.recapReport',
+  'buildWeb.recaps',
   'buildWeb.refreshGuideImages',
   'buildWeb.refreshIssueVersion',
   'buildWeb.removeRunImages',

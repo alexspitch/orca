@@ -200,6 +200,18 @@ describe('a report', () => {
     expect(second.text).toBe('😀b')
   })
 
+  it('comes without its scripts for the phone, from the same read', async () => {
+    const html =
+      '<head><script>mermaid("<\\/script>")</script><style>p{}</style></head>' +
+      '<body><pre class="mermaid">graph TD; A-->B</pre><SCRIPT src="x"></SCRIPT ></body>'
+    mocks.text.mockResolvedValue(html)
+    expect((await readBuildWebRecapReport('r1', 0, true)).text).toBe(
+      '<head><style>p{}</style></head><body><pre class="mermaid">graph TD; A-->B</pre></body>'
+    )
+    expect((await readBuildWebRecapReport('r1', 0)).text).toBe(html)
+    expect(mocks.text).toHaveBeenCalledTimes(1)
+  })
+
   it('is read again under another token, after it falls out of the cache, or after it failed', async () => {
     mocks.text.mockImplementation(async ({ path }) => path)
     await readBuildWebRecapReport('r1', 0)

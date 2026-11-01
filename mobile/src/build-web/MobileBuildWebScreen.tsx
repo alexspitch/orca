@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { ChevronLeft, MoreHorizontal, Plus, RefreshCw } from 'lucide-react-native'
+import { RefreshCw } from 'lucide-react-native'
 import type {
   BuildWebConnectionStatus,
   BuildWebIssueRow
 } from '../../../src/shared/build-web-types'
+import type { BuildWebRecap } from '../../../src/shared/build-web-recap-types'
 import {
   BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY,
   BUILD_WEB_RUNTIME_CAPABILITY
@@ -15,7 +16,6 @@ import { ActionSheetModal } from '../components/ActionSheetModal'
 import { LoadingSpinner } from '../components/LoadingSpinner'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
 import { MobileLoadErrorState } from '../components/MobileLoadErrorState'
-import { StatusDot } from '../components/StatusDot'
 import { useHostProtocolGates } from '../components/host-protocol-gates-context'
 import { useBackClaim } from '../navigation/use-back-claim'
 import { useRouteHandoff } from '../navigation/route-handoff'
@@ -35,8 +35,10 @@ import { BuildWebIssueScreen } from './issue/BuildWebIssueScreen'
 import { BuildWebTakeToWorkSheet } from './take-to-work/BuildWebTakeToWorkSheet'
 import { IssueCreateSheet } from './list/IssueCreateSheet'
 import { BuildWebNoticeBanner, type BuildWebNotice } from './BuildWebNoticeBanner'
+import { BuildWebScreenHeader } from './BuildWebScreenHeader'
 import { BuildWebImagesView } from './images/BuildWebImagesView'
 import { BuildWebTasksView } from './tasks/BuildWebTasksView'
+import { BuildWebRecapsView } from './recaps/BuildWebRecapsView'
 import { ImageTrackingContext, useImageTrackingState } from './images/image-tracking'
 import {
   BuildWebSessionCleanupSwitch,
@@ -44,12 +46,13 @@ import {
 } from './BuildWebSessionCleanupSetting'
 
 type OpenCard = { id: string; tab: BuildWebCardTab }
-type Section = 'issues' | 'images' | 'tasks'
+type Section = 'issues' | 'images' | 'tasks' | 'recaps'
 
 const SECTIONS: { value: Section; label: string }[] = [
   { value: 'issues', label: 'Issues' },
   { value: 'images', label: 'Images' },
-  { value: 'tasks', label: 'Tasks' }
+  { value: 'tasks', label: 'Tasks' },
+  { value: 'recaps', label: 'Recaps' }
 ]
 
 const NOTICE_MS = 4000
@@ -82,7 +85,11 @@ export function MobileBuildWebScreen() {
   // Why remembered: the Images section stays mounted once opened, so its filters survive a switch.
   const [imagesOpened, setImagesOpened] = useState(false)
   const [tasksOpened, setTasksOpened] = useState(false)
+  const [recapsOpened, setRecapsOpened] = useState(false)
   const [image, setImage] = useState<string | null>(null)
+  const [recap, setRecap] = useState<BuildWebRecap | null>(null)
+  // The section a card was opened from, which closing its last card returns to.
+  const [cardOrigin, setCardOrigin] = useState<Section | null>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const notify = useCallback((message: string, tone: BuildWebNoticeTone = 'info') => {
@@ -143,6 +150,12 @@ export function MobileBuildWebScreen() {
     setCards((open) => (open.at(-1)?.id === id ? open : [...open, { id, tab }]))
   }, [])
   const closeIssue = useCallback(() => setCards((open) => open.slice(0, -1)), [])
+  useEffect(() => {
+    if (cards.length === 0 && cardOrigin) {
+      setSection(cardOrigin)
+      setCardOrigin(null)
+    }
+  }, [cardOrigin, cards.length])
 
   const call = useMemo<BuildWebScreen['call'] | null>(
     () => (client ? (method, ...params) => callBuildWeb(client, method, ...params) : null),
@@ -180,6 +193,7 @@ export function MobileBuildWebScreen() {
 
   const card = section === 'issues' ? (cards.at(-1) ?? null) : null
   const imageShown = section === 'images' ? image : null
+  const recapShown = section === 'recaps' ? recap : null
   useBackClaim(
     taking
       ? () => {
@@ -196,7 +210,12 @@ export function MobileBuildWebScreen() {
               setImage(null)
               return true
             }
-          : null
+          : recapShown
+            ? () => {
+                setRecap(null)
+                return true
+              }
+            : null
   )
 
   const goBack = () => {
@@ -206,6 +225,10 @@ export function MobileBuildWebScreen() {
     }
     if (imageShown) {
       setImage(null)
+      return
+    }
+    if (recapShown) {
+      setRecap(null)
       return
     }
     router.back()
@@ -219,7 +242,7 @@ export function MobileBuildWebScreen() {
             {connState === 'connected' ? null : (
               <Text style={styles.reconnecting}>Reconnecting to the host…</Text>
             )}
-            {card || imageShown ? null : (
+            {card || imageShown || recapShown ? null : (
               <View style={styles.sections}>
                 <MobileSegmentedControl
                   segments={SECTIONS}
@@ -230,6 +253,8 @@ export function MobileBuildWebScreen() {
                       setImagesOpened(true)
                     } else if (next === 'tasks') {
                       setTasksOpened(true)
+                    } else if (next === 'recaps') {
+                      setRecapsOpened(true)
                     }
                   }}
                   fill
@@ -258,6 +283,21 @@ export function MobileBuildWebScreen() {
                     setSection('images')
                     setImagesOpened(true)
                     setImage(next)
+                  }}
+                />
+              </View>
+            ) : null}
+            {recapsOpened ? (
+              <View style={[styles.fill, section === 'recaps' ? null : styles.hidden]}>
+                <BuildWebRecapsView
+                  active={section === 'recaps'}
+                  reloadToken={reloadToken}
+                  recap={recap}
+                  onOpenRecap={setRecap}
+                  onOpenIssue={(id) => {
+                    setCardOrigin('recaps')
+                    setSection('issues')
+                    openIssue(id)
                   }}
                 />
               </View>
@@ -303,65 +343,22 @@ export function MobileBuildWebScreen() {
     return <BuildWebConnectForm client={client} status={status} onConnected={setStatus} />
   }
 
-  const connected = status?.connected === true
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Pressable
-          style={styles.iconButton}
-          onPress={goBack}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Back"
-        >
-          <ChevronLeft size={22} color={colors.textPrimary} />
-        </Pressable>
-        <View style={styles.titleWrap}>
-          <View style={styles.titleLine}>
-            <StatusDot state={connState} />
-            <Text style={styles.title}>{SECTIONS.find((s) => s.value === section)?.label}</Text>
-          </View>
-          {connected ? (
-            <Text style={styles.subtitle} numberOfLines={1}>
-              {status.login} · {status.baseUrl?.replace(/^https?:\/\//, '')}
-            </Text>
-          ) : null}
-        </View>
-        {connected ? (
-          <>
-            {section === 'issues' &&
-            hostCapabilities.includes(BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY) ? (
-              <Pressable
-                style={styles.iconButton}
-                onPress={() => setCreating(true)}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="New task"
-              >
-                <Plus size={18} color={colors.textSecondary} />
-              </Pressable>
-            ) : null}
-            <Pressable
-              style={styles.iconButton}
-              onPress={() => setReloadToken((n) => n + 1)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="Refresh"
-            >
-              <RefreshCw size={16} color={colors.textSecondary} />
-            </Pressable>
-            <Pressable
-              style={styles.iconButton}
-              onPress={() => setMenuOpen(true)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="More"
-            >
-              <MoreHorizontal size={18} color={colors.textSecondary} />
-            </Pressable>
-          </>
-        ) : null}
-      </View>
+      <BuildWebScreenHeader
+        title={SECTIONS.find((s) => s.value === section)?.label ?? ''}
+        connState={connState}
+        status={status}
+        onBack={goBack}
+        onCreate={
+          section === 'issues' &&
+          hostCapabilities.includes(BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY)
+            ? () => setCreating(true)
+            : null
+        }
+        onRefresh={() => setReloadToken((n) => n + 1)}
+        onMore={() => setMenuOpen(true)}
+      />
       <View style={styles.fill}>{body()}</View>
       <BuildWebNoticeBanner notice={notice} bottomInset={insets.bottom} />
       <ActionSheetModal
@@ -392,19 +389,6 @@ const styles = StyleSheet.create({
   fill: { flex: 1, minHeight: 0 },
   hidden: { display: 'none' },
   sections: { paddingHorizontal: spacing.md, paddingTop: spacing.sm },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderSubtle
-  },
-  iconButton: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  titleWrap: { flex: 1, minWidth: 0 },
-  titleLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  title: { color: colors.textPrimary, fontSize: typography.titleSize, fontWeight: '600' },
   subtitle: { color: colors.textMuted, fontSize: typography.metaSize },
   reconnecting: {
     color: colors.statusAmber,

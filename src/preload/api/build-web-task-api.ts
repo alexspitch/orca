@@ -166,7 +166,12 @@ export type BuildWebTaskApi = {
   watch: () => Promise<BuildWebWatchState>
   watchCheck: () => Promise<BuildWebMutationResult<BuildWebWatchCheck>>
   recaps: (args: BuildWebRecapQuery) => Promise<BuildWebMutationResult<BuildWebRecapPage>>
-  recapReport: (args: { runId: string; offset: number }) => Promise<BuildWebRecapReportPiece>
+  recapReport: (args: {
+    runId: string
+    offset: number
+    /** Without its scripts: the phone cannot run them. An older host sends them anyway. */
+    inert?: boolean
+  }) => Promise<BuildWebRecapReportPiece>
   testRuns: () => Promise<BuildWebTestRun[]>
   testRun: (args: { runId: string }) => Promise<BuildWebTestRunDetail | null>
   testRunWorkspace: (args: { runId: string; workspace: string }) => Promise<BuildWebTestWorkspace>

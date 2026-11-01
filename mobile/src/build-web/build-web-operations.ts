@@ -97,6 +97,8 @@ const BUILD_WEB_OPERATIONS = {
   pushImages: buildWebOperation('buildWeb.pushImages'),
   pushProgress: buildWebOperation('buildWeb.pushProgress'),
   pushRun: buildWebOperation('buildWeb.pushRun'),
+  recapReport: buildWebOperation('buildWeb.recapReport'),
+  recaps: buildWebOperation('buildWeb.recaps'),
   refreshGuideImages: buildWebOperation('buildWeb.refreshGuideImages'),
   refreshIssueVersion: buildWebOperation('buildWeb.refreshIssueVersion'),
   removeRunImages: buildWebOperation('buildWeb.removeRunImages'),

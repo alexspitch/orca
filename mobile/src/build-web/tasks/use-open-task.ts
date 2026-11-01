@@ -3,6 +3,7 @@ import type { BuildWebConsoleTask } from '../../../../src/shared/build-web-activ
 import type { BuildWebRun } from '../../../../src/shared/build-web-run-types'
 import { buildWebErrorMessage } from '../build-web-operations'
 import { useBuildWebScreen } from '../build-web-screen-context'
+import { findIssueByKey } from '../find-issue-by-key'
 
 // The build statuses a run's failure is about, as the desktop's open-activity-target reads them.
 const FAILED_BUILD = new Set(['FAILURE', 'UNSTABLE', 'trigger-failed', 'poll-failed'])
@@ -35,19 +36,9 @@ export function useOpenTask({
       return onOpenIssue(run.issue_id)
     }
     // Why the number: a run made for a task by its number alone carries no task id.
-    if (run.ticket) {
-      const ticket = run.ticket
-      const found = await call('listIssues', {
-        view: 'all',
-        q: ticket,
-        limit: 20,
-        offset: 0,
-        tree: true
-      })
-      const issue = found.issues.find((row) => row.key === ticket || row.jira_key === ticket)
-      if (issue) {
-        return onOpenIssue(issue.id)
-      }
+    const issue = run.ticket ? await findIssueByKey(call, run.ticket) : undefined
+    if (issue) {
+      return onOpenIssue(issue.id)
     }
     const image = imageOf(run)
     if (image) {

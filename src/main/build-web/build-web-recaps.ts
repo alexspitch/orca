@@ -186,12 +186,21 @@ function reportOf(credential: BuildWebCredential, runId: string): Promise<string
 
 const isHighSurrogate = (code: number): boolean => code >= 0xd800 && code <= 0xdbff
 
-/** The report's HTML from `offset`, one piece at a time: a whole report outgrows one RPC reply. */
+// Why a pattern is enough: the console escapes `</script` inside the libraries it inlines, and the
+// phone drops any script left over before it shows the report.
+const SCRIPT = /<script\b[^>]*>[\s\S]*?<\/script\s*>/gi
+
+/**
+ * The report's HTML from `offset`, one piece at a time: a whole report outgrows one RPC reply.
+ * `inert` drops its scripts for the phone, which cannot run them; mermaid alone is most of the bytes.
+ */
 export async function readBuildWebRecapReport(
   runId: string,
-  offset: number
+  offset: number,
+  inert = false
 ): Promise<BuildWebRecapReportPiece> {
-  const html = await reportOf(requireBuildWebCredential(), runId)
+  const full = await reportOf(requireBuildWebCredential(), runId)
+  const html = inert ? full.replace(SCRIPT, '') : full
   const start = Math.min(offset, html.length)
   let end = Math.min(start + RECAP_PIECE_CHARS, html.length)
   if (end < html.length && isHighSurrogate(html.charCodeAt(end - 1))) {

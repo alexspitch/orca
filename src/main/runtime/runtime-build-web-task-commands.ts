@@ -310,7 +310,7 @@ export class RuntimeBuildWebTaskCommands {
   }
 
   buildWebRecapReport(args: In<typeof BuildWebRecapReportParams>) {
-    return readBuildWebRecapReport(args.runId, args.offset)
+    return readBuildWebRecapReport(args.runId, args.offset, args.inert === true)
   }
 
   buildWebTestRuns() {

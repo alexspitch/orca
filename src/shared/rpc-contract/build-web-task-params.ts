@@ -137,5 +137,7 @@ export const BuildWebRecapReportParams = z.object({
     .number()
     .int()
     .min(0)
-    .max(64 * 1024 * 1024)
+    .max(64 * 1024 * 1024),
+  // Optional: a client from before the phone's Recaps does not send it.
+  inert: z.boolean().optional()
 })

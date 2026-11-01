@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
 import { callBuildWeb } from '../build-web-client'
+import { readRecapReport } from './recap-report-pieces'
 
 // A finished report never changes: the last few read stay here, so going back to one is instant.
 const KEPT = 4
@@ -19,7 +20,7 @@ function remember(key: string, html: string): void {
 
 type ReportRead = { key: string; html: string | null; error: string | null }
 
-/** A report read piece by piece (a whole one outgrows one reply), then handed over whole. */
+/** A report read whole, kept for going back to it. */
 export function useRecapReport(
   target: RuntimeClientTarget,
   contextKey: string,
@@ -39,19 +40,12 @@ export function useRecapReport(
     let alive = true
     void (async () => {
       try {
-        let html = ''
-        let offset = 0
-        for (;;) {
-          const piece = await callBuildWeb(target, 'recapReport', { runId, offset })
-          if (!alive) {
-            return
-          }
-          html += piece.text
-          // Why the empty check: a piece that adds nothing would otherwise ask forever.
-          if (piece.next >= piece.total || piece.text.length === 0) {
-            break
-          }
-          offset = piece.next
+        const html = await readRecapReport(
+          (offset) => callBuildWeb(target, 'recapReport', { runId, offset }),
+          () => alive
+        )
+        if (html === null) {
+          return
         }
         remember(key, html)
         setRead({ key, html, error: null })

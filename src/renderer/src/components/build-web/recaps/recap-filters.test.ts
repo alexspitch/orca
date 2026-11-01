@@ -15,6 +15,7 @@ const VERSIONS = [
   { id: 'sa-215', product: 'sa' as const, name: '2.15' },
   { id: 'dc-31', product: 'dc' as const, name: '3.1' }
 ]
+const LABEL = (product: string) => product.toUpperCase()
 const AUTOMATIONS = [
   { id: 'a-dc', name: 'DC changes', product: 'dc' as const, version_id: 'dc-31' },
   { id: 'a-sa', name: 'SA sizes', product: 'sa' as const, version_id: 'sa-216' }
@@ -71,12 +72,12 @@ describe('the Recaps query', () => {
 
 describe('the version picker', () => {
   it('names each version with its product until a product is picked', () => {
-    expect(recapVersionOptions(VERSIONS, 'all')).toEqual([
+    expect(recapVersionOptions(VERSIONS, 'all', LABEL)).toEqual([
       { value: 'sa-216', label: 'SA 2.16' },
       { value: 'sa-215', label: 'SA 2.15' },
       { value: 'dc-31', label: 'DC 3.1' }
     ])
-    expect(recapVersionOptions(VERSIONS, 'dc')).toEqual([{ value: 'dc-31', label: '3.1' }])
+    expect(recapVersionOptions(VERSIONS, 'dc', LABEL)).toEqual([{ value: 'dc-31', label: '3.1' }])
   })
 
   it('drops a version that is not the new product’s, and keeps one that is', () => {

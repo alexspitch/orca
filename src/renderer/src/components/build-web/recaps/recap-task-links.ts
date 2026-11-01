@@ -8,6 +8,9 @@ const TASK_KEY_ONLY = /^(?:IS|SDAP)-\d+(?:\.\d+)?$/
 
 export const isRecapTaskKey = (key: string): boolean => TASK_KEY_ONLY.test(key)
 
+/** The task numbers a text names, each once, in the order they first appear. */
+export const recapTaskKeys = (text: string): string[] => [...new Set(text.match(TASK_KEY))]
+
 /** What the frame posts when a number is clicked. */
 export const RECAP_TASK_MESSAGE = 'orca-recap-task'
 

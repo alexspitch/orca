@@ -5,9 +5,9 @@ import type {
   BuildWebRecapVersion
 } from '../../../../../shared/build-web-recap-types'
 import type { BuildWebProduct } from '../../../../../shared/build-web-types'
-import { productLabel } from '../build-web-labels'
 
-// The Recaps filters: what the person picked, and the query that asks build-web for it.
+// The Recaps filters: what the person picked, and the query that asks build-web for it. The phone
+// reads them too, so nothing here may reach the desktop's i18n.
 
 export type RecapFilters = {
   product: BuildWebProduct | 'all'
@@ -61,7 +61,8 @@ export function recapQuery(f: RecapFilters, page: number, pageSize: number): Bui
 /** The versions to pick from: the product's own, or every one named with its product. */
 export function recapVersionOptions(
   versions: readonly BuildWebRecapVersion[],
-  product: RecapFilters['product']
+  product: RecapFilters['product'],
+  productLabel: (product: BuildWebProduct) => string
 ): { value: string; label: string }[] {
   return versions
     .filter((v) => product === 'all' || v.product === product)
