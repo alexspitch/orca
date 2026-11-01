@@ -2,6 +2,10 @@ import { useMemo } from 'react'
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { ExternalLink } from 'lucide-react-native'
 import type { BuildWebRecap } from '../../../../src/shared/build-web-recap-types'
+import {
+  recapReportedAt,
+  recapWindowLabel
+} from '../../../../src/renderer/src/components/build-web/recaps/recap-window'
 import { htmlPreviewWithInertLinks } from '../../components/html-preview-inert-links'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { MobileLoadErrorState } from '../../components/MobileLoadErrorState'
@@ -16,6 +20,7 @@ import { buildWebErrorMessage } from '../build-web-operations'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { findIssueByKey } from '../find-issue-by-key'
 import { FilterPill } from '../list/list-controls'
+import { ProductChip } from '../BuildWebToneChip'
 import { useRecapReport } from './use-recap-report'
 
 /**
@@ -49,27 +54,32 @@ export function RecapReportView({
       .catch((failure: unknown) => notify(buildWebErrorMessage(failure), 'error'))
   }
 
+  const windowLabel = recapWindowLabel(recap)
+  const reportedAt = new Date(recapReportedAt(recap))
+  const facts = [
+    windowLabel ? `window ${windowLabel}` : '',
+    recap.version?.name,
+    Number.isNaN(reportedAt.getTime()) ? '' : reportedAt.toLocaleString()
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
   return (
     <View style={styles.root}>
       <View style={styles.bar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.grow}>
-          <View style={styles.keys}>
-            {report && report.taskKeys.length > 0 ? (
-              report.taskKeys.map((key) => (
-                <FilterPill
-                  key={key}
-                  label={key}
-                  accessibilityLabel={`Open task ${key}`}
-                  onPress={() => openTask(key)}
-                />
-              ))
-            ) : (
-              <Text style={styles.title} numberOfLines={1}>
-                {recap.name}
-              </Text>
-            )}
+        <View style={styles.grow}>
+          <View style={styles.heading}>
+            <ProductChip product={recap.product} />
+            <Text style={styles.title} numberOfLines={1}>
+              {recap.name}
+            </Text>
           </View>
-        </ScrollView>
+          {facts ? (
+            <Text style={styles.muted} numberOfLines={1}>
+              {facts}
+            </Text>
+          ) : null}
+        </View>
         {consoleUrl ? (
           <Pressable
             style={styles.iconButton}
@@ -82,6 +92,20 @@ export function RecapReportView({
           </Pressable>
         ) : null}
       </View>
+      {report && report.taskKeys.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.keysBar}>
+          <View style={styles.keys}>
+            {report.taskKeys.map((key) => (
+              <FilterPill
+                key={key}
+                label={key}
+                accessibilityLabel={`Open task ${key}`}
+                onPress={() => openTask(key)}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      ) : null}
       {error ? (
         <MobileLoadErrorState message={error} onRetry={retry} />
       ) : html === null ? (
@@ -129,8 +153,21 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.borderSubtle
   },
+  heading: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  keysBar: {
+    flexGrow: 0,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderSubtle
+  },
   keys: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  title: { color: colors.textPrimary, fontSize: typography.bodySize, fontWeight: '500' },
+  title: {
+    flexShrink: 1,
+    color: colors.textPrimary,
+    fontSize: typography.bodySize,
+    fontWeight: '500'
+  },
   iconButton: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   muted: { color: colors.textMuted, fontSize: typography.metaSize }

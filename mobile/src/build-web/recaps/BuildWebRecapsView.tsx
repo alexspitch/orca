@@ -178,6 +178,20 @@ export function BuildWebRecapsView({
             <FilterPill icon={FilterX} label="Reset" onPress={() => narrow(NO_RECAP_FILTERS)} />
           ) : null}
         </View>
+        {/* Why here: the empty state shows an error only while there are no rows to keep. */}
+        {error && days.length > 0 ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading the reports"
+            onPress={() => setReload((n) => n + 1)}
+            style={styles.errorRow}
+          >
+            <Text style={styles.error} numberOfLines={2}>
+              {error}
+            </Text>
+            <Text style={styles.retry}>Retry</Text>
+          </Pressable>
+        ) : null}
         <SectionList
           sections={days}
           keyExtractor={(item) => item.id}
@@ -280,5 +294,14 @@ const styles = StyleSheet.create({
   title: { flex: 1, color: colors.textPrimary, fontSize: typography.bodySize },
   meta: { flexShrink: 1, color: colors.textMuted, fontSize: typography.metaSize },
   pressed: { backgroundColor: colors.bgRaised },
-  note: { color: colors.textSecondary, padding: spacing.md }
+  note: { color: colors.textSecondary, padding: spacing.md },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingBottom: spacing.sm
+  },
+  error: { flex: 1, color: colors.statusRed, fontSize: typography.metaSize },
+  retry: { color: colors.textPrimary, fontSize: typography.metaSize, fontWeight: '600' }
 })
