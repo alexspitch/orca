@@ -7,7 +7,9 @@ import {
   type AgentBackgroundCommand
 } from '../../../src/shared/agent-background-commands'
 import { colors } from '../theme/mobile-theme'
+import { countAgentSessions } from '../../../src/shared/agent-session-counts'
 import { formatTimeAgo } from '../worktree/agent-row-display'
+import { buildAgentRowLineageTree } from '../worktree/agent-row-lineage'
 
 /** The agent's background commands, read defensively: hosts update independently of the phone. */
 export function agentBackgroundCommands(agent: RuntimeWorktreeAgentRow): AgentBackgroundCommand[] {
@@ -48,12 +50,14 @@ export function WorktreeBackgroundCommandRow({
 
 /**
  * A workspace's agent facts at the end of its title line, as on the desktop: what its agents run
- * in the background, then how many agents run, from two on. The host lists only agents in live
- * panes, so every row counts.
+ * in the background, then its active agent sessions out of all, from two sessions on. The host
+ * lists only agents in live panes; an agent another one dispatched counts under that session.
  */
 export function WorktreeAgentIndicators({ agents }: { agents: RuntimeWorktreeAgentRow[] }) {
   const commands = agents.flatMap(agentBackgroundCommands)
-  if (agents.length < 2 && commands.length === 0) {
+  const { rootRows, childrenByParentPaneKey } = buildAgentRowLineageTree(agents)
+  const sessions = countAgentSessions(rootRows, childrenByParentPaneKey, () => true)
+  if (sessions.total < 2 && commands.length === 0) {
     return null
   }
   return (
@@ -67,9 +71,14 @@ export function WorktreeAgentIndicators({ agents }: { agents: RuntimeWorktreeAge
           <BackgroundCommandIcon commands={commands} size={12} />
         </View>
       ) : null}
-      {agents.length > 1 ? (
-        <View style={styles.circle} accessibilityLabel={`${agents.length} agents running`}>
-          <Text style={styles.text}>{agents.length}</Text>
+      {sessions.total > 1 ? (
+        <View
+          style={styles.circle}
+          accessibilityLabel={`${sessions.active} of ${sessions.total} agent sessions active`}
+        >
+          <Text style={styles.text}>
+            {sessions.active}/{sessions.total}
+          </Text>
         </View>
       ) : null}
     </>
