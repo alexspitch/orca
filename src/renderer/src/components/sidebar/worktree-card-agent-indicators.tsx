@@ -1,7 +1,8 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { FlaskConical, SquareTerminal } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { DashboardAgentRow } from '@/components/dashboard/useDashboardData'
+import { buildAgentRowLineageTree } from '@/components/dashboard/agent-row-lineage-model'
 import { useNow } from '@/hooks/use-now'
 import { translate } from '@/i18n/i18n'
 import {
@@ -20,6 +21,27 @@ export function runningBackgroundCommands(
     .filter((agent) => agent.rowSource === 'live')
     .flatMap((agent) => agent.entry.backgroundCommands ?? [])
     .sort((a, b) => a.startedAt - b.startedAt)
+}
+
+/** Live agents a session holds at any depth: its subagents and the agents it dispatched. */
+export function countLiveAgentsUnderSession(
+  sessionPaneKey: string,
+  childrenByParentPaneKey: ReadonlyMap<string, readonly DashboardAgentRow[]>
+): number {
+  const seen = new Set([sessionPaneKey])
+  const pending = [...(childrenByParentPaneKey.get(sessionPaneKey) ?? [])]
+  let count = 0
+  for (let agent = pending.pop(); agent; agent = pending.pop()) {
+    if (seen.has(agent.paneKey)) {
+      continue
+    }
+    seen.add(agent.paneKey)
+    if (agent.rowSource !== 'retained') {
+      count += 1
+    }
+    pending.push(...(childrenByParentPaneKey.get(agent.paneKey) ?? []))
+  }
+  return count
 }
 
 export function BackgroundCommandIcon({
@@ -60,7 +82,7 @@ function BackgroundCommandLines({
 
 /**
  * A workspace's agent facts at the end of its title line: what its agents run in the background,
- * then how many agents run, shown from two on.
+ * then how many agent sessions run, shown from two on.
  */
 export function WorktreeCardAgentIndicators({
   worktreeId
@@ -68,8 +90,10 @@ export function WorktreeCardAgentIndicators({
   worktreeId: string
 }): React.JSX.Element | null {
   const agents = useWorktreeAgentRows(worktreeId)
+  const sessions = useMemo(() => buildAgentRowLineageTree(agents).rootRows, [agents])
+  // Why roots only: subagents and dispatched agents count under their session, not beside it.
   // Why not retained rows: their agents have exited; the rows only show how they ended.
-  const running = agents.filter((agent) => agent.rowSource !== 'retained').length
+  const running = sessions.filter((agent) => agent.rowSource !== 'retained').length
   const commands = runningBackgroundCommands(agents)
   if (running < 2 && commands.length === 0) {
     return null
@@ -97,8 +121,8 @@ export function WorktreeCardAgentIndicators({
           count={running}
           tone="neutral"
           hint={translate(
-            'auto.components.sidebar.WorktreeCardAgents.runningCount',
-            '{{count}} agents running',
+            'auto.components.sidebar.WorktreeCardAgents.runningSessionCount',
+            '{{count}} agent sessions running',
             { count: running }
           )}
         />

@@ -18,7 +18,12 @@ import { useWorktreeAgentRows } from './useWorktreeAgentRows'
 import { useNow } from '@/hooks/use-now'
 import type { AgentBackgroundCommand } from '../../../../shared/agent-background-commands'
 import { formatCompactDuration } from '../../../../shared/agent-row-decay-state'
-import { BackgroundCommandIcon, runningBackgroundCommands } from './worktree-card-agent-indicators'
+import {
+  BackgroundCommandIcon,
+  countLiveAgentsUnderSession,
+  runningBackgroundCommands
+} from './worktree-card-agent-indicators'
+import { SidebarCountBadge } from './SidebarCountBadge'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 import type { WorktreeCardPresentation } from './worktree-card-presentation'
 
@@ -28,7 +33,10 @@ import type { WorktreeCardPresentation } from './worktree-card-presentation'
 function CompactAgentLines({ worktreeId }: { worktreeId: string }): React.JSX.Element | null {
   const agents = useWorktreeAgentRows(worktreeId)
   const generatedTitlesEnabled = useAppStore((s) => s.settings?.tabAutoGenerateTitle === true)
-  const rootAgents = useMemo(() => buildAgentRowLineageTree(agents).rootRows, [agents])
+  const { rootRows: rootAgents, childrenByParentPaneKey } = useMemo(
+    () => buildAgentRowLineageTree(agents),
+    [agents]
+  )
   const now = useNow(30_000, runningBackgroundCommands(agents).length > 0)
   if (rootAgents.length === 0) {
     return null
@@ -53,6 +61,7 @@ function CompactAgentLines({ worktreeId }: { worktreeId: string }): React.JSX.El
         // Why inert: a retained row is completion evidence; opening it would wake a sleeping session.
         const retained = agent.rowSource === 'retained'
         const commands = retained ? [] : (agent.entry.backgroundCommands ?? [])
+        const agentsUnder = countLiveAgentsUnderSession(agent.paneKey, childrenByParentPaneKey)
         return (
           <React.Fragment key={agent.paneKey}>
             <button
@@ -69,6 +78,18 @@ function CompactAgentLines({ worktreeId }: { worktreeId: string }): React.JSX.El
                 <AgentStateDot state={state} size="md" tooltipSide="right" />
               </span>
               <span className="min-w-0 truncate text-foreground">{name}</span>
+              {agentsUnder > 0 ? (
+                <SidebarCountBadge
+                  small
+                  count={agentsUnder}
+                  tone="neutral"
+                  hint={translate(
+                    'auto.components.sidebar.WorktreeCardAgents.agentsInSessionCount',
+                    '{{count}} agents running in this session',
+                    { count: agentsUnder }
+                  )}
+                />
+              ) : null}
               <span className="shrink-0">{formatSummaryStateLabel(state)}</span>
             </button>
             {commands.map((command) => (
