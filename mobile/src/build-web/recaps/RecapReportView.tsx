@@ -6,6 +6,7 @@ import {
   recapReportedAt,
   recapWindowLabel
 } from '../../../../src/renderer/src/components/build-web/recaps/recap-window'
+import { recapVersionLabel } from '../../../../src/renderer/src/components/build-web/recaps/recap-version-label'
 import { htmlPreviewWithInertLinks } from '../../components/html-preview-inert-links'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { MobileLoadErrorState } from '../../components/MobileLoadErrorState'
@@ -16,6 +17,7 @@ import {
 import { useHtmlPreviewLinkGrant } from '../../components/use-html-preview-link-grant'
 import { openExternalLink } from '../../platform/external-link'
 import { colors, spacing, typography } from '../../theme/mobile-theme'
+import { productLabel } from '../build-web-labels'
 import { buildWebErrorMessage } from '../build-web-operations'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { findIssueByKey } from '../find-issue-by-key'
@@ -55,10 +57,11 @@ export function RecapReportView({
   }
 
   const windowLabel = recapWindowLabel(recap)
+  const version = recapVersionLabel(recap, productLabel)
   const reportedAt = new Date(recapReportedAt(recap))
   const facts = [
     windowLabel ? `window ${windowLabel}` : '',
-    recap.version?.name,
+    version?.label,
     Number.isNaN(reportedAt.getTime()) ? '' : reportedAt.toLocaleString()
   ]
     .filter(Boolean)
@@ -77,6 +80,12 @@ export function RecapReportView({
           {facts ? (
             <Text style={styles.muted} numberOfLines={1}>
               {facts}
+            </Text>
+          ) : null}
+          {/* Why: the phone has no hover to name every version a recap covers. */}
+          {version?.all ? (
+            <Text style={styles.muted} numberOfLines={2}>
+              {version.all}
             </Text>
           ) : null}
         </View>

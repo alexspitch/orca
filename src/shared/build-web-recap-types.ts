@@ -23,6 +23,12 @@ export type BuildWebRecap = {
   name: string
   product: BuildWebIssueProduct
   version: { id: string; name: string; branch: string } | null
+  /**
+   * Every version whose branch brought commits into its window, its own among them: a report that
+   * reads the version branches covers more than its automation's. Absent otherwise, and from an
+   * older console.
+   */
+  versions?: BuildWebRecapVersion[]
   commit: string | null
   trigger: 'manual' | 'scheduled'
   /** Who ran it by hand; null for a scheduled run. */

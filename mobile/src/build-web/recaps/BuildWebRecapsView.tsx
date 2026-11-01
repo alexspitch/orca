@@ -13,6 +13,7 @@ import {
   withRecapVersion,
   type RecapFilters
 } from '../../../../src/renderer/src/components/build-web/recaps/recap-filters'
+import { recapVersionLabel } from '../../../../src/renderer/src/components/build-web/recaps/recap-version-label'
 import { recapWindowLabel } from '../../../../src/renderer/src/components/build-web/recaps/recap-window'
 import { PickerModal } from '../../components/PickerModal'
 import { colors, spacing, typography } from '../../theme/mobile-theme'
@@ -131,7 +132,7 @@ export function BuildWebRecapsView({
             <ProductChip product={item.product} />
             <Text style={styles.meta} numberOfLines={1}>
               {[
-                item.version?.name,
+                recapVersionLabel(item, productLabel)?.label,
                 item.commit?.slice(0, 8),
                 windowLabel ? `window ${windowLabel}` : '',
                 startedBy(item)

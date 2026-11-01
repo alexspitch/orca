@@ -5,6 +5,7 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type { BuildWebRecap } from '../../../../../shared/build-web-recap-types'
 import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-target'
+import { productLabel } from '../build-web-labels'
 import { ProductChip } from '../BuildWebToneChip'
 import { useBuildWebPageEscape } from '../use-build-web-page-escape'
 import {
@@ -18,16 +19,18 @@ import {
   type RecapMonth
 } from './recap-calendar'
 import { RecapReportPane } from './RecapReportPane'
+import { recapVersionLabel } from './recap-version-label'
 import { recapReportedAt, recapWindowLabel } from './recap-window'
 
 const timeOf = (iso: string) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 
 function recapTitle(recap: BuildWebRecap): string {
+  const version = recapVersionLabel(recap, productLabel)
   return [
     recap.name,
     recapWindowLabel(recap),
-    recap.version?.name,
+    version?.all ?? version?.label,
     new Date(recapReportedAt(recap)).toLocaleString()
   ]
     .filter(Boolean)
@@ -186,6 +189,7 @@ export function RecapCalendarReport({
 }): React.JSX.Element {
   useBuildWebPageEscape(onBack, { first: true })
   const windowLabel = recapWindowLabel(recap)
+  const version = recapVersionLabel(recap, productLabel)
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
       <div className="flex min-w-0 items-center gap-2 border-b border-border px-2 py-1.5">
@@ -198,8 +202,10 @@ export function RecapCalendarReport({
         {windowLabel ? (
           <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{windowLabel}</span>
         ) : null}
-        {recap.version ? (
-          <span className="shrink-0 text-xs text-muted-foreground">{recap.version.name}</span>
+        {version ? (
+          <span className="shrink-0 text-xs text-muted-foreground" title={version.all ?? undefined}>
+            {version.label}
+          </span>
         ) : null}
         <div className="flex-1" />
         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
