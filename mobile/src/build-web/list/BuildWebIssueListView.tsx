@@ -7,6 +7,10 @@ import {
   type BuildWebIssueRow
 } from '../../../../src/shared/build-web-types'
 import type { BuildWebSavedQuery } from '../../../../src/shared/build-web-saved-query-types'
+import {
+  servesTesterStatuses,
+  statusesServed
+} from '../../../../src/shared/build-web-status-compat'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { MobileLoadErrorState } from '../../components/MobileLoadErrorState'
 import { PickerModal } from '../../components/PickerModal'
@@ -217,7 +221,10 @@ export function BuildWebIssueListView({
     }
     switch (picking?.field) {
       case 'status':
-        return (issue.parent_id ? BUILD_WEB_SUBTASK_STATUSES : BUILD_WEB_STATUSES).map((s) => ({
+        return statusesServed(
+          issue.parent_id ? BUILD_WEB_SUBTASK_STATUSES : BUILD_WEB_STATUSES,
+          servesTesterStatuses(screen.hostCapabilities)
+        ).map((s) => ({
           value: s,
           label: statusLabel(s),
           disabled: s === issue.status

@@ -14,6 +14,7 @@ import {
   type BuildWebTestingStatus
 } from '../../../../src/shared/build-web-run-types'
 import { BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
+import { statusesServed } from '../../../../src/shared/build-web-status-compat'
 import type { BuildWebTmsStand } from '../../../../src/shared/build-web-task-types'
 import { stepsOfLines } from '../../../../src/shared/build-web-issue-steps'
 import {
@@ -228,7 +229,10 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
             shown={<StatusChip status={status} />}
             disabled={busy}
             onChange={setStatus}
-            options={BUILD_WEB_STATUSES.map((s) => ({ value: s, label: statusLabel(s) }))}
+            options={statusesServed(BUILD_WEB_STATUSES, knowsTester).map((s) => ({
+              value: s,
+              label: statusLabel(s)
+            }))}
           />
         </PropertyRow>
         <PropertyRow label="Priority">

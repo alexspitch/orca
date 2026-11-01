@@ -4,6 +4,8 @@ import type {
   BuildWebJiraOutcome
 } from '../../../../src/shared/build-web-types'
 import { BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
+import { servesTesterStatuses } from '../../../../src/shared/build-web-status-compat'
+import { TESTER_REFUSAL } from '../list/list-capability-gates'
 import { statusLabel } from '../build-web-labels'
 import type { BuildWebScreen } from '../build-web-screen-context'
 import type { IssueConfirm } from './use-issue-confirm'
@@ -52,6 +54,9 @@ export function patchRefusal(
     !hostCapabilities.includes(BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY)
   ) {
     return 'This Orca server does not know Chat Platform yet. Update the server.'
+  }
+  if (patch.status === 'self_testing' && !servesTesterStatuses(hostCapabilities)) {
+    return TESTER_REFUSAL
   }
   return null
 }

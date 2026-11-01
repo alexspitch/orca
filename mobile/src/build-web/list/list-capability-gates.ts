@@ -6,14 +6,30 @@ import {
   BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY
 } from '../../../../src/shared/build-web-capability'
 import type { BuildWebIssueQuery } from '../../../../src/shared/build-web-types'
+import {
+  servesTesterStatuses,
+  statusFilterServed
+} from '../../../../src/shared/build-web-status-compat'
 
 // The desktop build-web-client's NEWER_METHODS / NEWER_ARGUMENTS for the list's calls: an older
 // server refuses these with a raw validation error, so ask first and say what to update.
+
+/** The list's query as this server takes it: the default Open filter holds self-testing, which an older one refuses. */
+export function issueQueryServed(
+  capabilities: readonly string[],
+  query: BuildWebIssueQuery
+): BuildWebIssueQuery {
+  const status = statusFilterServed(query.status, servesTesterStatuses(capabilities))
+  return status === null ? query : { ...query, status }
+}
 
 export function listIssuesRefusal(
   capabilities: readonly string[],
   query: BuildWebIssueQuery
 ): string | null {
+  if (statusFilterServed(query.status, servesTesterStatuses(capabilities)) === null) {
+    return TESTER_REFUSAL
+  }
   if (
     query.product?.includes('cp') &&
     !capabilities.includes(BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY)
@@ -40,6 +56,9 @@ export function listIssuesRefusal(
   }
   return null
 }
+
+export const TESTER_REFUSAL =
+  'This Orca server does not know testers and self-testing yet. Update the server.'
 
 const CHAT_PLATFORM_REFUSAL = 'This Orca server does not know Chat Platform yet. Update the server.'
 

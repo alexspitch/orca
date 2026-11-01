@@ -5,6 +5,7 @@ import {
   type BuildWebIssueSort,
   type BuildWebStatus
 } from '../../../../shared/build-web-types'
+import { upgradeKeptStatuses } from '../../../../shared/build-web-status-compat'
 
 // Per-viewer conveniences kept in localStorage (as the GitHub project column widths are): the
 // Issues page's quick filters and sort, and the side card's width. Lost storage just means defaults.
@@ -128,7 +129,7 @@ function prefsOf(raw: unknown): ViewPrefs {
   const width =
     typeof v.drawerWidth === 'number' && Number.isFinite(v.drawerWidth) ? v.drawerWidth : null
   const statuses = Array.isArray(v.statuses)
-    ? BUILD_WEB_STATUSES.filter((s) => v.statuses.includes(s))
+    ? upgradeKeptStatuses(BUILD_WEB_STATUSES.filter((s) => v.statuses.includes(s)))
     : null
   // Why the quick filters: Mine was one of them before the assignee list, kept as it was left.
   const assignees = Array.isArray(v.assignees)

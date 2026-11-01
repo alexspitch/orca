@@ -15,8 +15,13 @@ import {
 } from '../../../../shared/build-web-timeouts'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { BuildWebApi } from '../../../../preload/api/build-web-api'
-import { assertRuntimeEnvironmentCapability, callRuntimeRpc } from '@/runtime/runtime-rpc-client'
+import {
+  assertRuntimeEnvironmentCapability,
+  callRuntimeRpc,
+  runtimeEnvironmentSupportsCapability
+} from '@/runtime/runtime-rpc-client'
 import { translate } from '@/i18n/i18n'
+import { statusFilterServed } from '../../../../shared/build-web-status-compat'
 import { NEWER_METHODS, testerRefusal } from './build-web-newer-methods'
 
 type Method = keyof BuildWebApi
@@ -161,6 +166,31 @@ const NEWER_ARGUMENTS: {
   }
 ]
 
+const LIST_FILTER_METHODS: ReadonlySet<Method> = new Set<Method>(['listIssues', 'issueSummary'])
+
+/** Why: the default Open filter holds self-testing, which an older server's status enum refuses. */
+async function listFilterServed(
+  environmentId: string,
+  method: Method,
+  arg: unknown
+): Promise<unknown> {
+  const status = field(arg, 'status')
+  if (!LIST_FILTER_METHODS.has(method) || !Array.isArray(status) || typeof arg !== 'object') {
+    return arg
+  }
+  const servesTester =
+    !status.includes('self_testing') ||
+    (await runtimeEnvironmentSupportsCapability(
+      environmentId,
+      BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY
+    ))
+  const served = statusFilterServed(status, servesTester)
+  if (served === null) {
+    throw new Error(testerRefusal())
+  }
+  return { ...arg, status: served }
+}
+
 /**
  * One call to build-web through whichever host holds the token: this app's main process,
  * or a paired Orca server (which must announce `build-web.v1` first).
@@ -186,7 +216,8 @@ export async function callBuildWeb<M extends Method>(
     for (const { capability, refusal } of newer) {
       await assertRuntimeEnvironmentCapability(target.environmentId, capability, refusal())
     }
-    return callRuntimeRpc<ResultOf<M>>(target, `buildWeb.${method}`, args[0], {
+    const params = await listFilterServed(target.environmentId, method, args[0])
+    return callRuntimeRpc<ResultOf<M>>(target, `buildWeb.${method}`, params, {
       timeoutMs: buildWebHostWaitMs(method, args[0]) + BUILD_WEB_CLIENT_MARGIN_MS
     })
   }

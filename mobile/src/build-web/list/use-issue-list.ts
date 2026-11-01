@@ -21,7 +21,7 @@ import {
   issueQueryOf,
   type BuildWebListFilters
 } from './issue-list-query'
-import { listIssuesRefusal } from './list-capability-gates'
+import { issueQueryServed, listIssuesRefusal } from './list-capability-gates'
 
 // The desktop build-web-store and use-build-web-data for one mounted list: filters, sort, page,
 // rows, selection and folds. The view prefs persist exactly as the desktop's do.
@@ -169,8 +169,9 @@ export function useIssueList(reloadToken: number) {
 
   const load = useCallback(async () => {
     const mine = ++generation.current
-    const request = issueQueryOf({ quick, statuses, products, assignees, query, sort, page }, me)
-    const refusal = listIssuesRefusal(hostCapabilities, request)
+    const asked = issueQueryOf({ quick, statuses, products, assignees, query, sort, page }, me)
+    const refusal = listIssuesRefusal(hostCapabilities, asked)
+    const request = issueQueryServed(hostCapabilities, asked)
     if (refusal) {
       setLoading(false)
       setError(refusal)

@@ -1,45 +1,32 @@
 import { useCallback, useState } from 'react'
-import type {
-  BuildWebIssuePatch,
-  BuildWebIssueRow,
-  BuildWebJiraOutcome
-} from '../../../../src/shared/build-web-types'
+import type { BuildWebIssuePatch, BuildWebIssueRow } from '../../../../src/shared/build-web-types'
 import { statusLabel } from '../build-web-labels'
 import { buildWebErrorMessage } from '../build-web-operations'
-import { useBuildWebScreen, type BuildWebScreen } from '../build-web-screen-context'
+import { useBuildWebScreen } from '../build-web-screen-context'
 import type { IssueList } from './use-issue-list'
 import { useConfirmPrompt } from './use-confirm-prompt'
+import { notifyJiraOutcome, patchRefusal } from '../issue/issue-status-move'
 
 // The desktop's row writes (use-build-web-issue-write's useIssueRowPatch, BuildWebPage's
 // toggleFavorite): a status move asks first when Jira mirrors it, and what Jira did is shown.
-
-function notifyJiraOutcome(
-  notify: BuildWebScreen['notify'],
-  patch: BuildWebIssuePatch,
-  jira: BuildWebJiraOutcome | null
-): void {
-  if (!patch.status || !jira) {
-    return
-  }
-  if (jira.ok) {
-    notify(`Jira: ${jira.status}`)
-  } else {
-    notify(`Not moved in Jira: ${jira.error}`, 'error')
-  }
-}
 
 /**
  * The priority and the assignee show at once; the status only once the console took it, because
  * it moves Jira too. `busy` holds the ids being written.
  */
 export function useIssueRowActions(list: Pick<IssueList, 'patchIssue'>) {
-  const { call, notify } = useBuildWebScreen()
+  const { call, hostCapabilities, notify } = useBuildWebScreen()
   const { confirm, element: confirmElement } = useConfirmPrompt()
   const [busy, setBusy] = useState<ReadonlySet<string>>(new Set())
   const { patchIssue } = list
 
   const patch = useCallback(
     async (issue: BuildWebIssueRow, change: BuildWebIssuePatch) => {
+      const refusal = patchRefusal(hostCapabilities, change)
+      if (refusal) {
+        notify(refusal, 'error')
+        return
+      }
       if (change.status && issue.jira_key) {
         const accepted = await confirm({
           title: `Move ${issue.key} to “${statusLabel(change.status)}”?`,
@@ -79,7 +66,7 @@ export function useIssueRowActions(list: Pick<IssueList, 'patchIssue'>) {
         })
       }
     },
-    [call, confirm, notify, patchIssue]
+    [call, confirm, hostCapabilities, notify, patchIssue]
   )
 
   const toggleFavorite = useCallback(
