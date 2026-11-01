@@ -174,7 +174,18 @@ function buildFreshnessOf(value: Record<string, unknown>): BuildWebBuildFreshnes
           at: textOrNull(unpublished.at),
           state: freshnessStateOf(unpublished.state)
         }
-      : null
+      : null,
+    ...(Array.isArray(value.missing)
+      ? {
+          missing: records(value.missing).map((c) => ({
+            sha: textOf(c.sha),
+            subject: textOf(c.subject),
+            date: textOf(c.date),
+            author: textOf(c.author)
+          }))
+        }
+      : {}),
+    ...(value.missing_more === true ? { missing_more: true } : {})
   }
 }
 

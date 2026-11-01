@@ -10,6 +10,7 @@ import { BuildWebToneChip } from '../../BuildWebToneChip'
 import type { ChipTone } from '../../build-web-tones'
 import { cellLabel, type Cell } from './run-cells'
 import { PushMenu } from './RunMenus'
+import { missingCommitLines } from './freshness-missing'
 
 // The chips of one image row, after build-web's Progress: its state, how it stands against its
 // branch, and where it is in the registry — each with the reason in its tooltip.
@@ -180,7 +181,11 @@ function freshnessTip(f: BuildWebBuildFreshness, ticket: string | null): string 
   const unpublished = u
     ? ` ${translate('buildWeb.run.unpublished', 'CI also made #{{n}}, which the registry does not serve.', { n: String(u.build_number) })}`
     : ''
-  return `${made} ${formatAt(f.built_at) ?? '—'}, ${against} ${formatAt(f.ref_at) ?? '—'}: ${verdict}.${unpublished}`
+  const missing = missingCommitLines(f)
+  const notIn = missing.length
+    ? `\n\n${translate('buildWeb.run.notInBuild', 'Not in this build:')}\n${missing.join('\n')}`
+    : ''
+  return `${made} ${formatAt(f.built_at) ?? '—'}, ${against} ${formatAt(f.ref_at) ?? '—'}: ${verdict}.${unpublished}${notIn}`
 }
 
 export function FreshnessChip({

@@ -130,7 +130,13 @@ export type BuildWebBuildFreshness = {
     at: string | null
     state: BuildWebFreshnessState
   } | null
+  /** A stale build's commits it does not contain, newest first; absent from an older console. */
+  missing?: BuildWebMissingCommit[]
+  /** More commits are missing than `missing` lists. */
+  missing_more?: boolean
 }
+
+export type BuildWebMissingCommit = { sha: string; subject: string; date: string; author: string }
 
 export type BuildWebFreshness = {
   refs: BuildWebFreshnessRef[]

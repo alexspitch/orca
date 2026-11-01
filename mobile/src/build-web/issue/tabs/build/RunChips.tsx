@@ -12,6 +12,7 @@ import { LoadingSpinner } from '../../../../components/LoadingSpinner'
 import { chipTones, colors, spacing, typography } from '../../../../theme/mobile-theme'
 import { useBuildWebScreen } from '../../../build-web-screen-context'
 import { BuildWebToneChip } from '../../../BuildWebToneChip'
+import { missingCommitLines } from '../../../../../../src/renderer/src/components/build-web/issue/build/freshness-missing'
 
 // The chips of one image row, after build-web's Progress: its state, how it stands against its
 // branch, and where it is in the registry. A tap says the reason the desktop keeps in a tooltip.
@@ -151,7 +152,9 @@ function freshnessTip(f: BuildWebBuildFreshness, ticket: string | null): string 
   const unpublished = u
     ? ` CI also made #${u.build_number}, which the registry does not serve.`
     : ''
-  return `${made} ${formatAt(f.built_at) ?? '—'}, ${against} ${formatAt(f.ref_at) ?? '—'}: ${verdict}.${unpublished}`
+  const missing = missingCommitLines(f)
+  const notIn = missing.length ? `\n\nNot in this build:\n${missing.join('\n')}` : ''
+  return `${made} ${formatAt(f.built_at) ?? '—'}, ${against} ${formatAt(f.ref_at) ?? '—'}: ${verdict}.${unpublished}${notIn}`
 }
 
 export function FreshnessChip({
