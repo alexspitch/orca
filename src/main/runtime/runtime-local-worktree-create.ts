@@ -19,6 +19,7 @@ import type { RemoteFetchResult, RemoteTrackingBase } from './runtime-remote-fet
 import type { HostedReviewExecutionOptions } from '../source-control/hosted-review-git-options'
 import { hasLocalWorktreeBaseRef } from '../git/worktree-base-ref-probe'
 import { resolveRuntimeLocalWorktreeCreateCandidate } from './runtime-local-worktree-create-candidate'
+import { prepareTaskWorkBranch, taskWorkBranchOf } from '../build-web/build-web-task-branch'
 import {
   createRuntimeLocalGitWorktree,
   startRuntimeLocalBaseRefRefresh
@@ -97,9 +98,10 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
       throw error
     }
   }
+  const taskWorkBranch = taskWorkBranchOf(request.buildWebTask)
   // Overlap independent username/base reads to remove one serial Git/config round trip.
   const usernamePromise =
-    !request.branchNameOverride && settings.branchPrefix === 'git-username'
+    !request.branchNameOverride && !taskWorkBranch && settings.branchPrefix === 'git-username'
       ? resolveLocalGitUsername(repo.path)
       : Promise.resolve('')
   const baseBranchPromise = resolveWorktreeCreateBase({
@@ -145,6 +147,14 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
     fetchRemote: args.fetchRemote,
     timing: args.timing
   })
+  const taskBranch = taskWorkBranch
+    ? await prepareTaskWorkBranch({
+        repoPath: repo.path,
+        branch: taskWorkBranch,
+        remote: base.remoteTrackingBase?.remote ?? null,
+        gitOptions: worktreeGitOptions
+      })
+    : null
   const candidate = await args.timing.time('resolve_name', () =>
     resolveRuntimeLocalWorktreeCreateCandidate({
       request,
@@ -156,7 +166,8 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
       store,
       baseBranch: base.baseBranch,
       localWorktreeGitOptions: worktreeGitOptions,
-      hostedReviewExecutionContext: args.hostedReviewExecutionContext
+      hostedReviewExecutionContext: args.hostedReviewExecutionContext,
+      taskBranch
     })
   )
   const releaseInFlightHold = await holdInFlightWorktreeCreate(
@@ -212,6 +223,9 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
       addResult: git.addResult,
       ...(base.baseFallback ? { baseFallback: base.baseFallback } : {})
     }
+  } catch (error) {
+    await taskBranch?.rollback()
+    throw error
   } finally {
     releaseInFlightHold()
   }

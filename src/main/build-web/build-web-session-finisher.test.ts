@@ -33,7 +33,10 @@ vi.mock('./build-web-worktree-git-probe', () => ({
     refreshBase: async () => mocks.fetchOk.value,
     countCommits: async () => 0,
     scanBlockers: async () => [],
-    readIgnored: async () => []
+    readIgnored: async () => [],
+    readTaskBranch: async () => 'abc',
+    taskBranchAddsNothing: async () => true,
+    deleteTaskBranch: async () => {}
   })
 }))
 

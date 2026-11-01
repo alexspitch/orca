@@ -9,5 +9,7 @@ const TASK_KEY_RE = /^[A-Z][A-Z0-9]*-\d+(?:\.\d+)?$/
 export const WorktreeBuildWebTaskRequestSchema = z.object({
   issueId: z.string().trim().min(1).max(128),
   key: z.string().regex(TASK_KEY_RE),
-  consoleHost: z.string().trim().min(1).max(2048)
+  consoleHost: z.string().trim().min(1).max(2048),
+  // Why optional: a host before `build-web-work-branch.v1` strips it and names the branch itself.
+  workBranch: z.string().trim().min(1).max(255).optional()
 })

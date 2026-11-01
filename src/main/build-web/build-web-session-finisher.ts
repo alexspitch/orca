@@ -264,6 +264,7 @@ export class BuildWebSessionFinisher {
           readHead: probe.readHead,
           scanBlockers: probe.scanBlockers
         },
+        git: probe,
         reports: this.deps.reports
       },
       {

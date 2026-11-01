@@ -7,6 +7,7 @@ import {
   LOCAL_EXECUTION_HOST_ID
 } from '../../shared/execution-host'
 import type { WorktreeBuildWebTask } from '../../shared/build-web-session-types'
+import type { WorktreeMeta } from '../../shared/worktree/meta-types'
 import { sameBuildWebConsole } from '../../shared/build-web-console-origin'
 import { isFolderRepo } from '../../shared/repo-kind'
 import { splitWorktreeId } from '../../shared/worktree/id'
@@ -39,12 +40,8 @@ type TaskWorktreeStore = Pick<
   'getRepos' | 'getAllWorktreeMeta' | 'getAllWorktreeMetaForHost'
 >
 
-/** The task worktrees whose sessions live on `consoleHost`, the console connected now. */
-export function listLocalBuildWebTaskWorktrees(
-  store: TaskWorktreeStore,
-  consoleHost: string
-): BuildWebTaskWorktree[] {
-  const repos = store
+function localGitRepos(store: Pick<Store, 'getRepos'>) {
+  return store
     .getRepos()
     .filter(
       (repo) =>
@@ -52,19 +49,42 @@ export function listLocalBuildWebTaskWorktrees(
         !getRepoRoutingConnectionId(repo) &&
         !isFolderRepo(repo)
     )
-  const rows: BuildWebTaskWorktree[] = []
-  for (const [worktreeId, meta] of Object.entries(
-    readAllWorktreeMetaForHost(store, LOCAL_EXECUTION_HOST_ID)
-  )) {
-    const task = meta.buildWebTask
-    const parsed = splitWorktreeId(worktreeId)
-    const repo = parsed ? repos.find((r) => r.id === parsed.repoId) : undefined
-    if (!task || !sameBuildWebConsole(task.consoleHost, consoleHost) || !parsed || !repo) {
-      continue
+}
+
+function taskWorktreeOf(
+  repos: ReturnType<typeof localGitRepos>,
+  worktreeId: string,
+  meta: WorktreeMeta
+): BuildWebTaskWorktree | null {
+  const task = meta.buildWebTask
+  const parsed = splitWorktreeId(worktreeId)
+  const repo = parsed ? repos.find((r) => r.id === parsed.repoId) : undefined
+  return task && parsed && repo
+    ? { worktreeId, path: parsed.worktreePath, repo, meta, branch: task.branch, task }
+    : null
+}
+
+/** The task worktrees whose sessions live on `consoleHost`, the console connected now. */
+export function listLocalBuildWebTaskWorktrees(
+  store: TaskWorktreeStore,
+  consoleHost: string
+): BuildWebTaskWorktree[] {
+  const repos = localGitRepos(store)
+  return Object.entries(readAllWorktreeMetaForHost(store, LOCAL_EXECUTION_HOST_ID)).flatMap(
+    ([worktreeId, meta]) => {
+      const row = taskWorktreeOf(repos, worktreeId, meta)
+      return row && sameBuildWebConsole(row.task.consoleHost, consoleHost) ? [row] : []
     }
-    rows.push({ worktreeId, path: parsed.worktreePath, repo, meta, branch: task.branch, task })
-  }
-  return rows
+  )
+}
+
+/** A deleted task worktree, from the meta its delete dropped; null unless a local Git one. */
+export function removedBuildWebTaskWorktree(
+  store: Pick<Store, 'getRepos'>,
+  worktreeId: string,
+  meta: WorktreeMeta
+): BuildWebTaskWorktree | null {
+  return taskWorktreeOf(localGitRepos(store), worktreeId, meta)
 }
 
 async function isReadableDirectory(path: string): Promise<boolean> {

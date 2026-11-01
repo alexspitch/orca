@@ -66,12 +66,15 @@ export function TakeToWorkNewWorktree({
   client,
   repos,
   draft,
-  onChange
+  onChange,
+  workBranch
 }: {
   client: RpcClient
   repos: TakeToWorkRepo[]
   draft: NewWorktreeDraft
   onChange: (draft: NewWorktreeDraft) => void
+  /** The console's `work_branch`, when the host makes it the worktree's branch. */
+  workBranch?: string
 }) {
   const repo = repos.find((r) => r.id === draft.repoId)
   const defaultBaseRef = useDefaultBaseRef(client, repo)
@@ -111,6 +114,11 @@ export function TakeToWorkNewWorktree({
           onChangeText={(name) => onChange({ ...draft, name })}
           accessibilityLabel="Worktree name"
         />
+        {workBranch ? (
+          <Text style={partStyles.hint} numberOfLines={1}>
+            Branch: {workBranch}
+          </Text>
+        ) : null}
       </TakeToWorkField>
       {draft.repoId ? (
         <TakeToWorkField label="Base branch">

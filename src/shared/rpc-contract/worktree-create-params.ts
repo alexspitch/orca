@@ -49,7 +49,8 @@ export const WorktreeCreate = z
     linkedWorkItem: WorkspaceLinkedItemSchema.nullable().optional(),
     linkedItems: WorkspaceAttachmentsSchema.optional(),
     linkedTaskSourceContext: TaskSourceContextSchema.nullable().optional(),
-    // IS-147: an older host strips it, so clients send it only where `build-web-worktree-task.v1` is.
+    // IS-147: an older host strips it, so clients send it only where `build-web-worktree-task.v1` is,
+    // and its `workBranch` only where `build-web-work-branch.v1` is.
     buildWebTask: WorktreeBuildWebTaskRequestSchema.optional(),
     comment: OptionalString,
     displayName: OptionalString,

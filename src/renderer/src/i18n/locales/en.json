@@ -21543,6 +21543,7 @@
       "pickRepo": "Pick a repository",
       "name": "Name",
       "base": "Base branch",
+      "branch": "Branch: {{branch}}",
       "newHint": "Orca creates the worktree, then the session works in it (-no-worktree).",
       "noRepoFound": "The repository is not available.",
       "createFailed": "Could not create the worktree: {{error}}",

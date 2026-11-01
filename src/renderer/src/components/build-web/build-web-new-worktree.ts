@@ -9,20 +9,43 @@ import {
 import { runtimeEnvironmentSupportsCapability } from '@/runtime/runtime-rpc-client'
 import type { Worktree } from '../../../../shared/worktree/types'
 import type { WorktreeBuildWebTaskRequest } from '../../../../shared/build-web-session-types'
-import { BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY } from '../../../../shared/build-web-capability'
+import {
+  BUILD_WEB_WORK_BRANCH_RUNTIME_CAPABILITY,
+  BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY
+} from '../../../../shared/build-web-capability'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 
 // «Take to work» in a new worktree: made the way a task's «Start work» makes one — the repo's
 // setup policy and hook trust decide the setup script — before the session opens in it.
 
-/** This window's own main keeps it; a server only from the version that announces it. */
-async function hostKeepsBuildWebTask(target: RuntimeClientTarget): Promise<boolean> {
+/** This window's own main has it; a server only from the version that announces it. */
+async function hostSupports(target: RuntimeClientTarget, capability: string): Promise<boolean> {
   return target.kind === 'local'
     ? true
-    : runtimeEnvironmentSupportsCapability(
-        target.environmentId,
-        BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY
-      ).catch(() => false)
+    : runtimeEnvironmentSupportsCapability(target.environmentId, capability).catch(() => false)
+}
+
+/** The task link as the host takes it: none for an older host, no `workBranch` for one before it. */
+async function buildWebTaskForHost(
+  task: WorktreeBuildWebTaskRequest | undefined,
+  target: RuntimeClientTarget
+): Promise<WorktreeBuildWebTaskRequest | null> {
+  if (!task || !(await hostSupports(target, BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY))) {
+    return null
+  }
+  if (!task.workBranch || (await hostSupports(target, BUILD_WEB_WORK_BRANCH_RUNTIME_CAPABILITY))) {
+    return task
+  }
+  const { workBranch: _unsupported, ...link } = task
+  return link
+}
+
+/** The repo's host names a task worktree's branch after the console's `work_branch`. */
+export function hostTakesWorkBranch(repoId: string): Promise<boolean> {
+  const owner = resolveDirectLaunchOwnerRow(useAppStore.getState().repos, repoId)
+  return owner
+    ? hostSupports(owner.target, BUILD_WEB_WORK_BRANCH_RUNTIME_CAPABILITY)
+    : Promise.resolve(false)
 }
 
 export async function createTaskWorktree(args: {
@@ -32,7 +55,7 @@ export async function createTaskWorktree(args: {
   baseBranch: string
   /** The task the worktree is made for; dropped for a host that would not keep it. */
   buildWebTask?: WorktreeBuildWebTaskRequest
-  /** The sidebar label; the folder and branch keep `name`. */
+  /** The sidebar label; the folder keeps `name`, the branch too unless the task names its own. */
   displayName?: string
 }): Promise<Worktree | null> {
   const store = useAppStore.getState()
@@ -41,8 +64,7 @@ export async function createTaskWorktree(args: {
     toast.error(translate('buildWeb.take.noRepoFound', 'The repository is not available.'))
     return null
   }
-  const buildWebTask =
-    args.buildWebTask && (await hostKeepsBuildWebTask(owner.target)) ? args.buildWebTask : null
+  const buildWebTask = await buildWebTaskForHost(args.buildWebTask, owner.target)
   const setup = await resolveDirectSetupDecision(args.repoId, owner.repo, owner.executionHostId)
   // Why `inherit` when the repo asks per workspace: there is no composer here to ask in.
   const decision = setup.kind === 'decided' ? setup.decision : 'inherit'

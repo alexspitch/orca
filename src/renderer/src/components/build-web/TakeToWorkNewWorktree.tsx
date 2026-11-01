@@ -14,6 +14,7 @@ import { useRepoMap, useWorktreesForRepo } from '@/store/selectors'
 import { translate } from '@/i18n/i18n'
 import type { Repo } from '../../../../shared/repo-types'
 import { getRepoExecutionHostId } from '../../../../shared/execution-host'
+import { hostTakesWorkBranch } from './build-web-new-worktree'
 
 export type NewWorktreeDraft = { repoId: string; name: string; baseBranch: string }
 
@@ -38,17 +39,37 @@ function useDefaultBaseRef(repo: Repo | undefined): string | null {
   return repo?.worktreeBaseRef ?? (resolved && resolved.repoId === repoId ? resolved.ref : null)
 }
 
+/** The console's branch for the task when the picked repo's host takes it, else null. */
+function useShownWorkBranch(repoId: string, workBranch: string | undefined): string | null {
+  const [taken, setTaken] = useState<{ repoId: string; ok: boolean } | null>(null)
+  useEffect(() => {
+    if (!repoId || !workBranch) {
+      return
+    }
+    let stale = false
+    void hostTakesWorkBranch(repoId).then((ok) => !stale && setTaken({ repoId, ok }))
+    return () => {
+      stale = true
+    }
+  }, [repoId, workBranch])
+  return workBranch && taken?.repoId === repoId && taken.ok ? workBranch : null
+}
+
 /** Where the task's own worktree goes: the repository, its name and the branch it starts from. */
 export function TakeToWorkNewWorktree({
   repos,
   draft,
-  onChange
+  onChange,
+  workBranch
 }: {
   repos: Repo[]
   draft: NewWorktreeDraft
   onChange: (draft: NewWorktreeDraft) => void
+  /** The console's `work_branch`: shown when the host makes it the worktree's branch. */
+  workBranch?: string
 }): React.JSX.Element {
   const repoMap = useRepoMap()
+  const shownBranch = useShownWorkBranch(draft.repoId, workBranch)
   const repoWorktrees = useWorktreesForRepo(draft.repoId || null)
   const defaultBaseRef = useDefaultBaseRef(repoMap.get(draft.repoId))
   // Why: the base is always a named branch, never "whatever the default is" left blank.
@@ -86,6 +107,11 @@ export function TakeToWorkNewWorktree({
             value={draft.name}
             onChange={(event) => onChange({ ...draft, name: event.target.value })}
           />
+          {shownBranch ? (
+            <p className="truncate text-xs text-muted-foreground" title={shownBranch}>
+              {translate('buildWeb.take.branch', 'Branch: {{branch}}', { branch: shownBranch })}
+            </p>
+          ) : null}
         </div>
         <div className="flex min-w-0 flex-col gap-1.5">
           <Label>{translate('buildWeb.take.base', 'Base branch')}</Label>

@@ -5,6 +5,7 @@ import type { BuildWebWorktreeActivity } from './build-web-session-activity'
 import type { BuildWebWorktreeHead } from './build-web-empty-container'
 import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
 import { beginBuildWebRemoval, isBuildWebKeepInProgress } from './build-web-task-worktree-claims'
+import { settleTaskBranches, type BuildWebTaskBranchGit } from './build-web-task-branch-drop'
 
 // The finisher's delete of an empty task worktree (IS-147, plan 2.1 steps 4–5), and the frame the
 // host's other task-worktree delete shares. It runs inside the workspace delete queue as a tentative
@@ -84,6 +85,8 @@ export type BuildWebSessionRemovalDeps = {
   probe: BuildWebStillEmptyProbe
   remove: (selector: string) => Promise<RemoveWorktreeResult>
   forceDeleteBranch: (selector: string, branchName: string, head: string) => Promise<unknown>
+  /** Orca's task branch, read and deleted from the repo once the worktree is gone. */
+  git: BuildWebTaskBranchGit
   reports: Pick<BuildWebSessionReportQueue, 'hold' | 'release'>
   /** The host is shutting down: a delete that has not started stays undone. */
   stopped: () => boolean
@@ -108,31 +111,6 @@ export type BuildWebSessionRemovalOutcome =
   | { kind: 'removed'; note?: string }
   | { kind: 'cancelled'; why: string }
   | { kind: 'failed'; error: string }
-
-/**
- * Orca's own branch, left by a `-d` that refused (Git before 2.38 judges against the main HEAD):
- * deleted when it is the task's branch at the head proven to add nothing, otherwise named in the note.
- */
-async function settleTaskBranch(
-  deps: Pick<BuildWebSessionRemovalDeps, 'forceDeleteBranch'>,
-  selector: string,
-  target: BuildWebEmptyWorktree,
-  preserved: RemoveWorktreeResult['preservedBranch']
-): Promise<string | undefined> {
-  if (!preserved) {
-    return undefined
-  }
-  const head = preserved.head ?? target.head.sha
-  if (preserved.branchName === target.branch && head === target.head.sha) {
-    try {
-      await deps.forceDeleteBranch(selector, preserved.branchName, head)
-      return undefined
-    } catch (error) {
-      console.warn(`[build-web] could not delete branch ${preserved.branchName}:`, error)
-    }
-  }
-  return `branch kept: ${preserved.branchName}`
-}
 
 const IGNORED_NAMED = 5
 
@@ -212,7 +190,7 @@ export function removeEmptyBuildWebWorktree(
     lastChecks: () =>
       whyNotRemoveNow(deps, target.worktreeId, () => whyMetaChanged(deps.probe.readMeta(), target)),
     notes: async (selector, result) => [
-      await settleTaskBranch(deps, selector, target, result.preservedBranch),
+      ...(await settleTaskBranches(deps, selector, target.branch, result.preservedBranch)),
       ignoredNote(target.ignored)
     ]
   })

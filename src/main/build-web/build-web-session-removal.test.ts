@@ -63,6 +63,11 @@ function harness(removed: RemoveWorktreeResult = {}) {
     },
     remove: vi.fn(async () => removed),
     forceDeleteBranch: vi.fn(async () => ({ deleted: true })),
+    git: {
+      readTaskBranch: vi.fn(async () => 'abc'),
+      taskBranchAddsNothing: vi.fn(async () => true),
+      deleteTaskBranch: vi.fn(async () => {})
+    },
     reports,
     stopped: () => false
   }
@@ -201,17 +206,27 @@ describe('removeEmptyBuildWebWorktree', () => {
     expect(h.reports.release).toHaveBeenCalledWith('s1', undefined, undefined)
   })
 
+  it('deletes a task branch the delete never tried, as one it checked out existing', async () => {
+    const h = harness()
+    h.turn()
+    expect(await removeEmptyBuildWebWorktree(h.deps, TARGET)).toEqual({ kind: 'removed' })
+    expect(h.deps.git.deleteTaskBranch).toHaveBeenCalledWith('abc')
+    expect(h.deps.forceDeleteBranch).not.toHaveBeenCalled()
+  })
+
   it('names the branch in the report when it cannot prove or finish the delete', async () => {
-    const moved = harness({ preservedBranch: { branchName: 'is-147', head: 'def' } })
-    moved.turn()
-    expect(await removeEmptyBuildWebWorktree(moved.deps, TARGET)).toEqual({
+    const commits = harness({ preservedBranch: { branchName: 'is-147', head: 'abc' } })
+    vi.mocked(commits.deps.git.taskBranchAddsNothing).mockResolvedValueOnce(false)
+    commits.turn()
+    expect(await removeEmptyBuildWebWorktree(commits.deps, TARGET)).toEqual({
       kind: 'removed',
       note: 'branch kept: is-147'
     })
-    expect(moved.deps.forceDeleteBranch).not.toHaveBeenCalled()
+    expect(commits.deps.forceDeleteBranch).not.toHaveBeenCalled()
 
     const refused = harness({ preservedBranch: { branchName: 'is-147', head: 'abc' } })
     vi.mocked(refused.deps.forceDeleteBranch).mockRejectedValueOnce(new Error('locked'))
+    vi.mocked(refused.deps.git.deleteTaskBranch).mockRejectedValueOnce(new Error('locked'))
     refused.turn()
     expect(await removeEmptyBuildWebWorktree(refused.deps, TARGET)).toEqual({
       kind: 'removed',

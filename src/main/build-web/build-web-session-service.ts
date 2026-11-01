@@ -1,7 +1,10 @@
 import type { Store } from '../persistence'
 import type { OrcaRuntimeService } from '../runtime/orca-runtime'
 import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
-import { installBuildWebSessionReports } from './build-web-session-reports'
+import {
+  installBuildWebSessionReports,
+  setRemovedBuildWebWorktreeListener
+} from './build-web-session-reports'
 import { BuildWebSessionWatcher } from './build-web-session-watcher'
 
 // IS-147: the task-session watcher and its report queue, started by the desktop app and by orcad.
@@ -42,6 +45,9 @@ export function startBuildWebSessionService(
       stuckMs: envMs('ORCA_BUILD_WEB_SESSION_STUCK_MS', STUCK_MS),
       announceRemoved: (closed) => runtime.announceBuildWebSessionClosed(closed)
     })
+    setRemovedBuildWebWorktreeListener((worktreeId, meta) =>
+      watcher.noteRemovedTaskWorktree(worktreeId, meta)
+    )
     watcher.start()
     return watcher
   } catch (error) {

@@ -23,6 +23,7 @@ import type { RuntimeStore } from './runtime-store-contract'
 import { attributedSparsePresetId } from '../ipc/sparse-preset-attribution'
 import type { WorktreeCreateTimingRecorder } from '../worktree-create-timing'
 import { hostWorktreeTargetForRepo } from '../persistence/host-qualified-worktree-meta'
+import { createdBuildWebTask } from '../build-web/build-web-task-branch'
 
 export async function materializeRuntimeLocalWorktree<T>(args: {
   request: RuntimeManagedWorktreeCreateArgs
@@ -127,7 +128,7 @@ export async function materializeRuntimeLocalWorktree<T>(args: {
         ? { linkedTaskSourceContext: request.linkedTaskSourceContext }
         : {}),
       ...(request.buildWebTask
-        ? { buildWebTask: { ...request.buildWebTask, branch: branchName } }
+        ? { buildWebTask: createdBuildWebTask(request.buildWebTask, branchName) }
         : {}),
       ...(effectiveCreatedWithAgent ? { createdWithAgent: effectiveCreatedWithAgent } : {}),
       ...(request.pendingFirstAgentMessageRename === true && effectiveCreatedWithAgent

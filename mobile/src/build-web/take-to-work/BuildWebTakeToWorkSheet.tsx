@@ -11,7 +11,11 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { BuildWebToneChip, ProductChip, StatusChip } from '../BuildWebToneChip'
 import { CardButton, ErrorText, MutedText, ui } from '../issue/issue-card-ui'
 import { launchBuildWebTask } from './build-web-agent-launch'
-import { createTaskWorktree, type CreatedTaskWorktree } from './build-web-new-worktree'
+import {
+  createTaskWorktree,
+  taskLinkForHost,
+  type CreatedTaskWorktree
+} from './build-web-new-worktree'
 import {
   batchCheckMessage,
   defaultTakeToWorkWorktree,
@@ -40,7 +44,6 @@ import {
   supportsMobileExistingAgentLaunch
 } from '../../session/mobile-existing-agent-launch'
 import { useTakeToWorkHost } from './use-take-to-work-host'
-import { BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 
 const SETUP_CHOICES = [
   { value: 'inherit', label: 'Repo default' },
@@ -125,6 +128,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
   const worktree = worktrees.find((w) => w.worktreeId === worktreeId) ?? null
   const prompt = check.ok ? takeToWorkPrompt(issue.key, flags) : ''
   const baseUrl = status.baseUrl
+  const taskLink = taskLinkForHost(issue, baseUrl, hostCapabilities)
 
   const targetReady =
     created !== null ||
@@ -205,10 +209,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
           baseBranch: shownDraft.baseBranch,
           displayName: taskWorktreeTitle(issue),
           setupDecision,
-          // Why gated: an older host strips the field, and then nothing would say it was dropped.
-          ...(baseUrl && hostCapabilities.includes(BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY)
-            ? { buildWebTask: { issueId: issue.id, key: issue.key, consoleHost: baseUrl } }
-            : {})
+          ...(taskLink.buildWebTask ? { buildWebTask: taskLink.buildWebTask } : {})
         })
         if ('error' in made) {
           notify(made.error, 'error')
@@ -295,6 +296,7 @@ function TakeToWorkForm({ issues, onClose }: { issues: BuildWebIssueRow[]; onClo
                 repos={ownRepos}
                 draft={shownDraft}
                 onChange={setDraft}
+                workBranch={taskLink.workBranch}
               />
               <TakeToWorkField label="Setup script">
                 <MobileSegmentedControl

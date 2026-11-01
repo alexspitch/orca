@@ -101,6 +101,8 @@ export type BuildWebIssueRow = {
    * again). Absent from consoles before `agent-session-lifecycle`.
    */
   agent_session_state?: BuildWebLiveSessionState | null
+  /** The branch the skill works in, `<KEY>-<title slug>`; absent from older consoles and hosts. */
+  work_branch?: string
   /** Built in main from the stored base URL — never taken from the console's answer. */
   url: string
 }

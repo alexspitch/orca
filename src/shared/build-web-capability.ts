@@ -66,6 +66,9 @@ export const BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY = 'build-web-image-g
  */
 export const BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY = 'build-web-worktree-task.v1'
 
+/** A runtime whose «Take to work» worktree takes the console's `work_branch` as its branch. */
+export const BUILD_WEB_WORK_BRANCH_RUNTIME_CAPABILITY = 'build-web-work-branch.v1'
+
 /** A runtime whose `ui.set` takes `showInputRequiredGroup`, the «By task» Input required switch. */
 export const BUILD_WEB_INPUT_REQUIRED_GROUP_RUNTIME_CAPABILITY = 'build-web-input-required-group.v1'
 

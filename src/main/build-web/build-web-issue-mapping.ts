@@ -89,6 +89,7 @@ export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | 
     ...('agent_session_state' in v
       ? { agent_session_state: liveSessionStateOf(v.agent_session_state) }
       : {}),
+    ...(textOf(v.work_branch) ? { work_branch: textOf(v.work_branch) } : {}),
     url: buildWebIssueUrl(baseUrl, v.id, textOf(v.product))
   }
 }

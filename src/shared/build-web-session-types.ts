@@ -17,7 +17,10 @@ export type WorktreeBuildWebTask = {
 export type WorktreeBuildWebTaskRequest = Pick<
   WorktreeBuildWebTask,
   'issueId' | 'key' | 'consoleHost'
->
+> & {
+  /** The console's `work_branch`: the host checks it and makes it the worktree's branch. */
+  workBranch?: string
+}
 
 /** What the console derives from the task's status; ended rows answer their `ended_state`. */
 export const BUILD_WEB_AGENT_SESSION_STATES = [

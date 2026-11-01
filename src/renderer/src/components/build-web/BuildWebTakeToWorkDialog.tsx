@@ -142,7 +142,12 @@ function TakeToWorkForm({
             ...draft,
             name,
             displayName: taskWorktreeTitle(issue),
-            buildWebTask: { issueId: issue.id, key: issue.key, consoleHost: baseUrl }
+            buildWebTask: {
+              issueId: issue.id,
+              key: issue.key,
+              consoleHost: baseUrl,
+              ...(issue.work_branch ? { workBranch: issue.work_branch } : {})
+            }
           })
           if (created) {
             toast.loading(
@@ -239,7 +244,12 @@ function TakeToWorkForm({
           </p>
         </div>
       ) : (
-        <TakeToWorkNewWorktree repos={ownRepos} draft={draft} onChange={setDraft} />
+        <TakeToWorkNewWorktree
+          repos={ownRepos}
+          draft={draft}
+          onChange={setDraft}
+          workBranch={issue.work_branch}
+        />
       )}
       <TakeToWorkAgentPicker
         accounts={accounts}

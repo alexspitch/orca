@@ -3,10 +3,34 @@ import { createWorktreeWithNameRetry } from '../../tasks/worktree-create-retry'
 import { readNewWorktreeRuntimeCapabilities } from '../../tasks/worktree-create-capability'
 import { repoDefaultBaseRefRead } from '../../source-control/mobile-repo-base-ref-operations'
 import type { WorktreeBuildWebTaskRequest } from '../../../../src/shared/build-web-session-types'
+import type { BuildWebIssueRow } from '../../../../src/shared/build-web-types'
+import {
+  BUILD_WEB_WORK_BRANCH_RUNTIME_CAPABILITY,
+  BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY
+} from '../../../../src/shared/build-web-capability'
 import { worktreeFolderName } from '../../../../src/shared/build-web-task-session-worktree'
 
 // «Take to work» in a new worktree: the host makes it with the repo's own setup policy, then the
 // session is launched in it like in any existing one.
+
+/**
+ * The task link a host keeps, and the console's branch when the host names the worktree's branch
+ * after it. Why gated: an older host strips either field, and the sheet would promise what it dropped.
+ */
+export function taskLinkForHost(
+  issue: Pick<BuildWebIssueRow, 'id' | 'key' | 'work_branch'>,
+  consoleHost: string | null,
+  hostCapabilities: readonly string[]
+): { buildWebTask?: WorktreeBuildWebTaskRequest; workBranch?: string } {
+  if (!consoleHost || !hostCapabilities.includes(BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY)) {
+    return {}
+  }
+  const workBranch = hostCapabilities.includes(BUILD_WEB_WORK_BRANCH_RUNTIME_CAPABILITY)
+    ? issue.work_branch || undefined
+    : undefined
+  const link = { issueId: issue.id, key: issue.key, consoleHost }
+  return workBranch ? { buildWebTask: { ...link, workBranch }, workBranch } : { buildWebTask: link }
+}
 
 /** A worktree made for a task: `name` is its label, `folder` what the console keeps. */
 export type CreatedTaskWorktree = { worktreeId: string; name: string; folder: string }
@@ -21,7 +45,7 @@ export async function createTaskWorktree(args: {
   setupDecision: 'inherit' | 'run' | 'skip'
   /** The task the worktree is made for; only for a host that announces it keeps one. */
   buildWebTask?: WorktreeBuildWebTaskRequest
-  /** The sidebar label; the folder and branch keep `name`. */
+  /** The sidebar label; the folder keeps `name`, the branch too unless the task names its own. */
   displayName?: string
 }): Promise<CreatedTaskWorktree | { error: string }> {
   const created = await createWorktreeWithNameRetry({

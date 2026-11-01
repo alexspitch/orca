@@ -3,6 +3,7 @@ import {
   type BuildWebAgentSessionStatus
 } from '../../shared/build-web-session-types'
 import type { BuildWebIssueDetail } from '../../shared/build-web-types'
+import type { WorktreeMeta } from '../../shared/worktree/meta-types'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import type { Store } from '../persistence'
 import { readWorktreeMetaForHost } from '../persistence/host-qualified-worktree-meta'
@@ -20,12 +21,15 @@ import {
 } from './build-web-session-finisher'
 import { healBuildWebSessionLink, type BuildWebSessionHealRuntime } from './build-web-session-heal'
 import type { BuildWebSessionReportQueue } from './build-web-session-report-queue'
+import { dropBuildWebTaskBranch } from './build-web-task-branch-drop'
+import { createBuildWebWorktreeGitProbe } from './build-web-worktree-git-probe'
 import { watchedBuildWebSessionChange } from './build-web-session-state'
 import {
   hasBuildWebSession,
   isBuildWebTaskWorktreeBeingRemoved,
   isBuildWebTaskWorktreeGone,
   listLocalBuildWebTaskWorktrees,
+  removedBuildWebTaskWorktree,
   type BuildWebLinkedTaskWorktree,
   type BuildWebTaskWorktree
 } from './build-web-task-worktrees'
@@ -52,6 +56,8 @@ const HEAL_RETRY_MS = 10 * 60_000
 const CONFIRM_TIMEOUT_MS = 10_000
 // Why several: a folder missing once may be a volume still mounting; the cleanup is not undone.
 const GONE_LOOKS = 3
+// Why a limit: a delete that failed stays «underway» until a person retries it.
+const REMOVED_BRANCH_LOOKS = 10
 
 const readIssueInBackground = (issueId: string): Promise<BuildWebIssueDetail> =>
   getBuildWebIssue(issueId, undefined, { background: true })
@@ -66,6 +72,8 @@ export class BuildWebSessionWatcher {
   private readonly goneLooks = new Map<string, number>()
   private readonly healTriedAt = new Map<string, number>()
   private readonly unlinkedNoted = new Set<string>()
+  /** Task worktrees a person deleted: Orca's branch is looked at once their delete settled. */
+  private readonly removedBranches = new Map<string, { meta: WorktreeMeta; looks: number }>()
 
   constructor(private readonly deps: BuildWebSessionWatcherDeps) {
     this.finisher = new BuildWebSessionFinisher({
@@ -83,6 +91,13 @@ export class BuildWebSessionWatcher {
         return Boolean(session?.eligible && lookup?.settings.auto_cleanup)
       }
     })
+  }
+
+  /** A deleted task worktree; the finisher's own deletes settle their branch themselves. */
+  noteRemovedTaskWorktree(worktreeId: string, meta: WorktreeMeta): void {
+    if (!this.stopped && !this.finisher.isWorking(worktreeId)) {
+      this.removedBranches.set(worktreeId, { meta, looks: 0 })
+    }
   }
 
   /** Reports left by the last run go out now; the first full look waits one interval. */
@@ -116,6 +131,7 @@ export class BuildWebSessionWatcher {
 
   private async look(): Promise<void> {
     await this.deps.reports.drain()
+    await this.dropRemovedTaskBranches()
     const consoleHost = getBuildWebStatus().baseUrl
     const rows = consoleHost ? listLocalBuildWebTaskWorktrees(this.deps.store, consoleHost) : []
     if (rows.length === 0 || this.stopped) {
@@ -156,6 +172,40 @@ export class BuildWebSessionWatcher {
       // Why not awaited: a slow Git scan or a hung delete must not stall the next tick; the
       // finisher runs one look per worktree at a time.
       void this.finisher.finish(row, status, ps)
+    }
+  }
+
+  /** Orca's branch of a task worktree a person deleted goes when it adds nothing (plan 5). */
+  private async dropRemovedTaskBranches(): Promise<void> {
+    const { runtime, store } = this.deps
+    for (const [worktreeId, pending] of this.removedBranches) {
+      if (this.stopped) {
+        return
+      }
+      if (
+        isBuildWebTaskWorktreeBeingRemoved(runtime, worktreeId) &&
+        ++pending.looks < REMOVED_BRANCH_LOOKS
+      ) {
+        continue
+      }
+      this.removedBranches.delete(worktreeId)
+      const row = removedBuildWebTaskWorktree(store, worktreeId, pending.meta)
+      if (!row) {
+        continue
+      }
+      await dropBuildWebTaskBranch(
+        {
+          git: createBuildWebWorktreeGitProbe(runtime, store, row),
+          deletePreserved: (sha) =>
+            runtime.forceDeletePreservedBranch(
+              `id:${worktreeId}`,
+              row.branch,
+              sha,
+              LOCAL_EXECUTION_HOST_ID
+            )
+        },
+        row.branch
+      )
     }
   }
 

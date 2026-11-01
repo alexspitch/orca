@@ -18,6 +18,17 @@ const FILE_NAME = 'build-web-session-reports.json'
 
 let queue: BuildWebSessionReportQueue | null = null
 
+type RemovedTaskWorktreeListener = (worktreeId: string, meta: WorktreeMeta) => void
+
+let removedTaskWorktreeListener: RemovedTaskWorktreeListener | null = null
+
+/** The watcher hears of every deleted task worktree, to drop Orca's branch once the delete settled. */
+export function setRemovedBuildWebWorktreeListener(
+  listener: RemovedTaskWorktreeListener | null
+): void {
+  removedTaskWorktreeListener = listener
+}
+
 function sendReport(report: BuildWebSessionReport): Promise<unknown> {
   return report.kind === 'keep'
     ? keepBuildWebAgentSession(report.sessionId, { background: true })
@@ -75,8 +86,12 @@ export function reportRemovedBuildWebWorktree(
 
 export function installBuildWebSessionReports(): BuildWebSessionReportQueue {
   const reports = buildWebSessionReports()
-  setWorktreeMetaRowRemovedListener((worktreeId, meta) =>
+  setWorktreeMetaRowRemovedListener((worktreeId, meta) => {
     reportRemovedBuildWebWorktree(reports, worktreeId, meta)
-  )
+    // Why the folder: Forget keeps the checkout, and the branch stays with it.
+    if (meta.buildWebTask && !worktreeFolderExists(worktreeId)) {
+      removedTaskWorktreeListener?.(worktreeId, meta)
+    }
+  })
   return reports
 }
