@@ -12,7 +12,8 @@ export const BUILD_WEB_CARD_TABS = [
   'build',
   'guide',
   'commits',
-  'subtasks'
+  'subtasks',
+  'activity'
 ] as const
 export type BuildWebCardTab = (typeof BUILD_WEB_CARD_TABS)[number]
 

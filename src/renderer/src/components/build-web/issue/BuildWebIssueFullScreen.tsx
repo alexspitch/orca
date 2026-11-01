@@ -21,6 +21,7 @@ import { IssueCommentsTab } from './IssueCommentsTab'
 import { IssueBuildTab } from './IssueBuildTab'
 import { IssueGuideTab } from './IssueGuideTab'
 import { IssueCommitsTab } from './IssueCommitsTab'
+import { IssueActivityTab } from './IssueActivityTab'
 import { imageTally, readsRuns, writesRuns } from './issue-card-facts'
 import { useIssueRun } from './use-issue-run'
 import { useIssuePlan } from './plan/use-issue-plan'
@@ -44,7 +45,7 @@ export type BuildWebIssueTabPlace = {
   onBackToList: () => void
 }
 
-/** The task on the whole page, with build-web's tabs: Overview, Comments, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
+/** The task on the whole page, with build-web's tabs: Overview, Comments, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks, Activity. */
 export function BuildWebIssueFullScreen({
   onTakeToWork,
   inWorkspaceTab
@@ -196,14 +197,19 @@ export function BuildWebIssueFullScreen({
         return translate('buildWeb.card.subtasks', 'Subtasks {{count}}', {
           count: detail.children
         })
+      case 'activity':
+        return translate('buildWeb.card.activity', 'Activity {{count}}', {
+          count: detail.events?.length ?? 0
+        })
     }
   }
   // Why: a subtask has no subtasks of its own — the tree is two levels deep — and goes out, with
-  // its deploy note, as part of its task.
+  // its deploy note, as part of its task. An older Orca server sends no activity.
   const tabs = TABS.filter(
     (t) =>
       (showRuns || (t !== 'build' && t !== 'guide')) &&
-      ((t !== 'subtasks' && t !== 'deploy') || !detail.parent_id)
+      ((t !== 'subtasks' && t !== 'deploy') || !detail.parent_id) &&
+      (t !== 'activity' || detail.events !== undefined)
   )
   // Why: opened on Build for a task without one (a subtask, no rights), it shows Overview.
   const current = tabs.includes(tab) ? tab : 'overview'
@@ -314,6 +320,11 @@ export function BuildWebIssueFullScreen({
                 onOpen={(id) => openIssue(id, true)}
                 onChanged={state.reload}
               />
+            </TabsContent>
+          ) : null}
+          {detail.events && visited.has('activity') ? (
+            <TabsContent value="activity" forceMount hidden={current !== 'activity'}>
+              <IssueActivityTab target={target} events={detail.events} />
             </TabsContent>
           ) : null}
         </div>

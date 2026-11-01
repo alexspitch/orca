@@ -5,6 +5,7 @@ import {
   BUILD_WEB_STATUSES,
   type BuildWebAgentSession,
   type BuildWebComment,
+  type BuildWebIssueEvent,
   type BuildWebIssueFile,
   type BuildWebIssueDetail,
   type BuildWebIssueRow,
@@ -128,6 +129,22 @@ function commentOf(value: unknown): BuildWebComment | null {
     : null
 }
 
+/** A row of «Activity»; a console before IS-354 sends no result. */
+function eventOf(value: unknown): BuildWebIssueEvent | null {
+  const v = recordOf(value)
+  return v && typeof v.id === 'string' && v.id && typeof v.text === 'string' && v.text
+    ? {
+        id: v.id,
+        kind: textOf(v.kind),
+        text: v.text,
+        author: textOf(v.author),
+        created_at: textOf(v.created_at),
+        result: textOf(v.result),
+        result_text: textOf(v.result_text)
+      }
+    : null
+}
+
 function fileOf(value: unknown): BuildWebIssueFile | null {
   const v = recordOf(value)
   return v && typeof v.id === 'string' && typeof v.name === 'string'
@@ -180,6 +197,9 @@ export function issueDetailOf(baseUrl: string, value: unknown): BuildWebIssueDet
       : [],
     files: Array.isArray(card.files)
       ? card.files.map(fileOf).filter((f): f is BuildWebIssueFile => f !== null)
+      : [],
+    events: Array.isArray(card.events)
+      ? card.events.map(eventOf).filter((e): e is BuildWebIssueEvent => e !== null)
       : [],
     telegram_available: card.telegram_available === true,
     archived_at: textOrNull(issue.archived_at),

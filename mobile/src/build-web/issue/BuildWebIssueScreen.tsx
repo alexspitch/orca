@@ -26,6 +26,7 @@ import { IssueHeader } from './IssueHeader'
 import { IssueOverviewTab } from './IssueOverviewTab'
 import { IssueCommentsTab } from './IssueCommentsTab'
 import { IssueSubtasksTab } from './IssueSubtasksTab'
+import { IssueActivityTab } from './IssueActivityTab'
 import { IssueBuildTab } from './tabs/IssueBuildTab'
 import { IssueCommitsTab } from './tabs/IssueCommitsTab'
 import { IssueDeployTab } from './tabs/IssueDeployTab'
@@ -39,7 +40,7 @@ import { useIssueDetail } from './use-issue-detail'
 import { usePlanTabLabel } from './use-issue-plan-progress'
 import { useIssueRun } from './use-issue-run'
 
-/** The task on the whole screen, with build-web's tabs: Overview, Comments, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
+/** The task on the whole screen, with build-web's tabs: Overview, Comments, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks, Activity. */
 export function BuildWebIssueScreen({
   issueId,
   initialTab,
@@ -95,10 +96,12 @@ export function BuildWebIssueScreen({
   // A subtask's build is its parent's: it has no Build or Guide of its own.
   const showRuns = runsVisible && !detail.parent_id
   // Why: a subtask has no subtasks of its own, and goes out, with its deploy note, as its task.
+  // An older Orca server sends no activity.
   const tabs = BUILD_WEB_CARD_TABS.filter(
     (t) =>
       (showRuns || (t !== 'build' && t !== 'guide')) &&
-      ((t !== 'subtasks' && t !== 'deploy') || !detail.parent_id)
+      ((t !== 'subtasks' && t !== 'deploy') || !detail.parent_id) &&
+      (t !== 'activity' || detail.events !== undefined)
   )
   const current = tabs.includes(tab) ? tab : 'overview'
   const open = (next: BuildWebCardTab) => {
@@ -162,6 +165,8 @@ export function BuildWebIssueScreen({
         return 'Commits'
       case 'subtasks':
         return `Subtasks ${detail.children}`
+      case 'activity':
+        return `Activity ${detail.events?.length ?? 0}`
     }
   }
 
@@ -238,6 +243,7 @@ export function BuildWebIssueScreen({
           {pane('guide', <IssueGuideTab {...tabProps} />)}
           {pane('commits', <IssueCommitsTab {...tabProps} />)}
           {pane('subtasks', <IssueSubtasksTab detail={detail} onChanged={state.reload} />)}
+          {detail.events ? pane('activity', <IssueActivityTab events={detail.events} />) : null}
         </View>
       </ScrollView>
       {confirmElement}

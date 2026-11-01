@@ -183,6 +183,66 @@ describe('issue rows', () => {
     })
   })
 
+  it('reads the activity, keeping a kind or a result it does not know (IS-354)', () => {
+    const at = '2026-11-01T10:00:00Z'
+    const detail = issueDetailOf('https://bw.test', {
+      issue: raw,
+      events: [
+        {
+          id: 'e1',
+          kind: 'edited',
+          text: 'Статус: todo → inprogress',
+          author: 'a@x',
+          created_at: at
+        },
+        {
+          id: 'e2',
+          kind: 'notify',
+          text: 'Telegram: a@x',
+          author: 'уведомления',
+          created_at: at,
+          result: 'ok',
+          result_text: ''
+        },
+        {
+          id: 'e3',
+          kind: 'build',
+          text: 'Сборка',
+          author: 'train:t1',
+          created_at: at,
+          result: 'failed',
+          result_text: 'нет образа'
+        },
+        {
+          id: 'e4',
+          kind: 'build',
+          text: 'Сборка',
+          author: 'сборка',
+          created_at: at,
+          result: 'cancelled'
+        },
+        {
+          id: 'e5',
+          kind: 'teleport',
+          text: 'Новое',
+          author: 'ai',
+          created_at: at,
+          result: 'maybe'
+        },
+        { id: 'e6', kind: 'edited', text: '', author: 'a@x', created_at: at },
+        { kind: 'edited', text: 'no id' }
+      ]
+    })
+    expect(detail?.events?.map((e) => [e.id, e.kind, e.result, e.result_text])).toEqual([
+      ['e1', 'edited', '', ''],
+      ['e2', 'notify', 'ok', ''],
+      ['e3', 'build', 'failed', 'нет образа'],
+      ['e4', 'build', 'cancelled', ''],
+      ['e5', 'teleport', 'maybe', '']
+    ])
+    expect(issueDetailOf('https://bw.test', { issue: raw })?.events).toEqual([])
+  })
+
   it('reads the files of the task and of its comments', () => {
     const detail = issueDetailOf('https://bw.test', {
       issue: raw,

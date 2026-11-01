@@ -142,6 +142,22 @@ export type BuildWebComment = {
 export const BUILD_WEB_COMMENT_CHANNELS = ['', 'telegram', 'telegram_reply'] as const
 export type BuildWebCommentChannel = (typeof BUILD_WEB_COMMENT_CHANNELS)[number]
 
+/** IS-354: a row of the card's «Activity» — a change of the task, or an operation with it and its result. */
+export type BuildWebIssueEvent = {
+  id: string
+  /** created, edited, validation, jira, file, case, notify, build, comment, subtask, guide; a newer one is kept. */
+  kind: string
+  /** The console's own description, in Russian. */
+  text: string
+  /** A login, or the console's own actor: `train:<name>`, `watch`, `ai`, `jira`, `сборка`, … */
+  author: string
+  created_at: string
+  /** ok, failed or cancelled; '' for a change or a fact. A newer value is kept. */
+  result: string
+  /** Why it failed; for ok, the word that says it better than «success» («записано»). */
+  result_text: string
+}
+
 /** A file of the task, or of one of its comments: a screenshot, a recording, a document. */
 export type BuildWebIssueFile = {
   id: string
@@ -211,6 +227,8 @@ export type BuildWebIssueDetail = BuildWebIssueRow & {
   deleted_at: string | null
   /** Every agent session the task had, newest first (IS-147); absent from older consoles. */
   agent_sessions?: BuildWebAgentSessionRecord[]
+  /** IS-354: the task's activity, newest first; empty from older consoles, absent from older Orca servers. */
+  events?: BuildWebIssueEvent[]
 }
 
 /** The console's own sort keys for the task list. */
