@@ -17,6 +17,7 @@ import { BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY } from '../../../../src/share
 import type { BuildWebTmsStand } from '../../../../src/shared/build-web-task-types'
 import { stepsOfLines } from '../../../../src/shared/build-web-issue-steps'
 import {
+  isPerson,
   testerKindOf,
   type TesterKind
 } from '../../../../src/renderer/src/components/build-web/issue/issue-tester'
@@ -81,7 +82,15 @@ function useProductLists(product: BuildWebProduct | null): {
 
 // Why a separate form: it mounts per opening, so it starts empty.
 function IssueCreateForm({ onClose }: { onClose: () => void }) {
-  const { call, notify, openIssue, listSync, hostCapabilities } = useBuildWebScreen()
+  const {
+    call,
+    notify,
+    openIssue,
+    listSync,
+    hostCapabilities,
+    status: connection
+  } = useBuildWebScreen()
+  const creator = connection.login ?? ''
   const [product, setProduct] = useState<BuildWebProduct | null>(null)
   const [title, setTitle] = useState('')
   const [type, setType] = useState<IssueType>('bug')
@@ -110,7 +119,8 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
     ? testerKindOf({ status, parent_id: null }, asksAfterTrain ? afterTrain : 'Testing')
     : null
   const tester = picked && picked.kind === testerKind ? picked.who : ''
-  const needsTester = testerKind === 'external' && !tester
+  // IS-349: unpicked, the console gives an external check to the task's creator — a person's token.
+  const needsTester = testerKind === 'external' && !tester && !isPerson(creator)
 
   const chooseProduct = (next: string) => {
     const found = BUILD_WEB_PRODUCTS.find((p) => p === next)
@@ -284,7 +294,7 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
         {testerKind && testerKind !== 'self' ? (
           <NewIssueTesterRow
             kind={testerKind}
-            issue={{ product: product ?? 'unknown', assignee }}
+            issue={{ product: product ?? 'unknown', assignee, created_by: creator }}
             value={tester}
             disabled={busy}
             onChange={(who) => setPicked({ kind: testerKind, who })}

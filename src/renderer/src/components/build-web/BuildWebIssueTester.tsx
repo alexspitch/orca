@@ -11,7 +11,7 @@ import type { RuntimeClientTarget } from '../../../../shared/runtime-client-targ
 import { callBuildWeb } from './build-web-client'
 import { personLabel } from './build-web-labels'
 import { InlineSelect, PropertyRow } from './BuildWebPropertyControls'
-import { testerChoices, testerKindOf, type TesterKind } from './issue/issue-tester'
+import { defaultTesterOf, testerChoices, testerKindOf, type TesterKind } from './issue/issue-tester'
 
 const DEFAULT = '__default__'
 
@@ -105,7 +105,8 @@ export function IssueTesterRow({
 
 /**
  * A new task's «Tester»: the console's default, or a person for the check it is headed for. An
- * external check needs one: a task made here has no Jira author, and finish refuses it without.
+ * external check defaults to the creator (IS-349); a service token's task needs one picked, as
+ * finish refuses it without.
  */
 export function NewIssueTesterRow({
   target,
@@ -117,14 +118,15 @@ export function NewIssueTesterRow({
 }: {
   target: RuntimeClientTarget
   kind: Exclude<TesterKind, 'self'>
-  issue: Pick<BuildWebIssueRow, 'product' | 'assignee'>
+  issue: Pick<BuildWebIssueRow, 'product' | 'assignee'> & { created_by?: string }
   value: string
   disabled: boolean
   onChange: (tester: string) => void
 }): React.JSX.Element {
   const { people, load } = useBuildWebTesters(target)
   const label = translate('buildWeb.props.tester', 'Tester')
-  const missing = kind === 'external' && !value
+  const fallback = defaultTesterOf(kind, issue, people)
+  const missing = kind === 'external' && !value && !fallback
   return (
     <PropertyRow label={label}>
       <InlineSelect
@@ -139,7 +141,11 @@ export function NewIssueTesterRow({
             value: DEFAULT,
             label: missing
               ? translate('buildWeb.props.testerMissing', 'Not assigned')
-              : translate('buildWeb.props.testerDefault', 'Default')
+              : fallback
+                ? translate('buildWeb.props.testerDefaultWho', 'Default: {{who}}', {
+                    who: personLabel(fallback, people)
+                  })
+                : translate('buildWeb.props.testerDefault', 'Default')
           },
           ...testerChoices(kind, { ...issue, tester: value }, people, (who) =>
             personLabel(who, people)

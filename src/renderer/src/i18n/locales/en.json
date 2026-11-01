@@ -22047,6 +22047,7 @@
       "testerSelf": "{{who}} — self-testing",
       "testerNoAssignee": "No assignee",
       "testerDefault": "Default",
+      "testerDefaultWho": "Default: {{who}}",
       "testerMissing": "Not assigned",
       "jiraPerson": "Jira user",
       "author": "Author",

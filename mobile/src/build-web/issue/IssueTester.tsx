@@ -9,6 +9,7 @@ import type {
 import type { BuildWebTestingStatus } from '../../../../src/shared/build-web-run-types'
 import { BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 import {
+  defaultTesterOf,
   testerChoices,
   testerKindOf,
   type TesterKind
@@ -93,7 +94,7 @@ export function IssueTesterRow({
 
 /**
  * The desktop's NewIssueTesterRow: a new task's tester, the console's default or a person. An
- * external check needs one: a task made here has no Jira author, and finish refuses it without.
+ * external check defaults to the creator (IS-349); a service token's task needs one picked.
  */
 export function NewIssueTesterRow({
   kind,
@@ -103,13 +104,14 @@ export function NewIssueTesterRow({
   onChange
 }: {
   kind: Exclude<TesterKind, 'self'>
-  issue: Pick<BuildWebIssueRow, 'product' | 'assignee'>
+  issue: Pick<BuildWebIssueRow, 'product' | 'assignee'> & { created_by?: string }
   value: string
   disabled: boolean
   onChange: (tester: string) => void
 }) {
   const { people, load } = useBuildWebTesters()
-  const missing = kind === 'external' && !value
+  const fallback = defaultTesterOf(kind, issue, people)
+  const missing = kind === 'external' && !value && !fallback
   return (
     <PropertyRow label="Tester">
       <PropertySelect
@@ -119,7 +121,14 @@ export function NewIssueTesterRow({
         disabled={disabled}
         onOpen={load}
         options={[
-          { value: DEFAULT, label: missing ? 'Not assigned' : 'Default' },
+          {
+            value: DEFAULT,
+            label: missing
+              ? 'Not assigned'
+              : fallback
+                ? `Default: ${personLabel(fallback, people)}`
+                : 'Default'
+          },
           ...testerChoices(kind, { ...issue, tester: value }, people, (who) =>
             personLabel(who, people)
           )

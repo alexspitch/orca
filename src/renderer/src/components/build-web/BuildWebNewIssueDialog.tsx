@@ -38,7 +38,7 @@ import { useBuildWebAssignees, useBuildWebTarget } from './use-build-web-data'
 import { InlineSelect, PropertyRow } from './BuildWebPropertyControls'
 import { PriorityChip, StatusChip, TypeChip } from './BuildWebToneChip'
 import { NewIssueTesterRow } from './BuildWebIssueTester'
-import { testerKindOf, type TesterKind } from './issue/issue-tester'
+import { isPerson, testerKindOf, type TesterKind } from './issue/issue-tester'
 
 const NONE = '__none__'
 type IssueType = (typeof BUILD_WEB_ISSUE_TYPES)[number]
@@ -81,6 +81,7 @@ function NewIssueForm({
 }): React.JSX.Element {
   const { target } = useBuildWebTarget()
   const filtered = useBuildWebStore((s) => s.products)
+  const creator = useBuildWebStore((s) => s.status?.login ?? '')
   const [product, setProduct] = useState<BuildWebProduct | null>(() =>
     filtered.size === 1 ? ([...filtered][0] ?? null) : null
   )
@@ -112,7 +113,8 @@ function NewIssueForm({
     ? testerKindOf({ status, parent_id: null }, asksAfterTrain ? afterTrain : 'Testing')
     : null
   const tester = picked && picked.kind === testerKind ? picked.who : ''
-  const needsTester = testerKind === 'external' && !tester
+  // IS-349: unpicked, the console gives an external check to the task's creator — a person's token.
+  const needsTester = testerKind === 'external' && !tester && !isPerson(creator)
 
   const chooseProduct = (next: BuildWebProduct) => {
     if (next !== product) {
@@ -326,7 +328,7 @@ function NewIssueForm({
           <NewIssueTesterRow
             target={target}
             kind={testerKind}
-            issue={{ product: product ?? 'unknown', assignee }}
+            issue={{ product: product ?? 'unknown', assignee, created_by: creator }}
             value={tester}
             disabled={busy}
             onChange={(who) => setPicked({ kind: testerKind, who })}
