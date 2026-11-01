@@ -151,5 +151,12 @@ export function useOpenBuildWebSession() {
     [findWorktree, openWorktree]
   )
 
-  return { open, openTaskWorktree, openWorktree, listWorktrees, opening }
+  /** The task's workspace: its open session's, else the one its session chip names. */
+  const findTaskWorktree = useCallback(
+    async (issue: SessionIssue): Promise<Worktree | null> =>
+      (await findWorktree(issue, false)) ?? (await findWorktree(issue, true)),
+    [findWorktree]
+  )
+
+  return { open, openTaskWorktree, openWorktree, findTaskWorktree, listWorktrees, opening }
 }

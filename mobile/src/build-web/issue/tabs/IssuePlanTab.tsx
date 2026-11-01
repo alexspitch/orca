@@ -3,12 +3,12 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { ChevronDown } from 'lucide-react-native'
 import { planProgress } from '../../../../../src/renderer/src/components/build-web/issue/plan/issue-file-roles'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
-import { MobileMarkdown } from '../../../components/MobileMarkdown'
 import { PickerModal } from '../../../components/PickerModal'
 import { colors, radii, spacing, typography } from '../../../theme/mobile-theme'
 import type { BuildWebIssueTabProps } from '../../build-web-card-tabs'
 import { loginOf } from '../../build-web-labels'
 import { IssueAttachHint } from './plan/IssueAttachHint'
+import { IssueMarkdown } from './plan/IssueMarkdown'
 import { useIssuePlan } from './plan/use-issue-plan'
 
 /**
@@ -69,7 +69,7 @@ export function IssuePlanTab({ detail }: BuildWebIssueTabProps) {
       ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {text === null && !error ? <LoadingSpinner size={16} color={colors.textMuted} /> : null}
-      {text !== null ? <MobileMarkdown content={text} /> : null}
+      {text !== null ? <IssueMarkdown detail={detail} text={text} /> : null}
       <PickerModal
         visible={picking}
         title="Plan file"

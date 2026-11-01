@@ -7,13 +7,13 @@ import {
   isWritingDeployNotes
 } from '../../../../../src/renderer/src/components/build-web/issue/plan/deploy-notes-job'
 import { LoadingSpinner } from '../../../components/LoadingSpinner'
-import { MobileMarkdown } from '../../../components/MobileMarkdown'
 import { PickerModal } from '../../../components/PickerModal'
 import { colors, radii, spacing, typography } from '../../../theme/mobile-theme'
 import type { BuildWebIssueTabProps } from '../../build-web-card-tabs'
 import { loginOf } from '../../build-web-labels'
 import { GuideButton } from './guide/GuideButton'
 import type { IssueDeployNotes } from './plan/use-issue-deploy-notes'
+import { IssueMarkdown } from './plan/IssueMarkdown'
 import { useIssuePlan } from './plan/use-issue-plan'
 
 const whenOf = (job: BuildWebDeployNotesJob) =>
@@ -143,7 +143,7 @@ export function IssueDeployTab({
       ) : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       {text === null && !error ? <LoadingSpinner size={16} color={colors.textMuted} /> : null}
-      {text !== null ? <MobileMarkdown content={text} /> : null}
+      {text !== null ? <IssueMarkdown detail={detail} text={text} /> : null}
       <PickerModal
         visible={picking}
         title="Note file"
