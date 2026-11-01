@@ -95,6 +95,22 @@ async function openMobileFileTapAsync<T extends FileTapSessionTab>(
   }
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: Preserve the established response shape at this boundary.
   const resolved = accepted.value as RuntimeTerminalPathResolution
+  if (resolved.openTarget?.kind === 'absolute-directory') {
+    if (shouldActivateOpenedMobileSessionTab(options.getActivationState(false))) {
+      options.triggerOpenFeedback()
+      options.pushPreviewRoute(
+        createMobileFilePreviewHref({
+          hostId: options.hostId,
+          worktreeId: resolved.worktree?.trim() || options.worktreeId,
+          source: 'terminalFolder',
+          absolutePath: resolved.openTarget.absolutePath,
+          grantId: resolved.openTarget.grantId,
+          name: displayNameFromPath(resolved.openTarget.absolutePath)
+        })
+      )
+    }
+    return
+  }
   if (!resolved.exists || resolved.isDirectory) {
     reportOpenFailure(options)
     return

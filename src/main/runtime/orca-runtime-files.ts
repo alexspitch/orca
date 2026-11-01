@@ -137,6 +137,24 @@ export class RuntimeFileCommands {
     )
   }
 
+  listTerminalArtifactDirectory(
+    ...args: Parameters<RuntimeTerminalArtifacts['listTerminalArtifactDirectory']>
+  ) {
+    return this.artifacts.listTerminalArtifactDirectory(...args)
+  }
+
+  grantTerminalArtifactDirectoryFile(
+    ...args: Parameters<RuntimeTerminalArtifacts['grantTerminalArtifactDirectoryFile']>
+  ) {
+    return this.artifacts.grantTerminalArtifactDirectoryFile(...args)
+  }
+
+  readTerminalArtifactChunk(
+    ...args: Parameters<RuntimeTerminalArtifacts['readTerminalArtifactChunk']>
+  ) {
+    return this.artifacts.readTerminalArtifactChunk(...args)
+  }
+
   writeTerminalArtifactFile(
     worktreeSelector: string,
     grantId: string,

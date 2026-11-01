@@ -32,6 +32,7 @@ import { openTerminalHtmlFileInBrowser } from './terminal-file-link-browser-open
 export { isHtmlFilePath } from './local-html-file-destinations'
 import { refuseOpenInGroupRequest } from './terminal-file-open-in-group-toast'
 import { isExplicitEditorScopeKept, openLinkedFileInEditor } from './terminal-file-link-editor-open'
+import { openTerminalFolder } from '../terminal-artifact-folder/terminal-folder-open'
 
 export {
   getTerminalFileContext,
@@ -158,7 +159,7 @@ export function openDetectedFilePath(
       if (linkOwner?.kind === 'grant') {
         hostGrantId = linkOwner.grantId
         mappedFilePath = linkOwner.absolutePath
-        statResult = { isDirectory: false, escapesWorktree: true }
+        statResult = { isDirectory: linkOwner.isDirectory, escapesWorktree: true }
       } else if (linkOwner?.kind === 'client') {
         clientLocal = true
         fileContext = {
@@ -224,9 +225,7 @@ export function openDetectedFilePath(
       if (refuseExplicitNonEditorRoute()) {
         return
       }
-      if (canOpenWithSystemDefault) {
-        await window.api.shell.openFilePath(mappedFilePath, LOCAL_EXECUTION_HOST_ID)
-      }
+      await openTerminalFolder(fileContext, worktreeId, mappedFilePath, hostGrantId)
       return
     }
 

@@ -4,7 +4,8 @@ export type MobileFilePreviewRouteParams = {
   hostId: string
   worktreeId: string
   relativePath?: string
-  source?: 'worktree' | 'terminalArtifact'
+  /** `terminalFolder`: a server folder a terminal printed, listed instead of previewed. */
+  source?: 'worktree' | 'terminalArtifact' | 'terminalFolder'
   absolutePath?: string
   grantId?: string
   terminal?: string
@@ -64,6 +65,23 @@ export function normalizeMobileFilePreviewRouteParams(
   const grantId = singleParam(params.grantId)
   if (!hostId || !worktreeId) {
     return { ok: false, message: 'Unable to load preview' }
+  }
+  if (source === 'terminalFolder') {
+    if (!absolutePath || !grantId) {
+      return { ok: false, message: 'Unable to load the folder' }
+    }
+    return {
+      ok: true,
+      params: {
+        hostId,
+        worktreeId,
+        source,
+        absolutePath,
+        grantId,
+        name: optionalSingleParam(params.name),
+        worktreeName: optionalSingleParam(params.worktreeName)
+      }
+    }
   }
   if (source === 'terminalArtifact') {
     if (!absolutePath || !grantId) {

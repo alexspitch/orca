@@ -63,7 +63,27 @@ export type RuntimeTerminalPathOpenTarget =
       grantId: string
       readOnly?: true
     }
+  | {
+      // A folder under the host's temp dir the terminal printed: listed, its files granted one by one.
+      kind: 'absolute-directory'
+      provider: 'local'
+      absolutePath: string
+      grantId: string
+    }
   | { kind: 'unsupported'; reason: string }
+
+/** A file of a granted terminal folder, by its path under it. */
+export type RuntimeTerminalArtifactDirectoryEntry = { relativePath: string; size: number }
+
+export type RuntimeTerminalArtifactDirectoryListing = {
+  entries: RuntimeTerminalArtifactDirectoryEntry[]
+  /** More files than the listing holds, or a folder deeper than it walks. */
+  truncated: boolean
+}
+
+// Why a capability: an older host grants no folder, so a client asks before offering the list.
+export const TERMINAL_ARTIFACT_DIRECTORY_RUNTIME_CAPABILITY =
+  'files.terminal-artifact-directory.v1' as const
 
 export type RuntimeNativeChatFileContext = {
   tabId: string

@@ -48,6 +48,8 @@ export const EXECUTION_HOST_METHODS = [
   'files.readPreview',
   'files.readTerminalArtifact',
   'files.readTerminalArtifactPreview',
+  'files.listTerminalArtifactDirectory',
+  'files.grantTerminalArtifactDirectoryFile',
   'files.resolveTerminalPath',
   'files.searchPaths',
   'files.stat',

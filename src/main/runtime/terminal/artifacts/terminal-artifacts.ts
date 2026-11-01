@@ -6,14 +6,22 @@ import {
 } from './file-grants'
 import type {
   RuntimeFilePreviewResult,
+  RuntimeFileReadChunkResult,
   RuntimeFileReadResult,
+  RuntimeTerminalArtifactDirectoryListing,
   RuntimeTerminalPathResolution
 } from '../../../../shared/runtime-file-contracts'
 import {
   canonicalPathForArtifactComparison,
   isTerminalArtifactHardLinked,
+  localTerminalArtifactRoots,
   truncateMobileFilePreview
 } from './artifact-integrity'
+import {
+  listTerminalArtifactDirectory,
+  readTerminalArtifactChunk,
+  terminalArtifactDirectoryFile
+} from './artifact-directory'
 import {
   resolveAllowedLocalTerminalArtifactPath,
   openLocalTerminalArtifactGrant,
@@ -64,6 +72,9 @@ export class RuntimeTerminalArtifacts {
   }): Promise<RuntimeTerminalPathResolution> {
     const { stats, contentDigest } = await statLocalTerminalArtifact(args.artifactPath)
     const isDirectory = stats.isDirectory()
+    if (isDirectory) {
+      return this.resolveDirectoryGrant(args)
+    }
     if (!isDirectory && isTerminalArtifactHardLinked(stats)) {
       return {
         worktree: args.worktreeId,
@@ -100,6 +111,103 @@ export class RuntimeTerminalArtifacts {
           }
         : undefined
     }
+  }
+
+  /** A folder grant; the temp dir itself is never granted whole. */
+  private async resolveDirectoryGrant(args: {
+    worktreeId: string
+    artifactPath: string
+    clientId?: string
+  }): Promise<RuntimeTerminalPathResolution> {
+    const roots = await localTerminalArtifactRoots('')
+    const grant = roots.includes(args.artifactPath)
+      ? null
+      : this.grants.createTerminalDirectoryGrant({
+          worktreeId: args.worktreeId,
+          absolutePath: args.artifactPath,
+          clientId: args.clientId
+        })
+    return {
+      worktree: args.worktreeId,
+      relativePath: null,
+      absolutePath: args.artifactPath,
+      exists: true,
+      isDirectory: true,
+      openTarget: grant
+        ? {
+            kind: 'absolute-directory',
+            provider: 'local',
+            absolutePath: args.artifactPath,
+            grantId: grant.id
+          }
+        : undefined
+    }
+  }
+
+  async listTerminalArtifactDirectory(
+    worktreeSelector: string,
+    grantId: string,
+    absolutePath: string,
+    clientId?: string
+  ): Promise<RuntimeTerminalArtifactDirectoryListing> {
+    const { grant } = await this.grants.requireTerminalFileGrant(
+      worktreeSelector,
+      grantId,
+      absolutePath,
+      clientId
+    )
+    if (!grant.isDirectory) {
+      throw new Error('terminal_file_grant_mismatch')
+    }
+    this.grants.refreshTerminalFileGrant(grant)
+    return listTerminalArtifactDirectory(grant.absolutePath)
+  }
+
+  /** A read-only grant on one file of a granted folder, to preview or download it. */
+  async grantTerminalArtifactDirectoryFile(
+    worktreeSelector: string,
+    grantId: string,
+    absolutePath: string,
+    relativePath: string,
+    clientId?: string
+  ): Promise<RuntimeTerminalPathResolution> {
+    const { grant } = await this.grants.requireTerminalFileGrant(
+      worktreeSelector,
+      grantId,
+      absolutePath,
+      clientId
+    )
+    const file = grant.isDirectory ? await terminalArtifactDirectoryFile(grant, relativePath) : null
+    if (!file) {
+      throw new Error('terminal_file_grant_mismatch')
+    }
+    this.grants.refreshTerminalFileGrant(grant)
+    return this.resolveAbsoluteFileGrant({
+      worktreeId: grant.worktreeId,
+      artifactPath: file,
+      clientId,
+      readOnly: true,
+      provenance: grant.provenance
+    })
+  }
+
+  async readTerminalArtifactChunk(
+    worktreeSelector: string,
+    grantId: string,
+    absolutePath: string,
+    offset: number,
+    length: number,
+    clientId?: string
+  ): Promise<RuntimeFileReadChunkResult> {
+    const { grant } = await this.grants.requireTerminalFileGrant(
+      worktreeSelector,
+      grantId,
+      absolutePath,
+      clientId
+    )
+    const chunk = await readTerminalArtifactChunk(grant, offset, length)
+    this.grants.refreshTerminalFileGrant(grant)
+    return chunk
   }
 
   async readTerminalArtifactFile(

@@ -27,13 +27,13 @@ export type HostWorkspaceFile = {
 /** A path the host disowned that this computer has; the user's click here is the only authority to read it. */
 export type ClientLocalFile = { kind: 'client'; isDirectory: boolean }
 
-/** A host file outside every workspace that the host granted because this terminal printed it. */
+/** A host file — or a folder under its temp dir — outside every workspace, granted because this terminal printed it. */
 export type HostGrantedFile = {
   kind: 'grant'
   /** The host's canonical path; the grant is bound to it. */
   absolutePath: string
   grantId: string
-  isDirectory: false
+  isDirectory: boolean
 }
 
 /** The host answered: it has no file there this client may open. Transport failures stay other errors. */
@@ -118,6 +118,15 @@ export async function resolveHostWorkspaceFile(
         absolutePath: openTarget.absolutePath,
         grantId: openTarget.grantId,
         isDirectory: false
+      }
+    }
+    if (openTarget?.kind === 'absolute-directory') {
+      // Why: its files are listed and granted one by one through this folder grant.
+      return {
+        kind: 'grant',
+        absolutePath: openTarget.absolutePath,
+        grantId: openTarget.grantId,
+        isDirectory: true
       }
     }
     if (resolved.exists) {

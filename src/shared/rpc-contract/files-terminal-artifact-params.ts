@@ -17,3 +17,16 @@ export const TerminalArtifactFileWrite = TerminalArtifactFile.extend({
     .unknown()
     .refine((v): v is string => typeof v === 'string', { message: 'Missing file content' })
 })
+
+export const TerminalArtifactDirectoryFile = TerminalArtifactFile.extend({
+  relativePath: z.string().min(1).max(4096)
+})
+
+export const TerminalArtifactChunk = TerminalArtifactFile.extend({
+  offset: z.number().int().min(0),
+  length: z
+    .number()
+    .int()
+    .min(1)
+    .max(512 * 1024)
+})

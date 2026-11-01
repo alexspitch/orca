@@ -34,6 +34,8 @@ export type TerminalFileGrant = {
   // Linux can reuse inodes and coarse mtimes; the digest catches same-size content swaps.
   contentDigest: string | null
   readOnly: boolean
+  /** A folder the terminal named: its files are listed and granted one by one, never read as one. */
+  isDirectory?: true
   provenance: 'terminal-output' | 'native-chat'
   expiryTimer?: ReturnType<typeof setTimeout>
 }
@@ -64,6 +66,30 @@ export class RuntimeTerminalFileGrants {
       contentDigest: args.contentDigest ?? null,
       readOnly: args.readOnly === true,
       provenance: args.provenance
+    }
+    this.terminalFileGrants.set(grant.id, grant)
+    this.scheduleTerminalFileGrantExpiry(grant)
+    return grant
+  }
+
+  /** A read-only grant on a folder; no stat identity, since its files come and go. */
+  createTerminalDirectoryGrant(args: {
+    worktreeId: string
+    absolutePath: string
+    clientId?: string
+  }): TerminalFileGrant {
+    const grant: TerminalFileGrant = {
+      id: randomUUID(),
+      worktreeId: args.worktreeId,
+      absolutePath: args.absolutePath,
+      provider: 'local',
+      ...(args.clientId ? { clientId: args.clientId } : {}),
+      expiresAt: Date.now() + TERMINAL_FILE_GRANT_TTL_MS,
+      statIdentity: null,
+      contentDigest: null,
+      readOnly: true,
+      isDirectory: true,
+      provenance: 'terminal-output'
     }
     this.terminalFileGrants.set(grant.id, grant)
     this.scheduleTerminalFileGrantExpiry(grant)

@@ -23343,5 +23343,19 @@
   },
   "browserTab": {
     "agentDriving": "An agent is using this page"
+  },
+  "terminalArtifactFolder": {
+    "title": "Folder on the server",
+    "listFailed": "Could not list the folder.",
+    "loading": "Reading the folder…",
+    "empty": "The folder has no files.",
+    "open": "Open",
+    "openFailed": "Could not open the file.",
+    "download": "Download",
+    "downloadFailed": "Could not download the file.",
+    "truncated": "Only the first {{count}} files are listed.",
+    "tooBig": "The folder is over {{size}}; download its files one by one.",
+    "zipFailed": "Could not download the folder.",
+    "downloadAll": "Download all (.zip)"
   }
 }

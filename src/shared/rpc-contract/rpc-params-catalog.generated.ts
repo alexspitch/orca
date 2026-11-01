@@ -314,7 +314,12 @@ import {
   ServerDirectoryBrowse
 } from './files-params'
 import { FileOpen, FileWatch, WorktreeSelector } from './files-target-params'
-import { TerminalArtifactFile, TerminalArtifactFileWrite } from './files-terminal-artifact-params'
+import {
+  TerminalArtifactChunk,
+  TerminalArtifactDirectoryFile,
+  TerminalArtifactFile,
+  TerminalArtifactFileWrite
+} from './files-terminal-artifact-params'
 import {
   FolderWorkspaceCreate,
   FolderWorkspacePathStatus,
@@ -1155,9 +1160,11 @@ export const RPC_PARAMS_BY_METHOD = {
   'files.createDirNoClobber': FileMutationOpen,
   'files.createFile': FileMutationOpen,
   'files.delete': FileDelete,
+  'files.grantTerminalArtifactDirectoryFile': TerminalArtifactDirectoryFile,
   'files.list': WorktreeSelector,
   'files.listAll': FileListAll,
   'files.listMarkdownDocuments': WorktreeSelector,
+  'files.listTerminalArtifactDirectory': TerminalArtifactFile,
   'files.open': FileOpenTab,
   'files.openDiff': FileOpenDiff,
   'files.pathsExist': FilePathsExist,
@@ -1167,6 +1174,7 @@ export const RPC_PARAMS_BY_METHOD = {
   'files.readDocPreview': DocPreviewFileRead,
   'files.readPreview': FileOpen,
   'files.readTerminalArtifact': TerminalArtifactFile,
+  'files.readTerminalArtifactChunk': TerminalArtifactChunk,
   'files.readTerminalArtifactPreview': TerminalArtifactFile,
   'files.rename': FileRename,
   'files.resolveTerminalPath': ResolveTerminalPath,

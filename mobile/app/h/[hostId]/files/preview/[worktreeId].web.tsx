@@ -2,6 +2,7 @@ import { withWorkspaceRoute } from '../../../../../src/navigation/workspace-rout
 import { useLocalSearchParams } from 'expo-router'
 import { MobileFilePreviewScreen } from '../../../../../src/files/MobileFilePreviewScreen'
 import { normalizeMobileFilePreviewRouteParams } from '../../../../../src/files/mobile-file-preview-route'
+import { MobileTerminalFolderScreen } from '../../../../../src/files/MobileTerminalFolderScreen'
 
 // Render screen directly: native sibling imports a shell module that throws in browsers, and manifest imports every route.
 export default withWorkspaceRoute(function MobileFilePreviewRoute() {
@@ -22,5 +23,15 @@ export default withWorkspaceRoute(function MobileFilePreviewRoute() {
     name?: string | string[]
     worktreeName?: string | string[]
   }>()
-  return <MobileFilePreviewScreen route={normalizeMobileFilePreviewRouteParams(params)} />
+  const route = normalizeMobileFilePreviewRouteParams(params)
+  const folder = route.ok && route.params.source === 'terminalFolder' ? route.params : null
+  // Why here: a terminal folder lists its files; each opens back on this route as a terminal artifact.
+  if (folder?.absolutePath && folder.grantId) {
+    return (
+      <MobileTerminalFolderScreen
+        params={{ ...folder, absolutePath: folder.absolutePath, grantId: folder.grantId }}
+      />
+    )
+  }
+  return <MobileFilePreviewScreen route={route} />
 })
