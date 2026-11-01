@@ -13,6 +13,17 @@ export type TesterKind = 'testing' | 'external' | 'self'
 /** A person known only from Jira: `jira:<accountId>`, no e-mail. */
 export const isJiraLogin = (who: string): boolean => who.startsWith('jira:')
 
+/** IS-349: a real person — an address, not a Jira account and not a service login (`ai`, `сборка`). */
+export const isPerson = (who: string): boolean => who.includes('@') && !isJiraLogin(who)
+
+type AuthorFields = Pick<BuildWebIssueRow, 'jira_author'> & { created_by?: string }
+
+/** IS-349: the task's author — the card's «Author», else its creator when that is a person. */
+function authorOf(issue: AuthorFields): string {
+  const creator = issue.created_by ?? ''
+  return issue.jira_author || (isPerson(creator) ? creator : '')
+}
+
 /** By the status while under check, else by «After the train». Null: nobody accepts it. */
 export function testerKindOf(
   issue: Pick<BuildWebIssueRow, 'status' | 'parent_id'>,
@@ -46,10 +57,10 @@ const ROLES_OF: Record<Exclude<TesterKind, 'self'>, readonly BuildWebUserRole[]>
   external: ['ps_engineer', 'analyst']
 }
 
-/** Whom the console puts there by default: the product's tester, the Jira creator, the assignee. */
+/** Whom the console puts there by default: the product's tester, the task's author, the assignee. */
 export function defaultTesterOf(
   kind: TesterKind | null,
-  issue: Pick<BuildWebIssueRow, 'product' | 'assignee' | 'jira_author'>,
+  issue: Pick<BuildWebIssueRow, 'product' | 'assignee'> & AuthorFields,
   people: readonly BuildWebTester[]
 ): string {
   if (kind === 'self') {
@@ -61,13 +72,13 @@ export function defaultTesterOf(
     )
     return own?.email || issue.assignee
   }
-  return kind === 'external' ? (issue.jira_author ?? '') : ''
+  return kind === 'external' ? authorOf(issue) : ''
 }
 
 /** The picker's people: the kind's roles, the current tester and the default, by name. */
 export function testerChoices(
   kind: TesterKind | null,
-  issue: Pick<BuildWebIssueRow, 'product' | 'assignee' | 'jira_author' | 'tester'>,
+  issue: Pick<BuildWebIssueRow, 'product' | 'assignee' | 'tester'> & AuthorFields,
   people: readonly BuildWebTester[],
   label: (who: string) => string
 ): { value: string; label: string }[] {

@@ -25,7 +25,8 @@ import { callBuildWeb } from './build-web-client'
 import { BUILD_WEB_PRIORITIES, loginOf, productLabel, typeLabel } from './build-web-labels'
 import { PriorityChip, StatusChip, TypeChip } from './BuildWebToneChip'
 import { InlineSelect, PropertyRow, type PropertyOption } from './BuildWebPropertyControls'
-import { IssueTesterRow } from './BuildWebIssueTester'
+import { IssueTesterRow, useBuildWebTesters } from './BuildWebIssueTester'
+import { IssueAuthorRow, IssueRecipientsRow } from './BuildWebIssueAuthor'
 
 const NONE = '__none__'
 const PRODUCTS: readonly BuildWebProduct[] = BUILD_WEB_PRODUCTS
@@ -101,6 +102,8 @@ export function BuildWebIssueProperties({
   const standList = stands?.product === product ? stands.list : []
   const versionList = releases?.product === product ? releases.list : versions
   const busy = disabled || reading
+  const testers = useBuildWebTesters(target, detail.tester !== undefined)
+  const peopleProps = { people: testers.people, onOpen: testers.load, disabled: busy, onSave }
 
   /** Another stand is another build and another mode: both are read off it and frozen again. */
   const chooseStand = async (standId: string | null) => {
@@ -191,6 +194,13 @@ export function BuildWebIssueProperties({
             options={people}
           />
         </PropertyRow>
+        {/* IS-349: a console that sends the recipients lets the author be changed too. */}
+        {detail.notify_recipients === undefined ? null : (
+          <>
+            <IssueAuthorRow detail={detail} {...peopleProps} />
+            {child ? null : <IssueRecipientsRow detail={detail} {...peopleProps} />}
+          </>
+        )}
         {child ? null : (
           <>
             <PropertyRow label={translate('buildWeb.props.product', 'Product')}>
@@ -315,11 +325,9 @@ export function BuildWebIssueProperties({
         {/* IS-347: a console that sends the tester; a subtask has none, its parent is checked. */}
         {child || detail.tester === undefined ? null : (
           <IssueTesterRow
-            target={target}
             detail={detail}
+            {...peopleProps}
             afterTrain={testing?.value ?? detail.after_train ?? 'Testing'}
-            disabled={busy}
-            onSave={onSave}
           />
         )}
         <PropertyRow label={translate('buildWeb.detail.forAi', 'Handed to AI')}>

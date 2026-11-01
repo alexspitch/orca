@@ -38,30 +38,20 @@ export function PropertySelect<T extends string>({
   const current = options.find((o) => o.value === value)
   return (
     <>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        accessibilityState={{ disabled }}
+      <PropertyTrigger
+        label={label}
         disabled={disabled}
         onPress={() => {
           onOpen?.()
           setOpen(true)
         }}
-        style={({ pressed }) => [
-          styles.trigger,
-          disabled ? styles.disabled : null,
-          pressed ? styles.pressed : null
-        ]}
       >
-        <View style={styles.shown}>
-          {shown ?? (
-            <Text style={styles.text} numberOfLines={1}>
-              {current?.label ?? '—'}
-            </Text>
-          )}
-        </View>
-        <ChevronDown size={14} color={colors.textMuted} />
-      </Pressable>
+        {shown ?? (
+          <Text style={styles.text} numberOfLines={1}>
+            {current?.label ?? '—'}
+          </Text>
+        )}
+      </PropertyTrigger>
       <PickerModal
         visible={open}
         title={label}
@@ -76,6 +66,37 @@ export function PropertySelect<T extends string>({
         onClose={() => setOpen(false)}
       />
     </>
+  )
+}
+
+/** The closed control of a property: its value and a chevron; a press opens the picker. */
+export function PropertyTrigger({
+  label,
+  disabled,
+  onPress,
+  children
+}: {
+  label: string
+  disabled: boolean
+  onPress: () => void
+  children: ReactNode
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.trigger,
+        disabled ? styles.disabled : null,
+        pressed ? styles.pressed : null
+      ]}
+    >
+      <View style={styles.shown}>{children}</View>
+      <ChevronDown size={14} color={colors.textMuted} />
+    </Pressable>
   )
 }
 

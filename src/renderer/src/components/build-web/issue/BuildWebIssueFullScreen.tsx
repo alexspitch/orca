@@ -17,6 +17,7 @@ import { BuildWebIssueSubtasks } from '../BuildWebIssueSubtasks'
 import { IssueHeader } from './IssueHeader'
 import { useIssueArchive } from './use-issue-archive'
 import { IssueOverviewTab } from './IssueOverviewTab'
+import { IssueCommentsTab } from './IssueCommentsTab'
 import { IssueBuildTab } from './IssueBuildTab'
 import { IssueGuideTab } from './IssueGuideTab'
 import { IssueCommitsTab } from './IssueCommitsTab'
@@ -43,7 +44,7 @@ export type BuildWebIssueTabPlace = {
   onBackToList: () => void
 }
 
-/** The task on the whole page, with build-web's tabs: Overview, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
+/** The task on the whole page, with build-web's tabs: Overview, Comments, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
 export function BuildWebIssueFullScreen({
   onTakeToWork,
   inWorkspaceTab
@@ -166,6 +167,10 @@ export function BuildWebIssueFullScreen({
     switch (t) {
       case 'overview':
         return translate('buildWeb.card.overview', 'Overview')
+      case 'comments':
+        return translate('buildWeb.card.comments', 'Comments {{count}}', {
+          count: detail.comments.length
+        })
       case 'plan':
         return planLabel()
       case 'mockups':
@@ -240,6 +245,11 @@ export function BuildWebIssueFullScreen({
               onOpenIssue={(id) => openIssue(id, true)}
             />
           </TabsContent>
+          {visited.has('comments') ? (
+            <TabsContent value="comments" forceMount hidden={current !== 'comments'}>
+              <IssueCommentsTab target={target} state={state} />
+            </TabsContent>
+          ) : null}
           {visited.has('plan') ? (
             <TabsContent value="plan" forceMount hidden={current !== 'plan'}>
               <IssuePlanTab detail={detail} plan={plan} />

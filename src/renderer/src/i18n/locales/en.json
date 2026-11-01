@@ -21649,7 +21649,8 @@
       "updateServerSessions": "This Orca server does not follow task sessions yet. Update the server.",
       "updateServerTranscript": "This Orca server does not hand out session logs yet. Update the server.",
       "updateServerDeployNotes": "This Orca server does not show deploy notes yet. Update the server.",
-      "updateServerTester": "This Orca server does not know testers and self-testing yet. Update the server."
+      "updateServerTester": "This Orca server does not know testers and self-testing yet. Update the server.",
+      "updateServerAuthor": "This Orca server cannot change a task’s author and extra recipients yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -21760,6 +21761,7 @@
     },
     "card": {
       "overview": "Overview",
+      "comments": "Comments {{count}}",
       "buildCount": "Build {{ok}} / {{total}}",
       "build": "Build",
       "guide": "Guide & Jira",
@@ -22046,7 +22048,12 @@
       "testerNoAssignee": "No assignee",
       "testerDefault": "Default",
       "testerMissing": "Not assigned",
-      "jiraPerson": "Jira user"
+      "jiraPerson": "Jira user",
+      "author": "Author",
+      "authorCreator": "Creator: {{who}}",
+      "recipients": "Extra recipients",
+      "recipientsNone": "Nobody",
+      "recipientsHint": "They get the notice that the task went out, together with the author"
     },
     "run": {
       "dismiss": "Dismiss",

@@ -135,6 +135,13 @@ describe('issue rows', () => {
     })
   })
 
+  it('reads the extra recipients only from a console that sends them (IS-349)', () => {
+    expect(issueRowOf('https://bw.test', raw)).not.toHaveProperty('notify_recipients')
+    expect(
+      issueRowOf('https://bw.test', { ...raw, notify_recipients: ['ann@x.test', 7] })
+    ).toMatchObject({ notify_recipients: ['ann@x.test'] })
+  })
+
   it('reads the card with its branches and comments', () => {
     const detail = issueDetailOf('https://bw.test', {
       issue: { ...raw, description: 'text', steps: [{ text: 'one' }, 5] },

@@ -16,6 +16,7 @@ export type IssueCheckOption = {
 export function IssueCheckSheet({
   visible,
   title,
+  subtitle,
   resetLabel,
   options,
   selected,
@@ -25,6 +26,8 @@ export function IssueCheckSheet({
 }: {
   visible: boolean
   title: string
+  /** What the choice does, under the title. */
+  subtitle?: string
   resetLabel: string
   options: readonly IssueCheckOption[]
   selected: ReadonlySet<string>
@@ -35,6 +38,7 @@ export function IssueCheckSheet({
   return (
     <BottomDrawer visible={visible} onClose={onClose}>
       <Text style={styles.title}>{title}</Text>
+      {subtitle ? <Text style={styles.note}>{subtitle}</Text> : null}
       <View style={styles.presets}>
         <Pressable
           accessibilityRole="button"
@@ -81,6 +85,12 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '600',
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm
+  },
+  note: {
+    color: colors.textMuted,
+    fontSize: typography.metaSize,
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.sm
   },

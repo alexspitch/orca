@@ -92,6 +92,9 @@ export function issueRowOf(baseUrl: string, value: unknown): BuildWebIssueRow | 
       : {}),
     ...(textOf(v.work_branch) ? { work_branch: textOf(v.work_branch) } : {}),
     ...testerFieldsOf(v),
+    ...(Array.isArray(v.notify_recipients)
+      ? { notify_recipients: textsOf(v.notify_recipients) }
+      : {}),
     url: buildWebIssueUrl(baseUrl, v.id, textOf(v.product))
   }
 }

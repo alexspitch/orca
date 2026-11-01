@@ -27,7 +27,14 @@ export type PageTarget = Exclude<ActivityTarget, { kind: 'job' }>
 // The console's train row: `Поезд «<name>»: не удался шаг «<step>»`.
 const TRAIN_NAME = /«([^»]+)»/
 
-/** A build or a push is about the task's build, so the card opens on that tab. */
+/** The tab a task's notice opens on: Build for a build or a push, Comments for a comment (IS-349). */
+function noticeTab(kind: string): BuildWebCardTab {
+  if (kind === 'build' || kind === 'push') {
+    return 'build'
+  }
+  return kind === 'comment' || kind === 'telegram_reply' ? 'comments' : 'overview'
+}
+
 export function notificationTarget(n: BuildWebNotificationRef): PageTarget | null {
   if (n.kind === 'train' && !n.issue_id && !n.run_id) {
     return {
@@ -36,9 +43,8 @@ export function notificationTarget(n: BuildWebNotificationRef): PageTarget | nul
       at: n.last_at ?? ''
     }
   }
-  const tab: BuildWebCardTab = n.kind === 'build' || n.kind === 'push' ? 'build' : 'overview'
   if (n.issue_id) {
-    return { kind: 'issue', issueId: n.issue_id, tab }
+    return { kind: 'issue', issueId: n.issue_id, tab: noticeTab(n.kind) }
   }
   return n.run_id ? { kind: 'run', runId: n.run_id, tab: 'build' } : null
 }

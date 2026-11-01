@@ -24,6 +24,7 @@ import {
 /** The full-screen card's tabs, as build-web's task card has them. */
 export const BUILD_WEB_CARD_TABS = [
   'overview',
+  'comments',
   'plan',
   'mockups',
   'deploy',

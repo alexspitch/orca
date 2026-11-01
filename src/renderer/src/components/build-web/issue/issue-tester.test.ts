@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { BuildWebTester } from '../../../../../shared/build-web-types'
-import { testerChoices, testerKindOf } from './issue-tester'
+import { defaultTesterOf, testerChoices, testerKindOf } from './issue-tester'
 
 const person = (
   email: string,
@@ -52,5 +52,14 @@ describe('task tester', () => {
       )
     ).toEqual(['an@x.test', 'dev@x.test', 'jira:5b', 'ps@x.test'])
     expect(testerChoices('self', task, PEOPLE, label)).toEqual([])
+  })
+
+  it('defaults an external check to the author, else to a creator who is a person', () => {
+    const external = (over: { jira_author: string; created_by: string }) =>
+      defaultTesterOf('external', { ...task, ...over }, PEOPLE)
+    expect(external({ jira_author: '', created_by: 'an@x.test' })).toBe('an@x.test')
+    expect(external({ jira_author: '', created_by: 'сборка' })).toBe('')
+    expect(external({ jira_author: '', created_by: 'jira:9' })).toBe('')
+    expect(external({ jira_author: 'ps@x.test', created_by: 'an@x.test' })).toBe('ps@x.test')
   })
 })

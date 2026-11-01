@@ -39,7 +39,7 @@ const task = (over: Partial<BuildWebConsoleTask>): BuildWebConsoleTask => ({
 })
 
 describe('where a notification leads', () => {
-  it('opens its task, on the Build tab for a build or a push', () => {
+  it('opens its task, on the Build tab for a build or a push, on Comments for a comment', () => {
     expect(notificationTarget(note({ issue_id: 'i1', run_id: 'r1' }))).toEqual({
       kind: 'issue',
       issueId: 'i1',
@@ -48,6 +48,12 @@ describe('where a notification leads', () => {
     expect(notificationTarget(note({ kind: 'comment', issue_id: 'i1' }))).toEqual({
       kind: 'issue',
       issueId: 'i1',
+      tab: 'comments'
+    })
+    expect(notificationTarget(note({ kind: 'telegram_reply', issue_id: 'i1' }))).toMatchObject({
+      tab: 'comments'
+    })
+    expect(notificationTarget(note({ kind: 'status', issue_id: 'i1' }))).toMatchObject({
       tab: 'overview'
     })
   })

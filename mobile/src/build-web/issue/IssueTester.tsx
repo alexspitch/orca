@@ -20,10 +20,13 @@ import { PropertyRow, PropertySelect } from './IssuePropertySelect'
 
 const DEFAULT = '__default__'
 
-/** The tester picker's people, from a host that knows them; `load` reads them again. */
-function useBuildWebTesters(): { people: BuildWebTester[]; load: () => void } {
+/**
+ * The tester and author pickers' people, from a host that knows them; `load` reads them again.
+ * Not asked of a console that has no tester (before IS-347).
+ */
+export function useBuildWebTesters(wanted = true): { people: BuildWebTester[]; load: () => void } {
   const { call, hostCapabilities } = useBuildWebScreen()
-  const capable = hostCapabilities.includes(BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY)
+  const capable = wanted && hostCapabilities.includes(BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY)
   const [people, setPeople] = useState<BuildWebTester[]>([])
   const load = useCallback(() => {
     if (capable) {
@@ -40,16 +43,19 @@ function useBuildWebTesters(): { people: BuildWebTester[]; load: () => void } {
  */
 export function IssueTesterRow({
   detail,
+  people,
+  onOpen,
   afterTrain,
   disabled,
   onSave
 }: {
   detail: BuildWebIssueDetail
+  people: readonly BuildWebTester[]
+  onOpen: () => void
   afterTrain: BuildWebTestingStatus
   disabled: boolean
   onSave: (patch: BuildWebIssuePatch) => Promise<unknown> | void
 }) {
-  const { people, load } = useBuildWebTesters()
   const tester = detail.tester ?? ''
   const kind = testerKindOf(detail, afterTrain)
   if (!kind || kind === 'self') {
@@ -74,7 +80,7 @@ export function IssueTesterRow({
         value={tester || DEFAULT}
         shown={tester ? undefined : <ErrorText>Not assigned</ErrorText>}
         disabled={disabled}
-        onOpen={load}
+        onOpen={onOpen}
         options={[
           { value: DEFAULT, label: tester ? 'Default' : 'Not assigned' },
           ...testerChoices(kind, detail, people, (who) => personLabel(who, people))

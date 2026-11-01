@@ -5,6 +5,7 @@ import type { BuildWebRun, BuildWebTestingStatus } from '../../../src/shared/bui
 /** The card's tabs, in the desktop's order. */
 export const BUILD_WEB_CARD_TABS = [
   'overview',
+  'comments',
   'plan',
   'mockups',
   'deploy',

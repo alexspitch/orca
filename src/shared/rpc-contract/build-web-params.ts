@@ -82,7 +82,10 @@ const IssueFields = z.object({
     .optional(),
   // IS-347: a login or `jira:<accountId>`; '' asks the console for the default.
   tester: ShortText.optional(),
-  after_train: z.enum(BUILD_WEB_TESTING_STATUSES).optional()
+  after_train: z.enum(BUILD_WEB_TESTING_STATUSES).optional(),
+  // IS-349: the console checks who they are and caps the recipients at 20, in its own words.
+  jira_author: ShortText.optional(),
+  notify_recipients: z.array(ShortText).max(100).optional()
 })
 
 export const BuildWebIssueUpdateParams = z.object({

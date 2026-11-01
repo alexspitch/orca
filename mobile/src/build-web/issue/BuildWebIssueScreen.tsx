@@ -24,6 +24,7 @@ import { buildWebErrorMessage } from '../build-web-operations'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { IssueHeader } from './IssueHeader'
 import { IssueOverviewTab } from './IssueOverviewTab'
+import { IssueCommentsTab } from './IssueCommentsTab'
 import { IssueSubtasksTab } from './IssueSubtasksTab'
 import { IssueBuildTab } from './tabs/IssueBuildTab'
 import { IssueCommitsTab } from './tabs/IssueCommitsTab'
@@ -38,7 +39,7 @@ import { useIssueDetail } from './use-issue-detail'
 import { usePlanTabLabel } from './use-issue-plan-progress'
 import { useIssueRun } from './use-issue-run'
 
-/** The task on the whole screen, with build-web's tabs: Overview, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
+/** The task on the whole screen, with build-web's tabs: Overview, Comments, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
 export function BuildWebIssueScreen({
   issueId,
   initialTab,
@@ -142,6 +143,8 @@ export function BuildWebIssueScreen({
     switch (t) {
       case 'overview':
         return 'Overview'
+      case 'comments':
+        return `Comments ${detail.comments.length}`
       case 'plan':
         return planLabel
       case 'mockups':
@@ -221,13 +224,13 @@ export function BuildWebIssueScreen({
             'overview',
             <IssueOverviewTab
               state={state}
-              confirm={confirm}
               run={run.run}
               showRuns={showRuns}
               testing={{ value: testing, onChange: setTesting }}
               onOpenBuild={() => open('build')}
             />
           )}
+          {pane('comments', <IssueCommentsTab state={state} confirm={confirm} />)}
           {pane('plan', <IssuePlanTab {...tabProps} />)}
           {pane('mockups', <IssueMockupsTab {...tabProps} />)}
           {pane('deploy', <IssueDeployTab {...tabProps} notes={deployNotes} />)}

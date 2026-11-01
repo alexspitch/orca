@@ -15,15 +15,23 @@ import { testerChoices, testerKindOf, type TesterKind } from './issue/issue-test
 
 const DEFAULT = '__default__'
 
-/** The tester picker's people; `load` reads them again, for a person added since. */
-export function useBuildWebTesters(target: RuntimeClientTarget): {
+/**
+ * The tester and author pickers' people; `load` reads them again, for a person added since. Not
+ * asked of a console that has no tester (before IS-347).
+ */
+export function useBuildWebTesters(
+  target: RuntimeClientTarget,
+  wanted = true
+): {
   people: BuildWebTester[]
   load: () => void
 } {
   const [people, setPeople] = useState<BuildWebTester[]>([])
   const load = useCallback(() => {
-    void callBuildWeb(target, 'listTesters').then(setPeople, () => undefined)
-  }, [target])
+    if (wanted) {
+      void callBuildWeb(target, 'listTesters').then(setPeople, () => undefined)
+    }
+  }, [target, wanted])
   useEffect(load, [load])
   return { people, load }
 }
@@ -34,19 +42,20 @@ export function useBuildWebTesters(target: RuntimeClientTarget): {
  * is drawn as an error: the console found nobody to put there.
  */
 export function IssueTesterRow({
-  target,
   detail,
+  people,
+  onOpen,
   afterTrain,
   disabled,
   onSave
 }: {
-  target: RuntimeClientTarget
   detail: BuildWebIssueDetail
+  people: readonly BuildWebTester[]
+  onOpen: () => void
   afterTrain: BuildWebTestingStatus
   disabled: boolean
   onSave: (patch: BuildWebIssuePatch) => Promise<void> | void
 }): React.JSX.Element {
-  const { people, load } = useBuildWebTesters(target)
   const tester = detail.tester ?? ''
   const kind = testerKindOf(detail, afterTrain)
   const label = translate('buildWeb.props.tester', 'Tester')
@@ -79,7 +88,7 @@ export function IssueTesterRow({
         disabled={disabled}
         invalid={!tester}
         onChange={(v) => void onSave({ tester: v === DEFAULT ? '' : v })}
-        onOpen={load}
+        onOpen={onOpen}
         options={[
           {
             value: DEFAULT,

@@ -87,6 +87,9 @@ export const BUILD_WEB_DEPLOY_NOTES_RUNTIME_CAPABILITY = 'build-web-deploy-notes
  */
 export const BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY = 'build-web-issue-tester.v1'
 
+/** A runtime that passes a task's author and extra recipients on (IS-349): `jira_author`, `notify_recipients`. */
+export const BUILD_WEB_ISSUE_AUTHOR_RUNTIME_CAPABILITY = 'build-web-issue-author.v1'
+
 /**
  * A runtime that serves the «Recaps» page to the phone: `buildWeb.recaps` and `buildWeb.recapReport`
  * among the phone's methods, and a report read `inert`, without the scripts the phone cannot run.

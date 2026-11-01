@@ -113,8 +113,13 @@ export type BuildWebIssueRow = {
   tester?: string
   /** «After the train» before the first build, null for Testing; the run holds it after. */
   after_train?: BuildWebTestingStatus | null
-  /** The Jira issue's creator as a console login: an external check's default tester. */
+  /**
+   * «Author»: the Jira issue's creator as a console login, or (IS-349) a person picked on the card;
+   * '' is the task's creator when that is a person. An external check's default tester.
+   */
   jira_author?: string
+  /** IS-349: people told the task went out, with its author; root tasks only. Absent from older consoles and hosts. */
+  notify_recipients?: string[]
   /** Built in main from the stored base URL — never taken from the console's answer. */
   url: string
 }
@@ -299,6 +304,10 @@ export type BuildWebIssuePatch = Partial<{
   tester: string
   /** «After the train» before the first build; with a run, the console changes the run's too. */
   after_train: BuildWebTestingStatus
+  /** IS-349: a login or `jira:<accountId>`; '' makes the task's creator its author. */
+  jira_author: string
+  /** IS-349: people only (no `jira:`), at most 20; a subtask has none. */
+  notify_recipients: string[]
 }>
 
 /** A new task as the console's create takes it: the product and the title, the rest optional. */

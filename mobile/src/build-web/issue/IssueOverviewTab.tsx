@@ -5,25 +5,20 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { OverviewPanel } from './issue-card-ui'
 import { taskFilesOf } from './issue-attachment-kind'
 import { IssueAttachments } from './IssueAttachments'
-import { IssueCommentComposer } from './IssueCommentComposer'
-import { IssueComments } from './IssueComments'
 import { IssueDescriptionSection } from './IssueDescriptionSection'
 import { BuildSummaryCard, JiraCard, WorkCard } from './IssueOverviewCards'
 import { IssueProperties } from './IssueProperties'
-import type { IssueConfirm } from './use-issue-confirm'
 import type { IssueDetailState } from './use-issue-detail'
 
-/** The card's Overview: the desktop's two columns stacked — text, files and comments under the side cards. */
+/** The card's Overview: the desktop's two columns stacked — the text and the files under the side cards. */
 export function IssueOverviewTab({
   state,
-  confirm,
   run,
   showRuns,
   testing,
   onOpenBuild
 }: {
   state: IssueDetailState
-  confirm: IssueConfirm
   run: BuildWebRun | null | undefined
   showRuns: boolean
   testing: { value: BuildWebTestingStatus; onChange: (value: BuildWebTestingStatus) => void }
@@ -58,10 +53,6 @@ export function IssueOverviewTab({
           <IssueAttachments issueId={detail.id} files={files} />
         </OverviewPanel>
       ) : null}
-      <OverviewPanel title="Comments">
-        <IssueComments detail={detail} confirm={confirm} onChanged={state.reload} />
-        <IssueCommentComposer state={state} confirm={confirm} />
-      </OverviewPanel>
     </View>
   )
 }

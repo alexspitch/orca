@@ -30,7 +30,8 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { PriorityChip, StatusChip, TypeChip } from '../BuildWebToneChip'
 import { MutedText, ui } from './issue-card-ui'
 import { PropertyRow, PropertySelect } from './IssuePropertySelect'
-import { IssueTesterRow } from './IssueTester'
+import { IssueTesterRow, useBuildWebTesters } from './IssueTester'
+import { IssueAuthorRow, IssueRecipientsRow } from './IssueAuthor'
 
 const NONE = '__none__'
 
@@ -91,6 +92,8 @@ export function IssueProperties({
   const standList = stands?.product === product ? stands.list : []
   const versionList = releases?.product === product ? releases.list : versions
   const busy = disabled || reading
+  const testers = useBuildWebTesters(detail.tester !== undefined)
+  const peopleProps = { people: testers.people, onOpen: testers.load, disabled: busy, onSave }
 
   /** Another stand is another build and another mode: both are read off it and frozen again. */
   const chooseStand = async (standId: string | null) => {
@@ -175,6 +178,13 @@ export function IssueProperties({
           onChange={(v) => void onSave({ assignee: v === NONE ? '' : v })}
         />
       </PropertyRow>
+      {/* IS-349: a console that sends the recipients lets the author be changed too. */}
+      {detail.notify_recipients === undefined ? null : (
+        <>
+          <IssueAuthorRow detail={detail} {...peopleProps} />
+          {child ? null : <IssueRecipientsRow detail={detail} {...peopleProps} />}
+        </>
+      )}
       {child ? null : (
         <>
           <PropertyRow label="Product">
@@ -284,9 +294,8 @@ export function IssueProperties({
       {child || detail.tester === undefined ? null : (
         <IssueTesterRow
           detail={detail}
+          {...peopleProps}
           afterTrain={testing?.value ?? detail.after_train ?? 'Testing'}
-          disabled={busy}
-          onSave={onSave}
         />
       )}
       <PropertyRow label="Handed to AI">

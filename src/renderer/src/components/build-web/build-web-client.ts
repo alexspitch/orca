@@ -3,6 +3,7 @@ import {
   BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_ARCHIVE_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_ASSIGNEE_FILTER_RUNTIME_CAPABILITY,
+  BUILD_WEB_ISSUE_AUTHOR_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_FAVORITE_SORT_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY,
   BUILD_WEB_PRODUCT_CP_RUNTIME_CAPABILITY,
@@ -126,6 +127,23 @@ const NEWER_ARGUMENTS: {
     applies: (_method, arg) => namesIssueTester(arg),
     capability: BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY,
     refusal: testerRefusal
+  },
+  {
+    // Why: an older server strips both from the patch, and the console then changes nothing.
+    applies: (method, arg) => {
+      const patch = field(arg, 'patch')
+      return (
+        method === 'updateIssue' &&
+        (field(patch, 'jira_author') !== undefined ||
+          field(patch, 'notify_recipients') !== undefined)
+      )
+    },
+    capability: BUILD_WEB_ISSUE_AUTHOR_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerAuthor',
+        'This Orca server cannot change a task’s author and extra recipients yet. Update the server.'
+      )
   },
   {
     applies: (method, arg) =>

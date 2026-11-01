@@ -5,13 +5,11 @@ import type { IssueDetailState } from '../use-build-web-issue-detail'
 import type { BuildWebIssuePatch } from '../../../../../shared/build-web-types'
 import type { BuildWebRun, BuildWebTestingStatus } from '../../../../../shared/build-web-run-types'
 import { BuildWebIssueProperties } from '../BuildWebIssueProperties'
-import { BuildWebIssueComments } from '../BuildWebIssueComments'
 import { BuildWebIssueFiles } from '../BuildWebIssueFiles'
 import { taskFilesOf } from '../build-web-issue-file-open'
 import { EditableDescription, EditableSteps } from '../BuildWebIssueEditors'
 import { BuildWebToneChip } from '../BuildWebToneChip'
 import { BuildSummaryCard, JiraCard, OverviewPanel } from './IssueOverviewCards'
-import { IssueCommentComposer } from './IssueCommentComposer'
 import { BuildWebTaskSessions } from '../BuildWebTaskSessions'
 
 export function IssueOverviewTab({
@@ -98,10 +96,6 @@ export function IssueOverviewTab({
             <BuildWebIssueFiles target={target} detail={detail} files={taskFilesOf(detail)} />
           </OverviewPanel>
         ) : null}
-        <OverviewPanel title={translate('buildWeb.detail.comments', 'Comments')}>
-          <BuildWebIssueComments target={target} detail={detail} onChanged={state.reload} />
-          <IssueCommentComposer target={target} state={state} />
-        </OverviewPanel>
       </div>
     </ResizableSplit>
   )
