@@ -18,12 +18,18 @@ import {
   type RecapMonth
 } from './recap-calendar'
 import { RecapReportPane } from './RecapReportPane'
+import { recapReportedAt, recapWindowLabel } from './recap-window'
 
 const timeOf = (iso: string) =>
   new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 
 function recapTitle(recap: BuildWebRecap): string {
-  return [recap.name, recap.version?.name, new Date(recap.finished_at).toLocaleString()]
+  return [
+    recap.name,
+    recapWindowLabel(recap),
+    recap.version?.name,
+    new Date(recapReportedAt(recap)).toLocaleString()
+  ]
     .filter(Boolean)
     .join(' · ')
 }
@@ -84,7 +90,7 @@ export function RecapMonthNav({
   )
 }
 
-/** The month as a grid of days; each day lists the reports that finished on it. */
+/** The month as a grid of days; each day lists the reports that stand on it. */
 export function RecapCalendar({
   month,
   today,
@@ -150,7 +156,7 @@ export function RecapCalendar({
                           <ProductChip product={recap.product} />
                           <span className="min-w-0 flex-1 truncate">{recap.name}</span>
                           <span className="shrink-0 text-2xs text-muted-foreground tabular-nums">
-                            {timeOf(recap.finished_at)}
+                            {timeOf(recapReportedAt(recap))}
                           </span>
                         </button>
                       </li>
@@ -179,6 +185,7 @@ export function RecapCalendarReport({
   onBack: () => void
 }): React.JSX.Element {
   useBuildWebPageEscape(onBack, { first: true })
+  const windowLabel = recapWindowLabel(recap)
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-border">
       <div className="flex min-w-0 items-center gap-2 border-b border-border px-2 py-1.5">
@@ -188,12 +195,15 @@ export function RecapCalendarReport({
         </Button>
         <ProductChip product={recap.product} />
         <span className="min-w-0 truncate text-sm font-medium">{recap.name}</span>
+        {windowLabel ? (
+          <span className="shrink-0 text-xs text-muted-foreground tabular-nums">{windowLabel}</span>
+        ) : null}
         {recap.version ? (
           <span className="shrink-0 text-xs text-muted-foreground">{recap.version.name}</span>
         ) : null}
         <div className="flex-1" />
         <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-          {new Date(recap.finished_at).toLocaleString()}
+          {new Date(recapReportedAt(recap)).toLocaleString()}
         </span>
       </div>
       <section className="flex min-h-0 flex-1 flex-col">

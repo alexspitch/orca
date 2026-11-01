@@ -52,7 +52,11 @@ function recapOf(r: Record<string, unknown>): BuildWebRecap {
     commit: textOrNull(r.commit),
     trigger: r.trigger === 'scheduled' ? 'scheduled' : 'manual',
     started_by: textOrNull(r.started_by),
-    finished_at: textOf(r.finished_at)
+    finished_at: textOf(r.finished_at),
+    // Why the fallback: a console before IS-342 sends only `finished_at`.
+    reported_at: textOf(r.reported_at) || textOf(r.finished_at),
+    report_from: textOrNull(r.report_from),
+    report_to: textOrNull(r.report_to)
   }
 }
 

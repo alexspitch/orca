@@ -67,9 +67,18 @@ describe('the list', () => {
           commit: 'abcdef1234',
           trigger: 'scheduled',
           started_by: null,
-          finished_at: '2026-10-19T06:00:00.000Z'
+          finished_at: '2026-10-19T06:00:00.000Z',
+          reported_at: '2026-10-17T00:00:00.000Z',
+          report_from: '2026-10-10T00:00:00.000Z',
+          report_to: '2026-10-17T00:00:00.000Z'
         },
-        { id: 'r1', product: 'mobile', version: null, trigger: 'nonsense' },
+        {
+          id: 'r1',
+          product: 'mobile',
+          version: null,
+          trigger: 'nonsense',
+          finished_at: '2026-10-12T06:00:00.000Z'
+        },
         { name: 'no id' }
       ],
       total: 7,
@@ -99,7 +108,10 @@ describe('the list', () => {
             commit: 'abcdef1234',
             trigger: 'scheduled',
             started_by: null,
-            finished_at: '2026-10-19T06:00:00.000Z'
+            finished_at: '2026-10-19T06:00:00.000Z',
+            reported_at: '2026-10-17T00:00:00.000Z',
+            report_from: '2026-10-10T00:00:00.000Z',
+            report_to: '2026-10-17T00:00:00.000Z'
           },
           {
             id: 'r1',
@@ -110,7 +122,10 @@ describe('the list', () => {
             commit: null,
             trigger: 'manual',
             started_by: null,
-            finished_at: ''
+            finished_at: '2026-10-12T06:00:00.000Z',
+            reported_at: '2026-10-12T06:00:00.000Z',
+            report_from: null,
+            report_to: null
           }
         ],
         total: 7,

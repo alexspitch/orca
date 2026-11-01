@@ -4,6 +4,7 @@ import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type { BuildWebRecap } from '../../../../../shared/build-web-recap-types'
 import { ProductChip } from '../BuildWebToneChip'
+import { recapReportedAt, recapWindowLabel } from './recap-window'
 
 const when = (iso: string) => (iso ? new Date(iso).toLocaleString() : '')
 
@@ -40,6 +41,7 @@ export function RecapList({
       <ul className="scrollbar-sleek min-h-0 flex-1 overflow-auto">
         {recaps.map((r) => {
           const current = r.id === selectedId
+          const windowLabel = recapWindowLabel(r)
           return (
             <li key={r.id}>
               <button
@@ -53,9 +55,14 @@ export function RecapList({
                 )}
               >
                 <span className="flex items-baseline gap-2">
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium">{r.name}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-                    {when(r.finished_at)}
+                  <span className="min-w-0 truncate text-[13px] font-medium">{r.name}</span>
+                  {windowLabel ? (
+                    <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                      {windowLabel}
+                    </span>
+                  ) : null}
+                  <span className="ml-auto shrink-0 text-xs text-muted-foreground tabular-nums">
+                    {when(recapReportedAt(r))}
                   </span>
                 </span>
                 <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useAppStore } from '@/store'
 import { translate } from '@/i18n/i18n'
 import { useBuildWebStore } from '../build-web-store'
+import { recapReportedAt } from '../recaps/recap-window'
 import {
   backIndex,
   forwardIndex,
@@ -83,7 +84,7 @@ export function pageLabel(entry: PageEntry): string {
   if (entry.kind === 'issue') {
     return entry.label ?? translate('buildWeb.history.task', 'Task')
   }
-  const at = new Date(entry.recap.finished_at)
+  const at = new Date(recapReportedAt(entry.recap))
   const when = Number.isNaN(at.getTime())
     ? ''
     : ` · ${at.toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' })}`

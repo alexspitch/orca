@@ -1,7 +1,8 @@
 import type { BuildWebRecap } from '../../../../../shared/build-web-recap-types'
+import { recapReportedAt } from './recap-window'
 
 // The Recaps calendar: a month as weeks of local days, and the reports laid out on the day they
-// finished.
+// stand at, their window's end.
 
 export type RecapMonth = { year: number; month: number }
 
@@ -45,19 +46,19 @@ export function calendarWeeks(m: RecapMonth, firstDay: number): Date[][] {
   )
 }
 
-/** The reports by the local day they finished, each day's in the order they finished. */
+/** The reports by the local day they stand at, each day's in that order. */
 export function recapsByDay(recaps: readonly BuildWebRecap[]): Map<string, BuildWebRecap[]> {
   const byDay = new Map<string, BuildWebRecap[]>()
   for (const recap of recaps) {
-    const finished = new Date(recap.finished_at)
-    if (Number.isNaN(finished.getTime())) {
+    const at = new Date(recapReportedAt(recap))
+    if (Number.isNaN(at.getTime())) {
       continue
     }
-    const key = dayKey(finished)
+    const key = dayKey(at)
     byDay.set(key, [...(byDay.get(key) ?? []), recap])
   }
   for (const day of byDay.values()) {
-    day.sort((a, b) => a.finished_at.localeCompare(b.finished_at))
+    day.sort((a, b) => recapReportedAt(a).localeCompare(recapReportedAt(b)))
   }
   return byDay
 }

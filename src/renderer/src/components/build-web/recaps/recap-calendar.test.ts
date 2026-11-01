@@ -55,4 +55,14 @@ describe('the Recaps calendar', () => {
     expect(byDay.get('2026-10-19')?.map((r) => r.id)).toEqual(['early', 'late'])
     expect(byDay.get('2026-10-20')?.map((r) => r.id)).toEqual(['next'])
   })
+
+  it('puts a report on the day its window ends, not the day it was run', () => {
+    const backfill = {
+      ...recap('backfill', new Date(2026, 9, 3, 10, 0)),
+      reported_at: new Date(2026, 8, 26).toISOString()
+    }
+    const byDay = recapsByDay([backfill])
+    expect(byDay.get('2026-09-26')?.map((r) => r.id)).toEqual(['backfill'])
+    expect(byDay.has('2026-10-03')).toBe(false)
+  })
 })

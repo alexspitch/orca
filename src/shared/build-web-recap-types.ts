@@ -28,6 +28,11 @@ export type BuildWebRecap = {
   /** Who ran it by hand; null for a scheduled run. */
   started_by: string | null
   finished_at: string
+  /** Where the report stands in time: its window's end, else `finished_at`. Absent from an older host. */
+  reported_at?: string
+  /** The window the report covers; null for a run without one. Absent from an older host. */
+  report_from?: string | null
+  report_to?: string | null
 }
 
 export type BuildWebRecapPage = {
