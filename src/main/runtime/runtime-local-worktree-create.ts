@@ -176,22 +176,30 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
     worktreeGitOptions
   )
   try {
-    const git = await createRuntimeLocalGitWorktree({
-      request,
-      repo,
-      store,
-      settings,
-      base,
-      workspaceRoot: computeWorkspaceRoot(repo.path, pathSettings),
-      branchName: candidate.branchName,
-      worktreePath: candidate.worktreePath,
-      effectiveSanitizedName: candidate.effectiveSanitizedName,
-      checkoutExistingBranch: candidate.checkoutExistingBranch,
-      localWorktreeGitOptions: worktreeGitOptions,
-      baseRefRefresh,
-      rearm: args.rearm,
-      timing: args.timing
-    })
+    let git: Awaited<ReturnType<typeof createRuntimeLocalGitWorktree>>
+    try {
+      await taskBranch?.take()
+      git = await createRuntimeLocalGitWorktree({
+        request,
+        repo,
+        store,
+        settings,
+        base,
+        workspaceRoot: computeWorkspaceRoot(repo.path, pathSettings),
+        branchName: candidate.branchName,
+        worktreePath: candidate.worktreePath,
+        effectiveSanitizedName: candidate.effectiveSanitizedName,
+        checkoutExistingBranch: candidate.checkoutExistingBranch,
+        localWorktreeGitOptions: worktreeGitOptions,
+        baseRefRefresh,
+        rearm: args.rearm,
+        timing: args.timing
+      })
+    } catch (error) {
+      // Why only here: once the worktree exists it holds the branch, which must stay where it is.
+      await taskBranch?.rollback()
+      throw error
+    }
     const materialized = await materializeRuntimeLocalWorktree({
       request,
       repo,
@@ -223,9 +231,6 @@ async function performRuntimeLocalWorktreeCreate<T>(args: RuntimeLocalWorktreeCr
       addResult: git.addResult,
       ...(base.baseFallback ? { baseFallback: base.baseFallback } : {})
     }
-  } catch (error) {
-    await taskBranch?.rollback()
-    throw error
   } finally {
     releaseInFlightHold()
   }

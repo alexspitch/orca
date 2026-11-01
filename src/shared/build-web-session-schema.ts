@@ -11,5 +11,6 @@ export const WorktreeBuildWebTaskRequestSchema = z.object({
   key: z.string().regex(TASK_KEY_RE),
   consoleHost: z.string().trim().min(1).max(2048),
   // Why optional: a host before `build-web-work-branch.v1` strips it and names the branch itself.
-  workBranch: z.string().trim().min(1).max(255).optional()
+  // Why catch: a name past the limit falls back to `is-<n>` instead of refusing the whole create.
+  workBranch: z.string().trim().min(1).max(255).optional().catch(undefined)
 })

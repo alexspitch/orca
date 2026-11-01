@@ -21649,6 +21649,7 @@
       "updateServerSessions": "This Orca server does not follow task sessions yet. Update the server.",
       "updateServerTranscript": "This Orca server does not hand out session logs yet. Update the server.",
       "updateServerDeployNotes": "This Orca server does not show deploy notes yet. Update the server.",
+      "updateServerRecaps": "This Orca server does not show Recaps yet. Update the server.",
       "updateServerTester": "This Orca server does not know testers and self-testing yet. Update the server.",
       "updateServerAuthor": "This Orca server cannot change a task’s author and extra recipients yet. Update the server."
     },

@@ -74,6 +74,8 @@ describe('prepareTaskWorkBranch', () => {
     r.git(['fetch', '-q', 'origin'])
     const prepared = await r.prepare()
     expect(prepared).toMatchObject({ name: BRANCH, exists: true })
+    expect(r.git(['branch', '--list', BRANCH])).toBe('')
+    await prepared?.take()
     expect(r.git(['branch', '--list', BRANCH])).toContain(BRANCH)
     await prepared?.rollback()
     expect(r.git(['branch', '--list', BRANCH])).toBe('')
@@ -82,7 +84,9 @@ describe('prepareTaskWorkBranch', () => {
   it('fetches a branch only the remote has, though this repo never fetched it', async () => {
     const r = await repoWithRemote()
     r.run(r.origin, ['branch', BRANCH])
-    expect(await r.prepare()).toMatchObject({ name: BRANCH, exists: true })
+    const prepared = await r.prepare()
+    expect(prepared).toMatchObject({ name: BRANCH, exists: true })
+    await prepared?.take()
     expect(r.git(['rev-parse', BRANCH])).toBe(r.run(r.origin, ['rev-parse', BRANCH]))
   })
 
@@ -106,9 +110,21 @@ describe('prepareTaskWorkBranch', () => {
     ])
     r.run(r.origin, ['switch', '-q', 'master'])
     const prepared = await r.prepare()
+    expect(r.git(['rev-parse', BRANCH])).toBe(before)
+    await prepared?.take()
     expect(r.git(['rev-parse', BRANCH])).toBe(r.run(r.origin, ['rev-parse', BRANCH]))
     await prepared?.rollback()
     expect(r.git(['rev-parse', BRANCH])).toBe(before)
+  })
+
+  it('leaves the branch a worktree already checked out when the create fails after', async () => {
+    const r = await repoWithRemote()
+    r.run(r.origin, ['branch', BRANCH])
+    const prepared = await r.prepare()
+    await prepared?.take()
+    r.git(['worktree', 'add', '-q', path.join(r.root, 'task'), BRANCH])
+    await prepared?.rollback()
+    expect(r.git(['branch', '--list', BRANCH])).toContain(BRANCH)
   })
 
   it('keeps a local branch that diverged from the remote', async () => {

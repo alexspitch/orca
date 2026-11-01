@@ -1386,6 +1386,7 @@ async function performLocalWorktreeCreate(
   )
   let addResult: AddWorktreeResult
   try {
+    await taskBranch?.take()
     addResult =
       (await timing.time('git_worktree_add', async () => {
         if (sparseDirectories.length === 0 && !checkoutExistingBranch) {

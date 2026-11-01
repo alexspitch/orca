@@ -10,6 +10,7 @@ import {
   BUILD_WEB_ISSUE_FILES_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_MOCKUPS_RUNTIME_CAPABILITY,
   BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY,
+  BUILD_WEB_RECAPS_RUNTIME_CAPABILITY,
   BUILD_WEB_REDOS_TWIN_RUNTIME_CAPABILITY,
   BUILD_WEB_SAVED_QUERIES_RUNTIME_CAPABILITY,
   BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY,
@@ -220,6 +221,15 @@ export const NEWER_METHODS: {
       translate(
         'buildWeb.client.updateServerDeployNotes',
         'This Orca server does not show deploy notes yet. Update the server.'
+      )
+  },
+  {
+    methods: new Set<Method>(['recaps', 'recapReport']),
+    capability: BUILD_WEB_RECAPS_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerRecaps',
+        'This Orca server does not show Recaps yet. Update the server.'
       )
   },
   {

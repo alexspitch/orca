@@ -38,11 +38,31 @@ export function createdBuildWebTask(
 export type TaskWorkBranch = {
   name: string
   exists: boolean
-  /** Drops the local copy this step made of the remote branch, after a create that failed. */
+  /** Copies or fast-forwards the local branch; called right before `git worktree add`. */
+  take: () => Promise<void>
+  /** Undoes what `take` did, after a `git worktree add` that failed. */
   rollback: () => Promise<void>
 }
 
-const noRollback = async (): Promise<void> => {}
+const nothing = async (): Promise<void> => {}
+
+/** A branch step whose change waits for `take`, so an earlier failure of the create leaves none. */
+function deferredBranch(
+  name: string,
+  change: () => Promise<unknown>,
+  undo: () => Promise<void>
+): TaskWorkBranch {
+  let taken = false
+  return {
+    name,
+    exists: true,
+    take: async () => {
+      await change()
+      taken = true
+    },
+    rollback: () => (taken ? undo() : nothing())
+  }
+}
 
 // Why short: the person waits on «Take to work»; a slow remote leaves the refs it already has.
 const TASK_BRANCH_FETCH_TIMEOUT_MS = 20_000
@@ -78,9 +98,17 @@ export async function prepareTaskWorkBranch(args: {
     return null
   }
   // Why not prunable: a worktree whose folder is gone holds the branch only until Git prunes it.
-  const holder = (await listWorktreesStrict(repoPath, gitOptions)).find(
-    (worktree) => !worktree.prunable && worktree.branch.replace(/^refs\/heads\//, '') === branch
-  )
+  const holderOf = async () =>
+    (await listWorktreesStrict(repoPath, gitOptions)).find(
+      (worktree) => !worktree.prunable && worktree.branch.replace(/^refs\/heads\//, '') === branch
+    )
+  // Why: a create that failed after `git worktree add` leaves a checkout whose branch must not move.
+  const unlessHeld = (undo: () => Promise<void>) => async (): Promise<void> => {
+    if (!(await holderOf().catch(() => true))) {
+      await undo()
+    }
+  }
+  const holder = await holderOf()
   if (holder) {
     throw new Error(
       `The branch "${branch}" is checked out in ${holder.path}. Continue the task there, or switch that worktree off the branch.`
@@ -109,32 +137,32 @@ export async function prepareTaskWorkBranch(args: {
       if (remoteSha && remoteSha !== localSha) {
         console.warn(`[build-web] ${branch} differs from ${remote}; the local branch is kept`)
       }
-      return { name: branch, exists: true, rollback: noRollback }
+      return { name: branch, exists: true, take: nothing, rollback: nothing }
     }
-    await git(['update-ref', `refs/heads/${branch}`, remoteSha, localSha])
-    return {
-      name: branch,
-      exists: true,
-      rollback: () =>
+    return deferredBranch(
+      branch,
+      () => git(['update-ref', `refs/heads/${branch}`, remoteSha, localSha]),
+      unlessHeld(() =>
         git(['update-ref', `refs/heads/${branch}`, localSha, remoteSha]).then(
           () => {},
           (error: unknown) => console.warn(`[build-web] could not move ${branch} back:`, error)
         )
-    }
+      )
+    )
   }
   if (!remoteSha || !remoteRef) {
-    return { name: branch, exists: false, rollback: noRollback }
+    return { name: branch, exists: false, take: nothing, rollback: nothing }
   }
-  // Why --no-track: like any branch Orca makes; the skill pushes it with its own upstream.
-  await git(['branch', '--no-track', '--', branch, remoteRef])
-  return {
-    name: branch,
-    exists: true,
-    rollback: () =>
+  return deferredBranch(
+    branch,
+    // Why --no-track: like any branch Orca makes; the skill pushes it with its own upstream.
+    () => git(['branch', '--no-track', '--', branch, remoteRef]),
+    unlessHeld(() =>
       forceDeleteLocalBranch(repoPath, branch, remoteSha, undefined, gitOptions).catch(
         (error: unknown) => console.warn(`[build-web] could not drop branch ${branch}:`, error)
       )
-  }
+    )
+  )
 }
 
 async function defaultRemote(
