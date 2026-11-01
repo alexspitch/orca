@@ -79,6 +79,88 @@ describe('prepareTaskWorkBranch', () => {
     expect(r.git(['branch', '--list', BRANCH])).toBe('')
   })
 
+  it('fetches a branch only the remote has, though this repo never fetched it', async () => {
+    const r = await repoWithRemote()
+    r.run(r.origin, ['branch', BRANCH])
+    expect(await r.prepare()).toMatchObject({ name: BRANCH, exists: true })
+    expect(r.git(['rev-parse', BRANCH])).toBe(r.run(r.origin, ['rev-parse', BRANCH]))
+  })
+
+  it('fast-forwards a local branch the remote went on from, and moves it back on rollback', async () => {
+    const r = await repoWithRemote()
+    r.run(r.origin, ['branch', BRANCH])
+    r.git(['fetch', '-q', 'origin'])
+    r.git(['branch', '--no-track', BRANCH, `origin/${BRANCH}`])
+    const before = r.git(['rev-parse', BRANCH])
+    r.run(r.origin, ['switch', '-q', BRANCH])
+    r.run(r.origin, [
+      '-c',
+      'user.email=t@t',
+      '-c',
+      'user.name=t',
+      'commit',
+      '-q',
+      '--allow-empty',
+      '-m',
+      'b'
+    ])
+    r.run(r.origin, ['switch', '-q', 'master'])
+    const prepared = await r.prepare()
+    expect(r.git(['rev-parse', BRANCH])).toBe(r.run(r.origin, ['rev-parse', BRANCH]))
+    await prepared?.rollback()
+    expect(r.git(['rev-parse', BRANCH])).toBe(before)
+  })
+
+  it('keeps a local branch that diverged from the remote', async () => {
+    const r = await repoWithRemote()
+    r.run(r.origin, ['branch', BRANCH])
+    r.git(['fetch', '-q', 'origin'])
+    r.git(['branch', '--no-track', BRANCH, `origin/${BRANCH}`])
+    r.git(['switch', '-q', BRANCH])
+    r.git([
+      '-c',
+      'user.email=t@t',
+      '-c',
+      'user.name=t',
+      'commit',
+      '-q',
+      '--allow-empty',
+      '-m',
+      'local'
+    ])
+    r.git(['switch', '-q', 'master'])
+    const local = r.git(['rev-parse', BRANCH])
+    r.run(r.origin, ['switch', '-q', BRANCH])
+    r.run(r.origin, [
+      '-c',
+      'user.email=t@t',
+      '-c',
+      'user.name=t',
+      'commit',
+      '-q',
+      '--allow-empty',
+      '-m',
+      'remote'
+    ])
+    r.run(r.origin, ['switch', '-q', 'master'])
+    expect(await r.prepare()).toMatchObject({ name: BRANCH, exists: true })
+    expect(r.git(['rev-parse', BRANCH])).toBe(local)
+  })
+
+  it('goes on with the refs it has when the remote cannot be reached', async () => {
+    const r = await repoWithRemote()
+    r.git(['remote', 'set-url', 'origin', path.join(r.root, 'gone')])
+    expect(await r.prepare()).toMatchObject({ name: BRANCH, exists: false })
+  })
+
+  it('takes a branch a worktree whose folder is gone still names', async () => {
+    const r = await repoWithRemote()
+    const holder = path.join(r.root, 'holder')
+    r.git(['worktree', 'add', '-q', '-b', BRANCH, holder])
+    await rm(holder, { recursive: true, force: true })
+    expect(await r.prepare()).toMatchObject({ name: BRANCH, exists: true })
+  })
+
   it('refuses a branch another worktree holds, naming it', async () => {
     const r = await repoWithRemote()
     const holder = path.join(r.root, 'holder')
