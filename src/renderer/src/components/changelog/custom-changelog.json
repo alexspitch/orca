@@ -1,6 +1,32 @@
 {
   "releases": [
     {
+      "version": "1.4.246-custom.1793546062000",
+      "date": "2026-11-01",
+      "commit": "edc8710876e9",
+      "features": [
+        "The task card in Issues gets an «Activity» tab listing field changes, comments, notifications, builds and Jira actions with their results, filterable by type, on desktop and phone.",
+        "Swiping right with two fingers or pressing the mouse's back button now goes back from a new tab, another workspace, a sidebar page, Settings or an opened task.",
+        "A task opened from Issues, Testing or «New task» closes its tab when you go back, if it was not already open before.",
+        "Issues → «New task» now asks «After the train» and the tester, and the «Default» tester option shows who the console will assign.",
+        "Tasks created in Issues → «New task» with a personal token no longer require picking a tester for an external check; you become the default.",
+        "The task card's Properties get «Author» and, for root tasks, «Extra recipients», on desktop and phone.",
+        "Comments move from Overview to their own «Comments» tab on the task card, and comment notifications open the card directly on that tab.",
+        "Tasks support a new Self-testing status, and «After the train» offers a Self-testing option that skips publishing and moves Jira to Testing.",
+        "The task card gets a «Tester» row after «After the train», offering suitable people and highlighting a missing required tester in red.",
+        "The phone's Issues screen gets a Recaps section listing finished automation reports by day, with filters, and reports that link to their tasks.",
+        "Sidebar → Recaps now places each report on the end of the period it covers and shows that period beside its name.",
+        "«Take to work» now names the worktree's branch after the task the console's way and shows it as «Branch: …» before you start.",
+        "The task card gets a «Deploy» tab showing the console's note for deployment engineers, with its generation status and a «Write again» button."
+      ],
+      "settings": [],
+      "fixes": [
+        "A horizontal scroll that reaches the left edge of a page no longer triggers going back as if it were a swipe.",
+        "Empty task branches are no longer left behind when a task's worktree is deleted by a person or by cleanup.",
+        "Recaps run by hand for a past period no longer appear on the week they were built instead of the period they cover."
+      ]
+    },
+    {
       "version": "1.4.246-custom.1793353393000",
       "date": "2026-10-30",
       "commit": "4e9bfda5737c",
