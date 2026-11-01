@@ -49,6 +49,13 @@ function recapOf(r: Record<string, unknown>): BuildWebRecap {
       v && typeof v.id === 'string'
         ? { id: v.id, name: textOf(v.name), branch: textOf(v.branch) }
         : null,
+    ...(Array.isArray(r.versions)
+      ? {
+          versions: recordsOf(r.versions)
+            .map(versionOf)
+            .filter((x): x is BuildWebRecapVersion => x !== null)
+        }
+      : {}),
     commit: textOrNull(r.commit),
     trigger: r.trigger === 'scheduled' ? 'scheduled' : 'manual',
     started_by: textOrNull(r.started_by),

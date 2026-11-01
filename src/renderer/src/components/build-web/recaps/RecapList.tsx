@@ -3,7 +3,9 @@ import { Button } from '@/components/ui/button'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 import type { BuildWebRecap } from '../../../../../shared/build-web-recap-types'
+import { productLabel } from '../build-web-labels'
 import { ProductChip } from '../BuildWebToneChip'
+import { recapVersionLabel } from './recap-version-label'
 import { recapReportedAt, recapWindowLabel } from './recap-window'
 
 const when = (iso: string) => (iso ? new Date(iso).toLocaleString() : '')
@@ -42,6 +44,7 @@ export function RecapList({
         {recaps.map((r) => {
           const current = r.id === selectedId
           const windowLabel = recapWindowLabel(r)
+          const version = recapVersionLabel(r, productLabel)
           return (
             <li key={r.id}>
               <button
@@ -67,7 +70,11 @@ export function RecapList({
                 </span>
                 <span className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
                   <ProductChip product={r.product} />
-                  {r.version ? <span className="truncate">{r.version.name}</span> : null}
+                  {version ? (
+                    <span className="truncate" title={version.all ?? undefined}>
+                      {version.label}
+                    </span>
+                  ) : null}
                   {r.commit ? <span className="font-mono">{r.commit.slice(0, 8)}</span> : null}
                   <span className="ml-auto shrink-0">{startedBy(r)}</span>
                 </span>

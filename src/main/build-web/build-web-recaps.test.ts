@@ -64,6 +64,11 @@ describe('the list', () => {
           name: 'Weekly review',
           product: 'sa',
           version: { id: 'v1', name: '2.16', branch: 'master' },
+          versions: [
+            { id: 'v1', product: 'sa', name: '2.16' },
+            { id: 'v3', product: 'ap', name: '1.17' },
+            { id: 'v9', product: 'mobile', name: '1.0' }
+          ],
           commit: 'abcdef1234',
           trigger: 'scheduled',
           started_by: null,
@@ -105,6 +110,10 @@ describe('the list', () => {
             name: 'Weekly review',
             product: 'sa',
             version: { id: 'v1', name: '2.16', branch: 'master' },
+            versions: [
+              { id: 'v1', product: 'sa', name: '2.16' },
+              { id: 'v3', product: 'ap', name: '1.17' }
+            ],
             commit: 'abcdef1234',
             trigger: 'scheduled',
             started_by: null,
