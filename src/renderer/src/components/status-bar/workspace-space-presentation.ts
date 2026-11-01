@@ -6,6 +6,7 @@ import {
   type MigrationUnsupportedPtyEntry
 } from '../../../../shared/agent-status-types'
 import { parsePaneKey } from '../../../../shared/stable-pane-id'
+import { agentStateIsActive } from '../../../../shared/agent-session-counts'
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import { isClipboardTextByteLengthOverLimit } from '../../../../shared/clipboard-text'
 import type {
@@ -66,10 +67,6 @@ export function getPaneKeyTabId(paneKey: string): string | null {
   return paneKey.slice(0, separatorIndex)
 }
 
-function isActiveAgentState(entry: Pick<AgentStatusEntry, 'state'>): boolean {
-  return entry.state === 'working' || entry.state === 'blocked' || entry.state === 'waiting'
-}
-
 function countTitleActiveAgentsForTab(
   tab: Pick<TerminalTab, 'id' | 'title'>,
   runtimePaneTitlesByTabId: Record<string, Record<number, string>>,
@@ -105,7 +102,7 @@ export function countWorkspaceSpaceActiveAgents({
   let count = 0
 
   for (const [paneKey, entry] of Object.entries(agentStatusByPaneKey)) {
-    if (!isActiveAgentState(entry)) {
+    if (!agentStateIsActive(entry.state)) {
       continue
     }
     if (!isExplicitAgentStatusFresh(entry, now, AGENT_STATUS_STALE_AFTER_MS)) {

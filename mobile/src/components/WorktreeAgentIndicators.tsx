@@ -7,6 +7,7 @@ import {
   type AgentBackgroundCommand
 } from '../../../src/shared/agent-background-commands'
 import { colors } from '../theme/mobile-theme'
+import { countAgentSessions } from '../../../src/shared/agent-session-counts'
 import { formatTimeAgo } from '../worktree/agent-row-display'
 import { buildAgentRowLineageTree } from '../worktree/agent-row-lineage'
 
@@ -49,13 +50,14 @@ export function WorktreeBackgroundCommandRow({
 
 /**
  * A workspace's agent facts at the end of its title line, as on the desktop: what its agents run
- * in the background, then how many agent sessions run, from two on. The host lists only agents in
- * live panes; an agent another one dispatched counts under that session, not beside it.
+ * in the background, then its active agent sessions out of all, from two sessions on. The host
+ * lists only agents in live panes; an agent another one dispatched counts under that session.
  */
 export function WorktreeAgentIndicators({ agents }: { agents: RuntimeWorktreeAgentRow[] }) {
   const commands = agents.flatMap(agentBackgroundCommands)
-  const sessions = buildAgentRowLineageTree(agents).rootRows.length
-  if (sessions < 2 && commands.length === 0) {
+  const { rootRows, childrenByParentPaneKey } = buildAgentRowLineageTree(agents)
+  const sessions = countAgentSessions(rootRows, childrenByParentPaneKey, () => true)
+  if (sessions.total < 2 && commands.length === 0) {
     return null
   }
   return (
@@ -69,9 +71,14 @@ export function WorktreeAgentIndicators({ agents }: { agents: RuntimeWorktreeAge
           <BackgroundCommandIcon commands={commands} size={12} />
         </View>
       ) : null}
-      {sessions > 1 ? (
-        <View style={styles.circle} accessibilityLabel={`${sessions} agent sessions running`}>
-          <Text style={styles.text}>{sessions}</Text>
+      {sessions.total > 1 ? (
+        <View
+          style={styles.circle}
+          accessibilityLabel={`${sessions.active} of ${sessions.total} agent sessions active`}
+        >
+          <Text style={styles.text}>
+            {sessions.active}/{sessions.total}
+          </Text>
         </View>
       ) : null}
     </>
