@@ -10,6 +10,7 @@ import {
   writesRuns
 } from '../../../../src/renderer/src/components/build-web/issue/issue-card-facts'
 import { filesWithRole } from '../../../../src/renderer/src/components/build-web/issue/plan/issue-file-roles'
+import { isWritingDeployNotes } from '../../../../src/renderer/src/components/build-web/issue/plan/deploy-notes-job'
 import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { MobileLoadErrorState } from '../../components/MobileLoadErrorState'
 import { colors, spacing, typography } from '../../theme/mobile-theme'
@@ -26,16 +27,18 @@ import { IssueOverviewTab } from './IssueOverviewTab'
 import { IssueSubtasksTab } from './IssueSubtasksTab'
 import { IssueBuildTab } from './tabs/IssueBuildTab'
 import { IssueCommitsTab } from './tabs/IssueCommitsTab'
+import { IssueDeployTab } from './tabs/IssueDeployTab'
 import { IssueGuideTab } from './tabs/IssueGuideTab'
 import { IssueMockupsTab } from './tabs/IssueMockupsTab'
 import { IssuePlanTab } from './tabs/IssuePlanTab'
+import { useIssueDeployNotes } from './tabs/plan/use-issue-deploy-notes'
 import { useIssueArchive } from './use-issue-archive'
 import { useIssueConfirm } from './use-issue-confirm'
 import { useIssueDetail } from './use-issue-detail'
 import { usePlanTabLabel } from './use-issue-plan-progress'
 import { useIssueRun } from './use-issue-run'
 
-/** The task on the whole screen, with build-web's tabs: Overview, Plan, Artifacts, Build, Guide & Jira, Commits, Subtasks. */
+/** The task on the whole screen, with build-web's tabs: Overview, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
 export function BuildWebIssueScreen({
   issueId,
   initialTab,
@@ -53,6 +56,7 @@ export function BuildWebIssueScreen({
   const run = useIssueRun(issueId, runsVisible)
   const archive = useIssueArchive(state.detail, confirm, state.reload)
   const planLabel = usePlanTabLabel(state.detail)
+  const deployNotes = useIssueDeployNotes(state.detail, state.reload)
   const [tab, setTab] = useState<BuildWebCardTab>(initialTab)
   // Why: a tab stays mounted once opened, so a guide draft or a comment survives a tab switch.
   const [visited, setVisited] = useState<ReadonlySet<BuildWebCardTab>>(
@@ -89,8 +93,11 @@ export function BuildWebIssueScreen({
 
   // A subtask's build is its parent's: it has no Build or Guide of its own.
   const showRuns = runsVisible && !detail.parent_id
+  // Why: a subtask has no subtasks of its own, and goes out, with its deploy note, as its task.
   const tabs = BUILD_WEB_CARD_TABS.filter(
-    (t) => (showRuns || (t !== 'build' && t !== 'guide')) && (t !== 'subtasks' || !detail.parent_id)
+    (t) =>
+      (showRuns || (t !== 'build' && t !== 'guide')) &&
+      ((t !== 'subtasks' && t !== 'deploy') || !detail.parent_id)
   )
   const current = tabs.includes(tab) ? tab : 'overview'
   const open = (next: BuildWebCardTab) => {
@@ -116,6 +123,7 @@ export function BuildWebIssueScreen({
 
   const tally = currentRun ? imageTally(currentRun) : null
   const mockupCount = filesWithRole(detail.files, 'mockup').length
+  const deployCount = filesWithRole(detail.files, 'deploy').length
   const label = (t: BuildWebCardTab): string => {
     switch (t) {
       case 'overview':
@@ -124,6 +132,11 @@ export function BuildWebIssueScreen({
         return planLabel
       case 'mockups':
         return mockupCount ? `Artifacts ${mockupCount}` : 'Artifacts'
+      case 'deploy':
+        if (isWritingDeployNotes(deployNotes.job)) {
+          return 'Deploy …'
+        }
+        return deployCount ? `Deploy ${deployCount}` : 'Deploy'
       case 'build':
         return tally ? `Build ${tally.ok} / ${tally.total}` : 'Build'
       case 'guide':
@@ -203,6 +216,7 @@ export function BuildWebIssueScreen({
           )}
           {pane('plan', <IssuePlanTab {...tabProps} />)}
           {pane('mockups', <IssueMockupsTab {...tabProps} />)}
+          {pane('deploy', <IssueDeployTab {...tabProps} notes={deployNotes} />)}
           {pane('build', <IssueBuildTab {...tabProps} />)}
           {pane('guide', <IssueGuideTab {...tabProps} />)}
           {pane('commits', <IssueCommitsTab {...tabProps} />)}

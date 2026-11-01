@@ -25,6 +25,9 @@ import { useIssueRun } from './use-issue-run'
 import { useIssuePlan } from './plan/use-issue-plan'
 import { IssuePlanTab } from './plan/IssuePlanTab'
 import { IssueMockupsTab } from './plan/IssueMockupsTab'
+import { IssueDeployTab } from './plan/IssueDeployTab'
+import { useIssueDeployNotes } from './plan/use-issue-deploy-notes'
+import { isWritingDeployNotes } from './plan/deploy-notes-job'
 import { filesWithRole, planProgress } from './plan/issue-file-roles'
 
 type CardTab = BuildWebCardTab
@@ -40,7 +43,7 @@ export type BuildWebIssueTabPlace = {
   onBackToList: () => void
 }
 
-/** The task on the whole page, with build-web's tabs: Overview, Build, Guide & Jira, Commits, Subtasks. */
+/** The task on the whole page, with build-web's tabs: Overview, Plan, Artifacts, Deploy, Build, Guide & Jira, Commits, Subtasks. */
 export function BuildWebIssueFullScreen({
   onTakeToWork,
   inWorkspaceTab
@@ -97,6 +100,9 @@ export function BuildWebIssueFullScreen({
     }
   }, [detail, keepsPageTabs])
   const plan = useIssuePlan(target, detail)
+  // Why only once its tab is opened: the label needs no text, only the files and the job.
+  const deployNote = useIssuePlan(target, visited.has('deploy') ? detail : null, 'deploy')
+  const deployNotes = useIssueDeployNotes(target, detail, inSight, state.reload)
   const archive = useIssueArchive(target, detail, state.reload)
   if (!issueId || state.error) {
     return <BuildWebListState kind="error" error={state.error} />
@@ -130,6 +136,7 @@ export function BuildWebIssueFullScreen({
     }
   }
   const mockupCount = filesWithRole(detail.files, 'mockup').length
+  const deployCount = filesWithRole(detail.files, 'deploy').length
   // As build-web's tab: how far the plan has got once it is read, else how many plans there are.
   const planLabel = () => {
     const steps = plan.text ? planProgress(plan.text) : null
@@ -150,6 +157,13 @@ export function BuildWebIssueFullScreen({
         return mockupCount
           ? translate('buildWeb.card.mockupsCount', 'Artifacts {{count}}', { count: mockupCount })
           : translate('buildWeb.card.mockups', 'Artifacts')
+      case 'deploy':
+        if (isWritingDeployNotes(deployNotes.job)) {
+          return translate('buildWeb.card.deployWriting', 'Deploy …')
+        }
+        return deployCount
+          ? translate('buildWeb.card.deployCount', 'Deploy {{count}}', { count: deployCount })
+          : translate('buildWeb.card.deploy', 'Deploy')
       case 'build':
         return tally
           ? translate('buildWeb.card.buildCount', 'Build {{ok}} / {{total}}', tally)
@@ -164,9 +178,12 @@ export function BuildWebIssueFullScreen({
         })
     }
   }
-  // Why: a subtask has no subtasks of its own — the tree is two levels deep.
+  // Why: a subtask has no subtasks of its own — the tree is two levels deep — and goes out, with
+  // its deploy note, as part of its task.
   const tabs = TABS.filter(
-    (t) => (showRuns || (t !== 'build' && t !== 'guide')) && (t !== 'subtasks' || !detail.parent_id)
+    (t) =>
+      (showRuns || (t !== 'build' && t !== 'guide')) &&
+      ((t !== 'subtasks' && t !== 'deploy') || !detail.parent_id)
   )
   // Why: opened on Build for a task without one (a subtask, no rights), it shows Overview.
   const current = tabs.includes(tab) ? tab : 'overview'
@@ -221,6 +238,11 @@ export function BuildWebIssueFullScreen({
               className="h-full"
             >
               <IssueMockupsTab target={target} detail={detail} />
+            </TabsContent>
+          ) : null}
+          {!detail.parent_id && visited.has('deploy') ? (
+            <TabsContent value="deploy" forceMount hidden={current !== 'deploy'}>
+              <IssueDeployTab detail={detail} note={deployNote} notes={deployNotes} />
             </TabsContent>
           ) : null}
           {showRuns && visited.has('build') ? (

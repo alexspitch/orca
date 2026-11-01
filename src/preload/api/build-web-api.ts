@@ -2,6 +2,7 @@ import type {
   BuildWebConnectArgs,
   BuildWebConnectResult,
   BuildWebConnectionStatus,
+  BuildWebDeployNotesJob,
   BuildWebIssueDetail,
   BuildWebIssueFileContent,
   BuildWebMockupView,
@@ -172,6 +173,12 @@ export type BuildWebApi = {
   guideShot: (args: { runId: string; slug: string }) => Promise<BuildWebGuideShot>
   issueFile: (args: { id: string; fileId: string }) => Promise<BuildWebIssueFileContent>
   issueMockupView: (args: { id: string; fileId: string }) => Promise<BuildWebMockupView>
+  /** IS-341: the task's last generation of its deploy note; null when none was started. */
+  deployNotes: (args: { id: string }) => Promise<BuildWebDeployNotesJob | null>
+  /** Write the deploy note again; refused while one is being written. */
+  startDeployNotes: (args: {
+    id: string
+  }) => Promise<BuildWebMutationResult<BuildWebDeployNotesJob>>
   /** Desktop only: writes a file `issueFile` read to this computer, for its tabs; the path. */
   stageIssueFile: (args: {
     issueKey: string

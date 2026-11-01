@@ -1,6 +1,7 @@
 import {
   BUILD_WEB_ACTIVITY_RUNTIME_CAPABILITY,
   BUILD_WEB_CONSOLE_FEATURES_RUNTIME_CAPABILITY,
+  BUILD_WEB_DEPLOY_NOTES_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_ADOPT_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_FRESHNESS_RUNTIME_CAPABILITY,
   BUILD_WEB_IMAGE_GROUP_BUILD_RUNTIME_CAPABILITY,
@@ -204,6 +205,15 @@ export const NEWER_METHODS: {
       translate(
         'buildWeb.client.updateServerTranscript',
         'This Orca server does not hand out session logs yet. Update the server.'
+      )
+  },
+  {
+    methods: new Set<Method>(['deployNotes', 'startDeployNotes']),
+    capability: BUILD_WEB_DEPLOY_NOTES_RUNTIME_CAPABILITY,
+    refusal: () =>
+      translate(
+        'buildWeb.client.updateServerDeployNotes',
+        'This Orca server does not show deploy notes yet. Update the server.'
       )
   },
   {

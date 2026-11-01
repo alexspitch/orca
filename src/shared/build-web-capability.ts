@@ -74,3 +74,6 @@ export const BUILD_WEB_SESSION_TRANSCRIPT_RUNTIME_CAPABILITY = 'build-web-sessio
 
 /** A runtime that creates a task on the console: `buildWeb.createIssue`. */
 export const BUILD_WEB_ISSUE_CREATE_RUNTIME_CAPABILITY = 'build-web-issue-create.v1'
+
+/** A runtime that reads and restarts a task's deploy note (IS-341): `buildWeb.deployNotes`, `buildWeb.startDeployNotes`. */
+export const BUILD_WEB_DEPLOY_NOTES_RUNTIME_CAPABILITY = 'build-web-deploy-notes.v1'

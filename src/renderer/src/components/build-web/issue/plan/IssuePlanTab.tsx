@@ -51,6 +51,25 @@ function planComponents(detail: BuildWebIssueDetail): Components {
   }
 }
 
+/** A task's markdown file as a Markdown file's preview: a plan's steps read as checkboxes, not bullets. */
+export function IssueMarkdown({
+  detail,
+  text
+}: {
+  detail: BuildWebIssueDetail
+  text: string
+}): React.JSX.Element {
+  const components = useMemo(() => planComponents(detail), [detail])
+  const isDark = useDocumentDarkTheme()
+  return (
+    <div className={isDark ? 'markdown-dark' : 'markdown-light'}>
+      <div className="markdown-body">
+        <MarkdownPreviewBody content={text} components={components} />
+      </div>
+    </div>
+  )
+}
+
 /** How to attach what an empty tab is for, as build-web says it. */
 export function AttachHint({ text, command }: { text: string; command: string }) {
   return (
@@ -73,8 +92,6 @@ export function IssuePlanTab({
   plan: IssuePlan
 }): React.JSX.Element {
   const { plans, shown, text, error } = plan
-  const components = useMemo(() => planComponents(detail), [detail])
-  const isDark = useDocumentDarkTheme()
   if (!shown) {
     return (
       <AttachHint
@@ -123,14 +140,7 @@ export function IssuePlanTab({
       {text === null && !error ? (
         <Loader2 className="size-4 animate-spin text-muted-foreground" />
       ) : null}
-      {text !== null ? (
-        // The look of a Markdown file's preview: a plan's steps read as checkboxes, not bullets.
-        <div className={isDark ? 'markdown-dark' : 'markdown-light'}>
-          <div className="markdown-body">
-            <MarkdownPreviewBody content={text} components={components} />
-          </div>
-        </div>
-      ) : null}
+      {text !== null ? <IssueMarkdown detail={detail} text={text} /> : null}
     </div>
   )
 }

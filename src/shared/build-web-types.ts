@@ -131,13 +131,31 @@ export type BuildWebIssueFile = {
   mime: string
   /** The comment it was attached with; null for a file of the task itself. */
   comment_id: string | null
-  /** The card's Plan or Mockups tab it is shown in; '' for plain evidence. Absent from older hosts. */
+  /** The card's Plan, Mockups or Deploy tab it is shown in; '' for plain evidence. Absent from older hosts. */
   role?: BuildWebIssueFileRole
   created_by: string
   created_at: string
 }
 
-export type BuildWebIssueFileRole = '' | 'plan' | 'mockup'
+export const BUILD_WEB_ISSUE_FILE_ROLES = ['', 'plan', 'mockup', 'deploy'] as const
+export type BuildWebIssueFileRole = (typeof BUILD_WEB_ISSUE_FILE_ROLES)[number]
+
+export const BUILD_WEB_DEPLOY_NOTES_STATUSES = [
+  'queued',
+  'running',
+  'success',
+  'failed',
+  'cancelled'
+] as const
+
+/** IS-341: one generation of the note for the deployment engineers. On success `message` says why no note was written. */
+export type BuildWebDeployNotesJob = {
+  id: string
+  status: (typeof BUILD_WEB_DEPLOY_NOTES_STATUSES)[number]
+  created_at: string
+  finished_at: string | null
+  message: string | null
+}
 
 /** Where a mockup is shown: `base` (absolute, valid for hours) + a screen's `path`. */
 export type BuildWebMockupView = { base: string; screens: { name: string; path: string }[] }

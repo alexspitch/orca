@@ -1,7 +1,10 @@
-import type { BuildWebIssueFile } from '../../../../../../shared/build-web-types'
+import type {
+  BuildWebIssueFile,
+  BuildWebIssueFileRole
+} from '../../../../../../shared/build-web-types'
 
-// Which files of a task the card's Plan and Mockups tabs show, and what a plan says of its own
-// progress — as build-web's fileRoles.ts.
+// Which files of a task the card's Plan, Mockups and Deploy tabs show, and what a plan says of its
+// own progress — as build-web's fileRoles.ts.
 
 const newestFirst = (a: BuildWebIssueFile, b: BuildWebIssueFile) =>
   b.created_at.localeCompare(a.created_at)
@@ -9,7 +12,7 @@ const newestFirst = (a: BuildWebIssueFile, b: BuildWebIssueFile) =>
 /** The task's own files with this role, the newest first — the one a tab opens on. */
 export const filesWithRole = (
   files: readonly BuildWebIssueFile[],
-  role: 'plan' | 'mockup'
+  role: Exclude<BuildWebIssueFileRole, ''>
 ): BuildWebIssueFile[] =>
   files.filter((f) => f.comment_id === null && f.role === role).sort(newestFirst)
 

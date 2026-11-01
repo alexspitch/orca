@@ -26,6 +26,7 @@ export const BUILD_WEB_CARD_TABS = [
   'overview',
   'plan',
   'mockups',
+  'deploy',
   'build',
   'guide',
   'commits',

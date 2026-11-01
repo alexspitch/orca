@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import type {
   BuildWebIssueDetail,
-  BuildWebIssueFile
+  BuildWebIssueFile,
+  BuildWebIssueFileRole
 } from '../../../../../../src/shared/build-web-types'
 import {
   filesWithRole,
@@ -24,11 +25,15 @@ type PlanRead = { id: string; name: string; text: string | null; error: string |
 
 /**
  * The task's plan files, the newest shown first, and the text of the one shown. The plan attached
- * again under its name stays on screen until the new one is read.
+ * again under its name stays on screen until the new one is read. `role` reads the deploy note the
+ * same way.
  */
-export function useIssuePlan(detail: BuildWebIssueDetail | null): IssuePlan {
+export function useIssuePlan(
+  detail: BuildWebIssueDetail | null,
+  role: Extract<BuildWebIssueFileRole, 'plan' | 'deploy'> = 'plan'
+): IssuePlan {
   const { call, hostCapabilities } = useBuildWebScreen()
-  const plans = detail ? filesWithRole(detail.files, 'plan') : []
+  const plans = detail ? filesWithRole(detail.files, role) : []
   const issueId = detail?.id ?? null
   const [picked, setPicked] = useState<Pick<BuildWebIssueFile, 'id' | 'name'> | null>(null)
   const shown = followFile(plans, picked)

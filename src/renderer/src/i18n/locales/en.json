@@ -21646,7 +21646,8 @@
       "updateServerTwinDecision": "This Orca server cannot build a waiting redos image yet. Update the server.",
       "updateServerTaskPage": "This Orca server does not read the list of all build-web tasks yet. Update the server.",
       "updateServerSessions": "This Orca server does not follow task sessions yet. Update the server.",
-      "updateServerTranscript": "This Orca server does not hand out session logs yet. Update the server."
+      "updateServerTranscript": "This Orca server does not hand out session logs yet. Update the server.",
+      "updateServerDeployNotes": "This Orca server does not show deploy notes yet. Update the server."
     },
     "status": {
       "unknown": "Unknown",
@@ -21782,6 +21783,9 @@
       "planSteps": "Plan {{done}} / {{total}}",
       "mockups": "Artifacts",
       "mockupsCount": "Artifacts {{count}}",
+      "deploy": "Deploy",
+      "deployCount": "Deploy {{count}}",
+      "deployWriting": "Deploy …",
       "commentNotInTelegram": "Saved, but not sent to Telegram: {{error}}",
       "commentSentTelegramAwaiting": "Sent to the assignee in Telegram; the task awaits their answer.",
       "commentSentTelegram": "Sent to the assignee in Telegram.",
@@ -22673,6 +22677,21 @@
       "list": "Artifacts and screens",
       "openInBrowser": "Open in browser",
       "noPages": "The archive holds no .html page."
+    },
+    "deploy": {
+      "never": "No deploy note yet. build-web writes one when the task goes to “Deploying”.",
+      "writing": "The model reads the task’s commits and writes the note — up to twenty minutes. Started {{when}}.",
+      "failed": "Could not write the note ({{when}}): {{error}}",
+      "noReason": "no reason recorded",
+      "cancelled": "Writing the note was cancelled {{when}}.",
+      "nothing": "Checked {{when}}: {{reason}}.",
+      "removed": "A note was written {{when}} and taken out of the tab since.",
+      "write": "Write",
+      "writeAgain": "Write again",
+      "file": "Note file",
+      "rewriting": "A new note is being written — this one will be replaced or removed.",
+      "laterFailed": "Could not write a new note ({{when}}): {{error}}. The earlier one is below.",
+      "laterCancelled": "Writing a new note was cancelled {{when}}. The earlier one is below."
     },
     "history": {
       "label": "Page history",

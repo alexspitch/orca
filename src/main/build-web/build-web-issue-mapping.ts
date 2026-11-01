@@ -1,5 +1,6 @@
 import {
   BUILD_WEB_COMMENT_CHANNELS,
+  BUILD_WEB_ISSUE_FILE_ROLES,
   BUILD_WEB_PRODUCTS,
   BUILD_WEB_STATUSES,
   type BuildWebAgentSession,
@@ -116,7 +117,7 @@ function fileOf(value: unknown): BuildWebIssueFile | null {
         size: numberOf(v.size),
         mime: textOf(v.mime),
         comment_id: textOrNull(v.comment_id),
-        role: v.role === 'plan' || v.role === 'mockup' ? v.role : '',
+        role: BUILD_WEB_ISSUE_FILE_ROLES.find((r) => r === v.role) ?? '',
         created_by: textOf(v.created_by),
         created_at: textOf(v.created_at)
       }

@@ -41,6 +41,10 @@ import {
 import { RuntimeBuildWebCommands } from '../runtime/runtime-build-web-commands'
 import { stageBuildWebIssueFile } from '../build-web/build-web-issue-files'
 import {
+  getBuildWebDeployNotes,
+  startBuildWebDeployNotes
+} from '../build-web/build-web-deploy-notes'
+import {
   linkBuildWebSessionToWorktree,
   setBuildWebAgentSessionOnHost,
   type BuildWebSessionLinkRuntime
@@ -143,6 +147,8 @@ export function registerBuildWebHandlers(runtime: BuildWebSessionLinkRuntime): v
   handle('issueMockupView', BuildWebIssueFileParams, (args) =>
     commands.buildWebIssueMockupView(args)
   )
+  handle('deployNotes', BuildWebIssueId, (args) => getBuildWebDeployNotes(args.id))
+  handle('startDeployNotes', BuildWebIssueId, (args) => startBuildWebDeployNotes(args.id))
   // Why local only: the file is staged on this computer for its tabs, whichever host read it.
   handle('stageIssueFile', BuildWebStageIssueFileParams, (args) => stageBuildWebIssueFile(args))
   registerBuildWebTaskHandlers()
