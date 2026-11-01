@@ -9,8 +9,17 @@ import {
   type BuildWebStatus,
   type BuildWebVersion
 } from '../../../../src/shared/build-web-types'
+import {
+  BUILD_WEB_TESTING_STATUSES,
+  type BuildWebTestingStatus
+} from '../../../../src/shared/build-web-run-types'
+import { BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY } from '../../../../src/shared/build-web-capability'
 import type { BuildWebTmsStand } from '../../../../src/shared/build-web-task-types'
 import { stepsOfLines } from '../../../../src/shared/build-web-issue-steps'
+import {
+  testerKindOf,
+  type TesterKind
+} from '../../../../src/renderer/src/components/build-web/issue/issue-tester'
 import { BottomDrawer } from '../../components/BottomDrawer'
 import { MobileSwitch } from '../../components/MobileSwitch'
 import { colors, spacing, typography } from '../../theme/mobile-theme'
@@ -27,6 +36,7 @@ import { useBuildWebScreen } from '../build-web-screen-context'
 import { PriorityChip, StatusChip, TypeChip } from '../BuildWebToneChip'
 import { CardButton, ui } from '../issue/issue-card-ui'
 import { PropertyRow, PropertySelect } from '../issue/IssuePropertySelect'
+import { NewIssueTesterRow } from '../issue/IssueTester'
 import { useBuildWebAssignees } from './use-build-web-assignees'
 
 const NONE = '__none__'
@@ -71,7 +81,7 @@ function useProductLists(product: BuildWebProduct | null): {
 
 // Why a separate form: it mounts per opening, so it starts empty.
 function IssueCreateForm({ onClose }: { onClose: () => void }) {
-  const { call, notify, openIssue, listSync } = useBuildWebScreen()
+  const { call, notify, openIssue, listSync, hostCapabilities } = useBuildWebScreen()
   const [product, setProduct] = useState<BuildWebProduct | null>(null)
   const [title, setTitle] = useState('')
   const [type, setType] = useState<IssueType>('bug')
@@ -83,12 +93,24 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
   const [forAi, setForAi] = useState(false)
   const [description, setDescription] = useState('')
   const [steps, setSteps] = useState('')
+  const [afterTrain, setAfterTrain] = useState<BuildWebTestingStatus>('Testing')
+  // Why per kind: a person picked for one check is not offered for another.
+  const [picked, setPicked] = useState<{ kind: TesterKind; who: string } | null>(null)
   const [reading, setReading] = useState(false)
   const [saving, setSaving] = useState(false)
   const people = useBuildWebAssignees(true)
   const { versions, stands } = useProductLists(product)
   const trimmed = title.trim()
   const busy = saving || reading
+  // IS-347: only through a host that passes the tester on, as the card's tester row.
+  const knowsTester = hostCapabilities.includes(BUILD_WEB_ISSUE_TESTER_RUNTIME_CAPABILITY)
+  // Why not tools: its train carries nothing, and finish puts it straight under testing.
+  const asksAfterTrain = knowsTester && product !== 'tools'
+  const testerKind = knowsTester
+    ? testerKindOf({ status, parent_id: null }, asksAfterTrain ? afterTrain : 'Testing')
+    : null
+  const tester = picked && picked.kind === testerKind ? picked.who : ''
+  const needsTester = testerKind === 'external' && !tester
 
   const chooseProduct = (next: string) => {
     const found = BUILD_WEB_PRODUCTS.find((p) => p === next)
@@ -116,7 +138,7 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
   }
 
   const create = async () => {
-    if (!product || !trimmed) {
+    if (!product || !trimmed || needsTester) {
       return
     }
     const lines = stepsOfLines(steps)
@@ -131,7 +153,9 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
       ...(versionId ? { version_id: versionId } : {}),
       ...(stand ? { stand_id: stand.id, stand_mode: stand.mode, version: stand.version } : {}),
       ...(description.trim() ? { description } : {}),
-      ...(lines.length ? { steps: lines } : {})
+      ...(lines.length ? { steps: lines } : {}),
+      ...(asksAfterTrain ? { after_train: afterTrain } : {}),
+      ...(tester ? { tester } : {})
     }
     setSaving(true)
     try {
@@ -246,6 +270,26 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
             ]}
           />
         </PropertyRow>
+        {asksAfterTrain ? (
+          <PropertyRow label="Testing">
+            <PropertySelect
+              label="Testing"
+              value={afterTrain}
+              disabled={busy}
+              onChange={setAfterTrain}
+              options={BUILD_WEB_TESTING_STATUSES.map((s) => ({ value: s, label: s }))}
+            />
+          </PropertyRow>
+        ) : null}
+        {testerKind && testerKind !== 'self' ? (
+          <NewIssueTesterRow
+            kind={testerKind}
+            issue={{ product: product ?? 'unknown', assignee }}
+            value={tester}
+            disabled={busy}
+            onChange={(who) => setPicked({ kind: testerKind, who })}
+          />
+        ) : null}
         <PropertyRow label="Handed to AI">
           <MobileSwitch value={forAi} onValueChange={setForAi} accessibilityLabel="Handed to AI" />
         </PropertyRow>
@@ -273,7 +317,7 @@ function IssueCreateForm({ onClose }: { onClose: () => void }) {
         <CardButton
           variant="primary"
           label="Create"
-          disabled={!product || !trimmed || busy}
+          disabled={!product || !trimmed || busy || needsTester}
           onPress={() => void create()}
         />
       </View>

@@ -3,13 +3,9 @@ import { useAppStore } from '@/store'
 import { runtimeRpcTargetForAuthorityKey } from '@/runtime/runtime-client-target'
 import { recordedSessionServer } from '../../../../shared/build-web-session-host'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
-import {
-  lastVerifiedRuntimeStatus,
-  type RuntimeEnvironmentStatus
-} from '../../../../shared/runtime-host-status'
 import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { SessionListRow } from './BuildWebSessionList'
-import { newerMethodCapability } from './build-web-newer-methods'
+import { hostServesMethod } from './build-web-newer-methods'
 
 /**
  * The host that ran the session: its worktree's while it is here; once removed, the server its
@@ -32,19 +28,6 @@ function sessionLogTarget(
   return server ? { kind: 'environment', environmentId: server.environmentId } : buildWebTarget
 }
 
-function servesTranscripts(
-  target: RuntimeClientTarget,
-  statusByEnvironmentId: ReadonlyMap<string, RuntimeEnvironmentStatus>
-): boolean {
-  const capability = newerMethodCapability('sessionTranscript')
-  // Why: this app's own main process always hands logs out.
-  if (target.kind === 'local' || capability === null) {
-    return true
-  }
-  const status = lastVerifiedRuntimeStatus(statusByEnvironmentId.get(target.environmentId))
-  return status?.capabilities?.includes(capability) === true
-}
-
 /**
  * Per session, the host that reads its log, as the phone's card routes it; a session is absent when
  * the agent's own session id is unknown or that host predates session logs.
@@ -64,7 +47,7 @@ export function useSessionLogTargets(
         continue
       }
       const target = sessionLogTarget(row, buildWebTarget, environmentIds)
-      if (servesTranscripts(target, statusByEnvironmentId)) {
+      if (hostServesMethod(target, 'sessionTranscript', statusByEnvironmentId)) {
         targets.set(row.record.id, target)
       }
     }

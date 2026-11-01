@@ -20,6 +20,11 @@ import {
   BUILD_WEB_TRAINS_ROLLING_RUNTIME_CAPABILITY,
   BUILD_WEB_WORKTREE_TASK_RUNTIME_CAPABILITY
 } from '../../../../shared/build-web-capability'
+import {
+  lastVerifiedRuntimeStatus,
+  type RuntimeEnvironmentStatus
+} from '../../../../shared/runtime-host-status'
+import type { RuntimeClientTarget } from '../../../../shared/runtime-client-target'
 import type { BuildWebApi } from '../../../../preload/api/build-web-api'
 import { translate } from '@/i18n/i18n'
 
@@ -242,4 +247,18 @@ export const testerRefusal = (): string =>
 /** The capability a server announces for `method`; null for a call every build-web server has. */
 export function newerMethodCapability(method: Method): string | null {
   return NEWER_METHODS.find((newer) => newer.methods.has(method))?.capability ?? null
+}
+
+/** Whether `target` serves `method`: this app's own main process always does, a server once it announced it. */
+export function hostServesMethod(
+  target: RuntimeClientTarget,
+  method: Method,
+  statusByEnvironmentId: ReadonlyMap<string, RuntimeEnvironmentStatus>
+): boolean {
+  const capability = newerMethodCapability(method)
+  if (target.kind === 'local' || capability === null) {
+    return true
+  }
+  const status = lastVerifiedRuntimeStatus(statusByEnvironmentId.get(target.environmentId))
+  return status?.capabilities?.includes(capability) === true
 }

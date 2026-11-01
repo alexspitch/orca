@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { translate } from '@/i18n/i18n'
+import { useAppStore } from '@/store'
 import {
   BUILD_WEB_ISSUE_TYPES,
   BUILD_WEB_PRODUCTS,
@@ -23,14 +24,21 @@ import {
   type BuildWebStatus,
   type BuildWebVersion
 } from '../../../../shared/build-web-types'
+import {
+  BUILD_WEB_TESTING_STATUSES,
+  type BuildWebTestingStatus
+} from '../../../../shared/build-web-run-types'
 import type { BuildWebTmsStand } from '../../../../shared/build-web-task-types'
 import { stepsOfLines } from '../../../../shared/build-web-issue-steps'
 import { callBuildWeb } from './build-web-client'
 import { BUILD_WEB_PRIORITIES, loginOf, productLabel } from './build-web-labels'
+import { hostServesMethod } from './build-web-newer-methods'
 import { useBuildWebStore } from './build-web-store'
 import { useBuildWebAssignees, useBuildWebTarget } from './use-build-web-data'
 import { InlineSelect, PropertyRow } from './BuildWebPropertyControls'
 import { PriorityChip, StatusChip, TypeChip } from './BuildWebToneChip'
+import { NewIssueTesterRow } from './BuildWebIssueTester'
+import { testerKindOf, type TesterKind } from './issue/issue-tester'
 
 const NONE = '__none__'
 type IssueType = (typeof BUILD_WEB_ISSUE_TYPES)[number]
@@ -86,11 +94,25 @@ function NewIssueForm({
   const [forAi, setForAi] = useState(false)
   const [description, setDescription] = useState('')
   const [steps, setSteps] = useState('')
+  const [afterTrain, setAfterTrain] = useState<BuildWebTestingStatus>('Testing')
+  // Why per kind: a person picked for one check is not offered for another.
+  const [picked, setPicked] = useState<{ kind: TesterKind; who: string } | null>(null)
   const [reading, setReading] = useState(false)
   const [saving, setSaving] = useState(false)
   const people = useBuildWebAssignees(true)
   const { versions, stands } = useProductLists(product)
   const trimmed = title.trim()
+  // IS-347: only through a host that passes the tester on, as the card's tester row.
+  const knowsTester = useAppStore((s) =>
+    hostServesMethod(target, 'listTesters', s.runtimeStatusByEnvironmentId)
+  )
+  // Why not tools: its train carries nothing, and finish puts it straight under testing.
+  const asksAfterTrain = knowsTester && product !== 'tools'
+  const testerKind = knowsTester
+    ? testerKindOf({ status, parent_id: null }, asksAfterTrain ? afterTrain : 'Testing')
+    : null
+  const tester = picked && picked.kind === testerKind ? picked.who : ''
+  const needsTester = testerKind === 'external' && !tester
 
   const chooseProduct = (next: BuildWebProduct) => {
     if (next !== product) {
@@ -120,7 +142,7 @@ function NewIssueForm({
   }
 
   const create = async () => {
-    if (!product || !trimmed) {
+    if (!product || !trimmed || needsTester) {
       return
     }
     const lines = stepsOfLines(steps)
@@ -135,7 +157,9 @@ function NewIssueForm({
       ...(versionId ? { version_id: versionId } : {}),
       ...(stand ? { stand_id: stand.id, stand_mode: stand.mode, version: stand.version } : {}),
       ...(description.trim() ? { description } : {}),
-      ...(lines.length ? { steps: lines } : {})
+      ...(lines.length ? { steps: lines } : {}),
+      ...(asksAfterTrain ? { after_train: afterTrain } : {}),
+      ...(tester ? { tester } : {})
     }
     setSaving(true)
     try {
@@ -282,6 +306,32 @@ function NewIssueForm({
             ]}
           />
         </PropertyRow>
+        {asksAfterTrain ? (
+          <PropertyRow label={translate('buildWeb.props.testing', 'Testing')}>
+            <InlineSelect
+              label={translate('buildWeb.props.testing', 'Testing')}
+              value={afterTrain}
+              disabled={busy}
+              onChange={(v) => {
+                const next = BUILD_WEB_TESTING_STATUSES.find((s) => s === v)
+                if (next) {
+                  setAfterTrain(next)
+                }
+              }}
+              options={BUILD_WEB_TESTING_STATUSES.map((s) => ({ value: s, label: s }))}
+            />
+          </PropertyRow>
+        ) : null}
+        {testerKind && testerKind !== 'self' ? (
+          <NewIssueTesterRow
+            target={target}
+            kind={testerKind}
+            issue={{ product: product ?? 'unknown', assignee }}
+            value={tester}
+            disabled={busy}
+            onChange={(who) => setPicked({ kind: testerKind, who })}
+          />
+        ) : null}
         <PropertyRow label={translate('buildWeb.detail.forAi', 'Handed to AI')}>
           <Switch checked={forAi} disabled={busy} onCheckedChange={setForAi} />
         </PropertyRow>
@@ -304,7 +354,7 @@ function NewIssueForm({
         <Button type="button" variant="ghost" onClick={onClose}>
           {translate('buildWeb.create.cancel', 'Cancel')}
         </Button>
-        <Button type="submit" disabled={!product || !trimmed || busy}>
+        <Button type="submit" disabled={!product || !trimmed || busy || needsTester}>
           {translate('buildWeb.create.submit', 'Create')}
         </Button>
       </DialogFooter>
