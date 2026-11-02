@@ -1,6 +1,20 @@
 {
   "releases": [
     {
+      "version": "1.4.247-custom.1793609214000",
+      "date": "2026-11-02",
+      "commit": "fdf176374306",
+      "features": [
+        "The Freshness column on the Images page shows a spinner while a scan runs, with a hover note explaining it is checking, on desktop and phone.",
+        "Clicking a task number in a session's terminal now opens the task as a tab in that terminal's workspace instead of the Issues page."
+      ],
+      "settings": [],
+      "fixes": [
+        "Missing commit subjects on the Images page are no longer cut at 25 characters; they now show up to 100 in a wider tooltip.",
+        "Folder paths ending in a slash in a paired server's terminal, such as an agent's scratchpad folder, are now underlined and open when clicked."
+      ]
+    },
+    {
       "version": "1.4.247-custom.1793602154000",
       "date": "2026-11-02",
       "commit": "7e49d8bb7d22",
