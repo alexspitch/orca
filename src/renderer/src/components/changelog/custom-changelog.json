@@ -1,6 +1,27 @@
 {
   "releases": [
     {
+      "version": "1.4.247-custom.1793596592000",
+      "date": "2026-11-02",
+      "commit": "0b0b937cc14c",
+      "features": [
+        "In a paired server's terminal, clicking a temporary folder path opens a list of its files to view, download, or download all as a zip.",
+        "Recaps label a report covering several versions like «DC 3.1 +4», with the full version list shown on hover or in the report header.",
+        "Trains → Freshness tooltip on a «needs rebuild» chip lists the missing commits, newest first, by subject on desktop and phone.",
+        "On the phone, a file named in a task's plan or deploy note now opens in the file preview of the task's workspace.",
+        "Sidebar → workspace title badge shows active agent sessions out of all, and each session line counts the agents running under it."
+      ],
+      "settings": [],
+      "fixes": [
+        "«Take to work» now fetches a task's branch begun on another host first, so pushes are no longer refused and failed creates leave branches untouched.",
+        "A deleted task worktree's branch is now cleaned up even if Orca restarts before the next check.",
+        "Task cards no longer show an empty «Activity 0» tab when connected to an older console.",
+        "Recaps on the phone now show a Retry row when a refresh fails, and an open report's header names its product, window, version and time.",
+        "Issues task list and blockers badge load again from an older Orca server instead of failing with a validation error.",
+        "Sidebar → workspace title number now counts only running agent sessions instead of adding their subagents."
+      ]
+    },
+    {
       "version": "1.4.246-custom.1793546062000",
       "date": "2026-11-01",
       "commit": "edc8710876e9",
