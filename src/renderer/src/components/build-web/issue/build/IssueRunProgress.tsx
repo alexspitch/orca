@@ -167,6 +167,7 @@ export function IssueRunProgress({
     runBranch: run.branch,
     ticket: run.ticket,
     now,
+    scanning: scan.scanning,
     busy: actions.busy || !canWrite,
     building,
     pushingAny: pushingKeys.size > 0,

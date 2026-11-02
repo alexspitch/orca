@@ -157,23 +157,39 @@ function freshnessTip(f: BuildWebBuildFreshness, ticket: string | null): string 
   return `${made} ${formatAt(f.built_at) ?? '—'}, ${against} ${formatAt(f.ref_at) ?? '—'}: ${verdict}.${unpublished}${notIn}`
 }
 
+/** A row's freshness; while a scan runs, a spinner, and a tap says it is checking. */
 export function FreshnessChip({
   freshness,
-  ticket
+  ticket,
+  scanning
 }: {
-  freshness: BuildWebBuildFreshness
+  freshness: BuildWebBuildFreshness | undefined
   ticket: string | null
+  scanning: boolean
 }) {
-  if (freshness.state === 'unknown') {
-    return null
+  const spinner = scanning ? <LoadingSpinner size={12} color={colors.textMuted} /> : null
+  if (!freshness || freshness.state === 'unknown') {
+    return spinner ? (
+      <View
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel="Checking this image against its branch…"
+      >
+        {spinner}
+      </View>
+    ) : null
   }
   const current = freshness.state === 'current'
+  const tip = freshnessTip(freshness, ticket)
   return (
-    <TipChip
-      label={current ? 'up to date' : 'needs rebuild'}
-      tone={current ? 'green' : 'amber'}
-      tip={freshnessTip(freshness, ticket)}
-    />
+    <View style={styles.inline}>
+      {spinner}
+      <TipChip
+        label={current ? 'up to date' : 'needs rebuild'}
+        tone={current ? 'green' : 'amber'}
+        tip={scanning ? `Checking again against the branch…\n\n${tip}` : tip}
+      />
+    </View>
   )
 }
 

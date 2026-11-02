@@ -33,13 +33,16 @@ export function TipChip({
   tone,
   tip,
   onClick,
-  icon
+  icon,
+  wideTip = false
 }: {
   label: string
   tone: ChipTone | null
   tip: string
   onClick?: () => void
   icon?: React.ReactNode
+  /** Room for a line of about 100 characters, such as a commit subject. */
+  wideTip?: boolean
 }): React.JSX.Element {
   const chip = (
     <span className="inline-flex items-center gap-1">
@@ -58,7 +61,11 @@ export function TipChip({
           chip
         )}
       </TooltipTrigger>
-      <TooltipContent className="max-w-sm whitespace-pre-line">{tip}</TooltipContent>
+      <TooltipContent
+        className={cn('whitespace-pre-line', wideTip ? 'max-w-2xl text-pretty' : 'max-w-sm')}
+      >
+        {tip}
+      </TooltipContent>
     </Tooltip>
   )
 }
@@ -188,17 +195,40 @@ function freshnessTip(f: BuildWebBuildFreshness, ticket: string | null): string 
   return `${made} ${formatAt(f.built_at) ?? '—'}, ${against} ${formatAt(f.ref_at) ?? '—'}: ${verdict}.${unpublished}${notIn}`
 }
 
+/** A row's freshness; while a scan runs, a spinner, and the tooltip says it is checking. */
 export function FreshnessChip({
   freshness,
-  ticket
+  ticket,
+  scanning
 }: {
-  freshness: BuildWebBuildFreshness
+  freshness: BuildWebBuildFreshness | undefined
   ticket: string | null
+  scanning: boolean
 }): React.JSX.Element | null {
-  if (freshness.state === 'unknown') {
-    return null
+  const spinner = scanning ? (
+    <Loader2 className="size-3 animate-spin text-muted-foreground" aria-hidden />
+  ) : undefined
+  if (!freshness || freshness.state === 'unknown') {
+    if (!scanning) {
+      return null
+    }
+    const checking = translate(
+      'buildWeb.run.freshnessChecking',
+      'Checking this image against its branch…'
+    )
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex" role="status" aria-label={checking}>
+            {spinner}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{checking}</TooltipContent>
+      </Tooltip>
+    )
   }
   const current = freshness.state === 'current'
+  const tip = freshnessTip(freshness, ticket)
   return (
     <TipChip
       label={
@@ -207,7 +237,13 @@ export function FreshnessChip({
           : translate('buildWeb.run.needsRebuild', 'needs rebuild')
       }
       tone={current ? 'green' : 'amber'}
-      tip={freshnessTip(freshness, ticket)}
+      icon={spinner}
+      wideTip={Boolean(freshness.missing?.length)}
+      tip={
+        scanning
+          ? `${translate('buildWeb.run.freshnessRechecking', 'Checking again against the branch…')}\n\n${tip}`
+          : tip
+      }
     />
   )
 }

@@ -31,6 +31,8 @@ export type RunRowContext = {
   runBranch: string
   ticket: string | null
   now: number
+  /** The freshness scan is running: the Freshness column shows it is checking. */
+  scanning: boolean
   busy: boolean
   building: boolean
   /** A push is running somewhere on the run. */
@@ -142,8 +144,8 @@ export function RunImageRow({
           />
         ) : null}
         {c.state === 'pending' && lastBuilt ? <LastBuiltChips entry={lastBuilt} /> : null}
-        {c.state === 'done' && c.status === 'SUCCESS' && freshness ? (
-          <FreshnessChip freshness={freshness} ticket={ctx.ticket} />
+        {c.state === 'done' && c.status === 'SUCCESS' ? (
+          <FreshnessChip freshness={freshness} ticket={ctx.ticket} scanning={ctx.scanning} />
         ) : null}
         <RunTwinChip cell={c} disabled={ctx.busy || retrying} onRetry={ctx.onRetryTwin} />
       </div>

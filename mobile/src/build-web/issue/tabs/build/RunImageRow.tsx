@@ -30,6 +30,8 @@ export type RunRowContext = {
   runBranch: string
   ticket: string | null
   now: number
+  /** The freshness scan is running: the Freshness chip shows it is checking. */
+  scanning: boolean
   busy: boolean
   building: boolean
   testDirs: Record<string, string[]>
@@ -103,8 +105,8 @@ function RunImageRowView({
           />
         ) : null}
         {c.state === 'pending' && lastBuilt ? <LastBuiltChips entry={lastBuilt} /> : null}
-        {c.state === 'done' && c.status === 'SUCCESS' && freshness ? (
-          <FreshnessChip freshness={freshness} ticket={ctx.ticket} />
+        {c.state === 'done' && c.status === 'SUCCESS' ? (
+          <FreshnessChip freshness={freshness} ticket={ctx.ticket} scanning={ctx.scanning} />
         ) : null}
         <RunTwinChip cell={c} disabled={ctx.busy || retrying} onRetry={ctx.onRetryTwin} />
         <RegistryChip

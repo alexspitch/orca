@@ -22146,6 +22146,8 @@
       "containsIt": "at or after it — this image contains that commit",
       "missesIt": "before it — a newer commit is not in this image",
       "notInBuild": "Not in this build:",
+      "freshnessChecking": "Checking this image against its branch…",
+      "freshnessRechecking": "Checking again against the branch…",
       "unpublished": "CI also made #{{n}}, which the registry does not serve.",
       "upToDate": "up to date",
       "needsRebuild": "needs rebuild",

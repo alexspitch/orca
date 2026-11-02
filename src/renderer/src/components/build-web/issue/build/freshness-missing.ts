@@ -3,9 +3,9 @@ import type {
   BuildWebMissingCommit
 } from '../../../../../../shared/build-web-run-types'
 
-const SUBJECT_MAX = 25
+const SUBJECT_MAX = 100
 
-/** One subject a line, cut to 25 characters; `…` when the console listed only some. */
+/** One subject a line, cut to 100 characters; `…` when the console listed only some. */
 export function commitSubjectLines(
   commits: readonly BuildWebMissingCommit[] | undefined,
   more: boolean | undefined
