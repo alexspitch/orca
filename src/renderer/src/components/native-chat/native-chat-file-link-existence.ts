@@ -211,7 +211,13 @@ export function createNativeChatFileLinkExistence(
       return true
     }
     // Why: chat checks without a click, so a network share outside the workspace is never asked about.
-    if (!target || isHostUnresolved(target) || !mayCheckFileLinkTargetUnprompted(target, host)) {
+    // Why namesFolder: a folder opens only through a terminal's grant, which a chat never holds.
+    if (
+      !target ||
+      target.namesFolder ||
+      isHostUnresolved(target) ||
+      !mayCheckFileLinkTargetUnprompted(target, host)
+    ) {
       return false
     }
     const key = target.cacheKey

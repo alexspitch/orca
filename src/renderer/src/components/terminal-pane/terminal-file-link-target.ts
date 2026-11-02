@@ -47,6 +47,8 @@ export type FileLinkTarget = {
   isRemoteRuntimePath: boolean
   cacheKey: string
   isKnownWorktreeRoot: boolean
+  /** Printed with a trailing slash: a link only when its host grants it as a folder. */
+  namesFolder?: true
 }
 
 export type FileLinkPathExistence = ReturnType<typeof createTerminalPathExistenceBatch>
@@ -73,24 +75,26 @@ export function resolveFileLinkTarget(
   const isKnownWorktreeRoot = Boolean(
     resolveKnownWorktreeRootPathLink(absolutePath, useAppStore.getState(), fileContext)
   )
-  if (/[\\/]$/.test(parsed.pathText) && !isKnownWorktreeRoot) {
-    return null
-  }
+  const namesFolder = /[\\/]$/.test(parsed.pathText) && !isKnownWorktreeRoot
   const isRemoteRuntimePath = isRemoteRuntimeFileOperation(fileContext, absolutePath)
-  return {
+  const target: FileLinkTarget = {
     absolutePath,
     line: resolved.line,
     column: resolved.column,
     fileContext,
     isRemoteRuntimePath,
     cacheKey: getTerminalPathExistsCacheKey({
-      absolutePath,
+      // Why: a folder's answer (granted or not) differs from the same path printed without its slash.
+      absolutePath: namesFolder ? `${absolutePath}/` : absolutePath,
       connectionId: fileContext.connectionId,
       isRemoteRuntimePath,
       runtimeEnvironmentId: host.runtimeEnvironmentId
     }),
-    isKnownWorktreeRoot
+    isKnownWorktreeRoot,
+    ...(namesFolder ? { namesFolder } : {})
   }
+  // Why: only a paired server's folder outside the workspace can open (its host grants it); others stay text.
+  return namesFolder && !isHostPathOutsideWorkspace(target) ? null : target
 }
 
 /** Unprompted external-share stats can send credentials over SMB on local or SSH Windows hosts; permit the workspace’s own WSL distro. */

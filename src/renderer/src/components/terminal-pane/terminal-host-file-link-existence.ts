@@ -30,9 +30,12 @@ export async function hostFileLinkTargetExists(
   const probe = startTerminalPathExistsProbe()
   let exists: boolean
   try {
-    exists =
-      (await resolveHostWorkspaceFile(target.fileContext, target.absolutePath, terminalHandle)) !==
-      null
+    const owner = await resolveHostWorkspaceFile(
+      target.fileContext,
+      target.absolutePath,
+      terminalHandle
+    )
+    exists = target.namesFolder ? owner?.kind === 'grant' && owner.isDirectory : owner !== null
   } catch (error) {
     if (!(error instanceof HostFileRefusal)) {
       throw error
