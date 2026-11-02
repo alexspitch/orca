@@ -1,6 +1,18 @@
 {
   "releases": [
     {
+      "version": "1.4.247-custom.1793602154000",
+      "date": "2026-11-02",
+      "commit": "7e49d8bb7d22",
+      "features": [
+        "Images page: hovering an out-of-date image's rebuild or packages chip now lists the commits a rebuild would pick up, on desktop and phone."
+      ],
+      "settings": [],
+      "fixes": [
+        "Terminal: folders printed with a trailing slash, such as dir/, are now recognised in the terminal's output and open correctly."
+      ]
+    },
+    {
       "version": "1.4.247-custom.1793596592000",
       "date": "2026-11-02",
       "commit": "0b0b937cc14c",
