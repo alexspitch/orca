@@ -9,6 +9,7 @@ import type { RuntimeClientTarget } from '../../../../../shared/runtime-client-t
 import { callBuildWeb } from '../build-web-client'
 import { useBuildWebStore } from '../build-web-store'
 import { BuildWebToneChip } from '../BuildWebToneChip'
+import { commitSubjectLines } from '../issue/build/freshness-missing'
 
 // Whether an image of one product version holds its branch's latest changes, from the console's
 // sync scan. Asked only with a version picked: main then knows the version's own branch.
@@ -129,28 +130,36 @@ export function FreshnessCell({
   }
   const { rebuild, current, neverBuilt, branch } = scan.value
   if (Object.hasOwn(rebuild, row.image)) {
-    const { kind, changed } = rebuild[row.image]
+    const { kind, changed, commits, commitsMore } = rebuild[row.image]
     const what = changed.join(', ') || translate('buildWeb.images.rebuildSources', 'its sources')
+    const lines = commitSubjectLines(commits, commitsMore)
+    const notIn = lines.length
+      ? `\n\n${translate('buildWeb.run.notInBuild', 'Not in this build:')}\n${lines.join('\n')}`
+      : ''
     // Why two flags: its own code changed is a sure rebuild; a shared package may not reach it.
     return kind === 'app' ? (
       <BuildWebToneChip
         label={translate('buildWeb.images.rebuild', 'rebuild')}
         tone="amber"
-        title={translate(
-          'buildWeb.images.rebuildTip',
-          'Its own code changed on {{branch}} since its last build: {{what}}',
-          { branch, what }
-        )}
+        title={
+          translate(
+            'buildWeb.images.rebuildTip',
+            'Its own code changed on {{branch}} since its last build: {{what}}',
+            { branch, what }
+          ) + notIn
+        }
       />
     ) : (
       <BuildWebToneChip
         label={translate('buildWeb.images.rebuildPackages', 'packages')}
         tone="sky"
-        title={translate(
-          'buildWeb.images.rebuildPackagesTip',
-          'Only shared packages it is built with changed on {{branch}} since its last build: {{what}}',
-          { branch, what }
-        )}
+        title={
+          translate(
+            'buildWeb.images.rebuildPackagesTip',
+            'Only shared packages it is built with changed on {{branch}} since its last build: {{what}}',
+            { branch, what }
+          ) + notIn
+        }
       />
     )
   }

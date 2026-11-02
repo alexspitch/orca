@@ -80,7 +80,17 @@ describe('whether a version’s images hold its latest changes', () => {
             images: ['ap/ui', 'ap/api', 'constructor'],
             image_sources: { 'ap/ui': ['applications/ap-ui'], 'ap/api': ['packages/theme'] },
             up_to_date: ['ap/oauth'],
-            never_built: ['ap/new']
+            never_built: ['ap/new'],
+            pending_commits: [
+              {
+                sha: 'b2',
+                subject: 'IS-5 fix ui',
+                date: 'd2',
+                author: 'a',
+                images: ['ap/ui', 'ap/api']
+              },
+              { sha: 'b1', subject: 'IS-4 ui', date: 'd1', author: 'a', images: ['ap/ui'] }
+            ]
           }
         : { images: [], builds: [build('ap-release-1.16', '1.16')] }
     )
@@ -88,8 +98,19 @@ describe('whether a version’s images hold its latest changes', () => {
     expect(await scanBuildWebImageFreshness(args)).toEqual({
       branch: 'ap-release-1.16',
       rebuild: {
-        'ap/ui': { kind: 'app', changed: ['applications/ap-ui'] },
-        'ap/api': { kind: 'packages', changed: ['packages/theme'] },
+        'ap/ui': {
+          kind: 'app',
+          changed: ['applications/ap-ui'],
+          commits: [
+            { sha: 'b2', subject: 'IS-5 fix ui', date: 'd2', author: 'a' },
+            { sha: 'b1', subject: 'IS-4 ui', date: 'd1', author: 'a' }
+          ]
+        },
+        'ap/api': {
+          kind: 'packages',
+          changed: ['packages/theme'],
+          commits: [{ sha: 'b2', subject: 'IS-5 fix ui', date: 'd2', author: 'a' }]
+        },
         constructor: { kind: 'app', changed: [] }
       },
       current: ['ap/oauth'],

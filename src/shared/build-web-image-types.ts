@@ -1,3 +1,4 @@
+import type { BuildWebMissingCommit } from './build-web-run-types'
 import type { BuildWebRedosTwin } from './build-web-redos-twin'
 // build-web's Images section, as Orca shows it: the console's own records (snake_case), plus the
 // page model main computes so a remote client receives one page, never the whole history.
@@ -114,7 +115,14 @@ export type BuildWebImageHistory = {
  * Why an image is to rebuild: its own code changed (`app` — its application or plugin directory),
  * or only shared packages it is built with (`packages`), whose change may not touch it at all.
  */
-export type BuildWebImageChange = { kind: 'app' | 'packages'; changed: string[] }
+export type BuildWebImageChange = {
+  kind: 'app' | 'packages'
+  changed: string[]
+  /** The commits since its last build that touch it, newest first; absent from an older host. */
+  commits?: BuildWebMissingCommit[]
+  /** More commits touch it than `commits` lists. */
+  commitsMore?: boolean
+}
 
 /** Whether a product version's images hold its branch's latest changes, for one distribution. */
 export type BuildWebImageFreshness = {

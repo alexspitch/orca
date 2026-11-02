@@ -24,7 +24,15 @@ import {
   BUILD_WEB_CATALOG_TIMEOUT_MS,
   BUILD_WEB_LONG_TIMEOUT_MS
 } from '../../shared/build-web-timeouts'
-import { numberOf, recordOf, sourcesOf, textsOf } from './build-web-response-fields'
+import {
+  numberOf,
+  recordOf,
+  recordsOf,
+  sourcesOf,
+  textOf,
+  textsOf
+} from './build-web-response-fields'
+import type { BuildWebMissingCommit } from '../../shared/build-web-run-types'
 import { repoField, repoOfProduct } from '../../shared/build-web-repos'
 import {
   failedImageCount,
@@ -142,6 +150,32 @@ export function changeOf(changed: string[]): BuildWebImageChange {
   return { kind: packagesOnly ? 'packages' : 'app', changed }
 }
 
+const IMAGE_COMMITS_MAX = 15
+
+/** The console's pending commits, newest first, under each image they touch; at most 15 an image. */
+export function pendingCommitsByImage(
+  value: unknown
+): Record<string, Pick<BuildWebImageChange, 'commits' | 'commitsMore'>> {
+  const out: Record<string, { commits: BuildWebMissingCommit[]; commitsMore?: boolean }> = {}
+  for (const c of recordsOf(value)) {
+    const commit = {
+      sha: textOf(c.sha),
+      subject: textOf(c.subject),
+      date: textOf(c.date),
+      author: textOf(c.author)
+    }
+    for (const image of textsOf(c.images)) {
+      const entry = (out[image] ??= { commits: [] })
+      if (entry.commits.length < IMAGE_COMMITS_MAX) {
+        entry.commits.push(commit)
+      } else {
+        entry.commitsMore = true
+      }
+    }
+  }
+  return out
+}
+
 /**
  * The branch a product version is built from: its release branch, else master when master carries
  * that version. Read off the builds, which name both; a task branch never answers.
@@ -213,12 +247,16 @@ export async function scanBuildWebImageFreshness(args: {
       entry.at = Date.now()
       const record = recordOf(answer)
       const sources = sourcesOf(record?.image_sources)
+      const commits = pendingCommitsByImage(record?.pending_commits)
       return {
         branch,
         rebuild: Object.fromEntries(
           textsOf(record?.images).map((image) => [
             image,
-            changeOf(Object.hasOwn(sources, image) ? sources[image] : [])
+            {
+              ...changeOf(Object.hasOwn(sources, image) ? sources[image] : []),
+              ...(Object.hasOwn(commits, image) ? commits[image] : {})
+            }
           ])
         ),
         current: textsOf(record?.up_to_date),

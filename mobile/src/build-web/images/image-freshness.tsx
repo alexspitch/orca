@@ -9,6 +9,7 @@ import { LoadingSpinner } from '../../components/LoadingSpinner'
 import { colors } from '../../theme/mobile-theme'
 import { useBuildWebScreen } from '../build-web-screen-context'
 import { BuildWebToneChip } from '../BuildWebToneChip'
+import { commitSubjectLines } from '../../../../src/renderer/src/components/build-web/issue/build/freshness-missing'
 
 // Whether an image of one product version holds its branch's latest changes, from the console's
 // sync scan. Asked only with a version picked: the host then knows the version's own branch.
@@ -131,17 +132,19 @@ function flagOf(
   const change = Object.hasOwn(rebuild, image) ? rebuild[image] : undefined
   if (change) {
     const what = change.changed.join(', ') || 'its sources'
+    const lines = commitSubjectLines(change.commits, change.commitsMore)
+    const notIn = lines.length ? `\n\nNot in this build:\n${lines.join('\n')}` : ''
     // Why two flags: its own code changed is a sure rebuild; a shared package may not reach it.
     return change.kind === 'app'
       ? {
           label: 'rebuild',
           tone: 'amber',
-          why: `Its own code changed on ${branch} since its last build: ${what}`
+          why: `Its own code changed on ${branch} since its last build: ${what}${notIn}`
         }
       : {
           label: 'packages',
           tone: 'sky',
-          why: `Only shared packages it is built with changed on ${branch} since its last build: ${what}`
+          why: `Only shared packages it is built with changed on ${branch} since its last build: ${what}${notIn}`
         }
   }
   if (current.includes(image)) {
