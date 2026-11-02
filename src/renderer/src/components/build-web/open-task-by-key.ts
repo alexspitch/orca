@@ -94,11 +94,26 @@ export async function taskTitleByKey(key: string): Promise<string | null> {
   return found.source === 'build-web' ? found.task.title : found.issue.title
 }
 
+/** The task's card as a tab of `worktreeId`, with that workspace shown. */
+function showTaskTabIn(
+  worktreeId: string,
+  contextKey: string,
+  task: { issueId: string; key: string; title: string }
+): void {
+  const app = useAppStore.getState()
+  if (app.activeWorktreeId !== worktreeId) {
+    activateAndRevealWorktree(worktreeId)
+  } else if (app.activeView !== 'terminal') {
+    app.setActiveView('terminal')
+  }
+  useAppStore.getState().openBuildWebTaskTab(worktreeId, { contextKey, ...task })
+}
+
 /**
- * A task number clicked in a terminal: its build-web card as a tab of Issues, else the Jira issue
- * on the Tasks page, else a note that neither knows it.
+ * A task number clicked in a terminal: its build-web card as a tab of the terminal's workspace
+ * (of Issues without one), else the Jira issue on the Tasks page, else a note that neither knows it.
  */
-export async function openTaskByKey(key: string): Promise<void> {
+export async function openTaskByKey(key: string, sessionWorktreeId?: string): Promise<void> {
   armLinkReturn()
   const host = taskHost()
   const found = await resolveTaskByKey(host, key)
@@ -110,6 +125,11 @@ export async function openTaskByKey(key: string): Promise<void> {
       if (status) {
         store.setStatus(host.contextKey, status)
       }
+    }
+    if (sessionWorktreeId) {
+      const { id: issueId, key: taskKey, title } = found.task
+      showTaskTabIn(sessionWorktreeId, host.contextKey, { issueId, key: taskKey, title })
+      return
     }
     showBuildWebTaskCard(found.task)
     return
@@ -159,14 +179,7 @@ export async function openBuildWebTaskCard(
   if (store.contextKey !== host.contextKey) {
     store.setStatus(host.contextKey, status)
   }
-  const app = useAppStore.getState()
-  if (app.activeWorktreeId !== ownerWorktreeId) {
-    activateAndRevealWorktree(ownerWorktreeId)
-  } else if (app.activeView !== 'terminal') {
-    app.setActiveView('terminal')
-  }
-  useAppStore.getState().openBuildWebTaskTab(ownerWorktreeId, {
-    contextKey: host.contextKey,
+  showTaskTabIn(ownerWorktreeId, host.contextKey, {
     issueId: task.issueId,
     key: task.key,
     title: task.title

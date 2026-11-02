@@ -99,7 +99,7 @@ export function installTerminalPaneLinkHandling(context: PaneLinkContext): void 
       getTerminal,
       linkTooltip: pane.linkTooltip,
       getLinkActionContext: () => getLinkActionContext(pane.id),
-      openTask: openTaskByKey,
+      openTask: (key) => openTaskByKey(key, linkDeps.worktreeId),
       describeTask: taskTitleByKey
     })
   )
