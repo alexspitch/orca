@@ -37,6 +37,7 @@ export function recentTerminalPathCandidatesIncludePath(
     ]
       .map((candidate) => candidate.trim())
       .filter((candidate) => candidate.length > 0)
+      .flatMap(withTrailingSeparator)
   )
   for (const recent of recentCandidates) {
     if (candidates.has(recent)) {
@@ -44,6 +45,11 @@ export function recentTerminalPathCandidatesIncludePath(
     }
   }
   return false
+}
+
+// Why: a folder is printed as `dir/` but resolves to `dir`, and the trailing `/` reads as more path.
+function withTrailingSeparator(candidate: string): string[] {
+  return /[\\/]$/.test(candidate) ? [candidate] : [candidate, `${candidate}/`]
 }
 
 function pruneRecentPtyPathCandidates(candidates: string[]): string[] {
@@ -73,6 +79,7 @@ export function recentTerminalOutputIncludesPath(
     [pathText, absolutePath]
       .map((candidate) => candidate.trim())
       .filter((candidate) => candidate.length > 0)
+      .flatMap(withTrailingSeparator)
   )
   if (candidates.size === 0) {
     return false

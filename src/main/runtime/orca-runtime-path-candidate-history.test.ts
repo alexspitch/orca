@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { appendRecentPtyPathCandidates } from './terminal-output-path-candidates'
+import {
+  appendRecentPtyPathCandidates,
+  recentTerminalOutputIncludesPath,
+  recentTerminalPathCandidatesIncludePath
+} from './terminal-output-path-candidates'
 
 function fullCandidateHistory(): string[] {
   return Array.from(
@@ -43,5 +47,20 @@ describe('PTY path candidate history', () => {
     expect(changed).not.toBe(previous)
     expect(changed).toContain('/tmp/new-artifact.json')
     expect(previous).not.toContain('/tmp/new-artifact.json')
+  })
+
+  it('finds a folder printed with a trailing slash by its resolved path', () => {
+    const output = 'Screenshots: /tmp/claude-1001/scratchpad/ui/\r\n'
+    const folder = '/tmp/claude-1001/scratchpad/ui'
+    expect(recentTerminalOutputIncludesPath(output, folder, folder)).toBe(true)
+    const history = appendRecentPtyPathCandidates(undefined, output)
+    expect(recentTerminalPathCandidatesIncludePath(history, folder, folder)).toBe(true)
+    expect(
+      recentTerminalOutputIncludesPath(
+        output,
+        '/tmp/claude-1001/scratch',
+        '/tmp/claude-1001/scratch'
+      )
+    ).toBe(false)
   })
 })
